@@ -1,22 +1,6 @@
 export interface Flashcard { q: string; a: string }
 export const flashcards: Flashcard[] = [
   {
-    "q": "What does DC stand for?",
-    "a": "Direct Current"
-  },
-  {
-    "q": "What does AC stand for?",
-    "a": "Alternating Current"
-  },
-  {
-    "q": "Who is the scientist associated with inventing the DC system?",
-    "a": "Thomas Edison"
-  },
-  {
-    "q": "Who is the scientist associated with the discovery of AC?",
-    "a": "Nikola Tesla (referred to as Nicolas Chan/Tesla in text)"
-  },
-  {
     "q": "What is the primary characteristic of DC current flow?",
     "a": "Flows in one direction"
   },
