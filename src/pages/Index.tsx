@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
 import { Flashcard } from "@/components/Flashcard";
@@ -59,6 +59,14 @@ const Index = () => {
       {/* Ambient blobs */}
       <div className="pointer-events-none absolute -top-40 -left-40 w-96 h-96 rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+
+      <Link
+        to="/"
+        className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 hover:-translate-x-0.5 transition-all duration-300 animate-fade-up"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span className="hidden sm:inline">Chapters</span>
+      </Link>
 
       <header className="text-center z-10 animate-fade-up">
         <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-3">{deck.eyebrow}</p>
