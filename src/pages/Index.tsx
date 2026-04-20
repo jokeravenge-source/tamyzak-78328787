@@ -3,12 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
+import { flashcardsCh5 } from "@/data/flashcardsCh5";
 import { Flashcard } from "@/components/Flashcard";
 import { Button } from "@/components/ui/button";
 
 const decks: Record<string, { title: string; eyebrow: string; cards: typeof flashcards }> = {
   "3": { title: "Flashcards", eyebrow: "Ch 03 · Alternating Current", cards: flashcards },
   "4": { title: "Flashcards", eyebrow: "Ch 04 · Electromagnetic Waves", cards: flashcardsCh4 },
+  "5": { title: "Flashcards", eyebrow: "Ch 05 · Physical Optics", cards: flashcardsCh5 },
 };
 
 const Index = () => {
