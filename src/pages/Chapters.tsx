@@ -2,14 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { Lock, ArrowRight, Sparkles } from "lucide-react";
 
 const chapters = [
-  { n: 1, title: "Electric Current", subtitle: "Foundations of charge flow", locked: true },
-  { n: 2, title: "Magnetic Effects", subtitle: "Fields & forces", locked: true },
-  { n: 3, title: "Alternating Current", subtitle: "AC circuits, R-L-C, resonance", locked: false },
-  { n: 4, title: "Electromagnetic Waves", subtitle: "Maxwell, antennas & modulation", locked: false },
-  { n: 5, title: "Wave Optics", subtitle: "Interference & diffraction", locked: true },
-  { n: 6, title: "Modern Physics", subtitle: "Photons & matter waves", locked: true },
-  { n: 7, title: "Atomic Structure", subtitle: "Bohr & beyond", locked: true },
-  { n: 8, title: "Nuclear Physics", subtitle: "Decay & reactions", locked: true },
+  { n: 1, title: "Electric Current", subtitle: "", locked: true },
+  { n: 2, title: "Magnetic Effects", subtitle: "", locked: true },
+  { n: 3, title: "Alternating Current", subtitle: "", locked: false },
+  { n: 4, title: "Electromagnetic Waves", subtitle: "", locked: false },
+  { n: 5, title: "Wave Optics", subtitle: "", locked: true },
+  { n: 6, title: "Modern Physics", subtitle: "", locked: true },
+  { n: 7, title: "Atomic Structure", subtitle: "", locked: true },
+  { n: 8, title: "Nuclear Physics", subtitle: "", locked: true },
 ];
 
 const Chapters = () => {
@@ -29,7 +29,7 @@ const Chapters = () => {
       <header className="text-center max-w-3xl mx-auto z-10 relative animate-fade-up">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">AC Physics</span>
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">HYDAAR DIWAAN</span>
         </div>
         <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">
           Choose a Chapter
