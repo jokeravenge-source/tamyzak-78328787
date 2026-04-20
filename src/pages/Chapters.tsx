@@ -98,7 +98,7 @@ const Chapters = () => {
       </section>
 
       <footer className="text-center mt-16 text-xs text-muted-foreground tracking-widest z-10 relative">
-        ONLY CHAPTER 03 IS AVAILABLE — MORE COMING SOON
+        CHAPTERS 03 & 04 ARE AVAILABLE — MORE COMING SOON
       </footer>
     </main>
   );
