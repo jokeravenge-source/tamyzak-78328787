@@ -6,7 +6,7 @@ const chapters = [
   { n: 2, title: "Electromagnetic induction", subtitle: "", locked: true },
   { n: 3, title: "Alternating Current", subtitle: "", locked: false },
   { n: 4, title: "Electromagnetic Waves", subtitle: "", locked: false },
-  { n: 5, title: "Physical Optics", subtitle: "", locked: true },
+  { n: 5, title: "Physical Optics", subtitle: "", locked: false },
   { n: 6, title: "Modern Physics", subtitle: "", locked: true },
   { n: 7, title: "Solid state electronics", subtitle: "", locked: true },
   { n: 8, title: "Atomic Spectra and laser ", subtitle: "", locked: true },
