@@ -5,7 +5,7 @@ const chapters = [
   { n: 1, title: "Electric Current", subtitle: "Foundations of charge flow", locked: true },
   { n: 2, title: "Magnetic Effects", subtitle: "Fields & forces", locked: true },
   { n: 3, title: "Alternating Current", subtitle: "AC circuits, R-L-C, resonance", locked: false },
-  { n: 4, title: "Electromagnetic Induction", subtitle: "Faraday & Lenz", locked: true },
+  { n: 4, title: "Electromagnetic Waves", subtitle: "Maxwell, antennas & modulation", locked: false },
   { n: 5, title: "Wave Optics", subtitle: "Interference & diffraction", locked: true },
   { n: 6, title: "Modern Physics", subtitle: "Photons & matter waves", locked: true },
   { n: 7, title: "Atomic Structure", subtitle: "Bohr & beyond", locked: true },
@@ -16,7 +16,7 @@ const Chapters = () => {
   const navigate = useNavigate();
 
   const handleClick = (chapter: typeof chapters[number]) => {
-    if (chapter.n === 3) navigate("/flashcards");
+    if (!chapter.locked) navigate(`/flashcards/${chapter.n}`);
   };
 
   return (
