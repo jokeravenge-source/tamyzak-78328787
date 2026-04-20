@@ -32,10 +32,15 @@ const Index = () => {
     setDirection("right");
   };
   const reset = () => {
-    setCards(flashcards);
+    setCards(deck.cards);
     setIndex(0);
     setDirection("left");
   };
+
+  useEffect(() => {
+    setCards(deck.cards);
+    setIndex(0);
+  }, [deck]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -56,8 +61,8 @@ const Index = () => {
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
       <header className="text-center z-10 animate-fade-up">
-        <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-3">AC Physics</p>
-        <h1 className="text-4xl md:text-5xl font-bold gradient-text">Flashcards</h1>
+        <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-3">{deck.eyebrow}</p>
+        <h1 className="text-4xl md:text-5xl font-bold gradient-text">{deck.title}</h1>
       </header>
 
       <section className="w-full flex flex-col items-center gap-8 z-10 my-8">
