@@ -2,14 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { Lock, ArrowRight, Sparkles } from "lucide-react";
 
 const chapters = [
-  { n: 1, title: "Electric Current", subtitle: "", locked: true },
-  { n: 2, title: "Magnetic Effects", subtitle: "", locked: true },
+  { n: 1, title: "capitcors", subtitle: "", locked: true },
+  { n: 2, title: "Electromagnetic induction", subtitle: "", locked: true },
   { n: 3, title: "Alternating Current", subtitle: "", locked: false },
   { n: 4, title: "Electromagnetic Waves", subtitle: "", locked: false },
-  { n: 5, title: "Wave Optics", subtitle: "", locked: true },
+  { n: 5, title: "Physical Optics", subtitle: "", locked: true },
   { n: 6, title: "Modern Physics", subtitle: "", locked: true },
-  { n: 7, title: "Atomic Structure", subtitle: "", locked: true },
-  { n: 8, title: "Nuclear Physics", subtitle: "", locked: true },
+  { n: 7, title: "Solid state electronics", subtitle: "", locked: true },
+  { n: 8, title: "Atomic Spectra and laser ", subtitle: "", locked: true },
 ];
 
 const Chapters = () => {
