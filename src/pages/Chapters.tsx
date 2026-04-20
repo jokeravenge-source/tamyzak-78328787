@@ -7,7 +7,7 @@ const chapters = [
   { n: 3, title: "Alternating Current", subtitle: "", locked: false },
   { n: 4, title: "Electromagnetic Waves", subtitle: "", locked: false },
   { n: 5, title: "Physical Optics", subtitle: "", locked: false },
-  { n: 6, title: "Modern Physics", subtitle: "", locked: true },
+  { n: 6, title: "Modern Physics", subtitle: "", locked: false },
   { n: 7, title: "Solid state electronics", subtitle: "", locked: true },
   { n: 8, title: "Atomic Spectra and laser ", subtitle: "", locked: true },
 ];
