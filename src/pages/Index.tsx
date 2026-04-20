@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
 import { Flashcard } from "@/components/Flashcard";
