@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
+import { flashcardsCh4 } from "@/data/flashcardsCh4";
 import { Flashcard } from "@/components/Flashcard";
 import { Button } from "@/components/ui/button";
 
+const decks: Record<string, { title: string; eyebrow: string; cards: typeof flashcards }> = {
+  "3": { title: "Flashcards", eyebrow: "Ch 03 · Alternating Current", cards: flashcards },
+  "4": { title: "Flashcards", eyebrow: "Ch 04 · Electromagnetic Waves", cards: flashcardsCh4 },
+};
+
 const Index = () => {
-  const [cards, setCards] = useState(flashcards);
+  const { chapter = "3" } = useParams();
+  const deck = decks[chapter] ?? decks["3"];
+  const [cards, setCards] = useState(deck.cards);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right">("right");
 
