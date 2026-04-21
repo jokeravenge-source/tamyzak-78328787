@@ -5,6 +5,7 @@ import { flashcards } from "@/data/flashcards";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
 import { flashcardsCh5 } from "@/data/flashcardsCh5";
 import { flashcardsCh6 } from "@/data/flashcardsCh6";
+import { flashcardsCh7 } from "@/data/flashcardsCh7";
 import { Flashcard } from "@/components/Flashcard";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +14,7 @@ const decks: Record<string, { title: string; eyebrow: string; cards: typeof flas
   "4": { title: "Flashcards", eyebrow: "Ch 04 · Electromagnetic Waves", cards: flashcardsCh4 },
   "5": { title: "Flashcards", eyebrow: "Ch 05 · Physical Optics", cards: flashcardsCh5 },
   "6": { title: "Flashcards", eyebrow: "Ch 06 · Modern Physics", cards: flashcardsCh6 },
+  "7": { title: "Flashcards", eyebrow: "Ch 07 · Solid State Electronics", cards: flashcardsCh7 },
 };
 
 const Index = () => {
