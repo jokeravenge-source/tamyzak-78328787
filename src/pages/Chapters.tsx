@@ -9,7 +9,7 @@ const chapters = [
   { n: 5, title: "Physical Optics", subtitle: "", locked: false },
   { n: 6, title: "Modern Physics", subtitle: "", locked: false },
   { n: 7, title: "Solid state electronics", subtitle: "", locked: false },
-  { n: 8, title: "Atomic Spectra and laser ", subtitle: "", locked: true },
+  { n: 8, title: "Atomic Spectra and laser ", subtitle: "", locked: false },
 ];
 
 const Chapters = () => {
