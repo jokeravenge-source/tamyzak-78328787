@@ -3,7 +3,7 @@ import { Lock, ArrowRight, Sparkles } from "lucide-react";
 
 const chapters = [
   { n: 1, title: "capitcors", subtitle: "", locked: false },
-  { n: 2, title: "Electromagnetic induction", subtitle: "", locked: true },
+  { n: 2, title: "Electromagnetic induction", subtitle: "", locked: false },
   { n: 3, title: "Alternating Current", subtitle: "", locked: false },
   { n: 4, title: "Electromagnetic Waves", subtitle: "", locked: false },
   { n: 5, title: "Physical Optics", subtitle: "", locked: false },
