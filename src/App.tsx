@@ -6,14 +6,24 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import Chapters from "./pages/Chapters.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import { useState } from "react";
+import { TelegramGate, TELEGRAM_GATE_STORAGE_KEY } from "./components/TelegramGate";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  const [unlocked, setUnlocked] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1"
+  );
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      {!unlocked ? (
+        <TelegramGate onUnlock={() => setUnlocked(true)} />
+      ) : (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Chapters />} />
@@ -24,8 +34,10 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      )}
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
