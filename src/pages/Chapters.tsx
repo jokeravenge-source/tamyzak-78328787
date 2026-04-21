@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Lock, ArrowRight, Sparkles } from "lucide-react";
 
 const chapters = [
-  { n: 1, title: "capitcors", subtitle: "", locked: true },
+  { n: 1, title: "capitcors", subtitle: "", locked: false },
   { n: 2, title: "Electromagnetic induction", subtitle: "", locked: true },
   { n: 3, title: "Alternating Current", subtitle: "", locked: false },
   { n: 4, title: "Electromagnetic Waves", subtitle: "", locked: false },
