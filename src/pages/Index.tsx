@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
+import { flashcardsCh3Ar } from "@/data/flashcardsCh3Ar";
 import { flashcardsCh1 } from "@/data/flashcardsCh1";
 import { flashcardsCh2 } from "@/data/flashcardsCh2";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
@@ -31,7 +32,10 @@ const copy = {
 
 const Index = ({ language }: { language: AppLanguage }) => {
   const { chapter = "3" } = useParams();
-  const deck = decks[chapter] ?? decks["3"];
+  const baseDeck = decks[chapter] ?? decks["3"];
+  const deck = language === "ar" && chapter === "3"
+    ? { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 03 · التيار المتناوب", cards: flashcardsCh3Ar }
+    : baseDeck;
   const text = copy[language];
   const [cards, setCards] = useState(deck.cards);
   const [index, setIndex] = useState(0);
