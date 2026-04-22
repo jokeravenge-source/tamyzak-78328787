@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh3Ar } from "@/data/flashcardsCh3Ar";
 import { flashcardsCh4Ar } from "@/data/flashcardsCh4Ar";
+import { flashcardsCh5Ar } from "@/data/flashcardsCh5Ar";
 import { flashcardsCh1 } from "@/data/flashcardsCh1";
 import { flashcardsCh2 } from "@/data/flashcardsCh2";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
@@ -42,6 +43,10 @@ const Index = ({ language }: { language: AppLanguage }) => {
 
       if (language === "ar" && chapter === "4") {
         return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 04 · الموجات الكهرومغناطيسية", cards: flashcardsCh4Ar };
+      }
+
+      if (language === "ar" && chapter === "5") {
+        return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 05 · البصريات الفيزيائية", cards: flashcardsCh5Ar };
       }
 
       return baseDeck;
