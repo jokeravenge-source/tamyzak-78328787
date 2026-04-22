@@ -13,7 +13,6 @@ const chapters = [
   { n: 8, title: "Atomic Spectra and laser ", subtitle: "", locked: false },
 ];
 
-const Chapters = () => {
 const copy = {
   en: {
     badge: "HYDAAR DIWAAN",
