@@ -94,7 +94,7 @@ const Chapters = ({ language }: { language: AppLanguage }) => {
 
               {/* Title */}
               <div className="relative z-10 absolute bottom-6 left-6 right-6">
-                <h3 className={`text-lg font-semibold mb-1 ${isAvailable ? "text-foreground" : "text-muted-foreground"}`}>
+                <h3 className={`text-lg font-semibold mb-1 ${language === "ar" ? "text-center" : ""} ${isAvailable ? "text-foreground" : "text-muted-foreground"}`}>
                   {language === "ar" ? c.arTitle : c.title}
                 </h3>
                 <p className="text-xs text-muted-foreground line-clamp-1">{c.subtitle}</p>
