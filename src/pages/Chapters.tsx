@@ -3,14 +3,14 @@ import { Lock, ArrowRight, Sparkles } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 
 const chapters = [
-  { n: 1, title: "capitcors", subtitle: "", locked: false },
-  { n: 2, title: "Electromagnetic induction", subtitle: "", locked: false },
-  { n: 3, title: "Alternating Current", subtitle: "", locked: false },
-  { n: 4, title: "Electromagnetic Waves", subtitle: "", locked: false },
-  { n: 5, title: "Physical Optics", subtitle: "", locked: false },
-  { n: 6, title: "Modern Physics", subtitle: "", locked: false },
-  { n: 7, title: "Solid state electronics", subtitle: "", locked: false },
-  { n: 8, title: "Atomic Spectra and laser ", subtitle: "", locked: false },
+  { n: 1, title: "Capacitors", arTitle: "المتسعات", subtitle: "", locked: false },
+  { n: 2, title: "Electromagnetic Induction", arTitle: "الحث الكهرومغناطيسي", subtitle: "", locked: false },
+  { n: 3, title: "Alternating Current", arTitle: "التيار المتناوب", subtitle: "", locked: false },
+  { n: 4, title: "Electromagnetic Waves", arTitle: "الموجات الكهرومغناطيسية", subtitle: "", locked: false },
+  { n: 5, title: "Physical Optics", arTitle: "البصريات الفيزيائية", subtitle: "", locked: false },
+  { n: 6, title: "Modern Physics", arTitle: "الفيزياء الحديثة", subtitle: "", locked: false },
+  { n: 7, title: "Solid State Electronics", arTitle: "إلكترونيات الحالة الصلبة", subtitle: "", locked: false },
+  { n: 8, title: "Atomic Spectra and Laser", arTitle: "الأطياف الذرية والليزر", subtitle: "", locked: false },
 ];
 
 const copy = {
@@ -95,7 +95,7 @@ const Chapters = ({ language }: { language: AppLanguage }) => {
               {/* Title */}
               <div className="relative z-10 absolute bottom-6 left-6 right-6">
                 <h3 className={`text-lg font-semibold mb-1 ${isAvailable ? "text-foreground" : "text-muted-foreground"}`}>
-                  {c.title}
+                  {language === "ar" ? c.arTitle : c.title}
                 </h3>
                 <p className="text-xs text-muted-foreground line-clamp-1">{c.subtitle}</p>
               </div>
