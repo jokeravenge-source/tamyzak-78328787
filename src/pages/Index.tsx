@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh3Ar } from "@/data/flashcardsCh3Ar";
+import { flashcardsCh4Ar } from "@/data/flashcardsCh4Ar";
 import { flashcardsCh1 } from "@/data/flashcardsCh1";
 import { flashcardsCh2 } from "@/data/flashcardsCh2";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
@@ -34,9 +35,17 @@ const Index = ({ language }: { language: AppLanguage }) => {
   const { chapter = "3" } = useParams();
   const baseDeck = decks[chapter] ?? decks["3"];
   const deck = useMemo(
-    () => language === "ar" && chapter === "3"
-      ? { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 03 · التيار المتناوب", cards: flashcardsCh3Ar }
-      : baseDeck,
+    () => {
+      if (language === "ar" && chapter === "3") {
+        return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 03 · التيار المتناوب", cards: flashcardsCh3Ar };
+      }
+
+      if (language === "ar" && chapter === "4") {
+        return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 04 · الموجات الكهرومغناطيسية", cards: flashcardsCh4Ar };
+      }
+
+      return baseDeck;
+    },
     [baseDeck, chapter, language]
   );
   const text = copy[language];
