@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
@@ -33,9 +33,12 @@ const copy = {
 const Index = ({ language }: { language: AppLanguage }) => {
   const { chapter = "3" } = useParams();
   const baseDeck = decks[chapter] ?? decks["3"];
-  const deck = language === "ar" && chapter === "3"
-    ? { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 03 · التيار المتناوب", cards: flashcardsCh3Ar }
-    : baseDeck;
+  const deck = useMemo(
+    () => language === "ar" && chapter === "3"
+      ? { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 03 · التيار المتناوب", cards: flashcardsCh3Ar }
+      : baseDeck,
+    [baseDeck, chapter, language]
+  );
   const text = copy[language];
   const [cards, setCards] = useState(deck.cards);
   const [index, setIndex] = useState(0);
@@ -107,7 +110,7 @@ const Index = ({ language }: { language: AppLanguage }) => {
         />
 
         {/* Controls */}
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-4 md:gap-6" dir="ltr">
           <button
             onClick={prev}
             aria-label="Previous card"
