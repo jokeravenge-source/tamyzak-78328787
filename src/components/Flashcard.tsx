@@ -6,10 +6,14 @@ interface FlashcardProps {
   index: number;
   total: number;
   direction: "left" | "right";
+  language?: "ar" | "en";
 }
 
-export const Flashcard = ({ question, answer, index, total, direction }: FlashcardProps) => {
+export const Flashcard = ({ question, answer, index, total, direction, language = "en" }: FlashcardProps) => {
   const [flipped, setFlipped] = useState(false);
+  const labels = language === "ar"
+    ? { question: "السؤال", answer: "الإجابة", reveal: "اضغط لإظهار الإجابة", back: "اضغط لرؤية السؤال" }
+    : { question: "Question", answer: "Answer", reveal: "Tap to reveal answer", back: "Tap to see question" };
 
   useEffect(() => {
     setFlipped(false);
@@ -31,7 +35,7 @@ export const Flashcard = ({ question, answer, index, total, direction }: Flashca
           style={{ background: "var(--gradient-card-front)", boxShadow: "var(--shadow-card)" }}
         >
           <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-white/60">
-            <span>Question</span>
+            <span>{labels.question}</span>
             <span className="font-mono">{String(index + 1).padStart(2, "0")} / {total}</span>
           </div>
           <div className="flex-1 flex items-center justify-center px-2">
@@ -40,7 +44,7 @@ export const Flashcard = ({ question, answer, index, total, direction }: Flashca
             </p>
           </div>
           <div className="text-center text-xs text-white/50 tracking-widest uppercase group-hover:text-white/80 transition-colors">
-            Tap to reveal answer
+            {labels.reveal}
           </div>
         </div>
 
@@ -50,7 +54,7 @@ export const Flashcard = ({ question, answer, index, total, direction }: Flashca
           style={{ background: "var(--gradient-card-back)", boxShadow: "var(--shadow-card)" }}
         >
           <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-white/60">
-            <span>Answer</span>
+            <span>{labels.answer}</span>
             <span className="font-mono">{String(index + 1).padStart(2, "0")} / {total}</span>
           </div>
           <div className="flex-1 flex items-center justify-center px-2">
@@ -59,7 +63,7 @@ export const Flashcard = ({ question, answer, index, total, direction }: Flashca
             </p>
           </div>
           <div className="text-center text-xs text-white/50 tracking-widest uppercase group-hover:text-white/80 transition-colors">
-            Tap to see question
+            {labels.back}
           </div>
         </div>
       </button>
