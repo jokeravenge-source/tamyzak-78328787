@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Lock, ArrowRight, Sparkles } from "lucide-react";
+import type { AppLanguage } from "@/components/LanguageGate";
 
 const chapters = [
   { n: 1, title: "capitcors", subtitle: "", locked: false },
@@ -13,14 +14,29 @@ const chapters = [
 ];
 
 const Chapters = () => {
+const copy = {
+  en: {
+    badge: "HYDAAR DIWAAN",
+    title: "Choose a Chapter",
+    description: "Eight chapters of physics, distilled into beautiful flashcards. Start with what you need.",
+  },
+  ar: {
+    badge: "حيدر ديوان",
+    title: "اختر الفصل",
+    description: "ثمانية فصول في الفيزياء، مختصرة في بطاقات تعليمية جميلة. ابدأ بما تحتاجه.",
+  },
+};
+
+const Chapters = ({ language }: { language: AppLanguage }) => {
   const navigate = useNavigate();
+  const text = copy[language];
 
   const handleClick = (chapter: typeof chapters[number]) => {
     if (!chapter.locked) navigate(`/flashcards/${chapter.n}`);
   };
 
   return (
-    <main className="min-h-screen px-4 py-12 md:py-20 relative overflow-hidden">
+    <main className="min-h-screen px-4 py-12 md:py-20 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
       {/* Ambient blobs */}
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute top-1/3 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
@@ -29,13 +45,13 @@ const Chapters = () => {
       <header className="text-center max-w-3xl mx-auto z-10 relative animate-fade-up">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">HYDAAR DIWAAN</span>
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{text.badge}</span>
         </div>
         <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">
-          Choose a Chapter
+          {text.title}
         </h1>
         <p className="text-muted-foreground md:text-lg max-w-xl mx-auto">
-          Eight chapters of physics, distilled into beautiful flashcards. Start with what you need.
+          {text.description}
         </p>
       </header>
 
