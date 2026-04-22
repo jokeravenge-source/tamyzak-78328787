@@ -11,6 +11,7 @@ import { flashcardsCh7 } from "@/data/flashcardsCh7";
 import { flashcardsCh8 } from "@/data/flashcardsCh8";
 import { Flashcard } from "@/components/Flashcard";
 import { Button } from "@/components/ui/button";
+import type { AppLanguage } from "@/components/LanguageGate";
 
 const decks: Record<string, { title: string; eyebrow: string; cards: typeof flashcards }> = {
   "1": { title: "Flashcards", eyebrow: "Ch 01 · Capacitors", cards: flashcardsCh1 },
@@ -23,9 +24,15 @@ const decks: Record<string, { title: string; eyebrow: string; cards: typeof flas
   "8": { title: "Flashcards", eyebrow: "Ch 08 · Atomic Spectra and Laser", cards: flashcardsCh8 },
 };
 
-const Index = () => {
+const copy = {
+  en: { chapters: "Chapters", of: "of", shuffle: "Shuffle", reset: "Reset" },
+  ar: { chapters: "الفصول", of: "من", shuffle: "خلط", reset: "إعادة" },
+};
+
+const Index = ({ language }: { language: AppLanguage }) => {
   const { chapter = "3" } = useParams();
   const deck = decks[chapter] ?? decks["3"];
+  const text = copy[language];
   const [cards, setCards] = useState(deck.cards);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right">("right");
@@ -67,7 +74,7 @@ const Index = () => {
   const progress = ((index + 1) / cards.length) * 100;
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-between px-4 py-8 md:py-12 relative overflow-hidden">
+    <main className="min-h-screen flex flex-col items-center justify-between px-4 py-8 md:py-12 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
       {/* Ambient blobs */}
       <div className="pointer-events-none absolute -top-40 -left-40 w-96 h-96 rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
@@ -77,7 +84,7 @@ const Index = () => {
         className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 hover:-translate-x-0.5 transition-all duration-300 animate-fade-up"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span className="hidden sm:inline">Chapters</span>
+        <span className="hidden sm:inline">{text.chapters}</span>
       </Link>
 
       <header className="text-center z-10 animate-fade-up">
@@ -92,6 +99,7 @@ const Index = () => {
           index={index}
           total={cards.length}
           direction={direction}
+          language={language}
         />
 
         {/* Controls */}
@@ -108,7 +116,7 @@ const Index = () => {
             <div className="text-2xl font-mono font-bold gradient-text">
               {String(index + 1).padStart(2, "0")}
             </div>
-            <div className="text-xs text-muted-foreground tracking-widest">of {cards.length}</div>
+            <div className="text-xs text-muted-foreground tracking-widest">{text.of} {cards.length}</div>
           </div>
 
           <button
@@ -131,10 +139,10 @@ const Index = () => {
 
       <footer className="flex items-center gap-3 z-10 animate-fade-up">
         <Button variant="ghost" size="sm" onClick={shuffle} className="gap-2">
-          <Shuffle className="w-4 h-4" /> Shuffle
+          <Shuffle className="w-4 h-4" /> {text.shuffle}
         </Button>
         <Button variant="ghost" size="sm" onClick={reset} className="gap-2">
-          <RotateCcw className="w-4 h-4" /> Reset
+          <RotateCcw className="w-4 h-4" /> {text.reset}
         </Button>
       </footer>
     </main>
