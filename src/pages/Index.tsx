@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh1Ar } from "@/data/flashcardsCh1Ar";
+import { flashcardsCh2Ar } from "@/data/flashcardsCh2Ar";
 import { flashcardsCh3Ar } from "@/data/flashcardsCh3Ar";
 import { flashcardsCh4Ar } from "@/data/flashcardsCh4Ar";
 import { flashcardsCh5Ar } from "@/data/flashcardsCh5Ar";
@@ -43,6 +44,10 @@ const Index = ({ language }: { language: AppLanguage }) => {
     () => {
       if (language === "ar" && chapter === "1") {
         return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 01 · المتسعات", cards: flashcardsCh1Ar };
+      }
+
+      if (language === "ar" && chapter === "2") {
+        return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 02 · الحث الكهرومغناطيسي", cards: flashcardsCh2Ar };
       }
 
       if (language === "ar" && chapter === "3") {
