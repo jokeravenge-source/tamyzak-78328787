@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
+import { flashcardsCh1Ar } from "@/data/flashcardsCh1Ar";
 import { flashcardsCh3Ar } from "@/data/flashcardsCh3Ar";
 import { flashcardsCh4Ar } from "@/data/flashcardsCh4Ar";
 import { flashcardsCh5Ar } from "@/data/flashcardsCh5Ar";
@@ -40,6 +41,10 @@ const Index = ({ language }: { language: AppLanguage }) => {
   const baseDeck = decks[chapter] ?? decks["3"];
   const deck = useMemo(
     () => {
+      if (language === "ar" && chapter === "1") {
+        return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 01 · المتسعات", cards: flashcardsCh1Ar };
+      }
+
       if (language === "ar" && chapter === "3") {
         return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 03 · التيار المتناوب", cards: flashcardsCh3Ar };
       }
