@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { Lock, ArrowRight, Sparkles } from "lucide-react";
-import type { AppLanguage } from "@/components/LanguageGate";
+import { Lock, ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 
 const chapters = [
   { n: 1, title: "Capacitors", arTitle: "المتسعات", subtitle: "", locked: false },
@@ -26,9 +26,14 @@ const copy = {
   },
 };
 
-const Chapters = ({ language }: { language: AppLanguage }) => {
+const Chapters = ({ language, onChangeLanguage }: { language: AppLanguage; onChangeLanguage: () => void }) => {
   const navigate = useNavigate();
   const text = copy[language];
+
+  const handleChangeLanguage = () => {
+    localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+    onChangeLanguage();
+  };
 
   const handleClick = (chapter: typeof chapters[number]) => {
     if (!chapter.locked) navigate(`/flashcards/${chapter.n}`);
@@ -40,6 +45,14 @@ const Chapters = ({ language }: { language: AppLanguage }) => {
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute top-1/3 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
       <div className="pointer-events-none absolute -bottom-40 left-1/3 w-[28rem] h-[28rem] rounded-full bg-primary/15 blur-3xl animate-float" style={{ animationDelay: "4s" }} />
+
+      <button
+        onClick={handleChangeLanguage}
+        aria-label={language === "ar" ? "تغيير اللغة" : "Change language"}
+        className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 hover:-translate-x-0.5 transition-all duration-300 animate-fade-up"
+      >
+        <ArrowLeft className="w-5 h-5" />
+      </button>
 
       <header className="text-center max-w-3xl mx-auto z-10 relative animate-fade-up">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
