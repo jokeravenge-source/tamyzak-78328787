@@ -32,7 +32,7 @@ const App = () => {
       ) : (
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Chapters language={language} />} />
+          <Route path="/" element={<Chapters language={language} onChangeLanguage={() => setLanguage(null)} />} />
           <Route path="/flashcards" element={<Index language={language} />} />
           <Route path="/flashcards/:chapter" element={<Index language={language} />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
