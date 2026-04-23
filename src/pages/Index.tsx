@@ -6,6 +6,7 @@ import { flashcardsCh3Ar } from "@/data/flashcardsCh3Ar";
 import { flashcardsCh4Ar } from "@/data/flashcardsCh4Ar";
 import { flashcardsCh5Ar } from "@/data/flashcardsCh5Ar";
 import { flashcardsCh6Ar } from "@/data/flashcardsCh6Ar";
+import { flashcardsCh7Ar } from "@/data/flashcardsCh7Ar";
 import { flashcardsCh1 } from "@/data/flashcardsCh1";
 import { flashcardsCh2 } from "@/data/flashcardsCh2";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
@@ -52,6 +53,10 @@ const Index = ({ language }: { language: AppLanguage }) => {
 
       if (language === "ar" && chapter === "6") {
         return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 06 · الفيزياء الحديثة", cards: flashcardsCh6Ar };
+      }
+
+      if (language === "ar" && chapter === "7") {
+        return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 07 · إلكترونيات الحالة الصلبة", cards: flashcardsCh7Ar };
       }
 
       return baseDeck;
