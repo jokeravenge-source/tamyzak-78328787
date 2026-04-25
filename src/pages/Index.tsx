@@ -20,6 +20,8 @@ import { flashcardsCh8 } from "@/data/flashcardsCh8";
 import { Flashcard } from "@/components/Flashcard";
 import { Button } from "@/components/ui/button";
 import type { AppLanguage } from "@/components/LanguageGate";
+import type { AppSubject } from "@/pages/Subjects";
+import { supabase } from "@/integrations/supabase/client";
 
 const decks: Record<string, { title: string; eyebrow: string; cards: typeof flashcards }> = {
   "1": { title: "Flashcards", eyebrow: "Ch 01 · Capacitors", cards: flashcardsCh1 },
@@ -37,11 +39,48 @@ const copy = {
   ar: { chapters: "الفصول", of: "من", shuffle: "خلط", reset: "إعادة" },
 };
 
-const Index = ({ language }: { language: AppLanguage }) => {
+const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubject }) => {
   const { chapter = "3" } = useParams();
   const baseDeck = decks[chapter] ?? decks["3"];
+  const [remoteCards, setRemoteCards] = useState<typeof flashcards | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const isBiologyCh3 = subject === "biology" && chapter === "3";
+
+  useEffect(() => {
+    if (!isBiologyCh3) {
+      setRemoteCards(null);
+      return;
+    }
+    setLoading(true);
+    supabase
+      .from("flashcardsvioch3ar")
+      .select("*")
+      .then(({ data, error }) => {
+        if (error || !data) {
+          setRemoteCards([]);
+        } else {
+          // Map common column names to {q,a}
+          const mapped = data.map((row: Record<string, unknown>) => ({
+            q: String(row.question ?? row.q ?? row.front ?? ""),
+            a: String(row.answer ?? row.a ?? row.back ?? ""),
+          }));
+          setRemoteCards(mapped);
+        }
+        setLoading(false);
+      });
+  }, [isBiologyCh3]);
+
   const deck = useMemo(
     () => {
+      if (subject === "biology" && chapter === "3") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "الأحياء · الفصل الثالث" : "Biology · Chapter 3",
+          cards: remoteCards ?? [],
+        };
+      }
+
       if (language === "ar" && chapter === "1") {
         return { ...baseDeck, title: "بطاقات تعليمية", eyebrow: "الفصل 01 · المتسعات", cards: flashcardsCh1Ar };
       }
@@ -76,7 +115,7 @@ const Index = ({ language }: { language: AppLanguage }) => {
 
       return baseDeck;
     },
-    [baseDeck, chapter, language]
+    [baseDeck, chapter, language, subject, remoteCards]
   );
   const text = copy[language];
   const [cards, setCards] = useState(deck.cards);
@@ -117,7 +156,28 @@ const Index = ({ language }: { language: AppLanguage }) => {
   });
 
   const card = cards[index];
-  const progress = ((index + 1) / cards.length) * 100;
+  const progress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
+
+  if (isBiologyCh3 && (loading || cards.length === 0)) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
+        <Link
+          to="/"
+          className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">{text.chapters}</span>
+        </Link>
+        <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-3">{deck.eyebrow}</p>
+        <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-4">{deck.title}</h1>
+        <p className="text-muted-foreground">
+          {loading
+            ? language === "ar" ? "جارٍ التحميل..." : "Loading..."
+            : language === "ar" ? "لا توجد بطاقات بعد" : "No cards yet"}
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-between px-4 py-8 md:py-12 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
