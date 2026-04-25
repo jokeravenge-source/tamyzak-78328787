@@ -54,12 +54,11 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       setRemoteCards(null);
       return;
     }
-    const tableName = isBiologyCh3 ? "flashcardsvioch3ar" : "biology_flashcards2ar";
     setLoading(true);
-    supabase
-      .from(tableName as "flashcardsvioch3ar")
-      .select("*")
-      .then(({ data, error }) => {
+    const query = isBiologyCh3
+      ? supabase.from("flashcardsvioch3ar").select("*")
+      : supabase.from("biology_flashcards2ar").select("*");
+    query.then(({ data, error }) => {
         if (error || !data) {
           setRemoteCards([]);
         } else {
