@@ -169,7 +169,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   const card = cards[index];
   const progress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
 
-  if (isBiologyCh3 && (loading || cards.length === 0)) {
+  if (useRemote && (loading || cards.length === 0)) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
         <Link
