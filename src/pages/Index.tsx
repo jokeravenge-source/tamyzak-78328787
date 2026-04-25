@@ -46,15 +46,18 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   const [loading, setLoading] = useState(false);
 
   const isBiologyCh3 = subject === "biology" && chapter === "3";
+  const isBiologyCh2 = subject === "biology" && chapter === "2";
+  const useRemote = isBiologyCh3 || isBiologyCh2;
 
   useEffect(() => {
-    if (!isBiologyCh3) {
+    if (!useRemote) {
       setRemoteCards(null);
       return;
     }
+    const tableName = isBiologyCh3 ? "flashcardsvioch3ar" : "biology_flashcards2ar";
     setLoading(true);
     supabase
-      .from("flashcardsvioch3ar")
+      .from(tableName as "flashcardsvioch3ar")
       .select("*")
       .then(({ data, error }) => {
         if (error || !data) {
@@ -69,7 +72,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         }
         setLoading(false);
       });
-  }, [isBiologyCh3]);
+  }, [useRemote, isBiologyCh3]);
 
   const deck = useMemo(
     () => {
@@ -77,6 +80,14 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         return {
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "الأحياء · الفصل الثالث" : "Biology · Chapter 3",
+          cards: remoteCards ?? [],
+        };
+      }
+
+      if (subject === "biology" && chapter === "2") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "الأحياء · الفصل الثاني" : "Biology · Chapter 2",
           cards: remoteCards ?? [],
         };
       }
