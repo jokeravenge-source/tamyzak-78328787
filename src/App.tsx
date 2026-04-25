@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound.tsx";
 import { useState } from "react";
 import { TelegramGate, TELEGRAM_GATE_STORAGE_KEY } from "./components/TelegramGate";
 import { AppLanguage, LanguageGate, LANGUAGE_STORAGE_KEY } from "./components/LanguageGate";
+import Subjects, { SUBJECT_STORAGE_KEY, type AppSubject } from "./pages/Subjects";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,15 @@ const App = () => {
   const [language, setLanguage] = useState<AppLanguage | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(LANGUAGE_STORAGE_KEY) as AppLanguage | null) : null)
   );
+  const [subject, setSubject] = useState<AppSubject | null>(
+    () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
+  );
+
+  const resetLanguage = () => {
+    setSubject(null);
+    setLanguage(null);
+  };
+  const resetSubject = () => setSubject(null);
 
   return (
   <QueryClientProvider client={queryClient}>
@@ -29,10 +39,12 @@ const App = () => {
         <TelegramGate onUnlock={() => setUnlocked(true)} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
+      ) : !subject ? (
+        <Subjects language={language} onChangeLanguage={resetLanguage} onSelectSubject={setSubject} />
       ) : (
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Chapters language={language} onChangeLanguage={() => setLanguage(null)} />} />
+          <Route path="/" element={<Chapters language={language} onChangeLanguage={resetSubject} />} />
           <Route path="/flashcards" element={<Index language={language} />} />
           <Route path="/flashcards/:chapter" element={<Index language={language} />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
