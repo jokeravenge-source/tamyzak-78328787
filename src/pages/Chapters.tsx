@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Lock, ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
+import type { AppSubject } from "@/pages/Subjects";
+import { SUBJECT_STORAGE_KEY } from "@/pages/Subjects";
 
-const chapters = [
+const physicsChapters = [
   { n: 1, title: "Capacitors", arTitle: "المتسعات", subtitle: "", locked: false },
   { n: 2, title: "Electromagnetic Induction", arTitle: "الحث الكهرومغناطيسي", subtitle: "", locked: false },
   { n: 3, title: "Alternating Current", arTitle: "التيار المتناوب", subtitle: "", locked: false },
@@ -11,6 +13,14 @@ const chapters = [
   { n: 6, title: "Modern Physics", arTitle: "الفيزياء الحديثة", subtitle: "", locked: false },
   { n: 7, title: "Solid State Electronics", arTitle: "إلكترونيات الحالة الصلبة", subtitle: "", locked: false },
   { n: 8, title: "Atomic Spectra and Laser", arTitle: "الأطياف الذرية والليزر", subtitle: "", locked: false },
+];
+
+const biologyChapters = [
+  { n: 1, title: "Chapter 1", arTitle: "الفصل الأول", subtitle: "", locked: true },
+  { n: 2, title: "Chapter 2", arTitle: "الفصل الثاني", subtitle: "", locked: true },
+  { n: 3, title: "Chapter 3", arTitle: "الفصل الثالث", subtitle: "", locked: false },
+  { n: 4, title: "Chapter 4", arTitle: "الفصل الرابع", subtitle: "", locked: true },
+  { n: 5, title: "Chapter 5", arTitle: "الفصل الخامس", subtitle: "", locked: true },
 ];
 
 const copy = {
@@ -26,12 +36,13 @@ const copy = {
   },
 };
 
-const Chapters = ({ language, onChangeLanguage }: { language: AppLanguage; onChangeLanguage: () => void }) => {
+const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLanguage; subject: AppSubject; onChangeLanguage: () => void }) => {
   const navigate = useNavigate();
   const text = copy[language];
+  const chapters = subject === "biology" ? biologyChapters : physicsChapters;
 
   const handleChangeLanguage = () => {
-    localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+    localStorage.removeItem(SUBJECT_STORAGE_KEY);
     onChangeLanguage();
   };
 
