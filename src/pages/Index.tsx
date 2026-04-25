@@ -46,17 +46,19 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   const [loading, setLoading] = useState(false);
 
   const isBiologyCh3 = subject === "biology" && chapter === "3";
+  const isBiologyCh2 = subject === "biology" && chapter === "2";
+  const useRemote = isBiologyCh3 || isBiologyCh2;
 
   useEffect(() => {
-    if (!isBiologyCh3) {
+    if (!useRemote) {
       setRemoteCards(null);
       return;
     }
     setLoading(true);
-    supabase
-      .from("flashcardsvioch3ar")
-      .select("*")
-      .then(({ data, error }) => {
+    const query = isBiologyCh3
+      ? supabase.from("flashcardsvioch3ar").select("*")
+      : supabase.from("biology_flashcards2ar").select("*");
+    query.then(({ data, error }) => {
         if (error || !data) {
           setRemoteCards([]);
         } else {
@@ -69,7 +71,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         }
         setLoading(false);
       });
-  }, [isBiologyCh3]);
+  }, [useRemote, isBiologyCh3]);
 
   const deck = useMemo(
     () => {
@@ -77,6 +79,14 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         return {
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "الأحياء · الفصل الثالث" : "Biology · Chapter 3",
+          cards: remoteCards ?? [],
+        };
+      }
+
+      if (subject === "biology" && chapter === "2") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "الأحياء · الفصل الثاني" : "Biology · Chapter 2",
           cards: remoteCards ?? [],
         };
       }
@@ -158,7 +168,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   const card = cards[index];
   const progress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
 
-  if (isBiologyCh3 && (loading || cards.length === 0)) {
+  if (useRemote && (loading || cards.length === 0)) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
         <Link
