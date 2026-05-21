@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const systemPrompt = `You are an expert quiz generator. Generate exactly ${n} high-quality multiple choice questions in ${lang} based ONLY on the provided study material. Each question must have 4 distinct choices, one correct answer, and a clear explanation derived from the material. Return ONLY valid JSON, no markdown.`;
+    const systemPrompt = `You are an expert quiz generator. Generate exactly ${n} high-quality multiple choice questions in ${lang} based ONLY on the provided study material. Each question must have 4 distinct choices, one correct answer, a short helpful hint (without revealing the answer) and a clear explanation derived from the material. Return ONLY valid JSON, no markdown.`;
 
     const userPrompt = `Study material:\n\n${content}\n\nGenerate ${n} MCQs in ${lang}.`;
 
@@ -55,9 +55,10 @@ Deno.serve(async (req) => {
                         question: { type: "string" },
                         choices: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 4 },
                         answer_index: { type: "integer", minimum: 0, maximum: 3 },
+                        hint: { type: "string" },
                         explanation: { type: "string" },
                       },
-                      required: ["question", "choices", "answer_index", "explanation"],
+                      required: ["question", "choices", "answer_index", "hint", "explanation"],
                       additionalProperties: false,
                     },
                   },
