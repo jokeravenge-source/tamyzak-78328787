@@ -17,6 +17,10 @@ import { supabase } from "./integrations/supabase/client";
 import MainMenu from "./pages/MainMenu";
 import Missions from "./pages/Missions";
 import MCQ from "./pages/MCQ";
+import Summaries from "./pages/Summaries";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogin from "./pages/AdminLogin";
+import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -30,11 +34,37 @@ const App = () => {
     () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1"
   );
   const [authed, setAuthed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authRole, setAuthRole] = useState<AuthRole | null>(
+    () => (typeof window !== "undefined" ? (localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null) : null)
+  );
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setAuthed(!!session);
+      if (session?.user) {
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .eq("role", "admin")
+          .maybeSingle()
+          .then(({ data }) => setIsAdmin(!!data));
+      } else {
+        setIsAdmin(false);
+      }
     });
-    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthed(!!data.session);
+      if (data.session?.user) {
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.session.user.id)
+          .eq("role", "admin")
+          .maybeSingle()
+          .then(({ data: r }) => setIsAdmin(!!r));
+      }
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
   const [language, setLanguage] = useState<AppLanguage | null>(
@@ -43,7 +73,7 @@ const App = () => {
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -64,6 +94,20 @@ const App = () => {
     localStorage.setItem(MENU_STORAGE_KEY, choice);
     setMenuChoice(choice);
   };
+  const resetRole = () => {
+    localStorage.removeItem(ROLE_GATE_STORAGE_KEY);
+    setAuthRole(null);
+  };
+  const chooseRole = (r: AuthRole) => {
+    localStorage.setItem(ROLE_GATE_STORAGE_KEY, r);
+    setAuthRole(r);
+  };
+  const adminLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAdmin(false);
+    setAuthed(false);
+    resetRole();
+  };
 
   return (
   <QueryClientProvider client={queryClient}>
@@ -73,6 +117,12 @@ const App = () => {
       <ThemePicker language={language ?? "en"} />
       {!unlocked ? (
         <TelegramGate onUnlock={() => setUnlocked(true)} />
+      ) : !authRole ? (
+        <RoleGate onSelect={chooseRole} />
+      ) : authRole === "admin" && !authed ? (
+        <AdminLogin onAuthed={() => setAuthed(true)} onBack={resetRole} />
+      ) : authRole === "admin" && authed && isAdmin ? (
+        <AdminDashboard onLogout={adminLogout} />
       ) : !authed ? (
         <Auth onAuthed={() => setAuthed(true)} />
       ) : !language ? (
@@ -83,6 +133,10 @@ const App = () => {
         <Missions language={language} onBack={resetMenu} />
       ) : menuChoice === "mcq" ? (
         <MCQ language={language} onBack={resetMenu} />
+      ) : menuChoice === "summaries" ? (
+        <Summaries language={language} onBack={resetMenu} />
+      ) : menuChoice === "malazam" ? (
+        <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={() => {}} mode="malazam" />
       ) : !subject ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={setSubject} />
       ) : (
