@@ -48,10 +48,12 @@ const Subjects = ({
   language,
   onChangeLanguage,
   onSelectSubject,
+  mode = "flashcards",
 }: {
   language: AppLanguage;
   onChangeLanguage: () => void;
   onSelectSubject: (subject: AppSubject) => void;
+  mode?: "flashcards" | "malazam";
 }) => {
   const text = copy[language];
   const tgLabel = language === "ar" ? "تيليجرام" : "Telegram";
@@ -64,6 +66,11 @@ const Subjects = ({
 
   const handleClick = (s: typeof subjects[number]) => {
     if (s.locked) return;
+    if (mode === "malazam") {
+      const link = subjectTelegramLinks[s.code];
+      if (link) window.open(link, "_blank", "noopener,noreferrer");
+      return;
+    }
     localStorage.setItem(SUBJECT_STORAGE_KEY, s.code);
     onSelectSubject(s.code);
   };
