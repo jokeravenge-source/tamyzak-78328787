@@ -1,9 +1,18 @@
-import { Lock, ArrowLeft, ArrowRight, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon } from "lucide-react";
+import { Lock, ArrowLeft, ArrowRight, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Send } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 
 export const SUBJECT_STORAGE_KEY = "app_subject_v1";
 
 export type AppSubject = "physics" | "english" | "chemistry" | "biology" | "french" | "arabic";
+
+const subjectTelegramLinks: Record<AppSubject, string | null> = {
+  physics: "https://t.me/sad6ths/17274",
+  chemistry: "https://t.me/sad6ths/17140",
+  biology: "https://t.me/sad6ths/17525",
+  arabic: "https://t.me/sad6ths/16594",
+  french: "https://t.me/sad6ths/17522",
+  english: null,
+};
 
 const subjects: Array<{
   code: AppSubject;
@@ -45,6 +54,7 @@ const Subjects = ({
   onSelectSubject: (subject: AppSubject) => void;
 }) => {
   const text = copy[language];
+  const tgLabel = language === "ar" ? "تيليجرام" : "Telegram";
 
   const handleChangeLanguage = () => {
     localStorage.removeItem(LANGUAGE_STORAGE_KEY);
@@ -118,6 +128,26 @@ const Subjects = ({
                   {language === "ar" ? s.ar : s.en}
                 </h3>
                 {s.locked && <p className="text-xs text-muted-foreground">{text.soon}</p>}
+                {isAvailable && subjectTelegramLinks[s.code] && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(subjectTelegramLinks[s.code]!, "_blank", "noopener,noreferrer");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(subjectTelegramLinks[s.code]!, "_blank", "noopener,noreferrer");
+                      }
+                    }}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-primary/40 bg-background/40 text-xs text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    <Send className="w-3 h-3" /> {tgLabel}
+                  </span>
+                )}
               </div>
 
               {isAvailable && (
