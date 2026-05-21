@@ -36,7 +36,7 @@ const copy = {
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries";
 
 const MainMenu = ({
   language,
