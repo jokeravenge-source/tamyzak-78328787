@@ -76,6 +76,39 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_flashcards: {
+        Row: {
+          answer: string
+          chapter: string
+          created_at: string
+          created_by: string | null
+          id: string
+          language: string
+          question: string
+          subject: string
+        }
+        Insert: {
+          answer: string
+          chapter: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          language?: string
+          question: string
+          subject: string
+        }
+        Update: {
+          answer?: string
+          chapter?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          language?: string
+          question?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       mission_progress: {
         Row: {
           completed: boolean
@@ -103,6 +136,30 @@ export type Database = {
           topic_key?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title?: string
         }
         Relationships: []
       }
