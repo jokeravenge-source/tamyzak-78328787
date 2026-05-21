@@ -1,4 +1,4 @@
-import { Layers, BookOpenCheck, FileText, GraduationCap, ArrowRight, ArrowLeft, Sparkles, Lock } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 
 const copy = {
@@ -8,10 +8,14 @@ const copy = {
     description: "Pick what you want to do today. More tools are on the way.",
     soon: "Coming soon",
     items: {
-      flashcards: { title: "Flashcards", subtitle: "Master concepts with smart cards" },
-      quizzes: { title: "Quizzes", subtitle: "Test what you've learned" },
-      pastPapers: { title: "Past Papers", subtitle: "Practice real exam questions" },
-      summaries: { title: "Summaries", subtitle: "Quick chapter overviews" },
+      flashcards: { title: "Flashcards", subtitle: "Study with smart Q&A cards across every subject." },
+      sessions: { title: "Sessions", subtitle: "Track study time per subject and climb the leaderboard." },
+      malazam: { title: "Malazam", subtitle: "Curated booklets and study notes for every subject." },
+      summaries: { title: "Summaries", subtitle: "Share PDF summaries with peers and like the best ones." },
+      missions: { title: "My Missions", subtitle: "Check off chapter topics and watch your progress per subject." },
+      mcq: { title: "MCQ Generator", subtitle: "Upload any file and instantly get multiple-choice questions with hints." },
+      advices: { title: "Advices", subtitle: "Read advice from top students or share your own." },
+      videoNotes: { title: "Video to Notes", subtitle: "Upload audio or video and get AI-generated notes." },
     },
   },
   ar: {
@@ -20,10 +24,14 @@ const copy = {
     description: "اختر ما تريد البدء به اليوم. المزيد من الأدوات قريباً.",
     soon: "قريباً",
     items: {
-      flashcards: { title: "البطاقات التعليمية", subtitle: "أتقن المفاهيم ببطاقات ذكية" },
-      quizzes: { title: "الاختبارات", subtitle: "اختبر ما تعلمته" },
-      pastPapers: { title: "الأسئلة الوزارية", subtitle: "تدرّب على أسئلة حقيقية" },
-      summaries: { title: "الملخصات", subtitle: "ملخصات سريعة للفصول" },
+      flashcards: { title: "البطاقات التعليمية", subtitle: "ادرس عبر بطاقات السؤال والجواب لجميع المواد." },
+      sessions: { title: "الجلسات", subtitle: "احسب وقت دراستك لكل مادة وتحدّى أصدقاءك على لوحة المتصدرين." },
+      malazam: { title: "الملازم", subtitle: "ملازم ومذكرات دراسية مختارة لكل مادة." },
+      summaries: { title: "ملخصات", subtitle: "شارك ملخصات PDF مع زملائك وادعم الأفضل بإعجاب." },
+      missions: { title: "مهماتي", subtitle: "اشطب مواضيع كل فصل وتابع تقدمك في كل مادة." },
+      mcq: { title: "مولّد الأسئلة", subtitle: "ارفع أي ملف واحصل فوراً على أسئلة اختيار من متعدد مع تلميحات." },
+      advices: { title: "النصائح", subtitle: "اقرأ نصائح من المتفوقين أو شارك نصيحتك." },
+      videoNotes: { title: "من الفيديو إلى ملاحظات", subtitle: "ارفع صوتاً أو فيديو واحصل على ملاحظات." },
     },
   },
 } as const;
@@ -43,9 +51,13 @@ const MainMenu = ({
 
   const items = [
     { key: "flashcards" as const, Icon: Layers, locked: false, ...text.items.flashcards },
-    { key: "quizzes", Icon: BookOpenCheck, locked: true, ...text.items.quizzes },
-    { key: "pastPapers", Icon: FileText, locked: true, ...text.items.pastPapers },
-    { key: "summaries", Icon: GraduationCap, locked: true, ...text.items.summaries },
+    { key: "sessions", Icon: GraduationCap, locked: true, ...text.items.sessions },
+    { key: "malazam", Icon: BookMarked, locked: true, ...text.items.malazam },
+    { key: "summaries", Icon: FileText, locked: true, ...text.items.summaries },
+    { key: "missions", Icon: ListChecks, locked: true, ...text.items.missions },
+    { key: "mcq", Icon: HelpCircle, locked: true, ...text.items.mcq },
+    { key: "advices", Icon: MessageSquareQuote, locked: true, ...text.items.advices },
+    { key: "videoNotes", Icon: Headphones, locked: true, ...text.items.videoNotes },
   ];
 
   const handleBack = () => {
@@ -75,7 +87,7 @@ const MainMenu = ({
         <p className="text-muted-foreground md:text-lg max-w-xl mx-auto">{text.description}</p>
       </header>
 
-      <section className="max-w-5xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 gap-5 z-10 relative">
+      <section className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 z-10 relative">
         {items.map((it, i) => {
           const Icon = it.Icon;
           const available = !it.locked;
