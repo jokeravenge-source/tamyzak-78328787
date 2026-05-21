@@ -32,9 +32,6 @@ const App = () => {
   useEffect(() => {
     applyTheme(getInitialTheme());
   }, []);
-  const [unlocked, setUnlocked] = useState(
-    () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1"
-  );
   const [authed, setAuthed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authRole, setAuthRole] = useState<AuthRole | null>(
