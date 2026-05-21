@@ -13,6 +13,10 @@ import { flashcardsCh8Ar } from "@/data/flashcardsCh8Ar";
 import { flashcardsBioCh1Ar } from "@/data/flashcardsBioCh1Ar";
 import { flashcardsBioCh2Ar } from "@/data/flashcardsBioCh2Ar";
 import { flashcardsBioCh5Ar } from "@/data/flashcardsBioCh5Ar";
+import { flashcardsBioCh1En } from "@/data/flashcardsBioCh1En";
+import { flashcardsBioCh2En } from "@/data/flashcardsBioCh2En";
+import { flashcardsBioCh3En } from "@/data/flashcardsBioCh3En";
+import { flashcardsBioCh5En } from "@/data/flashcardsBioCh5En";
 import { flashcardsCh1 } from "@/data/flashcardsCh1";
 import { flashcardsCh2 } from "@/data/flashcardsCh2";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
@@ -58,21 +62,28 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         return {
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "الأحياء · الخلية" : "Biology · The Cell",
-          cards: flashcardsBioCh1Ar,
+          cards: language === "ar" ? flashcardsBioCh1Ar : flashcardsBioCh1En,
         };
       }
       if (subject === "biology" && chapter === "2") {
         return {
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "الأحياء · الأنسجة" : "Biology · Tissues",
-          cards: flashcardsBioCh2Ar,
+          cards: language === "ar" ? flashcardsBioCh2Ar : flashcardsBioCh2En,
+        };
+      }
+      if (subject === "biology" && chapter === "3") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "الأحياء · التكاثر" : "Biology · Reproduction",
+          cards: flashcardsBioCh3En,
         };
       }
       if (subject === "biology" && chapter === "5") {
         return {
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "الأحياء · الوراثة" : "Biology · Genetics",
-          cards: flashcardsBioCh5Ar,
+          cards: language === "ar" ? flashcardsBioCh5Ar : flashcardsBioCh5En,
         };
       }
 
