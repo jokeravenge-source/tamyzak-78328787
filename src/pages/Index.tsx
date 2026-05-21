@@ -10,6 +10,9 @@ import { flashcardsCh5Ar } from "@/data/flashcardsCh5Ar";
 import { flashcardsCh6Ar } from "@/data/flashcardsCh6Ar";
 import { flashcardsCh7Ar } from "@/data/flashcardsCh7Ar";
 import { flashcardsCh8Ar } from "@/data/flashcardsCh8Ar";
+import { flashcardsBioCh1Ar } from "@/data/flashcardsBioCh1Ar";
+import { flashcardsBioCh2Ar } from "@/data/flashcardsBioCh2Ar";
+import { flashcardsBioCh5Ar } from "@/data/flashcardsBioCh5Ar";
 import { flashcardsCh1 } from "@/data/flashcardsCh1";
 import { flashcardsCh2 } from "@/data/flashcardsCh2";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
@@ -21,7 +24,6 @@ import { Flashcard } from "@/components/Flashcard";
 import { Button } from "@/components/ui/button";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { AppSubject } from "@/pages/Subjects";
-import { supabase } from "@/integrations/supabase/client";
 
 const decks: Record<string, { title: string; eyebrow: string; cards: typeof flashcards }> = {
   "1": { title: "Flashcards", eyebrow: "Ch 01 · Capacitors", cards: flashcardsCh1 },
@@ -45,49 +47,32 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   const [remoteCards, setRemoteCards] = useState<typeof flashcards | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const isBiologyCh3 = subject === "biology" && chapter === "3";
-  const isBiologyCh2 = subject === "biology" && chapter === "2";
-  const useRemote = isBiologyCh3 || isBiologyCh2;
-
+  const useRemote = false;
   useEffect(() => {
-    if (!useRemote) {
-      setRemoteCards(null);
-      return;
-    }
-    setLoading(true);
-    const query = isBiologyCh3
-      ? supabase.from("flashcardsvioch3ar").select("*")
-      : supabase.from("biology_flashcards2ar").select("*");
-    query.then(({ data, error }) => {
-        if (error || !data) {
-          setRemoteCards([]);
-        } else {
-          // Map common column names to {q,a}
-          const mapped = data.map((row: Record<string, unknown>) => ({
-            q: String(row.question ?? row.q ?? row.front ?? ""),
-            a: String(row.answer ?? row.a ?? row.back ?? ""),
-          }));
-          setRemoteCards(mapped);
-        }
-        setLoading(false);
-      });
-  }, [useRemote, isBiologyCh3]);
+    setRemoteCards(null);
+  }, []);
 
   const deck = useMemo(
     () => {
-      if (subject === "biology" && chapter === "3") {
+      if (subject === "biology" && chapter === "1") {
         return {
           title: "بطاقات تعليمية",
-          eyebrow: language === "ar" ? "الأحياء · الفصل الثالث" : "Biology · Chapter 3",
-          cards: remoteCards ?? [],
+          eyebrow: language === "ar" ? "الأحياء · الخلية" : "Biology · The Cell",
+          cards: flashcardsBioCh1Ar,
         };
       }
-
       if (subject === "biology" && chapter === "2") {
         return {
           title: "بطاقات تعليمية",
-          eyebrow: language === "ar" ? "الأحياء · الفصل الثاني" : "Biology · Chapter 2",
-          cards: remoteCards ?? [],
+          eyebrow: language === "ar" ? "الأحياء · الأنسجة" : "Biology · Tissues",
+          cards: flashcardsBioCh2Ar,
+        };
+      }
+      if (subject === "biology" && chapter === "5") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "الأحياء · الوراثة" : "Biology · Genetics",
+          cards: flashcardsBioCh5Ar,
         };
       }
 

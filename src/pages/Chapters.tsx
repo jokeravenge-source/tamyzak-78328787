@@ -16,11 +16,11 @@ const physicsChapters = [
 ];
 
 const biologyChapters = [
-  { n: 1, title: "Chapter 1", arTitle: "الفصل الأول", subtitle: "", locked: true },
-  { n: 2, title: "Chapter 2", arTitle: "الفصل الثاني", subtitle: "", locked: true },
-  { n: 3, title: "Chapter 3", arTitle: "الفصل الثالث", subtitle: "", locked: false },
+  { n: 1, title: "The Cell", arTitle: "الخلية", subtitle: "", locked: false },
+  { n: 2, title: "Tissues", arTitle: "الأنسجة", subtitle: "", locked: false },
+  { n: 3, title: "Reproduction", arTitle: "التكاثر", subtitle: "", locked: true },
   { n: 4, title: "Chapter 4", arTitle: "الفصل الرابع", subtitle: "", locked: true },
-  { n: 5, title: "Chapter 5", arTitle: "الفصل الخامس", subtitle: "", locked: true },
+  { n: 5, title: "Genetics", arTitle: "الوراثة", subtitle: "", locked: false },
 ];
 
 const copy = {
