@@ -1,10 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target } from "lucide-react";
+import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
+import track1 from "@/assets/music/track1.mp3";
+import track2 from "@/assets/music/track2.mp3";
+import track3 from "@/assets/music/track3.mp3";
+import track4 from "@/assets/music/track4.mp3";
+import track5 from "@/assets/music/track5.mp3";
+import track6 from "@/assets/music/track6.mp3";
+
+const TRACKS = [track1, track2, track3, track4, track5, track6];
+const MAX_SECONDS = 48 * 3600;
+const PERSIST_KEY = "study_session_state_v1";
 
 const SUBJECTS = [
   { code: "islamic", en: "Islamic", ar: "التربية الإسلامية" },
@@ -54,6 +64,42 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const intervalRef = useRef<number | null>(null);
+  const [trackIdx, setTrackIdx] = useState(0);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.5);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Restore persisted session on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PERSIST_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (!s?.subject) return;
+      const base = s.accumulated ?? 0;
+      const extra = s.running && s.startedAt ? Math.floor((Date.now() - s.startedAt) / 1000) : 0;
+      let total = base + extra;
+      if (total >= MAX_SECONDS) total = MAX_SECONDS;
+      setSubject(s.subject);
+      setMission(s.mission ?? "");
+      setCompleted(!!s.completed);
+      setStarted(true);
+      setSeconds(total);
+      setRunning(!!s.running && total < MAX_SECONDS);
+    } catch {}
+  }, []);
+
+  // Persist on relevant state changes
+  useEffect(() => {
+    if (!started || !subject) return;
+    const payload = {
+      subject, mission, completed, started: true,
+      running,
+      startedAt: running ? Date.now() : null,
+      accumulated: seconds,
+    };
+    localStorage.setItem(PERSIST_KEY, JSON.stringify(payload));
+  }, [started, subject, mission, completed, running, seconds]);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -77,13 +123,58 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   useEffect(() => {
     if (running) {
-      intervalRef.current = window.setInterval(() => setSeconds((s) => s + 1), 1000);
+      intervalRef.current = window.setInterval(() => {
+        setSeconds((s) => {
+          const next = s + 1;
+          if (next >= MAX_SECONDS) {
+            setRunning(false);
+            return MAX_SECONDS;
+          }
+          return next;
+        });
+      }, 1000);
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [running]);
+
+  // Recompute elapsed when tab regains focus
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const raw = localStorage.getItem(PERSIST_KEY);
+        if (!raw) return;
+        const s = JSON.parse(raw);
+        if (!s?.running || !s?.startedAt) return;
+        const base = s.accumulated ?? 0;
+        const extra = Math.floor((Date.now() - s.startedAt) / 1000);
+        let total = base + extra;
+        if (total >= MAX_SECONDS) { total = MAX_SECONDS; setRunning(false); }
+        setSeconds(total);
+      } catch {}
+    };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onVis);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onVis);
+    };
+  }, []);
+
+  // Auto stop+save at max
+  useEffect(() => {
+    if (started && seconds >= MAX_SECONDS && running === false) {
+      // fire once
+      stopAndSave();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds, started]);
+
+  // Music volume sync
+  useEffect(() => { if (audioRef.current) audioRef.current.volume = volume; }, [volume]);
 
   const loadBoard = async (subj: string) => {
     const { data } = await supabase.from("study_sessions").select("user_id,points").eq("subject", subj);
@@ -120,7 +211,19 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     if (error) { toast.error(error.message); return; }
     toast.success(`${L.saved} (+${points} ${L.points})`);
     setStarted(false); setSeconds(0); setMission(""); setCompleted(false);
+    localStorage.removeItem(PERSIST_KEY);
     loadBoard(subject);
+  };
+
+  const toggleMusic = async () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (musicPlaying) { a.pause(); setMusicPlaying(false); }
+    else { try { await a.play(); setMusicPlaying(true); } catch {} }
+  };
+  const nextTrack = () => {
+    setTrackIdx((i) => (i + 1) % TRACKS.length);
+    setTimeout(() => { if (musicPlaying) audioRef.current?.play().catch(() => {}); }, 50);
   };
 
   if (!subject) {
@@ -190,6 +293,21 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
               </>
             )}
           </div>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-white/10 bg-secondary/30 backdrop-blur p-4 flex items-center gap-3 flex-wrap">
+          <Music className="w-5 h-5 text-primary" />
+          <span className="text-sm font-medium">{language === "ar" ? `موسيقى ${trackIdx + 1}/${TRACKS.length}` : `Track ${trackIdx + 1}/${TRACKS.length}`}</span>
+          <Button size="sm" variant="secondary" onClick={toggleMusic} className="gap-2">
+            {musicPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={nextTrack} className="gap-2"><SkipForward className="w-4 h-4" /></Button>
+          <div className="flex items-center gap-2 ml-auto">
+            {volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            <input type="range" min={0} max={1} step={0.05} value={volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))} className="w-28" />
+          </div>
+          <audio ref={audioRef} src={TRACKS[trackIdx]} loop preload="none" />
         </div>
 
         <section className="mt-10">
