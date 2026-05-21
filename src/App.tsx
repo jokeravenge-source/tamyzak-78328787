@@ -16,6 +16,7 @@ import Auth from "./pages/Auth";
 import { supabase } from "./integrations/supabase/client";
 import MainMenu from "./pages/MainMenu";
 import Missions from "./pages/Missions";
+import MCQ from "./pages/MCQ";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -42,7 +43,7 @@ const App = () => {
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions";
+  type MenuChoice = "flashcards" | "missions" | "mcq";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -80,6 +81,8 @@ const App = () => {
         <MainMenu language={language} onChangeLanguage={resetLanguage} onSelect={chooseMenu} />
       ) : menuChoice === "missions" ? (
         <Missions language={language} onBack={resetMenu} />
+      ) : menuChoice === "mcq" ? (
+        <MCQ language={language} onBack={resetMenu} />
       ) : !subject ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={setSubject} />
       ) : (
