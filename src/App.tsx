@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import Auth from "./pages/Auth";
 import { supabase } from "./integrations/supabase/client";
 import MainMenu from "./pages/MainMenu";
+import Missions from "./pages/Missions";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -41,8 +42,9 @@ const App = () => {
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
-  const [menuChoice, setMenuChoice] = useState<"flashcards" | null>(
-    () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as "flashcards" | null) : null)
+  type MenuChoice = "flashcards" | "missions";
+  const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
+    () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
 
   const resetLanguage = () => {
@@ -57,7 +59,7 @@ const App = () => {
     setMenuChoice(null);
     localStorage.removeItem(MENU_STORAGE_KEY);
   };
-  const chooseMenu = (choice: "flashcards") => {
+  const chooseMenu = (choice: MenuChoice) => {
     localStorage.setItem(MENU_STORAGE_KEY, choice);
     setMenuChoice(choice);
   };
@@ -76,6 +78,8 @@ const App = () => {
         <LanguageGate onSelect={setLanguage} />
       ) : !menuChoice ? (
         <MainMenu language={language} onChangeLanguage={resetLanguage} onSelect={chooseMenu} />
+      ) : menuChoice === "missions" ? (
+        <Missions language={language} onBack={resetMenu} />
       ) : !subject ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={setSubject} />
       ) : (
