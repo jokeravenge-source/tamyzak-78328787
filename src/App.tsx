@@ -12,6 +12,8 @@ import { AppLanguage, LanguageGate, LANGUAGE_STORAGE_KEY } from "./components/La
 import Subjects, { SUBJECT_STORAGE_KEY, type AppSubject } from "./pages/Subjects";
 import { ThemePicker, applyTheme, getInitialTheme } from "./components/ThemePicker";
 import { useEffect } from "react";
+import Auth from "./pages/Auth";
+import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +24,14 @@ const App = () => {
   const [unlocked, setUnlocked] = useState(
     () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1"
   );
+  const [authed, setAuthed] = useState(false);
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setAuthed(!!session);
+    });
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    return () => sub.subscription.unsubscribe();
+  }, []);
   const [language, setLanguage] = useState<AppLanguage | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(LANGUAGE_STORAGE_KEY) as AppLanguage | null) : null)
   );
@@ -43,6 +53,8 @@ const App = () => {
       <ThemePicker language={language ?? "en"} />
       {!unlocked ? (
         <TelegramGate onUnlock={() => setUnlocked(true)} />
+      ) : !authed ? (
+        <Auth onAuthed={() => setAuthed(true)} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
       ) : !subject ? (
