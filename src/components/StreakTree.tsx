@@ -1,11 +1,8 @@
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, OrbitControls } from "@react-three/drei";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
-import type { Group } from "three";
 
 const KEY = "streak_state_v1";
-const FULL_DAYS = 20; // 5% per day
+const FULL_DAYS = 20;
 
 type StreakState = { days: number; lastDate: string; celebrated?: boolean };
 
@@ -29,7 +26,7 @@ function useStreak() {
       if (prev.lastDate === t) return prev;
       let days = 1;
       if (prev.lastDate === yesterday()) days = prev.days + 1;
-      const next = { ...prev, days, lastDate: t, celebrated: prev.celebrated && days >= FULL_DAYS };
+      const next = { days, lastDate: t, celebrated: prev.celebrated && days >= FULL_DAYS };
       localStorage.setItem(KEY, JSON.stringify(next));
       return next;
     });
@@ -46,61 +43,83 @@ function useStreak() {
   return { state, markCelebrated };
 }
 
-function Tree({ progress }: { progress: number }) {
-  const group = useRef<Group>(null);
-  useFrame((_, dt) => {
-    if (group.current) group.current.rotation.y += dt * 0.25;
-  });
-  // progress 0..1
-  const trunkHeight = 0.4 + progress * 1.3;
-  const foliageScale = 0.25 + progress * 1.1;
-  const foliageY = trunkHeight + foliageScale * 0.6;
+/* Notion-style minimal 2D tree.
+   progress 0..1 controls trunk height and number of leaf clusters revealed. */
+function TreeSVG({ progress }: { progress: number }) {
+  // Anchor at bottom center (x=150, y=300). Trunk grows upward.
+  const trunkBaseY = 300;
+  const trunkMaxH = 170;
+  const trunkH = 30 + progress * trunkMaxH; // min 30 (sapling)
+  const trunkTopY = trunkBaseY - trunkH;
+  const trunkW = 8 + progress * 8;
 
-  // layered foliage cones
-  const layers = useMemo(() => [
-    { y: 0, s: 1.0 },
-    { y: 0.55, s: 0.78 },
-    { y: 1.0, s: 0.55 },
-  ], []);
+  // Branches/leaves clusters appear progressively
+  const clusters = [
+    { cx: 150, cy: trunkTopY - 10, r: 28, threshold: 0.05 },
+    { cx: 122, cy: trunkTopY + 12, r: 24, threshold: 0.20 },
+    { cx: 178, cy: trunkTopY + 12, r: 24, threshold: 0.35 },
+    { cx: 138, cy: trunkTopY - 32, r: 22, threshold: 0.50 },
+    { cx: 168, cy: trunkTopY - 30, r: 22, threshold: 0.65 },
+    { cx: 100, cy: trunkTopY - 6, r: 18, threshold: 0.80 },
+    { cx: 200, cy: trunkTopY - 6, r: 18, threshold: 0.90 },
+    { cx: 150, cy: trunkTopY - 56, r: 20, threshold: 1.0 },
+  ];
+
+  const leafFill = "hsl(var(--primary) / 0.15)";
+  const leafStroke = "hsl(var(--primary))";
 
   return (
-    <group ref={group} position={[0, -1.2, 0]}>
-      {/* Ground disc */}
-      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[1.8, 48]} />
-        <meshStandardMaterial color="#3a2a1a" />
-      </mesh>
+    <svg viewBox="0 0 300 320" className="w-full h-full">
+      {/* Ground line — Notion divider style */}
+      <line x1="20" y1="300" x2="280" y2="300" stroke="hsl(var(--border))" strokeWidth="1" />
+      {/* Small pot/soil dots */}
+      <circle cx="140" cy="305" r="1.5" fill="hsl(var(--muted-foreground))" />
+      <circle cx="160" cy="307" r="1.5" fill="hsl(var(--muted-foreground))" />
+      <circle cx="150" cy="310" r="1.5" fill="hsl(var(--muted-foreground))" />
+
       {/* Trunk */}
-      <mesh position={[0, trunkHeight / 2, 0]} castShadow>
-        <cylinderGeometry args={[0.12 + progress * 0.08, 0.18 + progress * 0.1, trunkHeight, 16]} />
-        <meshStandardMaterial color="#6b3a1f" roughness={0.9} />
-      </mesh>
-      {/* Foliage layered cones */}
-      {progress > 0.02 && (
-        <group position={[0, foliageY, 0]} scale={foliageScale}>
-          {layers.map((l, i) => (
-            <mesh key={i} position={[0, l.y, 0]} castShadow>
-              <coneGeometry args={[l.s, l.s * 1.3, 24]} />
-              <meshStandardMaterial color={i === 2 ? "#7fd47f" : i === 1 ? "#4fae5a" : "#2f8f47"} roughness={0.7} />
-            </mesh>
-          ))}
-        </group>
-      )}
-      {/* Sparkle ornaments when full */}
-      {progress >= 1 && (
-        <group position={[0, foliageY, 0]} scale={foliageScale}>
-          {Array.from({ length: 12 }).map((_, i) => {
-            const a = (i / 12) * Math.PI * 2;
-            return (
-              <mesh key={i} position={[Math.cos(a) * 0.7, 0.4 + Math.sin(a * 2) * 0.2, Math.sin(a) * 0.7]}>
-                <sphereGeometry args={[0.07, 16, 16]} />
-                <meshStandardMaterial color="#ffd24a" emissive="#ffa800" emissiveIntensity={0.8} />
-              </mesh>
-            );
-          })}
-        </group>
-      )}
-    </group>
+      <rect
+        x={150 - trunkW / 2}
+        y={trunkTopY}
+        width={trunkW}
+        height={trunkH}
+        rx={trunkW / 2}
+        fill="hsl(var(--foreground) / 0.85)"
+        style={{ transition: "all 700ms ease" }}
+      />
+
+      {/* Leaf clusters — appear as progress grows */}
+      {clusters.map((c, i) => {
+        const visible = progress >= c.threshold;
+        return (
+          <circle
+            key={i}
+            cx={c.cx}
+            cy={c.cy}
+            r={visible ? c.r : 0}
+            fill={leafFill}
+            stroke={leafStroke}
+            strokeWidth="1.5"
+            style={{ transition: "all 600ms cubic-bezier(.2,.7,.2,1)" }}
+          />
+        );
+      })}
+
+      {/* Sparkles when fully grown */}
+      {progress >= 1 &&
+        [...Array(5)].map((_, i) => {
+          const x = 60 + i * 45;
+          const y = 70 + (i % 2) * 20;
+          return (
+            <g key={i} transform={`translate(${x},${y})`}>
+              <path
+                d="M0,-6 L1.5,-1.5 L6,0 L1.5,1.5 L0,6 L-1.5,1.5 L-6,0 L-1.5,-1.5 Z"
+                fill="hsl(var(--primary))"
+              />
+            </g>
+          );
+        })}
+    </svg>
   );
 }
 
@@ -109,7 +128,6 @@ const StreakTree = ({ language = "en" }: { language?: "en" | "ar" }) => {
   const progress = Math.min(state.days / FULL_DAYS, 1);
   const pct = Math.round(progress * 100);
 
-  // Fire celebration once when full reached
   useEffect(() => {
     if (state.days >= FULL_DAYS && !state.celebrated) {
       const end = Date.now() + 4000;
@@ -130,25 +148,23 @@ const StreakTree = ({ language = "en" }: { language?: "en" | "ar" }) => {
 
   return (
     <section dir={language === "ar" ? "rtl" : "ltr"} className="w-full mt-12 mb-6">
-      <div className="mx-auto max-w-3xl rounded-3xl border border-primary/30 bg-gradient-to-b from-secondary/40 to-secondary/10 backdrop-blur p-4 md:p-6">
-        <div className="h-64 md:h-80 rounded-2xl overflow-hidden bg-gradient-to-b from-sky-900/30 to-emerald-900/20">
-          <Canvas shadows camera={{ position: [2.6, 1.6, 3.2], fov: 45 }}>
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[4, 6, 3]} intensity={1.1} castShadow />
-            <Float speed={1.2} rotationIntensity={0.2} floatIntensity={0.4}>
-              <Tree progress={progress} />
-            </Float>
-            <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.6} />
-          </Canvas>
+      <div className="mx-auto max-w-md rounded-xl border border-border bg-card p-6">
+        <div className="h-64">
+          <TreeSVG progress={progress} />
         </div>
         <div className="mt-4 text-center">
-          <p className="text-sm uppercase tracking-widest text-muted-foreground">{T.label}</p>
-          <p className="text-3xl md:text-4xl font-bold gradient-text mt-1">{state.days} {T.days}</p>
-          <div className="mt-3 h-2 w-full max-w-md mx-auto rounded-full bg-muted overflow-hidden">
-            <div className="h-full bg-primary transition-all duration-700" style={{ width: `${pct}%` }} />
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{T.label}</p>
+          <p className="text-3xl font-semibold text-foreground mt-1">
+            {state.days} <span className="text-base font-normal text-muted-foreground">{T.days}</span>
+          </p>
+          <div className="mt-4 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full bg-foreground transition-all duration-700"
+              style={{ width: `${pct}%` }}
+            />
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            {progress >= 1 ? T.full : `${pct}%`}
+            {progress >= 1 ? T.full : `${pct}% · ${FULL_DAYS - state.days} ${language === "ar" ? "يوم متبقي" : "days to go"}`}
           </p>
         </div>
       </div>
