@@ -18,7 +18,7 @@ const physicsChapters = [
 const biologyChapters = [
   { n: 1, title: "The Cell", arTitle: "الخلية", subtitle: "", locked: false },
   { n: 2, title: "Tissues", arTitle: "الأنسجة", subtitle: "", locked: false },
-  { n: 3, title: "Reproduction", arTitle: "التكاثر", subtitle: "", locked: true },
+  { n: 3, title: "Reproduction", arTitle: "التكاثر", subtitle: "", locked: false },
   { n: 4, title: "Chapter 4", arTitle: "الفصل الرابع", subtitle: "", locked: true },
   { n: 5, title: "Genetics", arTitle: "الوراثة", subtitle: "", locked: false },
 ];
