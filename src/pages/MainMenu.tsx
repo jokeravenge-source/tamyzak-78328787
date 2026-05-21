@@ -1,5 +1,7 @@
-import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const copy = {
   en: {
@@ -48,6 +50,28 @@ const MainMenu = ({
   onSelect: (choice: MainMenuChoice) => void;
 }) => {
   const text = copy[language];
+  type Notif = { id: string; title: string; body: string; created_at: string };
+  const [notifs, setNotifs] = useState<Notif[]>([]);
+  const READ_KEY = "notif_read_ids_v1";
+  const [readIds, setReadIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(READ_KEY) || "[]"); } catch { return []; }
+  });
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(10);
+      setNotifs((data ?? []) as Notif[]);
+    };
+    load();
+    const ch = supabase.channel("notifs").on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, load).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+  const unread = notifs.filter((n) => !readIds.includes(n.id));
+  const dismiss = (id: string) => {
+    const next = [...readIds, id];
+    setReadIds(next);
+    localStorage.setItem(READ_KEY, JSON.stringify(next));
+  };
+  const signOut = async () => { await supabase.auth.signOut(); };
 
   const items = [
     { key: "flashcards" as const, Icon: Layers, locked: false, ...text.items.flashcards },
@@ -77,6 +101,32 @@ const MainMenu = ({
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
+
+      <button
+        onClick={signOut}
+        aria-label={language === "ar" ? "تسجيل الخروج" : "Sign out"}
+        className="absolute top-6 right-6 z-20 inline-flex items-center gap-2 h-11 px-4 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
+      >
+        <LogOut className="w-4 h-4" />
+        <span className="hidden sm:inline">{language === "ar" ? "خروج" : "Sign out"}</span>
+      </button>
+
+      {unread.length > 0 && (
+        <div className="max-w-3xl mx-auto mb-6 space-y-2 relative z-10">
+          {unread.map((n) => (
+            <div key={n.id} className="flex items-start gap-3 rounded-2xl p-4 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up">
+              <Bell className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-foreground">{n.title}</h4>
+                {n.body && <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.body}</p>}
+              </div>
+              <button onClick={() => dismiss(n.id)} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <header className="text-center max-w-3xl mx-auto z-10 relative animate-fade-up">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
