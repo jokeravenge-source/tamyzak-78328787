@@ -7,7 +7,7 @@ import Index from "./pages/Index.tsx";
 import Chapters from "./pages/Chapters.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { useState } from "react";
-import { TelegramGate, TELEGRAM_GATE_STORAGE_KEY } from "./components/TelegramGate";
+
 import { AppLanguage, LanguageGate, LANGUAGE_STORAGE_KEY } from "./components/LanguageGate";
 import Subjects, { SUBJECT_STORAGE_KEY, type AppSubject } from "./pages/Subjects";
 import { ThemePicker, applyTheme, getInitialTheme } from "./components/ThemePicker";
@@ -32,9 +32,6 @@ const App = () => {
   useEffect(() => {
     applyTheme(getInitialTheme());
   }, []);
-  const [unlocked, setUnlocked] = useState(
-    () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1"
-  );
   const [authed, setAuthed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authRole, setAuthRole] = useState<AuthRole | null>(
@@ -117,9 +114,7 @@ const App = () => {
       <Toaster />
       <Sonner />
       <ThemePicker language={language ?? "en"} />
-      {!unlocked ? (
-        <TelegramGate onUnlock={() => setUnlocked(true)} />
-      ) : !authRole ? (
+      {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authRole === "admin" && !authed ? (
         <AdminLogin onAuthed={() => setAuthed(true)} onBack={resetRole} />
