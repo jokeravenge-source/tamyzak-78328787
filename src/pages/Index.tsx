@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
@@ -61,13 +62,24 @@ const copy = {
 const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubject }) => {
   const { chapter = "3" } = useParams();
   const baseDeck = decks[chapter] ?? decks["3"];
-  const [remoteCards, setRemoteCards] = useState<typeof flashcards | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const useRemote = false;
+  const [extraCards, setExtraCards] = useState<typeof flashcards>([]);
   useEffect(() => {
-    setRemoteCards(null);
-  }, []);
+    let active = true;
+    supabase
+      .from("custom_flashcards")
+      .select("question, answer")
+      .eq("subject", subject)
+      .eq("chapter", String(chapter))
+      .eq("language", language)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        if (!active) return;
+        setExtraCards((data ?? []).map((r) => ({ q: r.question, a: r.answer })));
+      });
+    return () => { active = false; };
+  }, [subject, chapter, language]);
+  const loading = false;
+  const useRemote = false;
 
   const deck = useMemo(
     () => {
@@ -161,10 +173,10 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
 
       return baseDeck;
     },
-    [baseDeck, chapter, language, subject, remoteCards]
+    [baseDeck, chapter, language, subject]
   );
   const text = copy[language];
-  const [cards, setCards] = useState(deck.cards);
+  const [cards, setCards] = useState([...deck.cards, ...extraCards]);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right">("right");
 
@@ -188,9 +200,9 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   };
 
   useEffect(() => {
-    setCards(deck.cards);
+    setCards([...deck.cards, ...extraCards]);
     setIndex(0);
-  }, [deck]);
+  }, [deck, extraCards]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
