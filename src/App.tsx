@@ -10,10 +10,15 @@ import { useState } from "react";
 import { TelegramGate, TELEGRAM_GATE_STORAGE_KEY } from "./components/TelegramGate";
 import { AppLanguage, LanguageGate, LANGUAGE_STORAGE_KEY } from "./components/LanguageGate";
 import Subjects, { SUBJECT_STORAGE_KEY, type AppSubject } from "./pages/Subjects";
+import { ThemePicker, applyTheme, getInitialTheme } from "./components/ThemePicker";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  useEffect(() => {
+    applyTheme(getInitialTheme());
+  }, []);
   const [unlocked, setUnlocked] = useState(
     () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1"
   );
@@ -35,6 +40,7 @@ const App = () => {
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <ThemePicker language={language ?? "en"} />
       {!unlocked ? (
         <TelegramGate onUnlock={() => setUnlocked(true)} />
       ) : !language ? (
