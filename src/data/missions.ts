@@ -682,42 +682,42 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-g1-1",
             "en": "When / While",
-            "ar": "When / While"
+            "ar": "عندما / بينما"
           },
           {
             "key": "eng-g1-2",
             "en": "Adjectives ending with (ed/ing)",
-            "ar": "Adjectives ending with (ed/ing)"
+            "ar": "الصفات المنتهية بـ (ed/ing)"
           },
           {
             "key": "eng-g1-3",
             "en": "Phrasal verbs",
-            "ar": "Phrasal verbs"
+            "ar": "الأفعال الاصطلاحية"
           },
           {
             "key": "eng-g1-4",
             "en": "Used to",
-            "ar": "Used to"
+            "ar": "اعتاد على"
           },
           {
             "key": "eng-g1-5",
             "en": "ful / fully",
-            "ar": "ful / fully"
+            "ar": "ممتلئ / بالكامل"
           },
           {
             "key": "eng-g1-6",
             "en": "many / much",
-            "ar": "many / much"
+            "ar": "كميّة / عدد"
           },
           {
             "key": "eng-g1-7",
             "en": "than / as ... as",
-            "ar": "than / as ... as"
+            "ar": "مقارنة / مساواة"
           },
           {
             "key": "eng-g1-8",
             "en": "Imperative to give advice",
-            "ar": "Imperative to give advice"
+            "ar": "صيغة الأمر لإعطاء النصيحة"
           }
         ]
       },
@@ -729,22 +729,22 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-g2-1",
             "en": "must / have to / need to",
-            "ar": "must / have to / need to"
+            "ar": "يجب / ينبغي / يلزم"
           },
           {
             "key": "eng-g2-2",
             "en": "Orders: advice / requests / suggestions / offer",
-            "ar": "Orders: advice / requests / suggestions / offer"
+            "ar": "الأوامر: نصيحة / طلبات / اقتراحات / عرض"
           },
           {
             "key": "eng-g2-3",
             "en": "Expectation",
-            "ar": "Expectation"
+            "ar": "التوقع"
           },
           {
             "key": "eng-g2-4",
             "en": "Have / Get / Make — Causative verbs",
-            "ar": "Have / Get / Make — Causative verbs"
+            "ar": "أفعال السببية: Have / Get / Make"
           }
         ]
       },
@@ -756,17 +756,17 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-g3-1",
             "en": "Definitions of careers",
-            "ar": "Definitions of careers"
+            "ar": "تعريفات المهن"
           },
           {
             "key": "eng-g3-2",
             "en": "Regret",
-            "ar": "Regret"
+            "ar": "الندم"
           },
           {
             "key": "eng-g3-3",
             "en": "Reported speech",
-            "ar": "Reported speech"
+            "ar": "الكلام المنقول"
           },
           {
             "key": "eng-g3-4",
@@ -783,27 +783,27 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-g5-1",
             "en": "Present Perfect simple",
-            "ar": "Present Perfect simple"
+            "ar": "المضارع التام البسيط"
           },
           {
             "key": "eng-g5-2",
             "en": "Been / Gone",
-            "ar": "Been / Gone"
+            "ar": "ذهب / كان من قبل"
           },
           {
             "key": "eng-g5-3",
             "en": "Present Perfect continuous",
-            "ar": "Present Perfect continuous"
+            "ar": "المضارع التام المستمر"
           },
           {
             "key": "eng-g5-4",
             "en": "Past Perfect",
-            "ar": "Past Perfect"
+            "ar": "الماضي التام"
           },
           {
             "key": "eng-g5-5",
             "en": "Relative Pronouns",
-            "ar": "Relative Pronouns"
+            "ar": "الضمائر الموصولة"
           }
         ]
       },
@@ -815,22 +815,22 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-g6-1",
             "en": "Passive voice",
-            "ar": "Passive voice"
+            "ar": "المبني للمجهول"
           },
           {
             "key": "eng-g6-2",
             "en": "Types of conditional sentences",
-            "ar": "Types of conditional sentences"
+            "ar": "أنواع الجمل الشرطية"
           },
           {
             "key": "eng-g6-3",
             "en": "Formal and informal letter",
-            "ar": "Formal and informal letter"
+            "ar": "الرسالة الرسمية وغير الرسمية"
           },
           {
             "key": "eng-g6-4",
             "en": "Present and Past deductions",
-            "ar": "Present and Past deductions"
+            "ar": "الاستنتاجات في المضارع والماضي"
           }
         ]
       },
@@ -842,7 +842,7 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-g4-1",
             "en": "Review of Units 1, 2, 3",
-            "ar": "Review of Units 1, 2, 3"
+            "ar": "مراجعة الوحدات 1، 2، 3"
           }
         ]
       },
@@ -854,7 +854,7 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-g8-1",
             "en": "Review of Units 5, 6",
-            "ar": "Review of Units 5, 6"
+            "ar": "مراجعة الوحدات 5، 6"
           }
         ]
       },
@@ -866,27 +866,27 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-r1-1",
             "en": "My friends were all watching (Ammar)",
-            "ar": "My friends were all watching (Ammar)"
+            "ar": "كان أصدقائي كلهم يشاهدون (عمار)"
           },
           {
             "key": "eng-r1-2",
             "en": "Let's start with diet",
-            "ar": "Let's start with diet"
+            "ar": "لنبدأ بالنظام الغذائي"
           },
           {
             "key": "eng-r1-3",
             "en": "Against all odds (Najla)",
-            "ar": "Against all odds (Najla)"
+            "ar": "رغم كل الصعاب (نجلاء)"
           },
           {
             "key": "eng-r1-4",
             "en": "Writing: Cigarettes advertising",
-            "ar": "Writing: Cigarettes advertising"
+            "ar": "كتابة: إعلانات السجائر"
           },
           {
             "key": "eng-r1-5",
             "en": "Writing: How to reduce car accidents",
-            "ar": "Writing: How to reduce car accidents"
+            "ar": "كتابة: كيفية الحد من حوادث السيارات"
           }
         ]
       },
@@ -898,32 +898,32 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-r2-1",
             "en": "A police officer's duties",
-            "ar": "A police officer's duties"
+            "ar": "واجبات ضابط الشرطة"
           },
           {
             "key": "eng-r2-2",
             "en": "Robbery",
-            "ar": "Robbery"
+            "ar": "السرقة"
           },
           {
             "key": "eng-r2-3",
             "en": "A safety brochure",
-            "ar": "A safety brochure"
+            "ar": "كتيب السلامة"
           },
           {
             "key": "eng-r2-4",
             "en": "Security technology (Radar)",
-            "ar": "Security technology (Radar)"
+            "ar": "تقنية الأمن (الرادار)"
           },
           {
             "key": "eng-r2-5",
             "en": "Writing: How to get a job",
-            "ar": "Writing: How to get a job"
+            "ar": "كتابة: كيف تحصل على وظيفة"
           },
           {
             "key": "eng-r2-6",
             "en": "Writing: Importance of road safety",
-            "ar": "Writing: Importance of road safety"
+            "ar": "كتابة: أهمية السلامة على الطرق"
           }
         ]
       },
@@ -935,7 +935,7 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-r3-1",
             "en": "Conference interpreter",
-            "ar": "Conference interpreter"
+            "ar": "مترجم فوري"
           }
         ]
       },
@@ -947,22 +947,22 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-r5-1",
             "en": "The atmosphere was really peaceful",
-            "ar": "The atmosphere was really peaceful"
+            "ar": "كان الجو هادئًا حقًا"
           },
           {
             "key": "eng-r5-2",
             "en": "Why are holidays so important?",
-            "ar": "Why are holidays so important?"
+            "ar": "لماذا العطلات مهمة جدًا؟"
           },
           {
             "key": "eng-r5-3",
             "en": "Writing: Future of tourism in Iraq",
-            "ar": "Writing: Future of tourism in Iraq"
+            "ar": "كتابة: مستقبل السياحة في العراق"
           },
           {
             "key": "eng-r5-4",
             "en": "Writing: A brief description of a holiday",
-            "ar": "Writing: A brief description of a holiday"
+            "ar": "كتابة: وصف موجز لعطلة"
           }
         ]
       },
@@ -974,22 +974,22 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-r6-1",
             "en": "Meet a banker",
-            "ar": "Meet a banker"
+            "ar": "قابل مصرفيًا"
           },
           {
             "key": "eng-r6-2",
             "en": "Making more money",
-            "ar": "Making more money"
+            "ar": "زيادة الدخل"
           },
           {
             "key": "eng-r6-3",
             "en": "Writing: Complaint to a bank",
-            "ar": "Writing: Complaint to a bank"
+            "ar": "كتابة: شكوى إلى بنك"
           },
           {
             "key": "eng-r6-4",
             "en": "Writing: Complaint regarding lack of ATMs",
-            "ar": "Writing: Complaint regarding lack of ATMs"
+            "ar": "كتابة: شكوى بخصوص نقص أجهزة الصراف الآلي"
           }
         ]
       },
@@ -1001,12 +1001,12 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-r4-1",
             "en": "People didn't use to workout at home",
-            "ar": "People didn't use to workout at home"
+            "ar": "لم يعتاد الناس على التمرين في المنزل"
           },
           {
             "key": "eng-r4-2",
             "en": "Writing: My new business (Company)",
-            "ar": "Writing: My new business (Company)"
+            "ar": "كتابة: عملي الجديد (شركة)"
           }
         ]
       },
@@ -1018,7 +1018,7 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-r8-1",
             "en": "A renewable resource",
-            "ar": "A renewable resource"
+            "ar": "الموارد المتجددة"
           }
         ]
       },
@@ -1030,12 +1030,12 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "eng-lit-1",
             "en": "Pride and Prejudice (6 sections)",
-            "ar": "Pride and Prejudice (6 sections)"
+            "ar": "كبرياء وتحامل (6 أقسام)"
           },
           {
             "key": "eng-lit-2",
             "en": "As You Like It (6 sections)",
-            "ar": "As You Like It (6 sections)"
+            "ar": "كما تشاء (6 أقسام)"
           }
         ]
       }
@@ -1054,47 +1054,47 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "math-1-1",
             "en": "1-1 Need to expand set of real numbers",
-            "ar": "1-1 Need to expand set of real numbers"
+            "ar": "1-1 الحاجة لتوسيع مجموعة الأعداد الحقيقية"
           },
           {
             "key": "math-1-2",
             "en": "1-2 Operations on complex numbers set",
-            "ar": "1-2 Operations on complex numbers set"
+            "ar": "1-2 العمليات على مجموعة الأعداد المركبة"
           },
           {
             "key": "math-1-3",
             "en": "1-3 Complex Conjugate",
-            "ar": "1-3 Complex Conjugate"
+            "ar": "1-3 المرافق العددي المركب"
           },
           {
             "key": "math-1-4",
             "en": "1-4 Square roots of complex numbers",
-            "ar": "1-4 Square roots of complex numbers"
+            "ar": "1-4 الجذور التربيعية للأعداد المركبة"
           },
           {
             "key": "math-1-5",
             "en": "1-5 Solution of quadratic equation in C",
-            "ar": "1-5 Solution of quadratic equation in C"
+            "ar": "1-5 حل المعادلة التربيعية في مجموعة الأعداد المركبة"
           },
           {
             "key": "math-1-6",
             "en": "1-6 Cubic roots for one integer",
-            "ar": "1-6 Cubic roots for one integer"
+            "ar": "1-6 الجذور التكعيبية لعدد صحيح"
           },
           {
             "key": "math-1-7",
             "en": "1-7 Geometric representation",
-            "ar": "1-7 Geometric representation"
+            "ar": "1-7 التمثيل الهندسي"
           },
           {
             "key": "math-1-8",
             "en": "1-8 Polar form",
-            "ar": "1-8 Polar form"
+            "ar": "1-8 الصورة القطبية"
           },
           {
             "key": "math-1-9",
             "en": "1-9 De Moivre's Theorem",
-            "ar": "1-9 De Moivre's Theorem"
+            "ar": "1-9 نظرية ديموافر"
           }
         ]
       },
@@ -1106,37 +1106,37 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "math-2-1",
             "en": "2-1 Conic Section",
-            "ar": "2-1 Conic Section"
+            "ar": "2-1 القطوع المخروطية"
           },
           {
             "key": "math-2-2",
             "en": "2-2 Parabola",
-            "ar": "2-2 Parabola"
+            "ar": "2-2 القطع المكافئ"
           },
           {
             "key": "math-2-3",
             "en": "2-3 Translation of Axes for Parabola",
-            "ar": "2-3 Translation of Axes for Parabola"
+            "ar": "2-3 إزاحة المحاور للقطع المكافئ"
           },
           {
             "key": "math-2-4",
             "en": "2-4 Ellipse",
-            "ar": "2-4 Ellipse"
+            "ar": "2-4 القطع الناقص"
           },
           {
             "key": "math-2-5",
             "en": "2-5 Translation of Axes for Ellipse",
-            "ar": "2-5 Translation of Axes for Ellipse"
+            "ar": "2-5 إزاحة المحاور للقطع الناقص"
           },
           {
             "key": "math-2-6",
             "en": "2-6 Hyperbola",
-            "ar": "2-6 Hyperbola"
+            "ar": "2-6 القطع الزائد"
           },
           {
             "key": "math-2-7",
             "en": "2-7 Translation of Axes for Hyperbola",
-            "ar": "2-7 Translation of Axes for Hyperbola"
+            "ar": "2-7 إزاحة المحاور للقطع الزائد"
           }
         ]
       },
@@ -1148,42 +1148,42 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "math-3-1",
             "en": "3-1 Related Rates",
-            "ar": "3-1 Related Rates"
+            "ar": "3-1 المعدلات المرتبطة"
           },
           {
             "key": "math-3-2",
             "en": "3-2 Rolle's and Mean Value Theorems",
-            "ar": "3-2 Rolle's and Mean Value Theorems"
+            "ar": "3-2 مبرهنتا رول والقيمة المتوسطة"
           },
           {
             "key": "math-3-3",
             "en": "3-3 First derivative test (increasing/decreasing)",
-            "ar": "3-3 First derivative test (increasing/decreasing)"
+            "ar": "3-3 اختبار المشتقة الأولى (تزايد/تناقص)"
           },
           {
             "key": "math-3-4",
             "en": "3-4 Local Maximum and local Minimum",
-            "ar": "3-4 Local Maximum and local Minimum"
+            "ar": "3-4 القيم القصوى المحلية والصغرى المحلية"
           },
           {
             "key": "math-3-5",
             "en": "3-5 Concavity of curves and inflection point",
-            "ar": "3-5 Concavity of curves and inflection point"
+            "ar": "3-5 تقعر المنحنيات ونقطة الانعطاف"
           },
           {
             "key": "math-3-6",
             "en": "3-6 Second derivative test",
-            "ar": "3-6 Second derivative test"
+            "ar": "3-6 اختبار المشتقة الثانية"
           },
           {
             "key": "math-3-7",
             "en": "3-7 Graphing function",
-            "ar": "3-7 Graphing function"
+            "ar": "3-7 رسم الدوال"
           },
           {
             "key": "math-3-8",
             "en": "3-8 Optimization problems",
-            "ar": "3-8 Optimization problems"
+            "ar": "3-8 مسائل الأمثلية"
           }
         ]
       },
@@ -1195,47 +1195,47 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "math-4-1",
             "en": "4-1 Regions Bounded by Curves",
-            "ar": "4-1 Regions Bounded by Curves"
+            "ar": "4-1 المناطق المحددة بالمنحنيات"
           },
           {
             "key": "math-4-2",
             "en": "4-2 Lower and Upper Rectangles",
-            "ar": "4-2 Lower and Upper Rectangles"
+            "ar": "4-2 المستطيلات السفلية والعلوية"
           },
           {
             "key": "math-4-3",
             "en": "4-3 Definition of Integration",
-            "ar": "4-3 Definition of Integration"
+            "ar": "4-3 تعريف التكامل"
           },
           {
             "key": "math-4-4",
             "en": "4-4 Fundamental Theorem of Integral",
-            "ar": "4-4 Fundamental Theorem of Integral"
+            "ar": "4-4 النظرية الأساسية للتكامل"
           },
           {
             "key": "math-4-5",
             "en": "4-5 Properties of Definite Integral",
-            "ar": "4-5 Properties of Definite Integral"
+            "ar": "4-5 خصائص التكامل المحدد"
           },
           {
             "key": "math-4-6",
             "en": "4-6 Indefinite Integral",
-            "ar": "4-6 Indefinite Integral"
+            "ar": "4-6 التكامل غير المحدد"
           },
           {
             "key": "math-4-7",
             "en": "4-7 The Natural Logarithm",
-            "ar": "4-7 The Natural Logarithm"
+            "ar": "4-7 اللوغاريتم الطبيعي"
           },
           {
             "key": "math-4-8",
             "en": "4-8 Plane Area by Definite Integral",
-            "ar": "4-8 Plane Area by Definite Integral"
+            "ar": "4-8 المساحة المستوية بواسطة التكامل المحدد"
           },
           {
             "key": "math-4-9",
             "en": "4-9 Volume of Revolution",
-            "ar": "4-9 Volume of Revolution"
+            "ar": "4-9 حجم الجسم الدوراني"
           }
         ]
       },
@@ -1247,27 +1247,27 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "math-5-1",
             "en": "5-1 Introduction",
-            "ar": "5-1 Introduction"
+            "ar": "5-1 مقدمة"
           },
           {
             "key": "math-5-2",
             "en": "5-2 Solution of an O.D.E.",
-            "ar": "5-2 Solution of an O.D.E."
+            "ar": "5-2 حل المعادلات التفاضلية العادية"
           },
           {
             "key": "math-5-3",
             "en": "5-3 Particular and General Solution",
-            "ar": "5-3 Particular and General Solution"
+            "ar": "5-3 الحل الخاص والحل العام"
           },
           {
             "key": "math-5-4",
             "en": "5-4 1st Order 1st Degree O.D.E.",
-            "ar": "5-4 1st Order 1st Degree O.D.E."
+            "ar": "5-4 المعادلات التفاضلية العادية من الرتبة الأولى والدرجة الأولى"
           },
           {
             "key": "math-5-5",
             "en": "5-5 Methods of solving",
-            "ar": "5-5 Methods of solving"
+            "ar": "5-5 طرق الحل"
           }
         ]
       },
@@ -1279,17 +1279,17 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "math-6-1",
             "en": "6-1 Introduction",
-            "ar": "6-1 Introduction"
+            "ar": "6-1 مقدمة"
           },
           {
             "key": "math-6-2",
             "en": "6-2 Dihedral angle and perpendicular planes",
-            "ar": "6-2 Dihedral angle and perpendicular planes"
+            "ar": "6-2 الزاوية ثنائية السطح والمستويات المتعامدة"
           },
           {
             "key": "math-6-3",
             "en": "6-3 Orthogonal projection on plane",
-            "ar": "6-3 Orthogonal projection on plane"
+            "ar": "6-3 الإسقاط المتعامد على مستوى"
           }
         ]
       }
@@ -1308,52 +1308,52 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-1-1",
             "en": "1-1 Capacitor",
-            "ar": "1-1 Capacitor"
+            "ar": "1-1 المكثف الكهربائي"
           },
           {
             "key": "phys-1-2",
             "en": "1-2 Parallel-plate capacitor",
-            "ar": "1-2 Parallel-plate capacitor"
+            "ar": "1-2 المكثف ذو اللوحين المتوازيين"
           },
           {
             "key": "phys-1-3",
             "en": "1-3 Capacitance",
-            "ar": "1-3 Capacitance"
+            "ar": "1-3 السعة الكهربائية"
           },
           {
             "key": "phys-1-4",
             "en": "1-4 Dielectric",
-            "ar": "1-4 Dielectric"
+            "ar": "1-4 العازل الكهربائي"
           },
           {
             "key": "phys-1-5",
             "en": "1-5 Factors affecting capacitance",
-            "ar": "1-5 Factors affecting capacitance"
+            "ar": "1-5 العوامل المؤثرة في السعة الكهربائية"
           },
           {
             "key": "phys-1-6",
             "en": "1-6 Combination of capacitors",
-            "ar": "1-6 Combination of capacitors"
+            "ar": "1-6 توصيل المكثفات"
           },
           {
             "key": "phys-1-7",
             "en": "1-7 Stored energy",
-            "ar": "1-7 Stored energy"
+            "ar": "1-7 الطاقة المخزونة"
           },
           {
             "key": "phys-1-8",
             "en": "1-8 Types of capacitors",
-            "ar": "1-8 Types of capacitors"
+            "ar": "1-8 أنواع المكثفات"
           },
           {
             "key": "phys-1-9",
             "en": "1-9 RC-circuit",
-            "ar": "1-9 RC-circuit"
+            "ar": "1-9 دائرة RC"
           },
           {
             "key": "phys-1-10",
             "en": "1-10 Practical applications",
-            "ar": "1-10 Practical applications"
+            "ar": "1-10 تطبيقات عملية"
           }
         ]
       },
@@ -1365,97 +1365,97 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-2-1",
             "en": "2-1 Introduction to magnetism",
-            "ar": "2-1 Introduction to magnetism"
+            "ar": "2-1 مقدمة في المغناطيسية"
           },
           {
             "key": "phys-2-2",
             "en": "2-2 Effect of E and B fields on charges",
-            "ar": "2-2 Effect of E and B fields on charges"
+            "ar": "2-2 تأثير المجالات الكهربائية والمغناطيسية على الشحنات"
           },
           {
             "key": "phys-2-3",
             "en": "2-3 Electromagnetic induction",
-            "ar": "2-3 Electromagnetic induction"
+            "ar": "2-3 الحث الكهرومغناطيسي"
           },
           {
             "key": "phys-2-4",
             "en": "2-4 Faraday's discovery",
-            "ar": "2-4 Faraday's discovery"
+            "ar": "2-4 اكتشاف فاراداي"
           },
           {
             "key": "phys-2-5",
             "en": "2-5 Motional EMF",
-            "ar": "2-5 Motional EMF"
+            "ar": "2-5 القوة الدافعة الكهربائية الحركية"
           },
           {
             "key": "phys-2-6",
             "en": "2-6 Induced current",
-            "ar": "2-6 Induced current"
+            "ar": "2-6 التيار الحثي"
           },
           {
             "key": "phys-2-7",
             "en": "2-7 Induction & conservation of energy",
-            "ar": "2-7 Induction & conservation of energy"
+            "ar": "2-7 الحث وحفظ الطاقة"
           },
           {
             "key": "phys-2-8",
             "en": "2-8 Magnetic flux",
-            "ar": "2-8 Magnetic flux"
+            "ar": "2-8 التدفق المغناطيسي"
           },
           {
             "key": "phys-2-9",
             "en": "2-9 Faraday's law",
-            "ar": "2-9 Faraday's law"
+            "ar": "2-9 قانون فاراداي"
           },
           {
             "key": "phys-2-10",
             "en": "2-10 Lenz's law",
-            "ar": "2-10 Lenz's law"
+            "ar": "2-10 قانون لنز"
           },
           {
             "key": "phys-2-11",
             "en": "2-11 Eddy currents",
-            "ar": "2-11 Eddy currents"
+            "ar": "2-11 التيارات الدوامية"
           },
           {
             "key": "phys-2-12",
             "en": "2-12 Electric generators",
-            "ar": "2-12 Electric generators"
+            "ar": "2-12 المولدات الكهربائية"
           },
           {
             "key": "phys-2-13",
             "en": "2-13 DC electric motors",
-            "ar": "2-13 DC electric motors"
+            "ar": "2-13 المحركات الكهربائية للتيار المستمر"
           },
           {
             "key": "phys-2-14",
             "en": "2-14 Inductance",
-            "ar": "2-14 Inductance"
+            "ar": "2-14 الحث الكهربائي"
           },
           {
             "key": "phys-2-15",
             "en": "2-15 Self inductance",
-            "ar": "2-15 Self inductance"
+            "ar": "2-15 الحث الذاتي"
           },
           {
             "key": "phys-2-16",
             "en": "2-16 Potential energy in inductance",
-            "ar": "2-16 Potential energy in inductance"
+            "ar": "2-16 الطاقة الكامنة في الحث"
           },
           {
             "key": "phys-2-17",
             "en": "2-17 Mutual induction",
-            "ar": "2-17 Mutual induction"
+            "ar": "2-17 الحث المتبادل"
           },
           {
             "key": "phys-2-18",
             "en": "2-18 Induced electric fields",
-            "ar": "2-18 Induced electric fields"
+            "ar": "2-18 المجالات الكهربائية الحثية"
           },
           {
             "key": "phys-2-19",
             "en": "2-19 Practical applications",
-            "ar": "2-19 Practical applications"
+            "ar": "2-19 تطبيقات عملية"
           }
         ]
       },
@@ -1467,67 +1467,67 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-3-1",
             "en": "3-1 Introduction",
-            "ar": "3-1 Introduction"
+            "ar": "3-1 مقدمة"
           },
           {
             "key": "phys-3-2",
             "en": "3-2 AC circuits",
-            "ar": "3-2 AC circuits"
+            "ar": "3-2 دوائر التيار المتردد"
           },
           {
             "key": "phys-3-3",
             "en": "3-3 Pure resistor load",
-            "ar": "3-3 Pure resistor load"
+            "ar": "3-3 حمل المقاومة الخالصة"
           },
           {
             "key": "phys-3-4",
             "en": "3-4 Power with pure resistor",
-            "ar": "3-4 Power with pure resistor"
+            "ar": "3-4 القدرة في المقاومة الخالصة"
           },
           {
             "key": "phys-3-5",
             "en": "3-5 Effective amount of AC",
-            "ar": "3-5 Effective amount of AC"
+            "ar": "3-5 القيمة الفعالة للتيار المتردد"
           },
           {
             "key": "phys-3-6",
             "en": "3-6 Pure inductor load",
-            "ar": "3-6 Pure inductor load"
+            "ar": "3-6 حمل المحث الخالص"
           },
           {
             "key": "phys-3-7",
             "en": "3-7 Pure capacitance load",
-            "ar": "3-7 Pure capacitance load"
+            "ar": "3-7 حمل سعوي خالص"
           },
           {
             "key": "phys-3-8",
             "en": "3-8 Series R-L-C",
-            "ar": "3-8 Series R-L-C"
+            "ar": "3-8 دوائر التوالي R-L-C"
           },
           {
             "key": "phys-3-9",
             "en": "3-9 Power factor",
-            "ar": "3-9 Power factor"
+            "ar": "3-9 معامل القدرة"
           },
           {
             "key": "phys-3-10",
             "en": "3-10 Electromagnetic oscillation",
-            "ar": "3-10 Electromagnetic oscillation"
+            "ar": "3-10 التذبذب الكهرومغناطيسي"
           },
           {
             "key": "phys-3-11",
             "en": "3-11 Resonance in AC",
-            "ar": "3-11 Resonance in AC"
+            "ar": "3-11 الرنين في التيار المتردد"
           },
           {
             "key": "phys-3-12",
             "en": "3-12 Quality factor",
-            "ar": "3-12 Quality factor"
+            "ar": "3-12 معامل الجودة"
           },
           {
             "key": "phys-3-13",
             "en": "3-13 Parallel R-L-C",
-            "ar": "3-13 Parallel R-L-C"
+            "ar": "3-13 دائرة R-L-C المتوازية"
           }
         ]
       },
@@ -1539,52 +1539,52 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-4-1",
             "en": "4-1 Introduction",
-            "ar": "4-1 Introduction"
+            "ar": "4-1 مقدمة"
           },
           {
             "key": "phys-4-2",
             "en": "4-2 Maxwell and EM theory",
-            "ar": "4-2 Maxwell and EM theory"
+            "ar": "4-2 نظرية ماكسويل والكهرومغناطيسية"
           },
           {
             "key": "phys-4-3",
             "en": "4-3 Generating EM waves",
-            "ar": "4-3 Generating EM waves"
+            "ar": "4-3 توليد الموجات الكهرومغناطيسية"
           },
           {
             "key": "phys-4-4",
             "en": "4-4 Transmission & receiving principles",
-            "ar": "4-4 Transmission & receiving principles"
+            "ar": "4-4 مبادئ الإرسال والاستقبال"
           },
           {
             "key": "phys-4-5",
             "en": "4-5 Transmission & receiving circuits",
-            "ar": "4-5 Transmission & receiving circuits"
+            "ar": "4-5 دوائر الإرسال والاستقبال"
           },
           {
             "key": "phys-4-6",
             "en": "4-6 Detection of EM waves",
-            "ar": "4-6 Detection of EM waves"
+            "ar": "4-6 الكشف عن الموجات الكهرومغناطيسية"
           },
           {
             "key": "phys-4-7",
             "en": "4-7 Modulation (AM, FM, PM)",
-            "ar": "4-7 Modulation (AM, FM, PM)"
+            "ar": "4-7 التضمين (AM, FM, PM)"
           },
           {
             "key": "phys-4-8",
             "en": "4-8 Range of radio waves",
-            "ar": "4-8 Range of radio waves"
+            "ar": "4-8 مدى الموجات الراديوية"
           },
           {
             "key": "phys-4-9",
             "en": "4-9 Propagation (Ground, Sky, Space)",
-            "ar": "4-9 Propagation (Ground, Sky, Space)"
+            "ar": "4-9 الانتشار (الأرضي، السماوي، الفضائي)"
           },
           {
             "key": "phys-4-10",
             "en": "4-10 Radar",
-            "ar": "4-10 Radar"
+            "ar": "4-10 الرادار"
           }
         ]
       },
@@ -1596,42 +1596,42 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-5-1",
             "en": "5-1 Introduction",
-            "ar": "5-1 Introduction"
+            "ar": "5-1 مقدمة"
           },
           {
             "key": "phys-5-2",
             "en": "5-2 Interference of light",
-            "ar": "5-2 Interference of light"
+            "ar": "5-2 تداخل الضوء"
           },
           {
             "key": "phys-5-3",
             "en": "5-3 Young's double slits",
-            "ar": "5-3 Young's double slits"
+            "ar": "5-3 شقي يونغ"
           },
           {
             "key": "phys-5-4",
             "en": "5-4 Interference in thin films",
-            "ar": "5-4 Interference in thin films"
+            "ar": "5-4 التداخل في الأغشية الرقيقة"
           },
           {
             "key": "phys-5-5",
             "en": "5-5 Diffraction of light",
-            "ar": "5-5 Diffraction of light"
+            "ar": "5-5 حيود الضوء"
           },
           {
             "key": "phys-5-6",
             "en": "5-6 Diffraction grating",
-            "ar": "5-6 Diffraction grating"
+            "ar": "5-6 محزوز الحيود"
           },
           {
             "key": "phys-5-7",
             "en": "5-7 Polarization",
-            "ar": "5-7 Polarization"
+            "ar": "5-7 الاستقطاب"
           },
           {
             "key": "phys-5-8",
             "en": "5-8 Scattering of light",
-            "ar": "5-8 Scattering of light"
+            "ar": "5-8 تشتت الضوء"
           }
         ]
       },
@@ -1643,62 +1643,62 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-6-1",
             "en": "6-1 Introduction",
-            "ar": "6-1 Introduction"
+            "ar": "6-1 مقدمة"
           },
           {
             "key": "phys-6-2",
             "en": "6-2 Quantum theory",
-            "ar": "6-2 Quantum theory"
+            "ar": "6-2 نظرية الكم"
           },
           {
             "key": "phys-6-3",
             "en": "6-3 Photoelectric effect",
-            "ar": "6-3 Photoelectric effect"
+            "ar": "6-3 الظاهرة الكهروضوئية"
           },
           {
             "key": "phys-6-4",
             "en": "6-4 Particles and waves",
-            "ar": "6-4 Particles and waves"
+            "ar": "6-4 الجسيمات والموجات"
           },
           {
             "key": "phys-6-5",
             "en": "6-5 Matter waves",
-            "ar": "6-5 Matter waves"
+            "ar": "6-5 موجات المادة"
           },
           {
             "key": "phys-6-6",
             "en": "6-6 Quantum mechanics & wave function",
-            "ar": "6-6 Quantum mechanics & wave function"
+            "ar": "6-6 ميكانيكا الكم والدالة الموجية"
           },
           {
             "key": "phys-6-7",
             "en": "6-7 Heisenberg Uncertainty Principle",
-            "ar": "6-7 Heisenberg Uncertainty Principle"
+            "ar": "6-7 مبدأ عدم اليقين لهايزنبرغ"
           },
           {
             "key": "phys-6-8",
             "en": "6-8 Relativity Theory",
-            "ar": "6-8 Relativity Theory"
+            "ar": "6-8 نظرية النسبية"
           },
           {
             "key": "phys-6-9",
             "en": "6-9 Einstein's two hypotheses",
-            "ar": "6-9 Einstein's two hypotheses"
+            "ar": "6-9 فرضيات أينشتاين"
           },
           {
             "key": "phys-6-10",
             "en": "6-10 Lorentz Transformations",
-            "ar": "6-10 Lorentz Transformations"
+            "ar": "6-10 تحويلات لورنتز"
           },
           {
             "key": "phys-6-11",
             "en": "6-11 Consequences of special relativity",
-            "ar": "6-11 Consequences of special relativity"
+            "ar": "6-11 نتائج النظرية النسبية الخاصة"
           },
           {
             "key": "phys-6-12",
             "en": "6-12 Mass Energy Equivalence",
-            "ar": "6-12 Mass Energy Equivalence"
+            "ar": "6-12 تكافؤ الكتلة والطاقة"
           }
         ]
       },
@@ -1710,52 +1710,52 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-7-1",
             "en": "7-1 Introduction",
-            "ar": "7-1 Introduction"
+            "ar": "7-1 مقدمة"
           },
           {
             "key": "phys-7-2",
             "en": "7-2 Electronic orbits & energy levels",
-            "ar": "7-2 Electronic orbits & energy levels"
+            "ar": "7-2 المدارات الإلكترونية ومستويات الطاقة"
           },
           {
             "key": "phys-7-3",
             "en": "7-3 Conductors, insulators, semiconductors",
-            "ar": "7-3 Conductors, insulators, semiconductors"
+            "ar": "7-3 الموصلات، العوازل، أشباه الموصلات"
           },
           {
             "key": "phys-7-4",
             "en": "7-4 Energy bands",
-            "ar": "7-4 Energy bands"
+            "ar": "7-4 نطاقات الطاقة"
           },
           {
             "key": "phys-7-5",
             "en": "7-5 Intrinsic semiconductors",
-            "ar": "7-5 Intrinsic semiconductors"
+            "ar": "7-5 أشباه الموصلات النقية"
           },
           {
             "key": "phys-7-6",
             "en": "7-6 Extrinsic semiconductors",
-            "ar": "7-6 Extrinsic semiconductors"
+            "ar": "7-6 أشباه الموصلات غير النقية"
           },
           {
             "key": "phys-7-7",
             "en": "7-7 PN diode",
-            "ar": "7-7 PN diode"
+            "ar": "7-7 صمام ثنائي PN"
           },
           {
             "key": "phys-7-8",
             "en": "7-8 Biasing potential for PN-diode",
-            "ar": "7-8 Biasing potential for PN-diode"
+            "ar": "7-8 جهد الانحياز للوصلة الثنائية PN"
           },
           {
             "key": "phys-7-9",
             "en": "7-9 Types of diodes",
-            "ar": "7-9 Types of diodes"
+            "ar": "7-9 أنواع الثنائيات"
           },
           {
             "key": "phys-7-10",
             "en": "7-10 Transistor",
-            "ar": "7-10 Transistor"
+            "ar": "7-10 الترانزستور"
           }
         ]
       },
@@ -1767,77 +1767,77 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-8-1",
             "en": "8-1 Introduction",
-            "ar": "8-1 Introduction"
+            "ar": "8-1 مقدمة"
           },
           {
             "key": "phys-8-2",
             "en": "8-2 Energy levels & Bohr's model",
-            "ar": "8-2 Energy levels & Bohr's model"
+            "ar": "8-2 مستويات الطاقة ونموذج بور"
           },
           {
             "key": "phys-8-3",
             "en": "8-3 Hydrogen atom spectrum",
-            "ar": "8-3 Hydrogen atom spectrum"
+            "ar": "8-3 طيف ذرة الهيدروجين"
           },
           {
             "key": "phys-8-4",
             "en": "8-4 Spectra",
-            "ar": "8-4 Spectra"
+            "ar": "8-4 الأطياف"
           },
           {
             "key": "phys-8-5",
             "en": "8-5 Types of spectra",
-            "ar": "8-5 Types of spectra"
+            "ar": "8-5 أنواع الأطياف"
           },
           {
             "key": "phys-8-6",
             "en": "8-6 X-rays",
-            "ar": "8-6 X-rays"
+            "ar": "8-6 الأشعة السينية"
           },
           {
             "key": "phys-8-7",
             "en": "8-7 Compton effect",
-            "ar": "8-7 Compton effect"
+            "ar": "8-7 تأثير كومبتون"
           },
           {
             "key": "phys-8-8",
             "en": "8-8 Laser and maser",
-            "ar": "8-8 Laser and maser"
+            "ar": "8-8 الليزر والميزر"
           },
           {
             "key": "phys-8-9",
             "en": "8-9 Properties of laser",
-            "ar": "8-9 Properties of laser"
+            "ar": "8-9 خصائص الليزر"
           },
           {
             "key": "phys-8-10",
             "en": "8-10 Mechanism of laser action",
-            "ar": "8-10 Mechanism of laser action"
+            "ar": "8-10 آلية عمل الليزر"
           },
           {
             "key": "phys-8-11",
             "en": "8-11 Boltzmann distribution & population inversion",
-            "ar": "8-11 Boltzmann distribution & population inversion"
+            "ar": "8-11 توزيع بولتزمان والانعكاس السكاني"
           },
           {
             "key": "phys-8-12",
             "en": "8-12 Constituents of laser",
-            "ar": "8-12 Constituents of laser"
+            "ar": "8-12 مكونات الليزر"
           },
           {
             "key": "phys-8-13",
             "en": "8-13 Laser levels systems",
-            "ar": "8-13 Laser levels systems"
+            "ar": "8-13 أنظمة مستويات الليزر"
           },
           {
             "key": "phys-8-14",
             "en": "8-14 Types of laser",
-            "ar": "8-14 Types of laser"
+            "ar": "8-14 أنواع الليزر"
           },
           {
             "key": "phys-8-15",
             "en": "8-15 Applications of laser",
-            "ar": "8-15 Applications of laser"
+            "ar": "8-15 تطبيقات الليزر"
           }
         ]
       },
@@ -1849,42 +1849,42 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-9-1",
             "en": "9-1 Introduction",
-            "ar": "9-1 Introduction"
+            "ar": "9-1 مقدمة"
           },
           {
             "key": "phys-9-2",
             "en": "9-2 Structure & properties of nucleus",
-            "ar": "9-2 Structure & properties of nucleus"
+            "ar": "9-2 تركيب وخصائص النواة"
           },
           {
             "key": "phys-9-3",
             "en": "9-3 Nuclear binding energy",
-            "ar": "9-3 Nuclear binding energy"
+            "ar": "9-3 طاقة الترابط النووي"
           },
           {
             "key": "phys-9-4",
             "en": "9-4 Radioactive decay (α, β, γ)",
-            "ar": "9-4 Radioactive decay (α, β, γ)"
+            "ar": "9-4 الاضمحلال الإشعاعي (ألفا، بيتا، جاما)"
           },
           {
             "key": "phys-9-5",
             "en": "9-5 Nuclear reactions",
-            "ar": "9-5 Nuclear reactions"
+            "ar": "9-5 التفاعلات النووية"
           },
           {
             "key": "phys-9-6",
             "en": "9-6 Nuclear fission",
-            "ar": "9-6 Nuclear fission"
+            "ar": "9-6 الانشطار النووي"
           },
           {
             "key": "phys-9-7",
             "en": "9-7 Nuclear fusion",
-            "ar": "9-7 Nuclear fusion"
+            "ar": "9-7 الاندماج النووي"
           },
           {
             "key": "phys-9-8",
             "en": "9-8 Hazards & benefits of radiation",
-            "ar": "9-8 Hazards & benefits of radiation"
+            "ar": "9-8 مخاطر وفوائد الإشعاع"
           }
         ]
       },
@@ -1896,82 +1896,82 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "phys-act-1",
             "en": "Ch.1: Dielectric & Faraday experiment",
-            "ar": "Ch.1: Dielectric & Faraday experiment"
+            "ar": "الفصل الأول: العازل الكهربائي وتجربة فاراداي"
           },
           {
             "key": "phys-act-2",
             "en": "Ch.1: Charge/discharge a capacitor",
-            "ar": "Ch.1: Charge/discharge a capacitor"
+            "ar": "الفصل الأول: شحن/تفريغ المكثف"
           },
           {
             "key": "phys-act-3",
             "en": "Ch.2: EM induction phenomenon",
-            "ar": "Ch.2: EM induction phenomenon"
+            "ar": "الفصل الثاني: ظاهرة الحث الكهرومغناطيسي"
           },
           {
             "key": "phys-act-4",
             "en": "Ch.2: Reducing eddy currents",
-            "ar": "Ch.2: Reducing eddy currents"
+            "ar": "الفصل الثاني: تقليل التيارات الدوامية"
           },
           {
             "key": "phys-act-5",
             "en": "Ch.2: Self-induced EMF",
-            "ar": "Ch.2: Self-induced EMF"
+            "ar": "الفصل الثاني: القوة الدافعة الكهربائية الذاتية الحث"
           },
           {
             "key": "phys-act-6",
             "en": "Ch.3: Frequency effect on XL",
-            "ar": "Ch.3: Frequency effect on XL"
+            "ar": "الفصل الثالث: تأثير التردد على المفاعلة الحثية"
           },
           {
             "key": "phys-act-7",
             "en": "Ch.3: L effect on XL",
-            "ar": "Ch.3: L effect on XL"
+            "ar": "الفصل الثالث: تأثير المحاثة على المفاعلة الحثية"
           },
           {
             "key": "phys-act-8",
             "en": "Ch.3: Frequency effect on capacitive reactance",
-            "ar": "Ch.3: Frequency effect on capacitive reactance"
+            "ar": "الفصل الثالث: تأثير التردد على المفاعلة السعوية"
           },
           {
             "key": "phys-act-9",
             "en": "Ch.3: Capacitance effect on capacitive reactance",
-            "ar": "Ch.3: Capacitance effect on capacitive reactance"
+            "ar": "الفصل الثالث: تأثير السعة على المفاعلة السعوية"
           },
           {
             "key": "phys-act-10",
             "en": "Ch.5: Young's double slits experiment",
-            "ar": "Ch.5: Young's double slits experiment"
+            "ar": "الفصل الخامس: تجربة يونج للشقوق المزدوجة"
           },
           {
             "key": "phys-act-11",
             "en": "Ch.5: Diffraction of light",
-            "ar": "Ch.5: Diffraction of light"
+            "ar": "الفصل الخامس: حيود الضوء"
           },
           {
             "key": "phys-act-12",
             "en": "Ch.5: Polarization of light",
-            "ar": "Ch.5: Polarization of light"
+            "ar": "الفصل الخامس: استقطاب الضوء"
           },
           {
             "key": "phys-act-13",
             "en": "Ch.5: Interference of waves",
-            "ar": "Ch.5: Interference of waves"
+            "ar": "الفصل الخامس: تداخل الموجات"
           },
           {
             "key": "phys-act-14",
             "en": "Ch.5: Polarized material & intensity",
-            "ar": "Ch.5: Polarized material & intensity"
+            "ar": "الفصل الخامس: المواد المستقطبة والشدة"
           },
           {
             "key": "phys-act-15",
             "en": "Ch.6: Photoelectric experiment",
-            "ar": "Ch.6: Photoelectric experiment"
+            "ar": "الفصل السادس: التجربة الكهروضوئية"
           },
           {
             "key": "phys-act-16",
             "en": "Ch.8: Types of spectra",
-            "ar": "Ch.8: Types of spectra"
+            "ar": "الفصل الثامن: أنواع الأطياف"
           }
         ]
       }
@@ -1990,92 +1990,92 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "chem-1-1",
             "en": "Preface",
-            "ar": "Preface"
+            "ar": "مقدمة"
           },
           {
             "key": "chem-1-2",
             "en": "Units of Energy and Temperature",
-            "ar": "Units of Energy and Temperature"
+            "ar": "وحدات الطاقة ودرجة الحرارة"
           },
           {
             "key": "chem-1-3",
             "en": "Thermodynamic Terms",
-            "ar": "Thermodynamic Terms"
+            "ar": "المصطلحات الثرموديناميكية"
           },
           {
             "key": "chem-1-4",
             "en": "Heat",
-            "ar": "Heat"
+            "ar": "الحرارة"
           },
           {
             "key": "chem-1-5",
             "en": "Enthalpy change",
-            "ar": "Enthalpy change"
+            "ar": "تغير المحتوى الحراري"
           },
           {
             "key": "chem-1-6",
             "en": "State Function",
-            "ar": "State Function"
+            "ar": "دالة الحالة"
           },
           {
             "key": "chem-1-7",
             "en": "General Properties of Materials",
-            "ar": "General Properties of Materials"
+            "ar": "الخصائص العامة للمواد"
           },
           {
             "key": "chem-1-8",
             "en": "Thermochemistry",
-            "ar": "Thermochemistry"
+            "ar": "الكيمياء الحرارية"
           },
           {
             "key": "chem-1-9",
             "en": "Measurement of Enthalpy of Reaction",
-            "ar": "Measurement of Enthalpy of Reaction"
+            "ar": "قياس حرارة التفاعل"
           },
           {
             "key": "chem-1-10",
             "en": "Thermochemical Equations",
-            "ar": "Thermochemical Equations"
+            "ar": "المعادلات الكيميائية الحرارية"
           },
           {
             "key": "chem-1-11",
             "en": "Standard Enthalpy of Reaction",
-            "ar": "Standard Enthalpy of Reaction"
+            "ar": "الإنثالبي القياسي للتفاعل"
           },
           {
             "key": "chem-1-12",
             "en": "Types of Enthalpy",
-            "ar": "Types of Enthalpy"
+            "ar": "أنواع الإنثالبي"
           },
           {
             "key": "chem-1-13",
             "en": "Methods of Calculating Std Enthalpy",
-            "ar": "Methods of Calculating Std Enthalpy"
+            "ar": "طرق حساب حرارة التكوين القياسية"
           },
           {
             "key": "chem-1-14",
             "en": "Spontaneous Processes",
-            "ar": "Spontaneous Processes"
+            "ar": "العمليات التلقائية"
           },
           {
             "key": "chem-1-15",
             "en": "Entropy",
-            "ar": "Entropy"
+            "ar": "الإنتروبيا"
           },
           {
             "key": "chem-1-16",
             "en": "Gibbs Free Energy",
-            "ar": "Gibbs Free Energy"
+            "ar": "طاقة جيبس الحرة"
           },
           {
             "key": "chem-1-17",
             "en": "Entropy of Physical Changes",
-            "ar": "Entropy of Physical Changes"
+            "ar": "إنتروبيا التغيرات الفيزيائية"
           },
           {
             "key": "chem-1-18",
             "en": "Questions",
-            "ar": "Questions"
+            "ar": "الأسئلة"
           }
         ]
       },
@@ -2087,67 +2087,67 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "chem-2-1",
             "en": "Irreversible and Reversible Reactions",
-            "ar": "Irreversible and Reversible Reactions"
+            "ar": "التفاعلات العكسية وغير العكسية"
           },
           {
             "key": "chem-2-2",
             "en": "Reversible Reactions & Equilibrium",
-            "ar": "Reversible Reactions & Equilibrium"
+            "ar": "التفاعلات العكوسية والاتزان"
           },
           {
             "key": "chem-2-3",
             "en": "Homogeneous & Heterogeneous Reactions",
-            "ar": "Homogeneous & Heterogeneous Reactions"
+            "ar": "التفاعلات المتجانسة وغير المتجانسة"
           },
           {
             "key": "chem-2-4",
             "en": "Equilibrium and Law of Mass Action",
-            "ar": "Equilibrium and Law of Mass Action"
+            "ar": "الاتزان وقانون فعل الكتلة"
           },
           {
             "key": "chem-2-5",
             "en": "Equilibrium Constant",
-            "ar": "Equilibrium Constant"
+            "ar": "ثابت الاتزان"
           },
           {
             "key": "chem-2-6",
             "en": "Calculating Equilibrium Constant",
-            "ar": "Calculating Equilibrium Constant"
+            "ar": "حساب ثابت الاتزان"
           },
           {
             "key": "chem-2-7",
             "en": "Relationship between Kp and Kc",
-            "ar": "Relationship between Kp and Kc"
+            "ar": "العلاقة بين Kp و Kc"
           },
           {
             "key": "chem-2-8",
             "en": "Significance of Equilibrium Constant",
-            "ar": "Significance of Equilibrium Constant"
+            "ar": "أهمية ثابت الاتزان"
           },
           {
             "key": "chem-2-9",
             "en": "Reaction Quotient",
-            "ar": "Reaction Quotient"
+            "ar": "حاصل التفاعل"
           },
           {
             "key": "chem-2-10",
             "en": "Free Energy and Reaction Quotient Q",
-            "ar": "Free Energy and Reaction Quotient Q"
+            "ar": "الطاقة الحرة وخارج قسمة التفاعل Q"
           },
           {
             "key": "chem-2-11",
             "en": "Le Chatelier's Principle",
-            "ar": "Le Chatelier's Principle"
+            "ar": "مبدأ لوشاتليه"
           },
           {
             "key": "chem-2-12",
             "en": "Factors Affecting Equilibrium",
-            "ar": "Factors Affecting Equilibrium"
+            "ar": "العوامل المؤثرة على الاتزان"
           },
           {
             "key": "chem-2-13",
             "en": "Questions",
-            "ar": "Questions"
+            "ar": "الأسئلة"
           }
         ]
       },
@@ -2159,52 +2159,52 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "chem-3-1",
             "en": "Introduction",
-            "ar": "Introduction"
+            "ar": "مقدمة"
           },
           {
             "key": "chem-3-2",
             "en": "Electrolytes and Non-Electrolytes",
-            "ar": "Electrolytes and Non-Electrolytes"
+            "ar": "الإلكتروليتات واللاإلكتروليتات"
           },
           {
             "key": "chem-3-3",
             "en": "Dissociation of Weak Electrolytes",
-            "ar": "Dissociation of Weak Electrolytes"
+            "ar": "تفكك الإلكتروليتات الضعيفة"
           },
           {
             "key": "chem-3-4",
             "en": "Self-Ionization of Water",
-            "ar": "Self-Ionization of Water"
+            "ar": "التأين الذاتي للماء"
           },
           {
             "key": "chem-3-5",
             "en": "pH in aqueous solutions",
-            "ar": "pH in aqueous solutions"
+            "ar": "الرقم الهيدروجيني في المحاليل المائية"
           },
           {
             "key": "chem-3-6",
             "en": "Solvolysis",
-            "ar": "Solvolysis"
+            "ar": "التحلل بالمذيب"
           },
           {
             "key": "chem-3-7",
             "en": "Common Ion Effect",
-            "ar": "Common Ion Effect"
+            "ar": "تأثير الأيون المشترك"
           },
           {
             "key": "chem-3-8",
             "en": "Buffer Solutions",
-            "ar": "Buffer Solutions"
+            "ar": "المحاليل المنظمة"
           },
           {
             "key": "chem-3-9",
             "en": "Solubility and Solubility Product (Ksp)",
-            "ar": "Solubility and Solubility Product (Ksp)"
+            "ar": "الذوبانية وحاصل الذوبانية (Ksp)"
           },
           {
             "key": "chem-3-10",
             "en": "Questions",
-            "ar": "Questions"
+            "ar": "الأسئلة"
           }
         ]
       },
@@ -2216,57 +2216,57 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "chem-4-1",
             "en": "Introduction",
-            "ar": "Introduction"
+            "ar": "مقدمة"
           },
           {
             "key": "chem-4-2",
             "en": "Oxidation Numbers",
-            "ar": "Oxidation Numbers"
+            "ar": "أعداد الأكسدة"
           },
           {
             "key": "chem-4-3",
             "en": "Oxidation-Reduction Reactions",
-            "ar": "Oxidation-Reduction Reactions"
+            "ar": "تفاعلات الأكسدة والاختزال"
           },
           {
             "key": "chem-4-4",
             "en": "Oxidizing and Reducing Agents",
-            "ar": "Oxidizing and Reducing Agents"
+            "ar": "العوامل المؤكسدة والمختزلة"
           },
           {
             "key": "chem-4-5",
             "en": "Electrochemical Cells",
-            "ar": "Electrochemical Cells"
+            "ar": "الخلايا الكهروكيميائية"
           },
           {
             "key": "chem-4-6",
             "en": "Galvanic Cells",
-            "ar": "Galvanic Cells"
+            "ar": "الخلايا الجلفانية"
           },
           {
             "key": "chem-4-7",
             "en": "Galvanic Cell Potential",
-            "ar": "Galvanic Cell Potential"
+            "ar": "جهد الخلية الجلفانية"
           },
           {
             "key": "chem-4-8",
             "en": "Faraday's Laws",
-            "ar": "Faraday's Laws"
+            "ar": "قوانين فاراداي"
           },
           {
             "key": "chem-4-9",
             "en": "Electrolytic Cells",
-            "ar": "Electrolytic Cells"
+            "ar": "الخلايا الإلكتروليتية"
           },
           {
             "key": "chem-4-10",
             "en": "Batteries and Fuel Cells",
-            "ar": "Batteries and Fuel Cells"
+            "ar": "البطاريات وخلايا الوقود"
           },
           {
             "key": "chem-4-11",
             "en": "Questions",
-            "ar": "Questions"
+            "ar": "الأسئلة"
           }
         ]
       },
@@ -2278,37 +2278,37 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "chem-6-1",
             "en": "Preface",
-            "ar": "Preface"
+            "ar": "مقدمة"
           },
           {
             "key": "chem-6-2",
             "en": "Methods of Qualitative Analysis",
-            "ar": "Methods of Qualitative Analysis"
+            "ar": "طرق التحليل النوعي (الكيفي)"
           },
           {
             "key": "chem-6-3",
             "en": "Quantitative Analysis",
-            "ar": "Quantitative Analysis"
+            "ar": "التحليل الكمي"
           },
           {
             "key": "chem-6-4",
             "en": "Gravimetric Analysis",
-            "ar": "Gravimetric Analysis"
+            "ar": "التحليل الوزني"
           },
           {
             "key": "chem-6-5",
             "en": "Volumetric Analysis",
-            "ar": "Volumetric Analysis"
+            "ar": "التحليل الحجمي"
           },
           {
             "key": "chem-6-6",
             "en": "Precipitation Methods",
-            "ar": "Precipitation Methods"
+            "ar": "طرق الترسيب"
           },
           {
             "key": "chem-6-7",
             "en": "Questions",
-            "ar": "Questions"
+            "ar": "الأسئلة"
           }
         ]
       },
@@ -2320,47 +2320,47 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "chem-5-1",
             "en": "Preface",
-            "ar": "Preface"
+            "ar": "مقدمة"
           },
           {
             "key": "chem-5-2",
             "en": "Double Salt & Coordination Compound",
-            "ar": "Double Salt & Coordination Compound"
+            "ar": "الملح المزدوج ومركبات التناسق"
           },
           {
             "key": "chem-5-3",
             "en": "Development of Coordination Chemistry",
-            "ar": "Development of Coordination Chemistry"
+            "ar": "تطور كيمياء التناسق"
           },
           {
             "key": "chem-5-4",
             "en": "Types of Ligands",
-            "ar": "Types of Ligands"
+            "ar": "أنواع الروابط"
           },
           {
             "key": "chem-5-5",
             "en": "Effective Atomic Number Rule (EAN)",
-            "ar": "Effective Atomic Number Rule (EAN)"
+            "ar": "قاعدة العدد الذري الفعال (EAN)"
           },
           {
             "key": "chem-5-6",
             "en": "Naming Coordination Compounds",
-            "ar": "Naming Coordination Compounds"
+            "ar": "تسمية المركبات التناسقية"
           },
           {
             "key": "chem-5-7",
             "en": "Bonding Theories",
-            "ar": "Bonding Theories"
+            "ar": "نظريات الترابط"
           },
           {
             "key": "chem-5-8",
             "en": "Coordination Numbers & Geometry",
-            "ar": "Coordination Numbers & Geometry"
+            "ar": "أعداد التناسق والهندسة"
           },
           {
             "key": "chem-5-9",
             "en": "Questions",
-            "ar": "Questions"
+            "ar": "الأسئلة"
           }
         ]
       },
@@ -2372,47 +2372,47 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "chem-7-1",
             "en": "Preface",
-            "ar": "Preface"
+            "ar": "مقدمة"
           },
           {
             "key": "chem-7-2",
             "en": "Alkyl Halides",
-            "ar": "Alkyl Halides"
+            "ar": "هاليدات الألكيل"
           },
           {
             "key": "chem-7-3",
             "en": "Alcohols",
-            "ar": "Alcohols"
+            "ar": "الكحولات"
           },
           {
             "key": "chem-7-4",
             "en": "Ethers",
-            "ar": "Ethers"
+            "ar": "الإيثرات"
           },
           {
             "key": "chem-7-5",
             "en": "Aldehydes and Ketones",
-            "ar": "Aldehydes and Ketones"
+            "ar": "الألدهيدات والكيتونات"
           },
           {
             "key": "chem-7-6",
             "en": "Carboxylic Acids",
-            "ar": "Carboxylic Acids"
+            "ar": "الأحماض الكربوكسيلية"
           },
           {
             "key": "chem-7-7",
             "en": "Esters",
-            "ar": "Esters"
+            "ar": "الإسترات"
           },
           {
             "key": "chem-7-8",
             "en": "Amines",
-            "ar": "Amines"
+            "ar": "الأمينات"
           },
           {
             "key": "chem-7-9",
             "en": "Questions",
-            "ar": "Questions"
+            "ar": "الأسئلة"
           }
         ]
       },
@@ -2424,37 +2424,37 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "chem-8-1",
             "en": "Preface",
-            "ar": "Preface"
+            "ar": "مقدمة"
           },
           {
             "key": "chem-8-2",
             "en": "Carbohydrates",
-            "ar": "Carbohydrates"
+            "ar": "الكربوهيدرات"
           },
           {
             "key": "chem-8-3",
             "en": "Proteins",
-            "ar": "Proteins"
+            "ar": "البروتينات"
           },
           {
             "key": "chem-8-4",
             "en": "Enzymes",
-            "ar": "Enzymes"
+            "ar": "الإنزيمات"
           },
           {
             "key": "chem-8-5",
             "en": "Lipids",
-            "ar": "Lipids"
+            "ar": "الدهون"
           },
           {
             "key": "chem-8-6",
             "en": "Soaps",
-            "ar": "Soaps"
+            "ar": "الصابون"
           },
           {
             "key": "chem-8-7",
             "en": "Questions",
-            "ar": "Questions"
+            "ar": "الأسئلة"
           }
         ]
       }
@@ -2473,37 +2473,37 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "bio-1-1",
             "en": "Introduction",
-            "ar": "Introduction"
+            "ar": "مقدمة"
           },
           {
             "key": "bio-1-2",
             "en": "Cell theory",
-            "ar": "Cell theory"
+            "ar": "النظرية الخلوية"
           },
           {
             "key": "bio-1-3",
             "en": "Cell size",
-            "ar": "Cell size"
+            "ar": "حجم الخلية"
           },
           {
             "key": "bio-1-4",
             "en": "Prokaryotic Cell",
-            "ar": "Prokaryotic Cell"
+            "ar": "الخلية بدائية النواة"
           },
           {
             "key": "bio-1-5",
             "en": "Eukaryotic Cell",
-            "ar": "Eukaryotic Cell"
+            "ar": "الخلية حقيقية النواة"
           },
           {
             "key": "bio-1-6",
             "en": "Cell Activities",
-            "ar": "Cell Activities"
+            "ar": "أنشطة الخلية"
           },
           {
             "key": "bio-1-7",
             "en": "Cell Division",
-            "ar": "Cell Division"
+            "ar": "انقسام الخلية"
           }
         ]
       },
@@ -2515,17 +2515,17 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "bio-2-1",
             "en": "Introduction",
-            "ar": "Introduction"
+            "ar": "مقدمة"
           },
           {
             "key": "bio-2-2",
             "en": "Plant tissues",
-            "ar": "Plant tissues"
+            "ar": "الأنسجة النباتية"
           },
           {
             "key": "bio-2-3",
             "en": "Animal tissues",
-            "ar": "Animal tissues"
+            "ar": "الأنسجة الحيوانية"
           }
         ]
       },
@@ -2537,27 +2537,27 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "bio-5-1",
             "en": "Introduction and brief history",
-            "ar": "Introduction and brief history"
+            "ar": "مقدمة وتاريخ موجز"
           },
           {
             "key": "bio-5-2",
             "en": "Genetics before Mendel",
-            "ar": "Genetics before Mendel"
+            "ar": "الوراثة قبل مندل"
           },
           {
             "key": "bio-5-3",
             "en": "Mendelian Genetics",
-            "ar": "Mendelian Genetics"
+            "ar": "الوراثة المندلية"
           },
           {
             "key": "bio-5-4",
             "en": "Post Mendel Genetics",
-            "ar": "Post Mendel Genetics"
+            "ar": "الوراثة بعد مندل"
           },
           {
             "key": "bio-5-5",
             "en": "Molecular base of Genetics",
-            "ar": "Molecular base of Genetics"
+            "ar": "الأساس الجزيئي للوراثة"
           }
         ]
       },
@@ -2569,57 +2569,57 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "bio-3-1",
             "en": "Introduction",
-            "ar": "Introduction"
+            "ar": "مقدمة"
           },
           {
             "key": "bio-3-2",
             "en": "Role in preserving species",
-            "ar": "Role in preserving species"
+            "ar": "دور في الحفاظ على الأنواع"
           },
           {
             "key": "bio-3-3",
             "en": "Types of reproduction",
-            "ar": "Types of reproduction"
+            "ar": "أنواع التكاثر"
           },
           {
             "key": "bio-3-4",
             "en": "Reproduction in Viruses",
-            "ar": "Reproduction in Viruses"
+            "ar": "التكاثر في الفيروسات"
           },
           {
             "key": "bio-3-5",
             "en": "Reproduction in Monera",
-            "ar": "Reproduction in Monera"
+            "ar": "التكاثر في المونيرا"
           },
           {
             "key": "bio-3-6",
             "en": "Reproduction in Protista",
-            "ar": "Reproduction in Protista"
+            "ar": "التكاثر في الطلائعيات"
           },
           {
             "key": "bio-3-7",
             "en": "Reproduction in Fungi",
-            "ar": "Reproduction in Fungi"
+            "ar": "التكاثر في الفطريات"
           },
           {
             "key": "bio-3-8",
             "en": "Reproduction in Plants",
-            "ar": "Reproduction in Plants"
+            "ar": "التكاثر في النباتات"
           },
           {
             "key": "bio-3-9",
             "en": "Reproduction in Animals",
-            "ar": "Reproduction in Animals"
+            "ar": "التكاثر في الحيوانات"
           },
           {
             "key": "bio-3-10",
             "en": "Parthenogenesis",
-            "ar": "Parthenogenesis"
+            "ar": "التوالد البكري"
           },
           {
             "key": "bio-3-11",
             "en": "Hermaphroditism",
-            "ar": "Hermaphroditism"
+            "ar": "الخنوثة"
           }
         ]
       },
@@ -2631,57 +2631,57 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "bio-4-1",
             "en": "Introduction",
-            "ar": "Introduction"
+            "ar": "مقدمة"
           },
           {
             "key": "bio-4-2",
             "en": "Concept of growth",
-            "ar": "Concept of growth"
+            "ar": "مفهوم النمو"
           },
           {
             "key": "bio-4-3",
             "en": "Concept of cell Differentiation",
-            "ar": "Concept of cell Differentiation"
+            "ar": "مفهوم تمايز الخلايا"
           },
           {
             "key": "bio-4-4",
             "en": "Level of Organization in Animal",
-            "ar": "Level of Organization in Animal"
+            "ar": "مستويات التنظيم في الحيوان"
           },
           {
             "key": "bio-4-5",
             "en": "Concept of Embryology",
-            "ar": "Concept of Embryology"
+            "ar": "مفهوم علم الأجنة"
           },
           {
             "key": "bio-4-6",
             "en": "Congenital Malformation in humans",
-            "ar": "Congenital Malformation in humans"
+            "ar": "التشوهات الخلقية في البشر"
           },
           {
             "key": "bio-4-7",
             "en": "Multiple Births and twin Formation",
-            "ar": "Multiple Births and twin Formation"
+            "ar": "الولادات المتعددة وتكوين التوائم"
           },
           {
             "key": "bio-4-8",
             "en": "Periods between Births",
-            "ar": "Periods between Births"
+            "ar": "الفترات بين الولادات"
           },
           {
             "key": "bio-4-9",
             "en": "Stem cells",
-            "ar": "Stem cells"
+            "ar": "الخلايا الجذعية"
           },
           {
             "key": "bio-4-10",
             "en": "Cloning in Animals",
-            "ar": "Cloning in Animals"
+            "ar": "الاستنساخ في الحيوانات"
           },
           {
             "key": "bio-4-11",
             "en": "Infertile treatment techniques",
-            "ar": "Infertile treatment techniques"
+            "ar": "تقنيات علاج العقم"
           }
         ]
       },
@@ -2693,207 +2693,207 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "bio-d-1",
             "en": "Ch.1: Structure of bacteria",
-            "ar": "Ch.1: Structure of bacteria"
+            "ar": "الفصل الأول: تركيب البكتيريا"
           },
           {
             "key": "bio-d-2",
             "en": "Ch.1: Structure of plant cell",
-            "ar": "Ch.1: Structure of plant cell"
+            "ar": "الفصل الأول: تركيب الخلية النباتية"
           },
           {
             "key": "bio-d-3",
             "en": "Ch.1: Structure of animal cell",
-            "ar": "Ch.1: Structure of animal cell"
+            "ar": "الفصل الأول: تركيب الخلية الحيوانية"
           },
           {
             "key": "bio-d-4",
             "en": "Ch.1: Structure of plasma membrane",
-            "ar": "Ch.1: Structure of plasma membrane"
+            "ar": "الفصل الأول: تركيب الغشاء البلازمي"
           },
           {
             "key": "bio-d-5",
             "en": "Ch.1: Structure of mitochondria",
-            "ar": "Ch.1: Structure of mitochondria"
+            "ar": "الفصل الأول: تركيب الميتوكوندريا"
           },
           {
             "key": "bio-d-6",
             "en": "Ch.1: Structure of chloroplast",
-            "ar": "Ch.1: Structure of chloroplast"
+            "ar": "الفصل الأول: تركيب البلاستيدات الخضراء"
           },
           {
             "key": "bio-d-7",
             "en": "Ch.1: Lysosome",
-            "ar": "Ch.1: Lysosome"
+            "ar": "الفصل الأول: الليسوسوم"
           },
           {
             "key": "bio-d-8",
             "en": "Ch.1: Structure of chromosome",
-            "ar": "Ch.1: Structure of chromosome"
+            "ar": "الفصل الأول: تركيب الكروموسوم"
           },
           {
             "key": "bio-d-9",
             "en": "Ch.1: Osmosis in plant & animal cells",
-            "ar": "Ch.1: Osmosis in plant & animal cells"
+            "ar": "الفصل الأول: الأسموزية في الخلايا النباتية والحيوانية"
           },
           {
             "key": "bio-d-10",
             "en": "Ch.1: Active transport",
-            "ar": "Ch.1: Active transport"
+            "ar": "الفصل الأول: النقل النشط"
           },
           {
             "key": "bio-d-11",
             "en": "Ch.1: Phagocytosis",
-            "ar": "Ch.1: Phagocytosis"
+            "ar": "الفصل الأول: البلعمة"
           },
           {
             "key": "bio-d-12",
             "en": "Ch.1: Mitosis",
-            "ar": "Ch.1: Mitosis"
+            "ar": "الفصل الأول: الانقسام المتساوي"
           },
           {
             "key": "bio-d-13",
             "en": "Ch.1: Meiosis",
-            "ar": "Ch.1: Meiosis"
+            "ar": "الفصل الأول: الانقسام الاختزالي"
           },
           {
             "key": "bio-d-14",
             "en": "Ch.2: Phloem tissue",
-            "ar": "Ch.2: Phloem tissue"
+            "ar": "الفصل الثاني: نسيج اللحاء"
           },
           {
             "key": "bio-d-15",
             "en": "Ch.2: Stratified columnar epithelial",
-            "ar": "Ch.2: Stratified columnar epithelial"
+            "ar": "الفصل الثاني: النسيج الطلائي الطبقي العمادي"
           },
           {
             "key": "bio-d-16",
             "en": "Ch.2: Transitional epithelial",
-            "ar": "Ch.2: Transitional epithelial"
+            "ar": "الفصل الثاني: النسيج الطلائي الانتقالي"
           },
           {
             "key": "bio-d-17",
             "en": "Ch.2: Skeletal muscle",
-            "ar": "Ch.2: Skeletal muscle"
+            "ar": "الفصل الثاني: العضلات الهيكلية"
           },
           {
             "key": "bio-d-18",
             "en": "Ch.2: Smooth muscle",
-            "ar": "Ch.2: Smooth muscle"
+            "ar": "الفصل الثاني: العضلات الملساء"
           },
           {
             "key": "bio-d-19",
             "en": "Ch.2: Cardiac muscle",
-            "ar": "Ch.2: Cardiac muscle"
+            "ar": "الفصل الثاني: عضلة القلب"
           },
           {
             "key": "bio-d-20",
             "en": "Ch.2: Pseudo unipolar neurons",
-            "ar": "Ch.2: Pseudo unipolar neurons"
+            "ar": "الفصل الثاني: الخلايا العصبية أحادية القطب الكاذبة"
           },
           {
             "key": "bio-d-21",
             "en": "Ch.2: Bipolar neurons",
-            "ar": "Ch.2: Bipolar neurons"
+            "ar": "الفصل الثاني: الخلايا العصبية ثنائية القطبية"
           },
           {
             "key": "bio-d-22",
             "en": "Ch.2: Multipolar neurons",
-            "ar": "Ch.2: Multipolar neurons"
+            "ar": "الفصل الثاني: الخلايا العصبية متعددة الأقطاب"
           },
           {
             "key": "bio-d-23",
             "en": "Ch.3: Male reproductive system",
-            "ar": "Ch.3: Male reproductive system"
+            "ar": "الفصل الثالث: الجهاز التناسلي الذكري"
           },
           {
             "key": "bio-d-24",
             "en": "Ch.3: Reproduction in viruses",
-            "ar": "Ch.3: Reproduction in viruses"
+            "ar": "الفصل الثالث: التكاثر في الفيروسات"
           },
           {
             "key": "bio-d-25",
             "en": "Ch.3: Bacteria binary fission",
-            "ar": "Ch.3: Bacteria binary fission"
+            "ar": "الفصل الثالث: الانشطار الثنائي في البكتيريا"
           },
           {
             "key": "bio-d-26",
             "en": "Ch.3: Bacterial conjugation (E-coli)",
-            "ar": "Ch.3: Bacterial conjugation (E-coli)"
+            "ar": "الفصل الثالث: الاقتران البكتيري (بكتيريا الإي كولاي)"
           },
           {
             "key": "bio-d-27",
             "en": "Ch.3: Binary fission in paramecium",
-            "ar": "Ch.3: Binary fission in paramecium"
+            "ar": "الفصل الثالث: الانشطار الثنائي في البراميسيوم"
           },
           {
             "key": "bio-d-28",
             "en": "Ch.3: Conjugation in paramecium",
-            "ar": "Ch.3: Conjugation in paramecium"
+            "ar": "الفصل الثالث: التزاوج في البراميسيوم"
           },
           {
             "key": "bio-d-29",
             "en": "Ch.3: Transverse binary fission in euglena",
-            "ar": "Ch.3: Transverse binary fission in euglena"
+            "ar": "الفصل الثالث: الانشطار الثنائي العرضي في اليوجلينا"
           },
           {
             "key": "bio-d-30",
             "en": "Ch.3: Alternation of generations",
-            "ar": "Ch.3: Alternation of generations"
+            "ar": "الفصل الثالث: تعاقب الأجيال"
           },
           {
             "key": "bio-d-31",
             "en": "Ch.3: Structure of flower",
-            "ar": "Ch.3: Structure of flower"
+            "ar": "الفصل الثالث: تركيب الزهرة"
           },
           {
             "key": "bio-d-32",
             "en": "Ch.3: Embryo formation in flowering plants",
-            "ar": "Ch.3: Embryo formation in flowering plants"
+            "ar": "الفصل الثالث: تكون الجنين في النباتات المزهرة"
           },
           {
             "key": "bio-d-33",
             "en": "Ch.3: Seed structure (mono & dicot)",
-            "ar": "Ch.3: Seed structure (mono & dicot)"
+            "ar": "الفصل الثالث: تركيب البذور (أحادية وثنائية الفلقة)"
           },
           {
             "key": "bio-d-34",
             "en": "Ch.3: Fruit structure",
-            "ar": "Ch.3: Fruit structure"
+            "ar": "الفصل الثالث: تركيب الثمرة"
           },
           {
             "key": "bio-d-35",
             "en": "Ch.3: Male reproductive system in human",
-            "ar": "Ch.3: Male reproductive system in human"
+            "ar": "الفصل الثالث: الجهاز التناسلي الذكري في الإنسان"
           },
           {
             "key": "bio-d-36",
             "en": "Ch.3: Mature sperm in human",
-            "ar": "Ch.3: Mature sperm in human"
+            "ar": "الفصل الثالث: الحيوان المنوي الناضج في الإنسان"
           },
           {
             "key": "bio-d-37",
             "en": "Ch.3: Ovarian cycle stages",
-            "ar": "Ch.3: Ovarian cycle stages"
+            "ar": "الفصل الثالث: مراحل الدورة المبيضية"
           },
           {
             "key": "bio-d-38",
             "en": "Ch.3: Stage of egg formation",
-            "ar": "Ch.3: Stage of egg formation"
+            "ar": "الفصل الثالث: مرحلة تكون البويضة"
           },
           {
             "key": "bio-d-39",
             "en": "Ch.3: Types of blood cells",
-            "ar": "Ch.3: Types of blood cells"
+            "ar": "الفصل الثالث: أنواع خلايا الدم"
           },
           {
             "key": "bio-d-40",
             "en": "Ch.5: Law of segregation",
-            "ar": "Ch.5: Law of segregation"
+            "ar": "الفصل الخامس: قانون الانعزال"
           },
           {
             "key": "bio-d-41",
             "en": "Ch.5: Types of chromosomes by centromere",
-            "ar": "Ch.5: Types of chromosomes by centromere"
+            "ar": "الفصل الخامس: أنواع الكروموسومات حسب السنترومير"
           }
         ]
       }
@@ -2912,12 +2912,12 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "fr-g-1",
             "en": "Négative",
-            "ar": "النفي (Négative)"
+            "ar": "النفي"
           },
           {
             "key": "fr-g-2",
             "en": "Remplacement",
-            "ar": "التعويض (Remplacement)"
+            "ar": "الاستبدال"
           },
           {
             "key": "fr-g-3",
@@ -3026,27 +3026,27 @@ export const missionsData: Record<string, MissionSubject> = {
           {
             "key": "fr-d-1",
             "en": "Leçon 1",
-            "ar": "Leçon 1"
+            "ar": "الدرس الأول"
           },
           {
             "key": "fr-d-2",
             "en": "Leçon 2",
-            "ar": "Leçon 2"
+            "ar": "الدرس الثاني"
           },
           {
             "key": "fr-d-3",
             "en": "Leçon 3",
-            "ar": "Leçon 3"
+            "ar": "الدرس الثالث"
           },
           {
             "key": "fr-d-4",
             "en": "Leçon 4",
-            "ar": "Leçon 4"
+            "ar": "الدرس الرابع"
           },
           {
             "key": "fr-d-5",
             "en": "Leçon 5",
-            "ar": "Leçon 5"
+            "ar": "الدرس الخامس"
           }
         ]
       }
