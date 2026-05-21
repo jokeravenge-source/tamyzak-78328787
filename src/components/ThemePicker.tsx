@@ -38,12 +38,18 @@ const THEMES: ThemeDef[] = [
 const ALL_CLASSES = THEMES.map((t) => `theme-${t.id}`);
 
 export function applyTheme(id: ThemeId) {
-  const root = document.documentElement;
-  root.classList.remove(...ALL_CLASSES);
-  root.classList.add(`theme-${id}`);
+  const targets = [document.documentElement, document.body];
+  for (const el of targets) {
+    if (!el) continue;
+    el.classList.remove(...ALL_CLASSES);
+    el.classList.add(`theme-${id}`);
+  }
   const def = THEMES.find((t) => t.id === id);
-  if (def?.mode === "dark") root.classList.add("dark");
-  else root.classList.remove("dark");
+  for (const el of targets) {
+    if (!el) continue;
+    if (def?.mode === "dark") el.classList.add("dark");
+    else el.classList.remove("dark");
+  }
 }
 
 export function getInitialTheme(): ThemeId {
