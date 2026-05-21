@@ -23,6 +23,19 @@ const biologyChapters = [
   { n: 5, title: "Genetics", arTitle: "الوراثة", subtitle: "", locked: false },
 ];
 
+const chemistryChapters = [
+  { n: 1, title: "Chapter 1", arTitle: "الفصل الأول", subtitle: "", locked: false },
+  { n: 2, title: "Chapter 2", arTitle: "الفصل الثاني", subtitle: "", locked: false },
+  { n: 3, title: "Chapter 3", arTitle: "الفصل الثالث", subtitle: "", locked: false },
+  { n: 4, title: "Chapter 4", arTitle: "الفصل الرابع", subtitle: "", locked: false },
+  { n: 5, title: "Chapter 5", arTitle: "الفصل الخامس", subtitle: "", locked: false },
+  { n: 6, title: "Chapter 6", arTitle: "الفصل السادس", subtitle: "", locked: false },
+];
+
+const arabicChapters = [
+  { n: 1, title: "Literature 1", arTitle: "الأدب الجزء الأول", subtitle: "", locked: false },
+];
+
 const copy = {
   en: {
     badge: "HYDAAR DIWAAN",
@@ -39,7 +52,11 @@ const copy = {
 const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLanguage; subject: AppSubject; onChangeLanguage: () => void }) => {
   const navigate = useNavigate();
   const text = copy[language];
-  const chapters = subject === "biology" ? biologyChapters : physicsChapters;
+  const chapters =
+    subject === "biology" ? biologyChapters :
+    subject === "chemistry" ? chemistryChapters :
+    subject === "arabic" ? arabicChapters :
+    physicsChapters;
 
   const handleChangeLanguage = () => {
     localStorage.removeItem(SUBJECT_STORAGE_KEY);
