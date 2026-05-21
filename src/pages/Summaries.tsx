@@ -1,0 +1,255 @@
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Upload, Heart, FileText, X, Loader2, Hash, Download, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import type { AppLanguage } from "@/components/LanguageGate";
+
+export const SUMMARY_SUBJECTS = [
+  { code: "physics", en: "Physics", ar: "الفيزياء", tag: "#Physics" },
+  { code: "chemistry", en: "Chemistry", ar: "الكيمياء", tag: "#Chemistry" },
+  { code: "biology", en: "Biology", ar: "الأحياء", tag: "#Biology" },
+  { code: "math", en: "Math", ar: "الرياضيات", tag: "#Math" },
+  { code: "english", en: "English", ar: "الإنجليزية", tag: "#English" },
+  { code: "french", en: "French", ar: "الفرنسية", tag: "#French" },
+  { code: "arabic", en: "Arabic", ar: "العربية", tag: "#Arabic" },
+  { code: "islamic", en: "Islamic", ar: "التربية الإسلامية", tag: "#Islamic" },
+] as const;
+
+type SubjectCode = typeof SUMMARY_SUBJECTS[number]["code"];
+const MAX_BYTES = 100 * 1024 * 1024;
+
+type SummaryRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  subject: string;
+  file_path: string;
+  approved: boolean;
+  created_at: string;
+};
+
+const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  const isAr = language === "ar";
+  const [rows, setRows] = useState<SummaryRow[]>([]);
+  const [likes, setLikes] = useState<Record<string, number>>({});
+  const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
+  const [userId, setUserId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<SubjectCode | "all">("all");
+  const [showUpload, setShowUpload] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Upload form
+  const [file, setFile] = useState<File | null>(null);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [subject, setSubject] = useState<SubjectCode>("physics");
+  const [uploading, setUploading] = useState(false);
+
+  const t = (en: string, ar: string) => (isAr ? ar : en);
+
+  const fetchAll = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    setUserId(user?.id ?? null);
+    const { data: sums } = await supabase
+      .from("summaries")
+      .select("*")
+      .eq("approved", true)
+      .order("created_at", { ascending: false });
+    const list = (sums ?? []) as SummaryRow[];
+    setRows(list);
+    if (list.length) {
+      const ids = list.map((r) => r.id);
+      const { data: lk } = await supabase
+        .from("summary_likes")
+        .select("summary_id, user_id")
+        .in("summary_id", ids);
+      const counts: Record<string, number> = {};
+      const mine = new Set<string>();
+      (lk ?? []).forEach((l: any) => {
+        counts[l.summary_id] = (counts[l.summary_id] ?? 0) + 1;
+        if (user && l.user_id === user.id) mine.add(l.summary_id);
+      });
+      setLikes(counts);
+      setMyLikes(mine);
+    } else {
+      setLikes({});
+      setMyLikes(new Set());
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchAll(); }, []);
+
+  const sorted = useMemo(() => {
+    const filtered = filter === "all" ? rows : rows.filter((r) => r.subject === filter);
+    return [...filtered].sort((a, b) => (likes[b.id] ?? 0) - (likes[a.id] ?? 0));
+  }, [rows, likes, filter]);
+
+  const toggleLike = async (id: string) => {
+    if (!userId) return;
+    if (myLikes.has(id)) {
+      const { error } = await supabase.from("summary_likes").delete().eq("user_id", userId).eq("summary_id", id);
+      if (error) return toast.error(error.message);
+      setMyLikes((s) => { const n = new Set(s); n.delete(id); return n; });
+      setLikes((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 1) - 1) }));
+    } else {
+      const { error } = await supabase.from("summary_likes").insert({ user_id: userId, summary_id: id });
+      if (error) return toast.error(error.message);
+      setMyLikes((s) => new Set(s).add(id));
+      setLikes((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
+    }
+  };
+
+  const download = async (path: string, name: string) => {
+    const { data, error } = await supabase.storage.from("summaries").createSignedUrl(path, 60);
+    if (error || !data) return toast.error(error?.message ?? "Failed");
+    const a = document.createElement("a");
+    a.href = data.signedUrl; a.download = name; a.target = "_blank"; a.rel = "noopener noreferrer";
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+
+  const onPickFile = (f: File | null) => {
+    if (!f) { setFile(null); return; }
+    if (f.size > MAX_BYTES) { toast.error(t("File exceeds 100 MB", "الملف يتجاوز 100 ميجابايت")); return; }
+    setFile(f);
+    if (!name) setName(f.name.replace(/\.[^.]+$/, ""));
+  };
+
+  const submitUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file || !userId) return;
+    if (!name.trim()) return toast.error(t("Name is required", "الاسم مطلوب"));
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("summaries").upload(path, file, { contentType: file.type });
+      if (upErr) throw upErr;
+      const { error: insErr } = await supabase.from("summaries").insert({
+        user_id: userId,
+        name: name.trim(),
+        description: description.trim() || null,
+        subject,
+        file_path: path,
+        file_size: file.size,
+        mime_type: file.type,
+        approved: false,
+      });
+      if (insErr) throw insErr;
+      toast.success(t("Submitted — waiting for admin approval", "تم الإرسال — بانتظار موافقة المسؤول"));
+      setShowUpload(false); setFile(null); setName(""); setDescription("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Upload failed");
+    } finally { setUploading(false); }
+  };
+
+  const subjLabel = (code: string) => {
+    const s = SUMMARY_SUBJECTS.find((x) => x.code === code);
+    return s ? (isAr ? s.ar : s.en) : code;
+  };
+  const subjTag = (code: string) => SUMMARY_SUBJECTS.find((x) => x.code === code)?.tag ?? `#${code}`;
+
+  return (
+    <main className="min-h-screen px-4 py-12 md:py-16 relative overflow-hidden" dir={isAr ? "rtl" : "ltr"}>
+      <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
+      <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+
+      <button onClick={onBack} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all">
+        <ArrowLeft className="w-5 h-5" />
+      </button>
+
+      <header className="text-center max-w-3xl mx-auto z-10 relative animate-fade-up">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{t("Summaries", "ملخصات")}</span>
+        </div>
+        <h1 className="text-4xl md:text-6xl font-bold gradient-text leading-[1.1] mb-3">{t("Community Summaries", "ملخصات الطلاب")}</h1>
+        <p className="text-muted-foreground md:text-lg">{t("Share PDF summaries and like the best ones. Top likes rise to the top.", "شارك ملخصاتك مع زملائك وادعم الأفضل. الأكثر إعجاباً يتصدر.")}</p>
+      </header>
+
+      <div className="max-w-6xl mx-auto mt-10 flex flex-wrap items-center justify-between gap-3 relative z-10">
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setFilter("all")} className={`px-3 py-1.5 rounded-full text-xs border transition-all ${filter === "all" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-secondary/40 text-muted-foreground hover:text-foreground"}`}>
+            <Hash className="w-3 h-3 inline mr-1" />{t("All", "الكل")}
+          </button>
+          {SUMMARY_SUBJECTS.map((s) => (
+            <button key={s.code} onClick={() => setFilter(s.code)} className={`px-3 py-1.5 rounded-full text-xs border transition-all ${filter === s.code ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-secondary/40 text-muted-foreground hover:text-foreground"}`}>
+              {s.tag}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => setShowUpload(true)} className="inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold">
+          <Upload className="w-4 h-4" /> {t("Upload summary", "رفع ملخص")}
+        </button>
+      </div>
+
+      <section className="max-w-6xl mx-auto mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
+        {loading ? (
+          <div className="col-span-full flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        ) : sorted.length === 0 ? (
+          <p className="col-span-full text-center text-muted-foreground py-16">{t("No summaries yet. Be the first to upload!", "لا توجد ملخصات بعد. كن أول من يرفع!")}</p>
+        ) : sorted.map((r, i) => (
+          <article key={r.id} className="rounded-3xl p-5 border border-white/10 bg-secondary/40 backdrop-blur flex flex-col gap-3 animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-xs px-2 py-1 rounded-full border border-primary/30 text-primary">{subjTag(r.subject)}</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg leading-snug">{r.name}</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">{subjLabel(r.subject)}</p>
+              {r.description && <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{r.description}</p>}
+            </div>
+            <div className="mt-auto flex items-center justify-between pt-2">
+              <button onClick={() => toggleLike(r.id)} className={`inline-flex items-center gap-1.5 text-sm transition-colors ${myLikes.has(r.id) ? "text-red-400" : "text-muted-foreground hover:text-foreground"}`}>
+                <Heart className={`w-4 h-4 ${myLikes.has(r.id) ? "fill-current" : ""}`} /> {likes[r.id] ?? 0}
+              </button>
+              <button onClick={() => download(r.file_path, r.name)} className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                <Download className="w-4 h-4" /> {t("Download", "تحميل")}
+              </button>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      {showUpload && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4" onClick={() => !uploading && setShowUpload(false)}>
+          <form onSubmit={submitUpload} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border border-white/10 bg-secondary p-6 space-y-4 animate-fade-up">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold gradient-text">{t("Upload summary", "رفع ملخص")}</h2>
+              <button type="button" onClick={() => setShowUpload(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">{t("File (max 100 MB)", "الملف (حد أقصى 100 ميجا)")}</label>
+              <input type="file" required onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} className="mt-1 w-full text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-primary file:text-primary-foreground" />
+              {file && <p className="text-xs text-muted-foreground mt-1">{file.name} — {(file.size / 1024 / 1024).toFixed(1)} MB</p>}
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">{t("Name *", "الاسم *")}</label>
+              <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={120} className="mt-1 w-full h-10 px-3 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">{t("Description (optional)", "الوصف (اختياري)")}</label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={500} className="mt-1 w-full px-3 py-2 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">{t("Subject *", "المادة *")}</label>
+              <select value={subject} onChange={(e) => setSubject(e.target.value as SubjectCode)} className="mt-1 w-full h-10 px-3 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm">
+                {SUMMARY_SUBJECTS.map((s) => <option key={s.code} value={s.code}>{isAr ? s.ar : s.en} — {s.tag}</option>)}
+              </select>
+            </div>
+            <button type="submit" disabled={uploading || !file} className="w-full h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2">
+              {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("Uploading…", "جارٍ الرفع…")}</> : <><Upload className="w-4 h-4" /> {t("Submit for approval", "إرسال للموافقة")}</>}
+            </button>
+            <p className="text-xs text-muted-foreground text-center">{t("An admin will review your file before it appears.", "سيراجع المسؤول الملف قبل ظهوره.")}</p>
+          </form>
+        </div>
+      )}
+    </main>
+  );
+};
+
+export default Summaries;
