@@ -114,9 +114,7 @@ const App = () => {
       <Toaster />
       <Sonner />
       <ThemePicker language={language ?? "en"} />
-      {!unlocked ? (
-        <TelegramGate onUnlock={() => setUnlocked(true)} />
-      ) : !authRole ? (
+      {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authRole === "admin" && !authed ? (
         <AdminLogin onAuthed={() => setAuthed(true)} onBack={resetRole} />
