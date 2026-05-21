@@ -7,7 +7,7 @@ import Index from "./pages/Index.tsx";
 import Chapters from "./pages/Chapters.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { useState } from "react";
-import { TelegramGate, TELEGRAM_GATE_STORAGE_KEY } from "./components/TelegramGate";
+
 import { AppLanguage, LanguageGate, LANGUAGE_STORAGE_KEY } from "./components/LanguageGate";
 import Subjects, { SUBJECT_STORAGE_KEY, type AppSubject } from "./pages/Subjects";
 import { ThemePicker, applyTheme, getInitialTheme } from "./components/ThemePicker";
