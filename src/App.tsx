@@ -18,6 +18,8 @@ import MainMenu from "./pages/MainMenu";
 import Missions from "./pages/Missions";
 import MCQ from "./pages/MCQ";
 import Summaries from "./pages/Summaries";
+import Advices from "./pages/Advices";
+import Sessions from "./pages/Sessions";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
@@ -73,7 +75,7 @@ const App = () => {
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -135,6 +137,10 @@ const App = () => {
         <MCQ language={language} onBack={resetMenu} />
       ) : menuChoice === "summaries" ? (
         <Summaries language={language} onBack={resetMenu} />
+      ) : menuChoice === "advices" ? (
+        <Advices language={language} onBack={resetMenu} />
+      ) : menuChoice === "sessions" ? (
+        <Sessions language={language} onBack={resetMenu} />
       ) : menuChoice === "malazam" ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={() => {}} mode="malazam" />
       ) : !subject ? (
