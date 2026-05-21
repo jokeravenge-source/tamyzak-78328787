@@ -17,6 +17,19 @@ import { flashcardsBioCh1En } from "@/data/flashcardsBioCh1En";
 import { flashcardsBioCh2En } from "@/data/flashcardsBioCh2En";
 import { flashcardsBioCh3En } from "@/data/flashcardsBioCh3En";
 import { flashcardsBioCh5En } from "@/data/flashcardsBioCh5En";
+import { flashcardsChemCh1En } from "@/data/flashcardsChemCh1En";
+import { flashcardsChemCh2En } from "@/data/flashcardsChemCh2En";
+import { flashcardsChemCh3En } from "@/data/flashcardsChemCh3En";
+import { flashcardsChemCh4En } from "@/data/flashcardsChemCh4En";
+import { flashcardsChemCh5En } from "@/data/flashcardsChemCh5En";
+import { flashcardsChemCh6En } from "@/data/flashcardsChemCh6En";
+import { flashcardsChemCh1Ar } from "@/data/flashcardsChemCh1Ar";
+import { flashcardsChemCh2Ar } from "@/data/flashcardsChemCh2Ar";
+import { flashcardsChemCh3Ar } from "@/data/flashcardsChemCh3Ar";
+import { flashcardsChemCh4Ar } from "@/data/flashcardsChemCh4Ar";
+import { flashcardsChemCh5Ar } from "@/data/flashcardsChemCh5Ar";
+import { flashcardsChemCh6Ar } from "@/data/flashcardsChemCh6Ar";
+import { flashcardsArabicLit1Ar } from "@/data/flashcardsArabicLit1Ar";
 import { flashcardsCh1 } from "@/data/flashcardsCh1";
 import { flashcardsCh2 } from "@/data/flashcardsCh2";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
@@ -84,6 +97,33 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "الأحياء · الوراثة" : "Biology · Genetics",
           cards: language === "ar" ? flashcardsBioCh5Ar : flashcardsBioCh5En,
+        };
+      }
+
+      if (subject === "chemistry") {
+        const chemEn: Record<string, typeof flashcards> = {
+          "1": flashcardsChemCh1En, "2": flashcardsChemCh2En, "3": flashcardsChemCh3En,
+          "4": flashcardsChemCh4En, "5": flashcardsChemCh5En, "6": flashcardsChemCh6En,
+        };
+        const chemAr: Record<string, typeof flashcards> = {
+          "1": flashcardsChemCh1Ar, "2": flashcardsChemCh2Ar, "3": flashcardsChemCh3Ar,
+          "4": flashcardsChemCh4Ar, "5": flashcardsChemCh5Ar, "6": flashcardsChemCh6Ar,
+        };
+        const cards = (language === "ar" ? chemAr : chemEn)[chapter];
+        if (cards) {
+          return {
+            title: "بطاقات تعليمية",
+            eyebrow: language === "ar" ? `الكيمياء · الفصل ${chapter}` : `Chemistry · Chapter ${chapter}`,
+            cards,
+          };
+        }
+      }
+
+      if (subject === "arabic" && chapter === "1") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "العربية · الأدب" : "Arabic · Literature",
+          cards: flashcardsArabicLit1Ar,
         };
       }
 
