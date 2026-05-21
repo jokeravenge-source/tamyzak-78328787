@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { ArrowLeft, Upload, Sparkles, Loader2, FileText, Check, X, RotateCw } from "lucide-react";
+import { ArrowLeft, Upload, Sparkles, Loader2, FileText, Check, X, RotateCw, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
@@ -27,6 +27,8 @@ const copy = {
     correct: "Correct!",
     wrong: "Wrong",
     explanation: "Explanation",
+    hint: "Hint",
+    showHint: "Show hint",
     yourScore: "Your Score",
     restart: "New Quiz",
     noText: "Could not read text from this file.",
@@ -51,6 +53,8 @@ const copy = {
     correct: "إجابة صحيحة!",
     wrong: "خطأ",
     explanation: "الشرح",
+    hint: "تلميح",
+    showHint: "عرض تلميح",
     yourScore: "نتيجتك",
     restart: "اختبار جديد",
     noText: "تعذرت قراءة النص من هذا الملف.",
@@ -59,7 +63,7 @@ const copy = {
   },
 } as const;
 
-type MCQ = { question: string; choices: string[]; answer_index: number; explanation: string };
+type MCQ = { question: string; choices: string[]; answer_index: number; explanation: string; hint?: string };
 type Phase = "setup" | "quiz" | "result";
 
 async function extractText(file: File): Promise<string> {
@@ -103,6 +107,7 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [hintShown, setHintShown] = useState(false);
   const [score, setScore] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -136,7 +141,7 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
       const qs: MCQ[] = (data?.questions || []).filter((q: any) => q?.choices?.length === 4);
       if (!qs.length) throw new Error("No questions returned");
       setQuestions(qs);
-      setCurrent(0); setSelected(null); setRevealed(false); setScore(0);
+      setCurrent(0); setSelected(null); setRevealed(false); setHintShown(false); setScore(0);
       setPhase("quiz");
     } catch (e: any) {
       toast.dismiss();
@@ -155,12 +160,12 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
 
   const nextQuestion = () => {
     if (current + 1 >= questions.length) { setPhase("result"); return; }
-    setCurrent((c) => c + 1); setSelected(null); setRevealed(false);
+    setCurrent((c) => c + 1); setSelected(null); setRevealed(false); setHintShown(false);
   };
 
   const restart = () => {
     setPhase("setup"); setFile(null); setQuestions([]);
-    setCurrent(0); setSelected(null); setRevealed(false); setScore(0);
+    setCurrent(0); setSelected(null); setRevealed(false); setHintShown(false); setScore(0);
   };
 
   return (
@@ -253,6 +258,23 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 mb-6">
                   <p className="text-sm font-semibold text-primary mb-1">{t.explanation}</p>
                   <p className="text-sm text-foreground/90">{q.explanation}</p>
+                </div>
+              )}
+              {!revealed && q.hint && (
+                <div className="mb-4">
+                  {hintShown ? (
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex gap-3">
+                      <Lightbulb className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-amber-400 mb-1">{t.hint}</p>
+                        <p className="text-sm text-foreground/90">{q.hint}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button variant="outline" onClick={() => setHintShown(true)} className="gap-2">
+                      <Lightbulb className="w-4 h-4" /> {t.showHint}
+                    </Button>
+                  )}
                 </div>
               )}
               {!revealed ? (
