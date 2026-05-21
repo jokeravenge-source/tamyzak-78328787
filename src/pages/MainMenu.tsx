@@ -51,7 +51,6 @@ const MainMenu = ({
 
   const items = [
     { key: "flashcards" as const, Icon: Layers, locked: false, ...text.items.flashcards },
-    { key: "sessions", Icon: GraduationCap, locked: true, ...text.items.sessions },
     { key: "malazam", Icon: BookMarked, locked: false, ...text.items.malazam },
     { key: "summaries", Icon: FileText, locked: false, ...text.items.summaries },
     { key: "missions", Icon: ListChecks, locked: false, ...text.items.missions },
