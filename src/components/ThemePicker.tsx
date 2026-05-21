@@ -35,20 +35,38 @@ const THEMES: ThemeDef[] = [
   { id: "nord", name: "Nord", arName: "نورد", swatch: ["#2e3440", "#3b4252", "#88c0d0"], mode: "dark" },
 ];
 
-const ALL_CLASSES = THEMES.map((t) => `theme-${t.id}`);
+const STYLE_TAG_ID = "app-theme-vars";
+
+function ensureStyleTag(): HTMLStyleElement {
+  let tag = document.getElementById(STYLE_TAG_ID) as HTMLStyleElement | null;
+  if (!tag) {
+    tag = document.createElement("style");
+    tag.id = STYLE_TAG_ID;
+    document.head.appendChild(tag);
+  }
+  return tag;
+}
 
 export function applyTheme(id: ThemeId) {
-  const targets = [document.documentElement, document.body];
-  for (const el of targets) {
-    if (!el) continue;
-    el.classList.remove(...ALL_CLASSES);
-    el.classList.add(`theme-${id}`);
-  }
   const def = THEMES.find((t) => t.id === id);
-  for (const el of targets) {
+  if (!def) return;
+  const tag = ensureStyleTag();
+  // Re-declare the chosen theme as :root vars with !important to win over any base CSS.
+  // We read the existing theme class CSS from index.css by name.
+  tag.textContent = `:root, html, body { color-scheme: ${def.mode}; }
+html.theme-active, body.theme-active { }
+:root { --__theme: "${id}"; }
+body { background: var(--gradient-bg) !important; }
+html, body { background-color: hsl(var(--background)) !important; }
+`;
+  // Set the theme class on both <html> and <body>; some preview wrappers
+  // may strip one but not both. Re-applied on every call.
+  const allClasses = THEMES.map((t) => `theme-${t.id}`);
+  for (const el of [document.documentElement, document.body]) {
     if (!el) continue;
-    if (def?.mode === "dark") el.classList.add("dark");
-    else el.classList.remove("dark");
+    el.classList.remove(...allClasses, "dark");
+    el.classList.add(`theme-${id}`);
+    if (def.mode === "dark") el.classList.add("dark");
   }
 }
 
