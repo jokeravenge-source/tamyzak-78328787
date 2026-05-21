@@ -56,7 +56,8 @@ const MainMenu = ({
     { key: "summaries", Icon: FileText, locked: false, ...text.items.summaries },
     { key: "missions", Icon: ListChecks, locked: false, ...text.items.missions },
     { key: "mcq", Icon: HelpCircle, locked: false, ...text.items.mcq },
-    { key: "advices", Icon: MessageSquareQuote, locked: true, ...text.items.advices },
+    { key: "advices", Icon: MessageSquareQuote, locked: false, ...text.items.advices },
+    { key: "sessions", Icon: GraduationCap, locked: false, ...text.items.sessions },
     { key: "videoNotes", Icon: Headphones, locked: true, ...text.items.videoNotes },
   ];
 
