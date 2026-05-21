@@ -31,38 +31,38 @@ export const Flashcard = ({ question, answer, index, total, direction, language 
       >
         {/* Front */}
         <div
-          className="absolute inset-0 backface-hidden rounded-[var(--radius)] p-8 md:p-12 flex flex-col justify-between border border-white/10"
-          style={{ background: "var(--gradient-card-front)", boxShadow: "var(--shadow-card)" }}
+          className="absolute inset-0 backface-hidden rounded-[var(--radius)] p-8 md:p-12 flex flex-col justify-between border border-border"
+          style={{ background: "var(--gradient-card-front)", boxShadow: "var(--shadow-card)", color: "hsl(var(--card-front-fg))" }}
         >
-          <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-white/60">
+          <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] opacity-60">
             <span>{labels.question}</span>
             <span className="font-mono">{String(index + 1).padStart(2, "0")} / {total}</span>
           </div>
           <div className="flex-1 flex items-center justify-center px-2">
-            <p className="text-2xl md:text-3xl font-semibold text-center leading-snug text-white">
+            <p className="text-2xl md:text-3xl font-semibold text-center leading-snug">
               {question}
             </p>
           </div>
-          <div className="text-center text-xs text-white/50 tracking-widest uppercase group-hover:text-white/80 transition-colors">
+          <div className="text-center text-xs opacity-50 tracking-widest uppercase group-hover:opacity-80 transition-opacity">
             {labels.reveal}
           </div>
         </div>
 
         {/* Back */}
         <div
-          className="absolute inset-0 backface-hidden rotate-y-180 rounded-[var(--radius)] p-8 md:p-12 flex flex-col justify-between border border-white/10"
-          style={{ background: "var(--gradient-card-back)", boxShadow: "var(--shadow-card)" }}
+          className="absolute inset-0 backface-hidden rotate-y-180 rounded-[var(--radius)] p-8 md:p-12 flex flex-col justify-between border border-border"
+          style={{ background: "var(--gradient-card-back)", boxShadow: "var(--shadow-card)", color: "hsl(var(--card-back-fg))" }}
         >
-          <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-white/60">
+          <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] opacity-70">
             <span>{labels.answer}</span>
             <span className="font-mono">{String(index + 1).padStart(2, "0")} / {total}</span>
           </div>
           <div className="flex-1 flex items-center justify-center px-2">
-            <p className="text-2xl md:text-3xl font-semibold text-center leading-snug text-white">
+            <p className="text-2xl md:text-3xl font-semibold text-center leading-snug">
               {answer}
             </p>
           </div>
-          <div className="text-center text-xs text-white/50 tracking-widest uppercase group-hover:text-white/80 transition-colors">
+          <div className="text-center text-xs opacity-60 tracking-widest uppercase group-hover:opacity-90 transition-opacity">
             {labels.back}
           </div>
         </div>
