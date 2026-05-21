@@ -14,6 +14,9 @@ import { ThemePicker, applyTheme, getInitialTheme } from "./components/ThemePick
 import { useEffect } from "react";
 import Auth from "./pages/Auth";
 import { supabase } from "./integrations/supabase/client";
+import MainMenu from "./pages/MainMenu";
+
+const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
 const queryClient = new QueryClient();
 
@@ -38,12 +41,26 @@ const App = () => {
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
+  const [menuChoice, setMenuChoice] = useState<"flashcards" | null>(
+    () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as "flashcards" | null) : null)
+  );
 
   const resetLanguage = () => {
     setSubject(null);
+    setMenuChoice(null);
+    localStorage.removeItem(MENU_STORAGE_KEY);
     setLanguage(null);
   };
   const resetSubject = () => setSubject(null);
+  const resetMenu = () => {
+    setSubject(null);
+    setMenuChoice(null);
+    localStorage.removeItem(MENU_STORAGE_KEY);
+  };
+  const chooseMenu = (choice: "flashcards") => {
+    localStorage.setItem(MENU_STORAGE_KEY, choice);
+    setMenuChoice(choice);
+  };
 
   return (
   <QueryClientProvider client={queryClient}>
@@ -57,8 +74,10 @@ const App = () => {
         <Auth onAuthed={() => setAuthed(true)} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
+      ) : !menuChoice ? (
+        <MainMenu language={language} onChangeLanguage={resetLanguage} onSelect={chooseMenu} />
       ) : !subject ? (
-        <Subjects language={language} onChangeLanguage={resetLanguage} onSelectSubject={setSubject} />
+        <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={setSubject} />
       ) : (
       <BrowserRouter>
         <Routes>
