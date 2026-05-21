@@ -2,6 +2,7 @@ import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, Me
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import StreakTree from "@/components/StreakTree";
 
 const copy = {
   en: {
@@ -187,6 +188,7 @@ const MainMenu = ({
           );
         })}
       </section>
+      <StreakTree language={language} />
     </main>
   );
 };
