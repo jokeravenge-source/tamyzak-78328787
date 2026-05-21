@@ -23,16 +23,169 @@ type ThemeDef = {
   arName: string;
   swatch: [string, string, string];
   mode: "light" | "dark";
+  vars: Record<string, string>;
 };
 
+// Each theme defines the full set of HSL tokens and gradient strings.
+const base = (
+  background: string,
+  foreground: string,
+  card: string,
+  cardFg: string,
+  cardFrontFg: string,
+  cardBackFg: string,
+  primary: string,
+  primaryFg: string,
+  primaryGlow: string,
+  secondary: string,
+  secondaryFg: string,
+  muted: string,
+  mutedFg: string,
+  border: string,
+  ring: string,
+  gradBg: string,
+  gradCardFront: string,
+  gradCardBack: string,
+  shadowCard: string,
+  shadowGlow: string,
+): Record<string, string> => ({
+  "--background": background,
+  "--foreground": foreground,
+  "--card": card,
+  "--card-foreground": cardFg,
+  "--card-front-fg": cardFrontFg,
+  "--card-back-fg": cardBackFg,
+  "--popover": card,
+  "--popover-foreground": cardFg,
+  "--primary": primary,
+  "--primary-foreground": primaryFg,
+  "--primary-glow": primaryGlow,
+  "--secondary": secondary,
+  "--secondary-foreground": secondaryFg,
+  "--muted": muted,
+  "--muted-foreground": mutedFg,
+  "--accent": primary,
+  "--accent-foreground": primaryFg,
+  "--destructive": "0 72% 51%",
+  "--destructive-foreground": "0 0% 100%",
+  "--border": border,
+  "--input": border,
+  "--ring": ring,
+  "--radius": "0.625rem",
+  "--gradient-bg": gradBg,
+  "--gradient-card-front": gradCardFront,
+  "--gradient-card-back": gradCardBack,
+  "--gradient-primary": `linear-gradient(135deg, hsl(${primary}), hsl(${primaryGlow}))`,
+  "--shadow-card": shadowCard,
+  "--shadow-glow": shadowGlow,
+});
+
 const THEMES: ThemeDef[] = [
-  { id: "notion-light", name: "Notion Light", arName: "نوشن فاتح", swatch: ["#f7f6f3", "#ffffff", "#2383e2"], mode: "light" },
-  { id: "notion-dark", name: "Notion Dark", arName: "نوشن داكن", swatch: ["#1f1f1f", "#2a2a2a", "#5b9dff"], mode: "dark" },
-  { id: "sepia", name: "Sepia", arName: "سيبيا", swatch: ["#efe6d3", "#faf3e0", "#b35a1c"], mode: "light" },
-  { id: "slate", name: "Slate", arName: "إردوازي", swatch: ["#1c2330", "#252e3f", "#3fb6ec"], mode: "dark" },
-  { id: "forest", name: "Forest", arName: "غابة", swatch: ["#eaf3ee", "#ffffff", "#1e8a5a"], mode: "light" },
-  { id: "rose", name: "Rose", arName: "وردي", swatch: ["#fbe9ee", "#ffffff", "#e1356f"], mode: "light" },
-  { id: "nord", name: "Nord", arName: "نورد", swatch: ["#2e3440", "#3b4252", "#88c0d0"], mode: "dark" },
+  {
+    id: "notion-light", name: "Notion Light", arName: "نوشن فاتح", mode: "light",
+    swatch: ["#f7f6f3", "#ffffff", "#2383e2"],
+    vars: base(
+      "40 14% 97%", "30 8% 15%", "0 0% 100%", "30 8% 15%", "30 8% 15%", "0 0% 100%",
+      "217 91% 55%", "0 0% 100%", "199 95% 60%",
+      "40 10% 94%", "30 8% 20%", "40 10% 94%", "30 5% 45%",
+      "30 8% 88%", "217 91% 55%",
+      "linear-gradient(180deg, hsl(40 14% 97%), hsl(40 14% 97%))",
+      "linear-gradient(135deg, hsl(0 0% 100%), hsl(40 14% 97%))",
+      "linear-gradient(135deg, hsl(217 91% 55%), hsl(199 95% 60%))",
+      "0 1px 3px hsl(30 8% 15% / 0.06), 0 12px 32px -8px hsl(30 8% 15% / 0.12)",
+      "0 0 0 1px hsl(217 91% 55% / 0.25), 0 8px 24px -4px hsl(217 91% 55% / 0.25)",
+    ),
+  },
+  {
+    id: "notion-dark", name: "Notion Dark", arName: "نوشن داكن", mode: "dark",
+    swatch: ["#1f1f1f", "#2a2a2a", "#5b9dff"],
+    vars: base(
+      "0 0% 12%", "0 0% 92%", "0 0% 15%", "0 0% 92%", "0 0% 95%", "0 0% 98%",
+      "217 91% 62%", "0 0% 100%", "199 95% 65%",
+      "0 0% 18%", "0 0% 92%", "0 0% 18%", "0 0% 60%",
+      "0 0% 22%", "217 91% 62%",
+      "linear-gradient(180deg, hsl(0 0% 12%), hsl(0 0% 10%))",
+      "linear-gradient(135deg, hsl(0 0% 18%), hsl(0 0% 13%))",
+      "linear-gradient(135deg, hsl(217 91% 28%), hsl(199 95% 22%))",
+      "0 1px 3px hsl(0 0% 0% / 0.3), 0 20px 50px -10px hsl(0 0% 0% / 0.5)",
+      "0 0 0 1px hsl(217 91% 62% / 0.4), 0 8px 32px -4px hsl(217 91% 62% / 0.45)",
+    ),
+  },
+  {
+    id: "sepia", name: "Sepia", arName: "سيبيا", mode: "light",
+    swatch: ["#efe6d3", "#faf3e0", "#b35a1c"],
+    vars: base(
+      "38 38% 94%", "25 30% 18%", "38 50% 97%", "25 30% 18%", "25 30% 18%", "38 50% 97%",
+      "22 75% 42%", "38 50% 97%", "30 80% 55%",
+      "36 25% 88%", "25 30% 22%", "36 25% 88%", "25 15% 42%",
+      "32 20% 82%", "22 75% 42%",
+      "linear-gradient(180deg, hsl(38 38% 94%), hsl(36 32% 91%))",
+      "linear-gradient(135deg, hsl(38 50% 97%), hsl(36 35% 92%))",
+      "linear-gradient(135deg, hsl(22 75% 42%), hsl(30 80% 55%))",
+      "0 1px 3px hsl(25 30% 18% / 0.08), 0 12px 32px -8px hsl(25 30% 18% / 0.15)",
+      "0 0 0 1px hsl(22 75% 42% / 0.3), 0 8px 24px -4px hsl(22 75% 42% / 0.3)",
+    ),
+  },
+  {
+    id: "slate", name: "Slate", arName: "إردوازي", mode: "dark",
+    swatch: ["#1c2330", "#252e3f", "#3fb6ec"],
+    vars: base(
+      "215 28% 14%", "210 20% 92%", "215 25% 18%", "210 20% 92%", "210 20% 95%", "0 0% 100%",
+      "199 89% 58%", "215 28% 10%", "188 95% 65%",
+      "215 22% 22%", "210 20% 92%", "215 22% 22%", "215 15% 65%",
+      "215 20% 26%", "199 89% 58%",
+      "linear-gradient(180deg, hsl(215 28% 14%), hsl(215 32% 10%))",
+      "linear-gradient(135deg, hsl(215 25% 20%), hsl(215 30% 14%))",
+      "linear-gradient(135deg, hsl(199 70% 28%), hsl(188 75% 22%))",
+      "0 1px 3px hsl(0 0% 0% / 0.4), 0 24px 60px -12px hsl(199 89% 30% / 0.4)",
+      "0 0 0 1px hsl(199 89% 58% / 0.4), 0 8px 32px -4px hsl(199 89% 58% / 0.4)",
+    ),
+  },
+  {
+    id: "forest", name: "Forest", arName: "غابة", mode: "light",
+    swatch: ["#eaf3ee", "#ffffff", "#1e8a5a"],
+    vars: base(
+      "150 25% 96%", "155 30% 14%", "0 0% 100%", "155 30% 14%", "155 30% 14%", "0 0% 100%",
+      "158 65% 32%", "0 0% 100%", "142 70% 45%",
+      "150 20% 92%", "155 30% 18%", "150 20% 92%", "155 12% 42%",
+      "150 18% 85%", "158 65% 32%",
+      "linear-gradient(180deg, hsl(150 25% 96%), hsl(148 22% 93%))",
+      "linear-gradient(135deg, hsl(0 0% 100%), hsl(150 25% 95%))",
+      "linear-gradient(135deg, hsl(158 65% 32%), hsl(142 70% 45%))",
+      "0 1px 3px hsl(155 30% 14% / 0.08), 0 12px 32px -8px hsl(158 65% 25% / 0.18)",
+      "0 0 0 1px hsl(158 65% 32% / 0.3), 0 8px 24px -4px hsl(158 65% 32% / 0.3)",
+    ),
+  },
+  {
+    id: "rose", name: "Rose", arName: "وردي", mode: "light",
+    swatch: ["#fbe9ee", "#ffffff", "#e1356f"],
+    vars: base(
+      "350 50% 97%", "340 25% 18%", "0 0% 100%", "340 25% 18%", "340 25% 18%", "0 0% 100%",
+      "340 75% 52%", "0 0% 100%", "320 80% 65%",
+      "350 40% 93%", "340 25% 22%", "350 40% 93%", "340 12% 45%",
+      "350 30% 88%", "340 75% 52%",
+      "linear-gradient(180deg, hsl(350 50% 97%), hsl(345 45% 94%))",
+      "linear-gradient(135deg, hsl(0 0% 100%), hsl(350 50% 96%))",
+      "linear-gradient(135deg, hsl(340 75% 52%), hsl(320 80% 65%))",
+      "0 1px 3px hsl(340 25% 18% / 0.08), 0 12px 32px -8px hsl(340 75% 45% / 0.2)",
+      "0 0 0 1px hsl(340 75% 52% / 0.3), 0 8px 24px -4px hsl(340 75% 52% / 0.3)",
+    ),
+  },
+  {
+    id: "nord", name: "Nord", arName: "نورد", mode: "dark",
+    swatch: ["#2e3440", "#3b4252", "#88c0d0"],
+    vars: base(
+      "220 16% 22%", "218 27% 92%", "222 16% 26%", "218 27% 92%", "218 27% 94%", "0 0% 100%",
+      "193 43% 67%", "220 16% 18%", "210 34% 63%",
+      "220 16% 30%", "218 27% 92%", "220 16% 30%", "218 16% 70%",
+      "220 14% 34%", "193 43% 67%",
+      "linear-gradient(180deg, hsl(220 16% 22%), hsl(220 18% 18%))",
+      "linear-gradient(135deg, hsl(222 16% 28%), hsl(220 18% 22%))",
+      "linear-gradient(135deg, hsl(193 43% 40%), hsl(210 34% 38%))",
+      "0 1px 3px hsl(0 0% 0% / 0.4), 0 24px 60px -12px hsl(220 18% 8% / 0.6)",
+      "0 0 0 1px hsl(193 43% 67% / 0.4), 0 8px 32px -4px hsl(193 43% 67% / 0.4)",
+    ),
+  },
 ];
 
 const STYLE_TAG_ID = "app-theme-vars";
@@ -51,22 +204,17 @@ export function applyTheme(id: ThemeId) {
   const def = THEMES.find((t) => t.id === id);
   if (!def) return;
   const tag = ensureStyleTag();
-  // Re-declare the chosen theme as :root vars with !important to win over any base CSS.
-  // We read the existing theme class CSS from index.css by name.
-  tag.textContent = `:root, html, body { color-scheme: ${def.mode}; }
-html.theme-active, body.theme-active { }
-:root { --__theme: "${id}"; }
-body { background: var(--gradient-bg) !important; }
-html, body { background-color: hsl(var(--background)) !important; }
-`;
-  // Set the theme class on both <html> and <body>; some preview wrappers
-  // may strip one but not both. Re-applied on every call.
-  const allClasses = THEMES.map((t) => `theme-${t.id}`);
+  const varDecls = Object.entries(def.vars)
+    .map(([k, v]) => `  ${k}: ${v} !important;`)
+    .join("\n");
+  // Inject as a stylesheet targeting :root, html and body — wins over any
+  // class-based rule and survives preview wrappers stripping classes.
+  tag.textContent = `:root, html, body {\n  color-scheme: ${def.mode};\n${varDecls}\n}\nbody { background: var(--gradient-bg) !important; background-attachment: fixed !important; }\n`;
+  // Also keep the tailwind `dark:` variant working by toggling .dark on both html and body.
   for (const el of [document.documentElement, document.body]) {
     if (!el) continue;
-    el.classList.remove(...allClasses, "dark");
-    el.classList.add(`theme-${id}`);
     if (def.mode === "dark") el.classList.add("dark");
+    else el.classList.remove("dark");
   }
 }
 
