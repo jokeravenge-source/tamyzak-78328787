@@ -36,7 +36,7 @@ const copy = {
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq";
 
 const MainMenu = ({
   language,
@@ -55,7 +55,7 @@ const MainMenu = ({
     { key: "malazam", Icon: BookMarked, locked: true, ...text.items.malazam },
     { key: "summaries", Icon: FileText, locked: true, ...text.items.summaries },
     { key: "missions", Icon: ListChecks, locked: false, ...text.items.missions },
-    { key: "mcq", Icon: HelpCircle, locked: true, ...text.items.mcq },
+    { key: "mcq", Icon: HelpCircle, locked: false, ...text.items.mcq },
     { key: "advices", Icon: MessageSquareQuote, locked: true, ...text.items.advices },
     { key: "videoNotes", Icon: Headphones, locked: true, ...text.items.videoNotes },
   ];
