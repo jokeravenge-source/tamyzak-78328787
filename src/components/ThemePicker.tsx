@@ -15,7 +15,8 @@ export type ThemeId =
   | "slate"
   | "forest"
   | "rose"
-  | "nord";
+  | "nord"
+  | "zombie";
 
 type ThemeDef = {
   id: ThemeId;
@@ -184,6 +185,21 @@ const THEMES: ThemeDef[] = [
       "linear-gradient(135deg, hsl(193 43% 40%), hsl(210 34% 38%))",
       "0 1px 3px hsl(0 0% 0% / 0.4), 0 24px 60px -12px hsl(220 18% 8% / 0.6)",
       "0 0 0 1px hsl(193 43% 67% / 0.4), 0 8px 32px -4px hsl(193 43% 67% / 0.4)",
+    ),
+  },
+  {
+    id: "zombie", name: "Zombie", arName: "زومبي", mode: "dark",
+    swatch: ["#1a1f10", "#3b4a1a", "#8bd11e"],
+    vars: base(
+      "80 30% 8%", "85 60% 70%", "75 25% 12%", "85 60% 70%", "85 80% 65%", "85 80% 65%",
+      "82 80% 42%", "80 50% 5%", "60 90% 50%",
+      "75 30% 16%", "85 60% 75%", "75 30% 16%", "70 20% 55%",
+      "30 50% 25%", "0 80% 45%",
+      "linear-gradient(180deg, hsl(80 30% 8%), hsl(30 40% 6%))",
+      "linear-gradient(135deg, hsl(75 25% 14%), hsl(30 40% 10%))",
+      "linear-gradient(135deg, hsl(82 80% 30%), hsl(0 80% 35%))",
+      "0 0 0 1px hsl(0 80% 30% / 0.5), 0 20px 50px -10px hsl(0 80% 20% / 0.7)",
+      "0 0 0 2px hsl(82 80% 42% / 0.6), 0 0 30px hsl(60 90% 40% / 0.6)",
     ),
   },
 ];
