@@ -25,6 +25,7 @@ import AdminLogin from "./pages/AdminLogin";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
 import SupportButton from "./components/SupportButton";
 import AccountCenter from "./pages/AccountCenter";
+import Essay from "./pages/Essay";
 import ZombieGuard from "./components/ZombieGuard";
 import EnglishCategoryPage, { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "./pages/EnglishCategory";
 
@@ -79,7 +80,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -153,6 +154,8 @@ const App = () => {
         <Sessions language={language} onBack={resetMenu} />
       ) : menuChoice === "account" ? (
         <AccountCenter language={language} onBack={resetMenu} />
+      ) : menuChoice === "essay" ? (
+        <Essay language={language} onBack={resetMenu} />
       ) : menuChoice === "malazam" ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={() => {}} mode="malazam" />
       ) : !subject ? (
