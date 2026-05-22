@@ -54,20 +54,28 @@ const englishParagraphsChapters = [
 
 const copy = {
   en: {
-    badge: "HYDAAR DIWAAN",
     title: "Choose a Chapter",
     description: "Eight chapters of physics, distilled into beautiful flashcards. Start with what you need.",
   },
   ar: {
-    badge: "حيدر ديوان",
     title: "اختر الفصل",
     description: "ثمانية فصول في الفيزياء، مختصرة في بطاقات تعليمية جميلة. ابدأ بما تحتاجه.",
   },
 };
 
+const teacherBadge: Record<AppSubject, { ar: string; en: string }> = {
+  physics: { ar: "حيدر ديوان", en: "HYDAR DIWAN" },
+  chemistry: { ar: "احمد النداوي", en: "AHMED AL-NADAWI" },
+  biology: { ar: "محمد العنزي", en: "MOHAMMED AL-ANZI" },
+  english: { ar: "محمد النداوي", en: "MOHAMMED AL-NADAWI" },
+  french: { ar: "محمد علي الكناني", en: "MOHAMMED ALI AL-KANANI" },
+  arabic: { ar: "", en: "" },
+};
+
 const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLanguage; subject: AppSubject; onChangeLanguage: () => void }) => {
   const navigate = useNavigate();
   const text = copy[language];
+  const badge = (teacherBadge[subject] ?? { ar: "", en: "" })[language];
   const englishCategory = (typeof window !== "undefined"
     ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null)
     : null);
@@ -107,7 +115,7 @@ const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLangua
       <header className="text-center max-w-3xl mx-auto z-10 relative animate-fade-up">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{text.badge}</span>
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{badge}</span>
         </div>
         <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">
           {text.title}
