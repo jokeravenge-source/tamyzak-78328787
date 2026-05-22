@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw, Bookmark, BookmarkCheck, Star } from "lucide-react";
+import { Plus, X, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh1Ar } from "@/data/flashcardsCh1Ar";
 import { flashcardsCh2Ar } from "@/data/flashcardsCh2Ar";
@@ -81,6 +83,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       .eq("subject", subject)
       .eq("chapter", String(chapter))
       .eq("language", language)
+      .eq("approved", true)
       .order("created_at", { ascending: true })
       .then(({ data }) => {
         if (!active) return;
@@ -239,6 +242,35 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     }
   };
 
+  // User-submitted flashcards (await admin approval)
+  const [showSubmit, setShowSubmit] = useState(false);
+  const [submitQ, setSubmitQ] = useState("");
+  const [submitA, setSubmitA] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const submitFlashcard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!submitQ.trim() || !submitA.trim()) return;
+    setSubmitting(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Not signed in");
+      const { error } = await supabase.from("custom_flashcards").insert({
+        subject,
+        chapter: String(chapter),
+        language,
+        question: submitQ.trim(),
+        answer: submitA.trim(),
+        created_by: u.user.id,
+        approved: false,
+      });
+      if (error) throw error;
+      toast.success(language === "ar" ? "تم الإرسال — بانتظار موافقة المسؤول" : "Submitted — waiting for admin approval");
+      setSubmitQ(""); setSubmitA(""); setShowSubmit(false);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed");
+    } finally { setSubmitting(false); }
+  };
+
   if (useRemote && (loading || cards.length === 0)) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -346,7 +378,42 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
             ? (savedView ? "كل البطاقات" : `المحفوظة (${saved.length})`)
             : (savedView ? "All cards" : `Saved (${saved.length})`)}
         </Button>
+        <Button variant="ghost" size="sm" onClick={() => setShowSubmit(true)} className="gap-2">
+          <Plus className="w-4 h-4" />
+          {language === "ar" ? "أضف بطاقة" : "Submit card"}
+        </Button>
       </footer>
+
+      {showSubmit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4" onClick={() => !submitting && setShowSubmit(false)}>
+          <form onSubmit={submitFlashcard} onClick={(e) => e.stopPropagation()} dir={language === "ar" ? "rtl" : "ltr"} className="w-full max-w-md rounded-3xl border border-white/10 bg-secondary p-6 space-y-4 animate-fade-up">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold gradient-text">
+                {language === "ar" ? "أرسل بطاقة جديدة" : "Submit a flashcard"}
+              </h2>
+              <button type="button" onClick={() => setShowSubmit(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {language === "ar"
+                ? `سيُراجع المسؤول بطاقتك قبل ظهورها. (${subject} · ${chapter} · ${language.toUpperCase()})`
+                : `An admin will review your card before it appears. (${subject} · Ch ${chapter} · ${language.toUpperCase()})`}
+            </p>
+            <div>
+              <label className="text-xs text-muted-foreground">{language === "ar" ? "السؤال *" : "Question *"}</label>
+              <textarea required value={submitQ} onChange={(e) => setSubmitQ(e.target.value)} rows={2} maxLength={500} className="mt-1 w-full px-3 py-2 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">{language === "ar" ? "الإجابة *" : "Answer *"}</label>
+              <textarea required value={submitA} onChange={(e) => setSubmitA(e.target.value)} rows={4} maxLength={2000} className="mt-1 w-full px-3 py-2 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm" />
+            </div>
+            <button type="submit" disabled={submitting || !submitQ.trim() || !submitA.trim()} className="w-full h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2">
+              {submitting
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> {language === "ar" ? "جارٍ الإرسال…" : "Submitting…"}</>
+                : <><Plus className="w-4 h-4" /> {language === "ar" ? "إرسال للموافقة" : "Submit for approval"}</>}
+            </button>
+          </form>
+        </div>
+      )}
     </main>
   );
 };

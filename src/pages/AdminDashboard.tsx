@@ -37,25 +37,36 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   useEffect(() => { fetchRows(); }, [tab]);
 
   // Flashcards state
-  type FC = { id: string; subject: string; chapter: string; language: string; question: string; answer: string; created_at: string };
+  type FC = { id: string; subject: string; chapter: string; language: string; question: string; answer: string; created_at: string; approved: boolean; created_by: string | null };
   const [fcs, setFcs] = useState<FC[]>([]);
   const [fcLoading, setFcLoading] = useState(false);
   const [fcForm, setFcForm] = useState({ subject: "physics", chapter: "1", language: "en", question: "", answer: "" });
+  const [fcFilter, setFcFilter] = useState<"pending" | "approved">("pending");
   const loadFcs = async () => {
     setFcLoading(true);
-    const { data } = await supabase.from("custom_flashcards").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase
+      .from("custom_flashcards")
+      .select("*")
+      .eq("approved", fcFilter === "approved")
+      .order("created_at", { ascending: false });
     setFcs((data ?? []) as FC[]);
     setFcLoading(false);
   };
-  useEffect(() => { if (tab === "flashcards") loadFcs(); }, [tab]);
+  useEffect(() => { if (tab === "flashcards") loadFcs(); }, [tab, fcFilter]);
   const addFc = async () => {
     if (!fcForm.question.trim() || !fcForm.answer.trim()) return toast.error("Question and answer required");
     const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("custom_flashcards").insert({ ...fcForm, created_by: u.user?.id });
+    const { error } = await supabase.from("custom_flashcards").insert({ ...fcForm, created_by: u.user?.id, approved: true });
     if (error) return toast.error(error.message);
     toast.success("Flashcard added");
     setFcForm({ ...fcForm, question: "", answer: "" });
     loadFcs();
+  };
+  const approveFc = async (id: string) => {
+    const { error } = await supabase.from("custom_flashcards").update({ approved: true }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Approved");
+    setFcs((r) => r.filter((x) => x.id !== id));
   };
   const delFc = async (id: string) => {
     if (!confirm("Delete this flashcard?")) return;
@@ -175,10 +186,18 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                 <Plus className="w-4 h-4" /> Add flashcard
               </button>
             </div>
+            <div className="flex gap-2">
+              <button onClick={() => setFcFilter("pending")} className={`px-3 py-1.5 rounded-full text-xs border ${fcFilter === "pending" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-secondary/40 text-muted-foreground"}`}>
+                <Clock className="w-3 h-3 inline mr-1" /> Pending review
+              </button>
+              <button onClick={() => setFcFilter("approved")} className={`px-3 py-1.5 rounded-full text-xs border ${fcFilter === "approved" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-secondary/40 text-muted-foreground"}`}>
+                <Check className="w-3 h-3 inline mr-1" /> Approved
+              </button>
+            </div>
             {fcLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : fcs.length === 0 ? (
-              <p className="text-center text-muted-foreground py-10">No custom flashcards yet.</p>
+              <p className="text-center text-muted-foreground py-10">{fcFilter === "pending" ? "No pending submissions." : "No approved flashcards yet."}</p>
             ) : (
               <div className="grid gap-3">
                 {fcs.map((f) => (
@@ -188,10 +207,16 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                         <span className="px-2 py-0.5 rounded-full border border-primary/30 text-primary">{f.subject}</span>
                         <span>Ch {f.chapter}</span>
                         <span>· {f.language.toUpperCase()}</span>
+                        {!f.approved && <span className="px-2 py-0.5 rounded-full border border-amber-500/40 text-amber-400">Pending</span>}
                       </div>
                       <p className="font-medium">{f.question}</p>
                       <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{f.answer}</p>
                     </div>
+                    {!f.approved && (
+                      <button onClick={() => approveFc(f.id)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm">
+                        <Check className="w-4 h-4" /> Approve
+                      </button>
+                    )}
                     <button onClick={() => delFc(f.id)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm">
                       <Trash2 className="w-4 h-4" /> Delete
                     </button>
