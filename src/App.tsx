@@ -23,6 +23,7 @@ import Sessions from "./pages/Sessions";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
+import SupportButton from "./components/SupportButton";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -114,6 +115,7 @@ const App = () => {
       <Toaster />
       <Sonner />
       <ThemePicker language={language ?? "en"} />
+      <SupportButton />
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authRole === "admin" && !authed ? (

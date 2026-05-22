@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw, Bookmark, BookmarkCheck, Star } from "lucide-react";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh1Ar } from "@/data/flashcardsCh1Ar";
 import { flashcardsCh2Ar } from "@/data/flashcardsCh2Ar";
@@ -63,6 +63,16 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   const { chapter = "3" } = useParams();
   const baseDeck = decks[chapter] ?? decks["3"];
   const [extraCards, setExtraCards] = useState<typeof flashcards>([]);
+  const SAVED_KEY = "saved_flashcards_v1";
+  type SavedCard = { q: string; a: string; subject: string; chapter: string };
+  const [saved, setSaved] = useState<SavedCard[]>(() => {
+    try { return JSON.parse(localStorage.getItem(SAVED_KEY) || "[]"); } catch { return []; }
+  });
+  const [savedView, setSavedView] = useState(false);
+  const persistSaved = (next: SavedCard[]) => {
+    setSaved(next);
+    localStorage.setItem(SAVED_KEY, JSON.stringify(next));
+  };
   useEffect(() => {
     let active = true;
     supabase
@@ -200,9 +210,13 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   };
 
   useEffect(() => {
-    setCards([...deck.cards, ...extraCards]);
+    if (savedView) {
+      setCards(saved.map((s) => ({ q: s.q, a: s.a })));
+    } else {
+      setCards([...deck.cards, ...extraCards]);
+    }
     setIndex(0);
-  }, [deck, extraCards]);
+  }, [deck, extraCards, savedView, saved]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -215,6 +229,15 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
 
   const card = cards[index];
   const progress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
+  const isSaved = !!card && saved.some((s) => s.q === card.q && s.a === card.a);
+  const toggleSave = () => {
+    if (!card) return;
+    if (isSaved) {
+      persistSaved(saved.filter((s) => !(s.q === card.q && s.a === card.a)));
+    } else {
+      persistSaved([...saved, { q: card.q, a: card.a, subject, chapter: String(chapter) }]);
+    }
+  };
 
   if (useRemote && (loading || cards.length === 0)) {
     return (
@@ -307,6 +330,21 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         </Button>
         <Button variant="ghost" size="sm" onClick={reset} className="gap-2">
           <RotateCcw className="w-4 h-4" /> {text.reset}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={toggleSave} className="gap-2" disabled={!card}>
+          {isSaved ? <BookmarkCheck className="w-4 h-4 text-primary" /> : <Bookmark className="w-4 h-4" />}
+          {language === "ar" ? (isSaved ? "محفوظة" : "حفظ") : (isSaved ? "Saved" : "Save")}
+        </Button>
+        <Button
+          variant={savedView ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setSavedView((v) => !v)}
+          className="gap-2"
+        >
+          <Star className="w-4 h-4" />
+          {language === "ar"
+            ? (savedView ? "كل البطاقات" : `المحفوظة (${saved.length})`)
+            : (savedView ? "All cards" : `Saved (${saved.length})`)}
         </Button>
       </footer>
     </main>
