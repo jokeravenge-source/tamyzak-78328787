@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { Sparkles, Mail, Lock, ArrowRight } from "lucide-react";
+import { Sparkles, Mail, Lock, ArrowRight, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 const GoogleIcon = () => (
