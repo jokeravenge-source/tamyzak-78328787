@@ -86,6 +86,12 @@ export default {
           "0%, 100%": { opacity: "0.5" },
           "50%": { opacity: "1" },
         },
+        "apple-pop": {
+          "0%": { transform: "scale(1)" },
+          "40%": { transform: "scale(1.06)" },
+          "70%": { transform: "scale(0.98)" },
+          "100%": { transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -95,6 +101,7 @@ export default {
         "fade-up": "fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
         "float": "float 6s ease-in-out infinite",
         "glow-pulse": "glow-pulse 3s ease-in-out infinite",
+        "apple-pop": "apple-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
     },
   },
