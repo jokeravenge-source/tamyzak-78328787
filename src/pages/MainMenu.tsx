@@ -1,4 +1,4 @@
-import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, UserCog, Menu } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, UserCog, Menu, PenLine } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ const copy = {
       advices: { title: "Advices", subtitle: "Read advice from top students or share your own." },
       videoNotes: { title: "Video to Notes", subtitle: "Upload audio or video and get AI-generated notes." },
       account: { title: "Account Center", subtitle: "Set your username and manage your profile." },
+      essay: { title: "Essay Coach", subtitle: "Upload a file and get essay questions graded 1–10 by AI." },
     },
   },
   ar: {
@@ -40,11 +41,12 @@ const copy = {
       advices: { title: "النصائح", subtitle: "اقرأ نصائح من المتفوقين أو شارك نصيحتك." },
       videoNotes: { title: "من الفيديو إلى ملاحظات", subtitle: "ارفع صوتاً أو فيديو واحصل على ملاحظات." },
       account: { title: "مركز الحساب", subtitle: "حدّد اسم المستخدم وأدر ملفك الشخصي." },
+      essay: { title: "مدرّب المقالات", subtitle: "ارفع ملفاً واحصل على أسئلة مقالية مُقيَّمة من 1 إلى 10." },
     },
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay";
 
 const MainMenu = ({
   language,
@@ -112,6 +114,7 @@ const MainMenu = ({
     { key: "mcq" as const, Icon: HelpCircle, ...text.items.mcq },
     { key: "advices" as const, Icon: MessageSquareQuote, ...text.items.advices },
     { key: "sessions" as const, Icon: GraduationCap, ...text.items.sessions },
+    { key: "essay" as const, Icon: PenLine, ...text.items.essay },
     { key: "account" as const, Icon: UserCog, ...text.items.account },
   ];
 

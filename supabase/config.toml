@@ -2,3 +2,6 @@ project_id = "mwksmqcthfwgvldgbggy"
 
 [functions.generate-mcq]
 verify_jwt = false
+
+[functions.essay-coach]
+verify_jwt = false
