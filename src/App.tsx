@@ -126,7 +126,7 @@ const App = () => {
       ) : authRole === "admin" && authed && isAdmin ? (
         <AdminDashboard onLogout={adminLogout} />
       ) : !authed ? (
-        <Auth onAuthed={() => setAuthed(true)} />
+        <Auth onAuthed={() => setAuthed(true)} onGoAdmin={() => chooseRole("admin")} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
       ) : !menuChoice ? (
