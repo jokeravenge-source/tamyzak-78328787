@@ -144,26 +144,20 @@ function TreeSVG({ progress }: { progress: number }) {
           const x = 60 + i * 45;
           const y = 70 + (i % 2) * 20;
           return (
-            <g
-              key={i}
-              transform={`translate(${x},${y})`}
-              style={{
-                transformOrigin: `${x}px ${y}px`,
-                transformBox: "fill-box",
-                animation: `streakSparkle 2.4s ease-in-out ${i * 0.25}s infinite`,
-              }}
-            >
-              <path
-                d="M0,-6 L1.5,-1.5 L6,0 L1.5,1.5 L0,6 L-1.5,1.5 L-6,0 L-1.5,-1.5 Z"
-                fill="hsl(var(--primary))"
-              />
+            <g key={i} transform={`translate(${x},${y})`}>
+              <g style={{ animation: `streakSparkle 2.4s ease-in-out ${i * 0.25}s infinite`, transformOrigin: "center" }}>
+                <path
+                  d="M0,-6 L1.5,-1.5 L6,0 L1.5,1.5 L0,6 L-1.5,1.5 L-6,0 L-1.5,-1.5 Z"
+                  fill="hsl(var(--primary))"
+                />
+              </g>
             </g>
           );
         })}
       <style>{`
         @keyframes streakSparkle {
-          0%, 100% { opacity: 0.3; transform: translate(0,0) scale(0.8); }
-          50%      { opacity: 1;   transform: translate(0,-3px) scale(1.15); }
+          0%, 100% { opacity: 0.4; transform: scale(0.8); }
+          50%      { opacity: 1;   transform: scale(1.2); }
         }
       `}</style>
     </svg>
