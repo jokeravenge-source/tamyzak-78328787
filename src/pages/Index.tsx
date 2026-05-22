@@ -34,6 +34,7 @@ import { flashcardsChemCh4Ar } from "@/data/flashcardsChemCh4Ar";
 import { flashcardsChemCh5Ar } from "@/data/flashcardsChemCh5Ar";
 import { flashcardsChemCh6Ar } from "@/data/flashcardsChemCh6Ar";
 import { flashcardsArabicLit1Ar } from "@/data/flashcardsArabicLit1Ar";
+import { flashcardsEngGrammar1 } from "@/data/flashcardsEngGrammar1";
 import { flashcardsCh1 } from "@/data/flashcardsCh1";
 import { flashcardsCh2 } from "@/data/flashcardsCh2";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
@@ -150,6 +151,14 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "العربية · الأدب" : "Arabic · Literature",
           cards: flashcardsArabicLit1Ar,
+        };
+      }
+
+      if (subject === "english" && chapter === "1") {
+        return {
+          title: language === "ar" ? "بطاقات تعليمية" : "Flashcards",
+          eyebrow: language === "ar" ? "الإنجليزية · القواعد · الوحدة 1" : "English · Grammar · Unit 1",
+          cards: flashcardsEngGrammar1,
         };
       }
 

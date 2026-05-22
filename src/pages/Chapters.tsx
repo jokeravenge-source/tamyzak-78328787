@@ -4,6 +4,7 @@ import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGat
 import type { AppSubject } from "@/pages/Subjects";
 import { SUBJECT_STORAGE_KEY } from "@/pages/Subjects";
 import SubjectAgent from "@/components/SubjectAgent";
+import { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "@/pages/EnglishCategory";
 
 const physicsChapters = [
   { n: 1, title: "Capacitors", arTitle: "المتسعات", subtitle: "", locked: false },
@@ -37,6 +38,20 @@ const arabicChapters = [
   { n: 1, title: "Literature 1", arTitle: "الأدب الجزء الأول", subtitle: "", locked: false },
 ];
 
+const englishGrammarChapters = Array.from({ length: 8 }, (_, i) => ({
+  n: i + 1,
+  title: `Unit ${i + 1}`,
+  arTitle: `الوحدة ${i + 1}`,
+  subtitle: "",
+  locked: i > 0,
+}));
+const englishLiteratureChapters = [
+  { n: 1, title: "Coming Soon", arTitle: "قريباً", subtitle: "", locked: true },
+];
+const englishParagraphsChapters = [
+  { n: 1, title: "Coming Soon", arTitle: "قريباً", subtitle: "", locked: true },
+];
+
 const copy = {
   en: {
     badge: "HYDAAR DIWAAN",
@@ -53,10 +68,16 @@ const copy = {
 const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLanguage; subject: AppSubject; onChangeLanguage: () => void }) => {
   const navigate = useNavigate();
   const text = copy[language];
+  const englishCategory = (typeof window !== "undefined"
+    ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null)
+    : null);
   const chapters =
     subject === "biology" ? biologyChapters :
     subject === "chemistry" ? chemistryChapters :
     subject === "arabic" ? arabicChapters :
+    subject === "english" && englishCategory === "grammar" ? englishGrammarChapters :
+    subject === "english" && englishCategory === "literature" ? englishLiteratureChapters :
+    subject === "english" && englishCategory === "paragraphs" ? englishParagraphsChapters :
     physicsChapters;
 
   const handleChangeLanguage = () => {
