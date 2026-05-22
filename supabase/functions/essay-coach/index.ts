@@ -1,0 +1,125 @@
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  try {
+    const body = await req.json();
+    const mode = body.mode as "generate" | "grade";
+    const language = body.language === "ar" ? "Arabic" : "English";
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (mode === "generate") {
+      const text = String(body.text || "").slice(0, 60000);
+      const n = Math.max(1, Math.min(10, Number(body.count) || 5));
+      if (!text || text.trim().length < 50) {
+        return new Response(JSON.stringify({ error: "Not enough text" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const systemPrompt = `You are an expert exam writer. Generate exactly ${n} open-ended ESSAY questions in ${language} based ONLY on the provided study material. Each question must require an explanatory paragraph answer (not yes/no). Return ONLY via the tool call.`;
+      const userPrompt = `Study material:\n\n${text}\n\nGenerate ${n} essay questions in ${language}.`;
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "submit_questions",
+              description: "Submit essay questions",
+              parameters: {
+                type: "object",
+                properties: {
+                  questions: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        question: { type: "string" },
+                        reference_answer: { type: "string", description: "Model answer derived strictly from the material" },
+                      },
+                      required: ["question", "reference_answer"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["questions"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "submit_questions" } },
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        const status = res.status === 429 || res.status === 402 ? res.status : 500;
+        return new Response(JSON.stringify({ error: errText }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const data = await res.json();
+      const tc = data.choices?.[0]?.message?.tool_calls?.[0];
+      if (!tc) return new Response(JSON.stringify({ error: "No questions" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const parsed = JSON.parse(tc.function.arguments);
+      return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (mode === "grade") {
+      const question = String(body.question || "");
+      const reference = String(body.reference || "");
+      const answer = String(body.answer || "");
+      const systemPrompt = `You are a strict but fair exam grader. Rate the student's answer from 1 to 10 based on accuracy, completeness, and clarity, comparing it against the reference answer and the question. Respond ONLY via tool call in ${language}.`;
+      const userPrompt = `Question:\n${question}\n\nReference answer:\n${reference}\n\nStudent answer:\n${answer}\n\nGrade from 1 to 10 and give brief feedback.`;
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "submit_grade",
+              description: "Submit a grade",
+              parameters: {
+                type: "object",
+                properties: {
+                  score: { type: "integer", minimum: 1, maximum: 10 },
+                  feedback: { type: "string" },
+                },
+                required: ["score", "feedback"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "submit_grade" } },
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        const status = res.status === 429 || res.status === 402 ? res.status : 500;
+        return new Response(JSON.stringify({ error: errText }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const data = await res.json();
+      const tc = data.choices?.[0]?.message?.tool_calls?.[0];
+      if (!tc) return new Response(JSON.stringify({ error: "No grade" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const parsed = JSON.parse(tc.function.arguments);
+      return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    return new Response(JSON.stringify({ error: "Invalid mode" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+});
