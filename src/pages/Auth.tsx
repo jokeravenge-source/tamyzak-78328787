@@ -69,11 +69,23 @@ export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
       <section className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-8 animate-fade-up">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-background/40 mb-6">
-          <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            {mode === "signin" ? "Sign in" : "Sign up"}
-          </span>
+        <div className="flex items-start justify-between mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-background/40">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              {mode === "signin" ? "Sign in" : "Sign up"}
+            </span>
+          </div>
+          {onGoAdmin && (
+            <button
+              type="button"
+              onClick={onGoAdmin}
+              aria-label="Admin access"
+              className="w-10 h-10 rounded-full border border-white/10 bg-background/40 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-all"
+            >
+              <Shield className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         <h1 className="text-3xl md:text-4xl font-bold gradient-text leading-tight mb-2">
