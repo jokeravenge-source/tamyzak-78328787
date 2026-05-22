@@ -19,7 +19,7 @@ const AppleIcon = () => (
   </svg>
 );
 
-export const Auth = ({ onAuthed }: { onAuthed: () => void }) => {
+export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?: () => void }) => {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
