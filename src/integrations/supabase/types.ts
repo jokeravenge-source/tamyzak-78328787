@@ -79,6 +79,7 @@ export type Database = {
       custom_flashcards: {
         Row: {
           answer: string
+          approved: boolean
           chapter: string
           created_at: string
           created_by: string | null
@@ -89,6 +90,7 @@ export type Database = {
         }
         Insert: {
           answer: string
+          approved?: boolean
           chapter: string
           created_at?: string
           created_by?: string | null
@@ -99,6 +101,7 @@ export type Database = {
         }
         Update: {
           answer?: string
+          approved?: boolean
           chapter?: string
           created_at?: string
           created_by?: string | null
