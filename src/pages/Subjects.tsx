@@ -25,7 +25,7 @@ const subjects: Array<{
   { code: "physics", en: "Physics", ar: "الفيزياء", Icon: Atom, locked: false },
   { code: "chemistry", en: "Chemistry", ar: "الكيمياء", Icon: FlaskConical, locked: false },
   { code: "biology", en: "Biology", ar: "الأحياء", Icon: Leaf, locked: false },
-  { code: "english", en: "English", ar: "الإنجليزية", Icon: BookOpen, locked: true },
+  { code: "english", en: "English", ar: "الإنجليزية", Icon: BookOpen, locked: false },
   { code: "french", en: "French", ar: "الفرنسية", Icon: LangIcon, locked: true },
   { code: "arabic", en: "Arabic", ar: "العربية", Icon: BookOpen, locked: false },
 ];
