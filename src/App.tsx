@@ -26,6 +26,7 @@ import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/Rol
 import SupportButton from "./components/SupportButton";
 import AccountCenter from "./pages/AccountCenter";
 import ZombieGuard from "./components/ZombieGuard";
+import EnglishCategoryPage, { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "./pages/EnglishCategory";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -75,6 +76,9 @@ const App = () => {
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
+  const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
+    () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
+  );
   type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
@@ -86,10 +90,16 @@ const App = () => {
     localStorage.removeItem(MENU_STORAGE_KEY);
     setLanguage(null);
   };
-  const resetSubject = () => setSubject(null);
+  const resetSubject = () => {
+    setSubject(null);
+    localStorage.removeItem(ENGLISH_CATEGORY_STORAGE_KEY);
+    setEnglishCategory(null);
+  };
   const resetMenu = () => {
     setSubject(null);
     setMenuChoice(null);
+    localStorage.removeItem(ENGLISH_CATEGORY_STORAGE_KEY);
+    setEnglishCategory(null);
     localStorage.removeItem(MENU_STORAGE_KEY);
   };
   const chooseMenu = (choice: MenuChoice) => {
@@ -147,6 +157,15 @@ const App = () => {
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={() => {}} mode="malazam" />
       ) : !subject ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={setSubject} />
+      ) : subject === "english" && !englishCategory ? (
+        <EnglishCategoryPage
+          language={language}
+          onBack={resetSubject}
+          onSelect={(c) => {
+            localStorage.setItem(ENGLISH_CATEGORY_STORAGE_KEY, c);
+            setEnglishCategory(c);
+          }}
+        />
       ) : (
       <BrowserRouter>
         <Routes>
