@@ -436,6 +436,33 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           </form>
         </div>
       )}
+
+      {showRating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4">
+          <div dir={language === "ar" ? "rtl" : "ltr"} className="w-full max-w-md rounded-3xl border border-white/10 bg-secondary p-6 space-y-5 animate-fade-up text-center">
+            <h2 className="text-2xl font-bold gradient-text">
+              {language === "ar" ? "كيف كان مستواك؟" : "How did you do?"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {language === "ar" ? "قيّم نفسك بصراحة بعد إنهاء البطاقات." : "Rate yourself honestly after finishing the deck."}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleRating("good")}
+                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+              >
+                {language === "ar" ? "جيد 👍" : "Good 👍"}
+              </button>
+              <button
+                onClick={() => handleRating("bad")}
+                className="flex-1 h-12 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20 font-semibold"
+              >
+                {language === "ar" ? "سيئ 👎" : "Bad 👎"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
