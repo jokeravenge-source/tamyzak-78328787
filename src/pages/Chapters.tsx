@@ -3,6 +3,7 @@ import { Lock, ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import type { AppSubject } from "@/pages/Subjects";
 import { SUBJECT_STORAGE_KEY } from "@/pages/Subjects";
+import SubjectAgent from "@/components/SubjectAgent";
 
 const physicsChapters = [
   { n: 1, title: "Capacitors", arTitle: "المتسعات", subtitle: "", locked: false },
@@ -156,6 +157,7 @@ const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLangua
       <footer className="text-center mt-16 text-xs text-muted-foreground tracking-widest z-10 relative">
         {"\n"}
       </footer>
+      <SubjectAgent subject={subject} language={language} />
     </main>
   );
 };
