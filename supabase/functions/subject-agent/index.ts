@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,6 +54,17 @@ async function fetchSubjectContext(subject: string): Promise<string> {
       const text = (await blob.text()).slice(0, 20000);
       parts.push(`### File: ${f.name}\n${text}`);
       total += text.length;
+    } else if (f.name.toLowerCase().endsWith(".pdf") || (blob.type || "") === "application/pdf") {
+      try {
+        const buf = new Uint8Array(await blob.arrayBuffer());
+        const pdf = await getDocumentProxy(buf);
+        const { text } = await extractText(pdf, { mergePages: true });
+        const clean = (Array.isArray(text) ? text.join("\n") : text).slice(0, 20000);
+        parts.push(`### File: ${f.name}\n${clean}`);
+        total += clean.length;
+      } catch (err) {
+        parts.push(`### File: ${f.name} (failed to parse PDF: ${String(err)})`);
+      }
     } else {
       parts.push(`### File: ${f.name} (binary, ${blob.type || "unknown"}, ${f.metadata?.size ?? "?"} bytes)`);
     }
