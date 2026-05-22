@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, ContactShadows } from "@react-three/drei";
-import * as THREE from "three";
+import { DotLottieReact, type DotLottie } from "@lottiefiles/dotlottie-react";
+import treeLottie from "@/assets/tree_growth.lottie?url";
 
 const KEY = "streak_state_v1";
 const FULL_DAYS = 20;
