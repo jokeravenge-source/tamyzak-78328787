@@ -70,6 +70,15 @@ function TreeSVG({ progress }: { progress: number }) {
 
   return (
     <svg viewBox="0 0 300 320" className="w-full h-full">
+      <defs>
+        <filter id="leafGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       {/* Ground line — Notion divider style */}
       <line x1="20" y1="300" x2="280" y2="300" stroke="hsl(var(--border))" strokeWidth="1" />
       {/* Small pot/soil dots */}
@@ -88,20 +97,44 @@ function TreeSVG({ progress }: { progress: number }) {
         style={{ transition: "all 700ms ease" }}
       />
 
-      {/* Leaf clusters — appear as progress grows */}
+      {/* Leaf clusters — smoothly grow in with a soft bloom when unlocked */}
       {clusters.map((c, i) => {
         const visible = progress >= c.threshold;
+        // How "fresh" is this unlock (0 = just unlocked, 1 = settled long ago)
+        const overshoot = visible
+          ? Math.min(1, (progress - c.threshold) / 0.08)
+          : 0;
+        const scale = visible ? 1 + (1 - overshoot) * 0.18 : 0;
         return (
-          <circle
+          <g
             key={i}
-            cx={c.cx}
-            cy={c.cy}
-            r={visible ? c.r : 0}
-            fill={leafFill}
-            stroke={leafStroke}
-            strokeWidth="1.5"
-            style={{ transition: "all 600ms cubic-bezier(.2,.7,.2,1)" }}
-          />
+            style={{
+              transformOrigin: `${c.cx}px ${c.cy}px`,
+              transformBox: "fill-box",
+              transform: `scale(${scale})`,
+              opacity: visible ? 1 : 0,
+              transition:
+                "transform 900ms cubic-bezier(.34,1.56,.64,1), opacity 600ms ease-out",
+              transitionDelay: `${i * 80}ms`,
+              filter: visible && overshoot < 1 ? "url(#leafGlow)" : undefined,
+            }}
+          >
+            <circle
+              cx={c.cx}
+              cy={c.cy}
+              r={c.r}
+              fill={leafFill}
+              stroke={leafStroke}
+              strokeWidth="1.5"
+            />
+            {/* tiny inner highlight pops as it unlocks */}
+            <circle
+              cx={c.cx - c.r * 0.3}
+              cy={c.cy - c.r * 0.3}
+              r={c.r * 0.18}
+              fill="hsl(var(--primary) / 0.35)"
+            />
+          </g>
         );
       })}
 
@@ -112,13 +145,21 @@ function TreeSVG({ progress }: { progress: number }) {
           const y = 70 + (i % 2) * 20;
           return (
             <g key={i} transform={`translate(${x},${y})`}>
-              <path
-                d="M0,-6 L1.5,-1.5 L6,0 L1.5,1.5 L0,6 L-1.5,1.5 L-6,0 L-1.5,-1.5 Z"
-                fill="hsl(var(--primary))"
-              />
+              <g style={{ animation: `streakSparkle 2.4s ease-in-out ${i * 0.25}s infinite`, transformOrigin: "center" }}>
+                <path
+                  d="M0,-6 L1.5,-1.5 L6,0 L1.5,1.5 L0,6 L-1.5,1.5 L-6,0 L-1.5,-1.5 Z"
+                  fill="hsl(var(--primary))"
+                />
+              </g>
             </g>
           );
         })}
+      <style>{`
+        @keyframes streakSparkle {
+          0%, 100% { opacity: 0.4; transform: scale(0.8); }
+          50%      { opacity: 1;   transform: scale(1.2); }
+        }
+      `}</style>
     </svg>
   );
 }
