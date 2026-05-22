@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { DotLottieReact, type DotLottie } from "@lottiefiles/dotlottie-react";
 import treeLottie from "@/assets/tree_growth.lottie?url";
@@ -122,6 +122,47 @@ const StreakTree = ({ language = "en" }: { language?: "en" | "ar" }) => {
   const progress = Math.min(state.days / FULL_DAYS, 1);
   const pct = Math.round(progress * 100);
 
+  const treeBoxRef = useRef<HTMLDivElement | null>(null);
+  const prevAppleCountRef = useRef<number>(-1);
+  const [popKey, setPopKey] = useState(0);
+
+  // Sparkle + pop when a new apple appears (roughly one per streak day).
+  useEffect(() => {
+    const appleCount = state.days; // 1 apple per day, up to FULL_DAYS
+    const prev = prevAppleCountRef.current;
+    if (prev === -1) {
+      prevAppleCountRef.current = appleCount;
+      return;
+    }
+    if (appleCount > prev) {
+      const bursts = appleCount - prev;
+      const box = treeBoxRef.current?.getBoundingClientRect();
+      for (let i = 0; i < bursts; i++) {
+        setTimeout(() => {
+          // Pop the tree slightly
+          setPopKey((k) => k + 1);
+          // Sparkle burst near a random spot in the canopy
+          if (box) {
+            const x = (box.left + box.width * (0.25 + Math.random() * 0.5)) / window.innerWidth;
+            const y = (box.top + box.height * (0.2 + Math.random() * 0.4)) / window.innerHeight;
+            confetti({
+              particleCount: 18,
+              spread: 60,
+              startVelocity: 22,
+              scalar: 0.7,
+              ticks: 80,
+              gravity: 0.6,
+              origin: { x, y },
+              colors: ["#FFD700", "#FFFFFF", "#FFE680", "#FFB347"],
+              shapes: ["star", "circle"],
+            });
+          }
+        }, i * 220);
+      }
+    }
+    prevAppleCountRef.current = appleCount;
+  }, [state.days]);
+
   useEffect(() => {
     if (state.days >= FULL_DAYS && !state.celebrated) {
       const end = Date.now() + 4000;
@@ -143,8 +184,10 @@ const StreakTree = ({ language = "en" }: { language?: "en" | "ar" }) => {
   return (
     <section dir={language === "ar" ? "rtl" : "ltr"} className="w-full mt-12 mb-6">
       <div className="mx-auto max-w-md rounded-xl border border-border bg-card p-6">
-        <div className="h-72 rounded-lg overflow-hidden flex items-center justify-center">
-          <LottieTree progress={progress} />
+        <div ref={treeBoxRef} className="relative h-72 rounded-lg overflow-hidden flex items-center justify-center">
+          <div key={popKey} className="w-full h-full animate-apple-pop">
+            <LottieTree progress={progress} />
+          </div>
         </div>
         <div className="mt-4 text-center">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">{T.label}</p>
