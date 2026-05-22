@@ -110,11 +110,11 @@ export const Auth = ({ onAuthed }: { onAuthed: () => void }) => {
           <div className="h-px flex-1 bg-white/10" />
         </div>
 
-        <form onSubmit={handleEmail} className="space-y-3">
+        <form onSubmit={handleEmail} className="space-y-3" noValidate>
           <div className="relative">
             <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
-              type="email"
+              type="text"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}

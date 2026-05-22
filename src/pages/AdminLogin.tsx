@@ -57,10 +57,10 @@ export const AdminLogin = ({ onAuthed, onBack }: { onAuthed: () => void; onBack:
         </div>
         <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2">Admin sign-in</h1>
         <p className="text-sm text-muted-foreground mb-6">Enter admin credentials to manage summaries.</p>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3" noValidate>
           <div className="relative">
             <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin email" className="w-full h-11 pl-10 pr-3 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm" />
+            <input type="text" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin email" className="w-full h-11 pl-10 pr-3 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm" />
           </div>
           <div className="relative">
             <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
