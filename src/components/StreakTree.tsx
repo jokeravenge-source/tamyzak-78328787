@@ -60,19 +60,49 @@ function LottieTree({ progress }: { progress: number }) {
 
   useEffect(() => {
     if (!dotLottie) return;
-    const apply = () => {
+    let raf = 0;
+    let cancelled = false;
+    let currentFrame = 0;
+
+    const run = () => {
       const total = dotLottie.totalFrames || 0;
       if (!total) return;
-      const frame = Math.max(0, Math.min(total - 1, Math.round(total * progress)));
-      try {
-        dotLottie.pause();
-        dotLottie.setFrame(frame);
-      } catch {}
+      const target = Math.max(0, Math.min(total - 1, Math.round(total * progress)));
+      const startFrame = currentFrame;
+      const growMs = 1600; // smooth grow-in tween
+      const t0 = performance.now();
+
+      try { dotLottie.pause(); } catch {}
+
+      const tick = (now: number) => {
+        if (cancelled) return;
+        const elapsed = now - t0;
+        const k = Math.min(1, elapsed / growMs);
+        // easeOutCubic
+        const eased = 1 - Math.pow(1 - k, 3);
+        let f = startFrame + (target - startFrame) * eased;
+
+        if (k >= 1) {
+          // After growth: gentle apple sway by oscillating ±1.5 frames around target
+          const sway = Math.sin((now - t0) / 600) * 1.5;
+          f = target + sway;
+        }
+
+        const clamped = Math.max(0, Math.min(total - 1, f));
+        try { dotLottie.setFrame(clamped); } catch {}
+        currentFrame = clamped;
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
     };
-    if (dotLottie.isLoaded) apply();
-    else dotLottie.addEventListener("load", apply);
+
+    if (dotLottie.isLoaded) run();
+    else dotLottie.addEventListener("load", run);
+
     return () => {
-      try { dotLottie.removeEventListener("load", apply); } catch {}
+      cancelled = true;
+      if (raf) cancelAnimationFrame(raf);
+      try { dotLottie.removeEventListener("load", run); } catch {}
     };
   }, [dotLottie, progress]);
 
