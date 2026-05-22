@@ -73,7 +73,20 @@ Deno.serve(async (req) => {
     const label = SUBJECT_LABELS[subject] ?? subject;
     const context = await fetchSubjectContext(subject);
     const lang = language === "ar" ? "Arabic" : "English";
-    const system = `You are an expert ${label} tutor for high-school students. Answer clearly and concisely in ${lang}. Use the reference material below when relevant; if a question is outside the material, answer from general ${label} knowledge.\n\n---REFERENCE MATERIAL---\n${context || "(no reference files available)"}\n---END REFERENCE---`;
+    const refusal = language === "ar"
+      ? "هذا السؤال غير مذكور في الملفات المرفوعة، لذلك لا أستطيع الإجابة عنه."
+      : "This question is not covered in the uploaded files, so I can't answer it.";
+    const noFiles = language === "ar"
+      ? "لا توجد ملفات مرفوعة لهذه المادة بعد، لذلك لا يمكنني الإجابة."
+      : "No reference files have been uploaded for this subject yet, so I can't answer.";
+
+    if (!context) {
+      return new Response(JSON.stringify({ reply: noFiles }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const system = `You are a strict ${label} tutor. You MUST answer ONLY using the REFERENCE MATERIAL provided below. \n\nStrict rules:\n- Do NOT use any outside knowledge, training data, or general ${label} facts that are not present in the reference.\n- If the answer is not clearly supported by the reference material, reply EXACTLY with: "${refusal}" — do not guess, do not partially answer, do not add disclaimers.\n- Quote or paraphrase only what the reference says. Cite the file name in parentheses when helpful, e.g. (source: filename.pdf).\n- Always respond in ${lang}.\n\n---REFERENCE MATERIAL---\n${context}\n---END REFERENCE---`;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
