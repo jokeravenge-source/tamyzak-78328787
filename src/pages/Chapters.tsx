@@ -63,7 +63,7 @@ const copy = {
   },
 };
 
-const teacherBadge: Record<AppSubject, { ar: string; en: string }> = {
+const teacherBadge: Partial<Record<AppSubject, { ar: string; en: string }>> = {
   physics: { ar: "حيدر ديوان", en: "HYDAR DIWAN" },
   chemistry: { ar: "احمد النداوي", en: "AHMED AL-NADAWI" },
   biology: { ar: "محمد العنزي", en: "MOHAMMED AL-ANZI" },
