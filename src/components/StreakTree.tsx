@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
 import { DotLottieReact, type DotLottie } from "@lottiefiles/dotlottie-react";
 import treeLottie from "@/assets/tree_growth.lottie?url";
