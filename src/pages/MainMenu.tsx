@@ -1,8 +1,9 @@
-import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, UserCog } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, UserCog, Menu } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import StreakTree from "@/components/StreakTree";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerClose } from "@/components/ui/drawer";
 
 const copy = {
   en: {
@@ -98,12 +99,20 @@ const MainMenu = ({
     { key: "flashcards" as const, Icon: Layers, locked: false, ...text.items.flashcards },
     { key: "malazam", Icon: BookMarked, locked: false, ...text.items.malazam },
     { key: "summaries", Icon: FileText, locked: false, ...text.items.summaries },
-    { key: "missions", Icon: ListChecks, locked: false, ...text.items.missions },
     { key: "mcq", Icon: HelpCircle, locked: false, ...text.items.mcq },
-    { key: "advices", Icon: MessageSquareQuote, locked: false, ...text.items.advices },
     { key: "sessions", Icon: GraduationCap, locked: false, ...text.items.sessions },
-    { key: "account", Icon: UserCog, locked: false, ...text.items.account },
     { key: "videoNotes", Icon: Headphones, locked: true, ...text.items.videoNotes },
+  ];
+
+  const drawerItems = [
+    { key: "flashcards" as const, Icon: Layers, ...text.items.flashcards },
+    { key: "malazam" as const, Icon: BookMarked, ...text.items.malazam },
+    { key: "summaries" as const, Icon: FileText, ...text.items.summaries },
+    { key: "missions" as const, Icon: ListChecks, ...text.items.missions },
+    { key: "mcq" as const, Icon: HelpCircle, ...text.items.mcq },
+    { key: "advices" as const, Icon: MessageSquareQuote, ...text.items.advices },
+    { key: "sessions" as const, Icon: GraduationCap, ...text.items.sessions },
+    { key: "account" as const, Icon: UserCog, ...text.items.account },
   ];
 
   const handleBack = () => {
@@ -123,6 +132,43 @@ const MainMenu = ({
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
+
+      <Drawer>
+        <DrawerTrigger asChild>
+          <button
+            aria-label={language === "ar" ? "القائمة" : "Menu"}
+            className="absolute top-6 left-20 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle className="text-center gradient-text">{text.title}</DrawerTitle>
+          </DrawerHeader>
+          <div dir={language === "ar" ? "rtl" : "ltr"} className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 pb-8 max-h-[70vh] overflow-y-auto">
+            {drawerItems.map((it) => {
+              const Icon = it.Icon;
+              return (
+                <DrawerClose asChild key={it.key}>
+                  <button
+                    onClick={() => onSelect(it.key as MainMenuChoice)}
+                    className="flex items-center gap-3 rounded-2xl p-4 border border-primary/30 bg-secondary/40 hover:border-primary hover:bg-secondary/70 transition text-left"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                      <Icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-foreground">{it.title}</div>
+                      <div className="text-xs text-muted-foreground truncate">{it.subtitle}</div>
+                    </div>
+                  </button>
+                </DrawerClose>
+              );
+            })}
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <button
         onClick={signOut}
