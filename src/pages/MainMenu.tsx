@@ -1,4 +1,4 @@
-import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, UserCog } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ const copy = {
     title: "Your Study Hub",
     description: "Pick what you want to do today. More tools are on the way.",
     soon: "Coming soon",
+    hi: "Hi",
     items: {
       flashcards: { title: "Flashcards", subtitle: "Study with smart Q&A cards across every subject." },
       sessions: { title: "Sessions", subtitle: "Track study time per subject and climb the leaderboard." },
@@ -19,6 +20,7 @@ const copy = {
       mcq: { title: "MCQ Generator", subtitle: "Upload any file and instantly get multiple-choice questions with hints." },
       advices: { title: "Advices", subtitle: "Read advice from top students or share your own." },
       videoNotes: { title: "Video to Notes", subtitle: "Upload audio or video and get AI-generated notes." },
+      account: { title: "Account Center", subtitle: "Set your username and manage your profile." },
     },
   },
   ar: {
@@ -26,6 +28,7 @@ const copy = {
     title: "منصة الدراسة",
     description: "اختر ما تريد البدء به اليوم. المزيد من الأدوات قريباً.",
     soon: "قريباً",
+    hi: "أهلاً",
     items: {
       flashcards: { title: "البطاقات التعليمية", subtitle: "ادرس عبر بطاقات السؤال والجواب لجميع المواد." },
       sessions: { title: "الجلسات", subtitle: "احسب وقت دراستك لكل مادة وتحدّى أصدقاءك على لوحة المتصدرين." },
@@ -35,11 +38,12 @@ const copy = {
       mcq: { title: "مولّد الأسئلة", subtitle: "ارفع أي ملف واحصل فوراً على أسئلة اختيار من متعدد مع تلميحات." },
       advices: { title: "النصائح", subtitle: "اقرأ نصائح من المتفوقين أو شارك نصيحتك." },
       videoNotes: { title: "من الفيديو إلى ملاحظات", subtitle: "ارفع صوتاً أو فيديو واحصل على ملاحظات." },
+      account: { title: "مركز الحساب", subtitle: "حدّد اسم المستخدم وأدر ملفك الشخصي." },
     },
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account";
 
 const MainMenu = ({
   language,
@@ -74,6 +78,22 @@ const MainMenu = ({
   };
   const signOut = async () => { await supabase.auth.signOut(); };
 
+  const [username, setUsername] = useState<string>(() => localStorage.getItem("app_display_name_v1") || "");
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data: p } = await supabase.from("profiles").select("display_name").eq("user_id", u.user.id).maybeSingle();
+      if (p?.display_name) {
+        setUsername(p.display_name);
+        localStorage.setItem("app_display_name_v1", p.display_name);
+      }
+    })();
+    const onChange = () => setUsername(localStorage.getItem("app_display_name_v1") || "");
+    window.addEventListener("app:username-changed", onChange);
+    return () => window.removeEventListener("app:username-changed", onChange);
+  }, []);
+
   const items = [
     { key: "flashcards" as const, Icon: Layers, locked: false, ...text.items.flashcards },
     { key: "malazam", Icon: BookMarked, locked: false, ...text.items.malazam },
@@ -82,6 +102,7 @@ const MainMenu = ({
     { key: "mcq", Icon: HelpCircle, locked: false, ...text.items.mcq },
     { key: "advices", Icon: MessageSquareQuote, locked: false, ...text.items.advices },
     { key: "sessions", Icon: GraduationCap, locked: false, ...text.items.sessions },
+    { key: "account", Icon: UserCog, locked: false, ...text.items.account },
     { key: "videoNotes", Icon: Headphones, locked: true, ...text.items.videoNotes },
   ];
 
@@ -136,6 +157,9 @@ const MainMenu = ({
         </div>
         <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">{text.title}</h1>
         <p className="text-muted-foreground md:text-lg max-w-xl mx-auto">{text.description}</p>
+        {username && (
+          <p className="mt-3 text-sm text-primary font-medium">{text.hi}, {username} 👋</p>
+        )}
       </header>
 
       <section className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 z-10 relative">

@@ -4,6 +4,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw, Bookmark, BookmarkCheck, Star } from "lucide-react";
 import { Plus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { setRedoRequired, clearRedoAndZombie } from "@/components/ZombieGuard";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh1Ar } from "@/data/flashcardsCh1Ar";
 import { flashcardsCh2Ar } from "@/data/flashcardsCh2Ar";
@@ -195,7 +196,11 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
 
   const next = () => {
     setDirection("right");
-    setIndex((i) => (i + 1) % cards.length);
+    setIndex((i) => {
+      const ni = (i + 1) % cards.length;
+      if (i === cards.length - 1) setShowRating(true);
+      return ni;
+    });
   };
   const prev = () => {
     setDirection("left");
@@ -244,6 +249,23 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
 
   // User-submitted flashcards (await admin approval)
   const [showSubmit, setShowSubmit] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+
+  const handleRating = (level: "good" | "bad") => {
+    setShowRating(false);
+    if (level === "good") {
+      clearRedoAndZombie();
+      toast.success(language === "ar" ? "أحسنت! استمر." : "Great work — keep it up!");
+    } else {
+      setRedoRequired(subject, String(chapter), 10);
+      toast.warning(
+        language === "ar"
+          ? "أعد البطاقات الآن — وإلا سيتحول الموقع إلى وضع الزومبي!"
+          : "Redo these flashcards now — or the site will turn into zombie mode!",
+        { duration: 8000 }
+      );
+    }
+  };
   const [submitQ, setSubmitQ] = useState("");
   const [submitA, setSubmitA] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -412,6 +434,33 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
                 : <><Plus className="w-4 h-4" /> {language === "ar" ? "إرسال للموافقة" : "Submit for approval"}</>}
             </button>
           </form>
+        </div>
+      )}
+
+      {showRating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4">
+          <div dir={language === "ar" ? "rtl" : "ltr"} className="w-full max-w-md rounded-3xl border border-white/10 bg-secondary p-6 space-y-5 animate-fade-up text-center">
+            <h2 className="text-2xl font-bold gradient-text">
+              {language === "ar" ? "كيف كان مستواك؟" : "How did you do?"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {language === "ar" ? "قيّم نفسك بصراحة بعد إنهاء البطاقات." : "Rate yourself honestly after finishing the deck."}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleRating("good")}
+                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+              >
+                {language === "ar" ? "جيد 👍" : "Good 👍"}
+              </button>
+              <button
+                onClick={() => handleRating("bad")}
+                className="flex-1 h-12 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20 font-semibold"
+              >
+                {language === "ar" ? "سيئ 👎" : "Bad 👎"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>

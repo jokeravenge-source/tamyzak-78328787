@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Zombie mode — bad UI overlay applied via .zombie-mode on <html> */
+html.zombie-mode {
+  filter: hue-rotate(35deg) saturate(1.2) contrast(1.05);
+  cursor: crosshair;
+}
+html.zombie-mode body {
+  font-family: "Comic Sans MS", "Chalkboard SE", system-ui, sans-serif !important;
+  letter-spacing: 0.5px;
+}
+html.zombie-mode * {
+  text-shadow: 1px 1px 0 hsl(0 80% 30% / 0.6), -1px 0 0 hsl(82 80% 40% / 0.4) !important;
+}
+html.zombie-mode h1,
+html.zombie-mode h2,
+html.zombie-mode h3 {
+  transform: skew(-2deg, 0.5deg);
+  animation: zombie-twitch 2.6s infinite steps(8);
+}
+html.zombie-mode img,
+html.zombie-mode button {
+  filter: grayscale(0.4) sepia(0.4) hue-rotate(40deg);
+}
+html.zombie-mode .gradient-text {
+  background: linear-gradient(90deg, #8bd11e, #b34a1a, #8bd11e) !important;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+@keyframes zombie-twitch {
+  0%, 92%, 100% { transform: skew(-2deg, 0.5deg) translate(0, 0); }
+  93% { transform: skew(-2deg, 0.5deg) translate(-1px, 1px); }
+  95% { transform: skew(-2deg, 0.5deg) translate(2px, -1px); }
+  97% { transform: skew(-2deg, 0.5deg) translate(-1px, 0); }
+}
+
 @layer base {
   :root,
   .theme-notion-light {
