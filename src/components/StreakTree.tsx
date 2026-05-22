@@ -13,7 +13,7 @@ const yesterday = () => {
   const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10);
 };
 
-const FORCE_FULL_KEY = "streak_force_full_v1";
+const FORCE_RESET_KEY = "streak_force_reset_2days_v1";
 
 function useStreak() {
   const [state, setState] = useState<StreakState>(() => {
@@ -26,11 +26,11 @@ function useStreak() {
 
   useEffect(() => {
     setState((prev) => {
-      // One-time override: force streak to 100%
-      if (localStorage.getItem(FORCE_FULL_KEY) !== "1") {
-        const next = { days: FULL_DAYS, lastDate: today(), celebrated: false };
+      // One-time override: reset streak to 2 days
+      if (localStorage.getItem(FORCE_RESET_KEY) !== "1") {
+        const next = { days: 2, lastDate: today(), celebrated: false };
         localStorage.setItem(KEY, JSON.stringify(next));
-        localStorage.setItem(FORCE_FULL_KEY, "1");
+        localStorage.setItem(FORCE_RESET_KEY, "1");
         return next;
       }
       const t = today();
