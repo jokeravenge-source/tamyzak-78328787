@@ -24,6 +24,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
 import SupportButton from "./components/SupportButton";
+import AccountCenter from "./pages/AccountCenter";
+import ZombieGuard from "./components/ZombieGuard";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -73,7 +75,7 @@ const App = () => {
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -116,6 +118,7 @@ const App = () => {
       <Sonner />
       <ThemePicker language={language ?? "en"} />
       <SupportButton />
+      <ZombieGuard />
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authRole === "admin" && !authed ? (
@@ -138,6 +141,8 @@ const App = () => {
         <Advices language={language} onBack={resetMenu} />
       ) : menuChoice === "sessions" ? (
         <Sessions language={language} onBack={resetMenu} />
+      ) : menuChoice === "account" ? (
+        <AccountCenter language={language} onBack={resetMenu} />
       ) : menuChoice === "malazam" ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={() => {}} mode="malazam" />
       ) : !subject ? (
