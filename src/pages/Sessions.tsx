@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,14 +17,14 @@ const MAX_SECONDS = 48 * 3600;
 const PERSIST_KEY = "study_session_state_v1";
 
 const SUBJECTS = [
-  { code: "islamic", en: "Islamic", ar: "التربية الإسلامية" },
-  { code: "arabic", en: "Arabic", ar: "العربية" },
-  { code: "english", en: "English", ar: "الإنجليزية" },
-  { code: "french", en: "French", ar: "الفرنسية" },
-  { code: "math", en: "Math", ar: "الرياضيات" },
-  { code: "physics", en: "Physics", ar: "الفيزياء" },
-  { code: "chemistry", en: "Chemistry", ar: "الكيمياء" },
-  { code: "biology", en: "Biology", ar: "الأحياء" },
+  { code: "islamic", en: "Islamic", ar: "التربية الإسلامية", Icon: Moon },
+  { code: "arabic", en: "Arabic", ar: "العربية", Icon: BookOpen },
+  { code: "english", en: "English", ar: "الإنجليزية", Icon: Languages },
+  { code: "french", en: "French", ar: "الفرنسية", Icon: Globe },
+  { code: "math", en: "Math", ar: "الرياضيات", Icon: Sigma },
+  { code: "physics", en: "Physics", ar: "الفيزياء", Icon: Atom },
+  { code: "chemistry", en: "Chemistry", ar: "الكيمياء", Icon: FlaskConical },
+  { code: "biology", en: "Biology", ar: "الأحياء", Icon: Leaf },
 ] as const;
 
 const T = {
@@ -34,6 +34,10 @@ const T = {
     start: "Start", pause: "Pause", resume: "Resume", stop: "Stop & save",
     completed: "Mark mission completed", points: "pts", noOne: "No scores yet.",
     saved: "Session saved",
+    pointsTitle: "How points work",
+    pointsLine1: "You earn 1 point for every full hour you study.",
+    pointsLine2: "Finish your mission and get +1 bonus point.",
+    pointsLine3: "Points add up per subject on the leaderboard.",
   },
   ar: {
     title: "جلسات الدراسة", desc: "اختر مادة وحدد مهمتك واكسب النقاط.",
@@ -41,6 +45,10 @@ const T = {
     start: "ابدأ", pause: "إيقاف مؤقت", resume: "متابعة", stop: "إيقاف وحفظ",
     completed: "تم إنجاز المهمة", points: "نقطة", noOne: "لا توجد نتائج بعد.",
     saved: "تم حفظ الجلسة",
+    pointsTitle: "كيف تُحسب النقاط",
+    pointsLine1: "تحصل على نقطة واحدة لكل ساعة دراسة كاملة.",
+    pointsLine2: "إذا أنجزت مهمتك تحصل على نقطة إضافية (+1).",
+    pointsLine3: "تتجمع النقاط لكل مادة على لوحة المتصدرين.",
   },
 } as const;
 
@@ -236,14 +244,28 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-3">{L.title}</h1>
           <p className="text-muted-foreground">{L.desc}</p>
         </header>
+        <div className="max-w-2xl mx-auto mb-8 rounded-2xl border border-primary/30 bg-primary/5 backdrop-blur p-5">
+          <div className="flex items-center gap-2 mb-2 text-primary font-semibold">
+            <Info className="w-4 h-4" />
+            <span>{L.pointsTitle}</span>
+          </div>
+          <ul className="text-sm text-muted-foreground list-disc ps-5 space-y-1">
+            <li>{L.pointsLine1}</li>
+            <li>{L.pointsLine2}</li>
+            <li>{L.pointsLine3}</li>
+          </ul>
+        </div>
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-          {SUBJECTS.map((s) => (
-            <button key={s.code} onClick={() => setSubject(s.code)}
-              className="rounded-2xl border border-primary/40 bg-secondary/40 backdrop-blur p-6 h-32 hover:-translate-y-1 hover:border-primary transition-all text-left">
-              <Timer className="w-6 h-6 text-primary mb-3" />
-              <div className="font-semibold text-lg">{language === "ar" ? s.ar : s.en}</div>
-            </button>
-          ))}
+          {SUBJECTS.map((s) => {
+            const SIcon = s.Icon;
+            return (
+              <button key={s.code} onClick={() => setSubject(s.code)}
+                className="rounded-2xl border border-primary/40 bg-secondary/40 backdrop-blur p-6 h-32 hover:-translate-y-1 hover:border-primary transition-all text-left">
+                <SIcon className="w-6 h-6 text-primary mb-3" />
+                <div className="font-semibold text-lg">{language === "ar" ? s.ar : s.en}</div>
+              </button>
+            );
+          })}
         </div>
       </main>
     );
