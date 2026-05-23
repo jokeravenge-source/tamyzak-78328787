@@ -36,6 +36,7 @@ const CurvedNavBar = ({
   };
   const indicatorPct = ((active ? positions[active] : positions.basics) / W) * 100;
   const spring = { type: "spring" as const, stiffness: 320, damping: 28, mass: 0.6 };
+  const slide = { type: "spring" as const, stiffness: 260, damping: 30, mass: 0.5, restDelta: 0.001 };
 
   return (
     <motion.nav
@@ -97,17 +98,18 @@ const CurvedNavBar = ({
         <motion.span
           aria-hidden
           initial={false}
-          animate={{ left: `${indicatorPct}%`, opacity: active ? 1 : 0, scale: active ? 1 : 0.6 }}
-          transition={spring}
-          style={{ top: H / 2 }}
+          animate={{ x: `${indicatorPct}%`, opacity: active ? 1 : 0, scale: active ? 1 : 0.6 }}
+          transition={slide}
+          style={{ top: H / 2, left: 0, willChange: "transform" }}
           className="absolute -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-primary/15 blur-md"
         />
         {/* Top sliding indicator pill */}
         <motion.span
           aria-hidden
           initial={false}
-          animate={{ left: `${indicatorPct}%`, opacity: active ? 1 : 0 }}
-          transition={spring}
+          animate={{ x: `${indicatorPct}%`, opacity: active ? 1 : 0 }}
+          transition={slide}
+          style={{ left: 0, willChange: "transform" }}
           className="absolute top-1.5 -translate-x-1/2 w-10 h-1 rounded-full bg-primary shadow-[0_0_14px_hsl(var(--primary))]"
         />
 
