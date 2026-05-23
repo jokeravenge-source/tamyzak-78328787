@@ -211,6 +211,11 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const stopAndSave = async () => {
     if (!userId || !subject) return;
     if (savingRef.current) return;
+    if (seconds <= 0) {
+      setStarted(false); setRunning(false); setMission(""); setCompleted(false);
+      localStorage.removeItem(PERSIST_KEY);
+      return;
+    }
     savingRef.current = true;
     setRunning(false);
     const hours = seconds / 3600;
