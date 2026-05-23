@@ -36,8 +36,7 @@ Deno.serve(async (req) => {
     transcript = transcript.slice(0, 60000);
 
     // 2) Generate notes via Lovable AI
-    const lang = language === "ar" ? "Arabic" : "English";
-    const systemPrompt = `You are an expert study-notes writer. From a YouTube video transcript, produce clean, well-structured study notes in ${lang}. Use Markdown with: a short summary, key concepts as bullet points, important definitions, and a final "Takeaways" section. Be faithful to the transcript only.`;
+    const systemPrompt = `You are an expert study-notes writer. From a YouTube video transcript, produce clean, well-structured study notes ALWAYS in Arabic (العربية), regardless of the transcript language. Translate if needed. Use Markdown with: a short summary (ملخص), key concepts as bullet points (المفاهيم الأساسية), important definitions (تعريفات مهمة), and a final "خلاصة" (Takeaways) section. Be faithful to the transcript only.`;
     const userPrompt = `Transcript:\n\n${transcript}\n\nWrite the notes now.`;
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
