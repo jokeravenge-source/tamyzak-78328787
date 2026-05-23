@@ -1,4 +1,5 @@
-import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, Compass } from "lucide-react";
+import { motion } from "framer-motion";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,7 @@ const copy = {
     soon: "Coming soon",
     hi: "Hi",
     items: {
+      basics: { title: "The Basics", subtitle: "All your essential study tools in one tidy hub." },
       flashcards: { title: "Flashcards", subtitle: "Study with smart Q&A cards across every subject." },
       sessions: { title: "Sessions", subtitle: "Track study time per subject and climb the leaderboard." },
       malazam: { title: "Malazam", subtitle: "Curated booklets and study notes for every subject." },
@@ -32,6 +34,7 @@ const copy = {
     soon: "قريباً",
     hi: "أهلاً",
     items: {
+      basics: { title: "الأساسيات", subtitle: "كل أدواتك الدراسية الأساسية في مكان واحد." },
       flashcards: { title: "البطاقات التعليمية", subtitle: "ادرس عبر بطاقات السؤال والجواب لجميع المواد." },
       sessions: { title: "الجلسات", subtitle: "احسب وقت دراستك لكل مادة وتحدّى أصدقاءك على لوحة المتصدرين." },
       malazam: { title: "الملازم", subtitle: "ملازم ومذكرات دراسية مختارة لكل مادة." },
@@ -46,7 +49,7 @@ const copy = {
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings";
 
 const MainMenu = ({
   language,
@@ -98,6 +101,7 @@ const MainMenu = ({
   }, []);
 
   const items = [
+    { key: "basics" as const, Icon: Compass, locked: false, ...text.items.basics },
     { key: "flashcards" as const, Icon: Layers, locked: false, ...text.items.flashcards },
     { key: "malazam", Icon: BookMarked, locked: false, ...text.items.malazam },
     { key: "summaries", Icon: FileText, locked: false, ...text.items.summaries },
@@ -162,17 +166,25 @@ const MainMenu = ({
         )}
       </header>
 
-      <section className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 z-10 relative">
+      <motion.section
+        initial="hidden"
+        animate="show"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
+        className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 z-10 relative"
+      >
         {items.map((it, i) => {
           const Icon = it.Icon;
           const available = !it.locked;
           return (
-            <button
+            <motion.button
               key={it.key}
+              variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }}
+              whileHover={available ? { y: -6 } : undefined}
+              whileTap={available ? { scale: 0.97 } : undefined}
+              transition={{ duration: 0.35, ease: "easeOut" }}
               onClick={() => available && onSelect(it.key as MainMenuChoice)}
               disabled={it.locked}
-              style={{ animationDelay: `${i * 70}ms` }}
-              className={`group relative text-left rounded-3xl p-6 h-44 border backdrop-blur overflow-hidden transition-all duration-500 animate-fade-up
+              className={`group relative text-left rounded-3xl p-6 h-44 border backdrop-blur overflow-hidden
                 ${available
                   ? "border-primary/40 bg-secondary/40 hover:-translate-y-2 hover:border-primary cursor-pointer shadow-lg hover:shadow-[var(--shadow-glow)]"
                   : "border-white/5 bg-secondary/20 opacity-60 cursor-not-allowed"}`}
@@ -208,10 +220,10 @@ const MainMenu = ({
                   style={{ background: "var(--gradient-primary)" }}
                 />
               )}
-            </button>
+            </motion.button>
           );
         })}
-      </section>
+      </motion.section>
       <StreakTree language={language} />
       <CurvedNavBar language={language} onSelect={onSelect} />
     </main>
