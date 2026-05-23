@@ -7,6 +7,7 @@ type ExtractOptions = {
 };
 
 const PDF_WORKER_SRC = "/pdf.worker.mjs";
+const PDF_ASSET_BASE = "/pdfjs";
 
 let pdfWorkerReady = false;
 
@@ -32,6 +33,11 @@ async function extractPdfText(file: File, options: ExtractOptions = {}) {
   const data = new Uint8Array(await file.arrayBuffer());
   const loadingTask = pdfjs.getDocument({
     data,
+    cMapUrl: `${PDF_ASSET_BASE}/cmaps/`,
+    cMapPacked: true,
+    standardFontDataUrl: `${PDF_ASSET_BASE}/standard_fonts/`,
+    wasmUrl: `${PDF_ASSET_BASE}/wasm/`,
+    useSystemFonts: true,
     useWorkerFetch: false,
   });
 
