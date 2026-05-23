@@ -28,8 +28,8 @@ const configurePdfWorker = () => {
 async function extractPdfText(file: File, options: ExtractOptions = {}) {
   configurePdfWorker();
 
-  const maxPagesLimit = options.maxPages ?? 200;
-  const maxChars = options.maxChars ?? 200000;
+  const maxPagesLimit = options.maxPages ?? 2000;
+  const maxChars = options.maxChars ?? 1500000;
   const data = new Uint8Array(await file.arrayBuffer());
   const loadingTask = pdfjs.getDocument({
     data,
