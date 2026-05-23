@@ -76,6 +76,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const savingRef = useRef(false);
 
   // Restore persisted session on mount
   useEffect(() => {
@@ -209,6 +210,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   const stopAndSave = async () => {
     if (!userId || !subject) return;
+    if (savingRef.current) return;
+    savingRef.current = true;
     setRunning(false);
     const hours = seconds / 3600;
     const points = Math.floor(hours) + (completed ? 1 : 0);
@@ -216,11 +219,12 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
       mission_completed: completed, points,
     });
-    if (error) { toast.error(error.message); return; }
+    if (error) { savingRef.current = false; toast.error(error.message); return; }
     toast.success(`${L.saved} (+${points} ${L.points})`);
     setStarted(false); setSeconds(0); setMission(""); setCompleted(false);
     localStorage.removeItem(PERSIST_KEY);
     loadBoard(subject);
+    setTimeout(() => { savingRef.current = false; }, 500);
   };
 
   const toggleMusic = async () => {
