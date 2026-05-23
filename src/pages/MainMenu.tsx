@@ -172,7 +172,7 @@ const MainMenu = ({
         variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
         className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 z-10 relative"
       >
-        {items.map((it, i) => {
+        {items.map((it) => {
           const Icon = it.Icon;
           const available = !it.locked;
           return (
