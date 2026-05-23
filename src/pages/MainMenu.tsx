@@ -20,7 +20,7 @@ const copy = {
       missions: { title: "My Missions", subtitle: "Check off chapter topics and watch your progress per subject." },
       mcq: { title: "MCQ Generator", subtitle: "Upload any file and instantly get multiple-choice questions with hints." },
       advices: { title: "Advices", subtitle: "Read advice from top students or share your own." },
-      videoNotes: { title: "Video to Notes", subtitle: "Upload audio or video and get AI-generated notes." },
+      videoNotes: { title: "Video to Notes", subtitle: "Paste a YouTube link and get AI-generated study notes." },
       account: { title: "Account Center", subtitle: "Set your username and manage your profile." },
       essay: { title: "Essay Coach", subtitle: "Upload a file and get essay questions graded 1–10 by AI." },
     },
@@ -39,14 +39,14 @@ const copy = {
       missions: { title: "مهماتي", subtitle: "اشطب مواضيع كل فصل وتابع تقدمك في كل مادة." },
       mcq: { title: "مولّد الأسئلة", subtitle: "ارفع أي ملف واحصل فوراً على أسئلة اختيار من متعدد مع تلميحات." },
       advices: { title: "النصائح", subtitle: "اقرأ نصائح من المتفوقين أو شارك نصيحتك." },
-      videoNotes: { title: "من الفيديو إلى ملاحظات", subtitle: "ارفع صوتاً أو فيديو واحصل على ملاحظات." },
+      videoNotes: { title: "من الفيديو إلى ملاحظات", subtitle: "ألصق رابط يوتيوب واحصل على ملاحظات دراسية بالذكاء الاصطناعي." },
       account: { title: "مركز الحساب", subtitle: "حدّد اسم المستخدم وأدر ملفك الشخصي." },
       essay: { title: "مدرّب المقالات", subtitle: "ارفع ملفاً واحصل على أسئلة مقالية مُقيَّمة من 1 إلى 10." },
     },
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes";
 
 const MainMenu = ({
   language,
@@ -103,7 +103,7 @@ const MainMenu = ({
     { key: "summaries", Icon: FileText, locked: false, ...text.items.summaries },
     { key: "mcq", Icon: HelpCircle, locked: false, ...text.items.mcq },
     { key: "sessions", Icon: GraduationCap, locked: false, ...text.items.sessions },
-    { key: "videoNotes", Icon: Headphones, locked: true, ...text.items.videoNotes },
+    { key: "videoNotes", Icon: Headphones, locked: false, ...text.items.videoNotes },
   ];
 
   const drawerItems = [
@@ -115,6 +115,7 @@ const MainMenu = ({
     { key: "advices" as const, Icon: MessageSquareQuote, ...text.items.advices },
     { key: "sessions" as const, Icon: GraduationCap, ...text.items.sessions },
     { key: "essay" as const, Icon: PenLine, ...text.items.essay },
+    { key: "videoNotes" as const, Icon: Headphones, ...text.items.videoNotes },
     { key: "account" as const, Icon: UserCog, ...text.items.account },
   ];
 

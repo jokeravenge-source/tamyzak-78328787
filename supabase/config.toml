@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.essay-coach]
 verify_jwt = false
+
+[functions.video-notes]
+verify_jwt = false
