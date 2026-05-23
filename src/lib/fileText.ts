@@ -78,7 +78,7 @@ async function renderPdfPageImage(pdf: Awaited<ReturnType<typeof pdfjs.getDocume
 
     canvas.width = Math.ceil(viewport.width);
     canvas.height = Math.ceil(viewport.height);
-    await page.render({ canvasContext: context, viewport }).promise;
+    await page.render({ canvas, canvasContext: context, viewport } as Parameters<typeof page.render>[0]).promise;
     const image = canvas.toDataURL("image/jpeg", 0.62);
     canvas.width = 0;
     canvas.height = 0;
@@ -164,18 +164,23 @@ async function extractPdfMaterial(file: File, options: ExtractOptions = {}): Pro
   }
 }
 
-export async function extractTextFromFile(file: File, options: ExtractOptions = {}) {
+export async function extractStudyMaterial(file: File, options: ExtractOptions = {}): Promise<StudyMaterial> {
   const maxChars = options.maxChars ?? DEFAULT_MAX_CHARS;
 
-  if (isTextFile(file)) return (await file.slice(0, maxChars * 4).text()).slice(0, maxChars);
+  if (isTextFile(file)) return { text: (await file.slice(0, maxChars * 4).text()).slice(0, maxChars) };
 
   if (isDocxFile(file)) {
     const arrayBuffer = await file.arrayBuffer();
     const { value } = await mammoth.extractRawText({ arrayBuffer });
-    return value.slice(0, maxChars);
+    return { text: value.slice(0, maxChars) };
   }
 
-  if (isPdfFile(file)) return await extractPdfText(file, options);
+  if (isPdfFile(file)) return await extractPdfMaterial(file, options);
 
   throw new Error("unsupported");
+}
+
+export async function extractTextFromFile(file: File, options: ExtractOptions = {}) {
+  const material = await extractStudyMaterial(file, options);
+  return material.text;
 }
