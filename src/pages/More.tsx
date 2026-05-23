@@ -1,7 +1,8 @@
-import { ArrowLeft, ArrowRight, Sparkles, HelpCircle, ListChecks, MessageSquareQuote, PenLine, Headphones } from "lucide-react";
+import { ArrowRight, Sparkles, HelpCircle, ListChecks, MessageSquareQuote, PenLine, Headphones } from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
+import CurvedNavBar from "@/components/CurvedNavBar";
 
 const copy = {
   en: {
@@ -34,12 +35,12 @@ type MoreKey = "mcq" | "missions" | "advices" | "essay" | "videoNotes";
 
 const More = ({
   language,
-  onBack,
   onSelect,
+  onNav,
 }: {
   language: AppLanguage;
-  onBack: () => void;
   onSelect: (c: MainMenuChoice) => void;
+  onNav: (c: MainMenuChoice) => void;
 }) => {
   const t = copy[language];
   const items: { key: MoreKey; Icon: React.ComponentType<{ className?: string }> }[] = [
@@ -55,19 +56,11 @@ const More = ({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="min-h-screen px-4 py-12 md:py-20 relative overflow-hidden"
+      className="min-h-screen px-4 py-12 md:py-20 pb-32 relative overflow-hidden"
       dir={language === "ar" ? "rtl" : "ltr"}
     >
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-
-      <button
-        onClick={onBack}
-        aria-label="Back"
-        className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
-      >
-        <ArrowLeft className="w-5 h-5" />
-      </button>
 
       <header className="text-center max-w-3xl mx-auto z-10 relative">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
@@ -112,6 +105,7 @@ const More = ({
           );
         })}
       </motion.section>
+      <CurvedNavBar language={language} active="more" onSelect={onNav} />
     </motion.main>
   );
 };
