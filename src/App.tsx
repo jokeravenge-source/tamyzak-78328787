@@ -152,8 +152,13 @@ const App = () => {
         <Auth onAuthed={() => setAuthed(true)} onGoAdmin={() => chooseRole("admin")} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
-      ) : !menuChoice ? (
-        <MainMenu language={language} onChangeLanguage={resetLanguage} onSelect={chooseMenu} />
+      ) : !menuChoice || menuChoice === "basics" ? (
+        <Basics
+          language={language}
+          onChangeLanguage={resetLanguage}
+          onSelect={handleBasicsSelect}
+          onNav={chooseMenu}
+        />
       ) : menuChoice === "missions" ? (
         <Missions language={language} onBack={resetMenu} />
       ) : menuChoice === "mcq" ? (
@@ -170,12 +175,10 @@ const App = () => {
         <Essay language={language} onBack={resetMenu} />
       ) : menuChoice === "videoNotes" ? (
         <VideoNotes language={language} onBack={resetMenu} />
-      ) : menuChoice === "basics" ? (
-        <Basics language={language} onBack={resetMenu} onSelect={handleBasicsSelect} />
       ) : menuChoice === "biologyDrawings" ? (
         <BiologyDrawings language={language} onBack={backToBasics} />
       ) : menuChoice === "more" ? (
-        <More language={language} onBack={resetMenu} onSelect={(c) => chooseMenu(c)} />
+        <More language={language} onSelect={(c) => chooseMenu(c)} onNav={chooseMenu} />
       ) : menuChoice === "malazam" ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={() => {}} mode="malazam" />
       ) : !subject ? (
