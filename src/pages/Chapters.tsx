@@ -38,6 +38,15 @@ const arabicChapters = [
   { n: 1, title: "Literature 1", arTitle: "الأدب الجزء الأول", subtitle: "", locked: false },
 ];
 
+const frenchChapters = [
+  { n: 1, title: "Negation", arTitle: "النفي", subtitle: "ne ... pas / jamais / plus", locked: false },
+  { n: 2, title: "Interrogation", arTitle: "الاستفهام", subtitle: "Est-ce que / Inversion", locked: false },
+  { n: 3, title: "Relative Pronouns", arTitle: "ضمائر الوصل", subtitle: "Qui / Que / Où / Dont", locked: false },
+  { n: 4, title: "Feminization", arTitle: "التأنيث", subtitle: "Règles & exceptions", locked: false },
+  { n: 5, title: "Plural", arTitle: "الجمع", subtitle: "Pluriel des noms & adjectifs", locked: false },
+  { n: 6, title: "Adverbs", arTitle: "اشتقاق الظروف", subtitle: "-ment / -emment / -amment", locked: false },
+];
+
 const englishGrammarChapters = Array.from({ length: 8 }, (_, i) => ({
   n: i + 1,
   title: `Unit ${i + 1}`,
@@ -83,6 +92,7 @@ const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLangua
     subject === "biology" ? biologyChapters :
     subject === "chemistry" ? chemistryChapters :
     subject === "arabic" ? arabicChapters :
+    subject === "french" ? frenchChapters :
     subject === "english" && englishCategory === "grammar" ? englishGrammarChapters :
     subject === "english" && englishCategory === "literature" ? englishLiteratureChapters :
     subject === "english" && englishCategory === "paragraphs" ? englishParagraphsChapters :

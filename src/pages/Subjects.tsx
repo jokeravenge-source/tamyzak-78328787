@@ -26,7 +26,7 @@ const subjects: Array<{
   { code: "chemistry", en: "Chemistry", ar: "الكيمياء", Icon: FlaskConical, locked: false },
   { code: "biology", en: "Biology", ar: "الأحياء", Icon: Leaf, locked: false },
   { code: "english", en: "English", ar: "الإنجليزية", Icon: BookOpen, locked: false },
-  { code: "french", en: "French", ar: "الفرنسية", Icon: LangIcon, locked: true },
+  { code: "french", en: "French", ar: "الفرنسية", Icon: LangIcon, locked: false },
   { code: "arabic", en: "Arabic", ar: "العربية", Icon: BookOpen, locked: false },
 ];
 
