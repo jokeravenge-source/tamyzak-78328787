@@ -170,7 +170,7 @@ const App = () => {
       ) : menuChoice === "sessions" ? (
         <Sessions language={language} onBack={resetMenu} />
       ) : menuChoice === "account" ? (
-        <AccountCenter language={language} onBack={resetMenu} />
+        <AccountCenter language={language} onBack={resetMenu} onNav={chooseMenu} />
       ) : menuChoice === "essay" ? (
         <Essay language={language} onBack={resetMenu} />
       ) : menuChoice === "videoNotes" ? (
