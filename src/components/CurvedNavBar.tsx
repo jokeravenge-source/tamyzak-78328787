@@ -25,9 +25,21 @@ const CurvedNavBar = ({
     onSelect(tab as MainMenuChoice);
   };
 
+  // Fixed pixel positions of the three tabs inside the 320px-wide bar
+  const positions: Record<TabKey, number> = {
+    basics: 36,
+    more: 160,
+    account: 284,
+  };
+  const indicatorX = active ? positions[active] : positions.basics;
+  const spring = { type: "spring" as const, stiffness: 320, damping: 28, mass: 0.6 };
+
   return (
-    <nav
+    <motion.nav
       aria-label="Quick navigation"
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 260, damping: 26, delay: 0.05 }}
       className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
       dir="ltr"
     >
@@ -47,55 +59,90 @@ const CurvedNavBar = ({
           />
         </svg>
 
+        {/* Sliding active indicator (smoothly animates between tab positions) */}
+        <motion.span
+          aria-hidden
+          initial={false}
+          animate={{ x: indicatorX, opacity: active ? 1 : 0 }}
+          transition={spring}
+          className="absolute top-0 left-0 -translate-x-1/2 w-10 h-1 rounded-full bg-primary shadow-[0_0_12px_hsl(var(--primary))]"
+        />
+
         {/* Center floating button → More */}
         <motion.button
-          whileTap={{ scale: 0.9 }}
-          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.88 }}
+          whileHover={{ scale: 1.06 }}
+          animate={{ y: active === "more" ? -4 : 0 }}
+          transition={spring}
           onClick={() => go("more")}
           aria-label={L.more}
-          className={`absolute left-1/2 -translate-x-1/2 -top-2 w-14 h-14 rounded-full flex items-center justify-center shadow-[var(--shadow-glow)] ${
-            active === "more" ? "bg-primary text-primary-foreground ring-4 ring-primary/30" : "bg-primary text-primary-foreground"
-          }`}
+          className="absolute left-1/2 -translate-x-1/2 -top-2 w-14 h-14 rounded-full flex items-center justify-center shadow-[var(--shadow-glow)] bg-primary text-primary-foreground"
         >
           <MoreHorizontal className="w-6 h-6" />
         </motion.button>
 
         {/* Left tab → Basics */}
-        <motion.button
-          whileTap={{ scale: 0.92 }}
+        <Tab
+          x={positions.basics}
+          label={L.basics}
+          isActive={active === "basics"}
+          Icon={Sparkles}
           onClick={() => go("basics")}
-          className={`absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 px-2 transition-colors ${
-            active === "basics" ? "text-primary" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <motion.span animate={{ scale: active === "basics" ? 1.2 : 1 }} transition={{ type: "spring", stiffness: 300, damping: 16 }}>
-            <Sparkles className="w-5 h-5" />
-          </motion.span>
-          <span className="text-[10px] font-medium tracking-wide">{L.basics}</span>
-          {active === "basics" && (
-            <motion.span layoutId="navIndicator" className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary" />
-          )}
-        </motion.button>
+          spring={spring}
+        />
 
         {/* Right tab → Account */}
-        <motion.button
-          whileTap={{ scale: 0.92 }}
+        <Tab
+          x={positions.account}
+          label={L.account}
+          isActive={active === "account"}
+          Icon={UserCog}
           onClick={() => go("account")}
-          className={`absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 px-2 transition-colors ${
-            active === "account" ? "text-primary" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <motion.span animate={{ scale: active === "account" ? 1.2 : 1 }} transition={{ type: "spring", stiffness: 300, damping: 16 }}>
-            <UserCog className="w-5 h-5" />
-          </motion.span>
-          <span className="text-[10px] font-medium tracking-wide">{L.account}</span>
-          {active === "account" && (
-            <motion.span layoutId="navIndicator" className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-primary" />
-          )}
-        </motion.button>
+          spring={spring}
+        />
       </div>
-    </nav>
+    </motion.nav>
   );
 };
+
+const Tab = ({
+  x,
+  label,
+  isActive,
+  Icon,
+  onClick,
+  spring,
+}: {
+  x: number;
+  label: string;
+  isActive: boolean;
+  Icon: React.ComponentType<{ className?: string }>;
+  onClick: () => void;
+  spring: object;
+}) => (
+  <motion.button
+    whileTap={{ scale: 0.9 }}
+    transition={spring}
+    onClick={onClick}
+    style={{ left: x }}
+    className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 px-2 select-none ${
+      isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+    } transition-colors`}
+  >
+    <motion.span
+      animate={{ scale: isActive ? 1.25 : 1, y: isActive ? -2 : 0 }}
+      transition={spring}
+    >
+      <Icon className="w-5 h-5" />
+    </motion.span>
+    <motion.span
+      animate={{ opacity: isActive ? 1 : 0.75 }}
+      transition={{ duration: 0.2 }}
+      className="text-[10px] font-medium tracking-wide"
+    >
+      {label}
+    </motion.span>
+  </motion.button>
+);
 
 export default CurvedNavBar;
