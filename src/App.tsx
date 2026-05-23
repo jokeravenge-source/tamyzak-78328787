@@ -31,6 +31,7 @@ import ZombieGuard from "./components/ZombieGuard";
 import EnglishCategoryPage, { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "./pages/EnglishCategory";
 import Basics, { type BasicsChoice } from "./pages/Basics";
 import BiologyDrawings from "./pages/BiologyDrawings";
+import More from "./pages/More";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -83,7 +84,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -173,6 +174,8 @@ const App = () => {
         <Basics language={language} onBack={resetMenu} onSelect={handleBasicsSelect} />
       ) : menuChoice === "biologyDrawings" ? (
         <BiologyDrawings language={language} onBack={backToBasics} />
+      ) : menuChoice === "more" ? (
+        <More language={language} onBack={resetMenu} onSelect={(c) => chooseMenu(c)} />
       ) : menuChoice === "malazam" ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={() => {}} mode="malazam" />
       ) : !subject ? (
