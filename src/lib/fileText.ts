@@ -71,7 +71,6 @@ async function extractPdfText(file: File, options: ExtractOptions = {}) {
     useSystemFonts: true,
     useWorkerFetch: false,
     disableFontFace: true,
-    isEvalSupported: false,
   });
 
   try {
