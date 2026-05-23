@@ -196,8 +196,9 @@ const Basics = ({
       </motion.section>
 
       <StreakTree language={language} />
-      <CurvedNavBar language={language} active="basics" onSelect={onNav} />
     </motion.main>
+      <CurvedNavBar language={language} active="basics" onSelect={onNav} />
+      </>
   );
 };
 
