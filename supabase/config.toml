@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.video-notes]
 verify_jwt = false
+
+[functions.setup-admins]
+verify_jwt = false
