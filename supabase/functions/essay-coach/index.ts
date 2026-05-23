@@ -20,8 +20,8 @@ Deno.serve(async (req) => {
       if (!text || text.trim().length < 50) {
         return new Response(JSON.stringify({ error: "Not enough text" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      const systemPrompt = `You are an expert exam writer. Generate exactly ${n} open-ended ESSAY questions in ${language} based ONLY on the provided study material. Each question must require an explanatory paragraph answer (not yes/no). Return ONLY via the tool call.`;
-      const userPrompt = `Study material:\n\n${text}\n\nGenerate ${n} essay questions in ${language}.`;
+      const systemPrompt = `You are an expert science exam writer. Generate exactly ${n} open-ended SCIENTIFIC essay questions in ${language} based STRICTLY and ONLY on the provided study material. ABSOLUTE RULES:\n- Do NOT introduce any facts, examples, definitions, names, formulas, or concepts that are not explicitly present in the material.\n- Every question MUST be answerable using ONLY the material provided.\n- Focus on scientific reasoning: explanations of phenomena, causes/effects, processes, mechanisms, comparisons, definitions, derivations, applications, and analysis of scientific concepts found in the material.\n- Each question must require an explanatory paragraph answer (not yes/no, not one word).\n- The reference_answer MUST be derived word-for-meaning from the material only, with no outside information.\nReturn ONLY via the tool call.`;
+      const userPrompt = `Study material (use ONLY this content, nothing else):\n\n${text}\n\nGenerate ${n} scientific essay questions in ${language} grounded strictly in the material above.`;
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
