@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { type AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { extractTextFromFile } from "@/lib/fileText";
+import { extractStudyMaterial } from "@/lib/fileText";
 
 const copy = {
   en: {
@@ -98,12 +98,13 @@ const Essay = ({ language, onBack }: { language: AppLanguage; onBack: () => void
     setLoading(true);
     try {
       toast.loading(t.extracting, { id: "ext" });
-      const text = await extractTextFromFile(file);
+      const material = await extractStudyMaterial(file);
+      const text = material.text;
       toast.dismiss("ext");
-      if (!text || text.trim().length < 50) { toast.error(t.noText); setLoading(false); return; }
+      if ((!text || text.trim().length < 50) && !material.pageImages?.length) { toast.error(t.noText); setLoading(false); return; }
       toast.loading(t.generating, { id: "gen" });
       const { data, error } = await supabase.functions.invoke("essay-coach", {
-        body: { mode: "generate", text, count, language },
+        body: { mode: "generate", text, pageImages: material.pageImages, count, language },
       });
       toast.dismiss("gen");
       if (error) throw error;
