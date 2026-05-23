@@ -80,9 +80,14 @@ async function extractText(file: File): Promise<string> {
   }
   if (name.endsWith(".pdf") || file.type === "application/pdf") {
     const pdfjs: any = await import("pdfjs-dist");
-    // @ts-ignore
-    const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
-    pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+    try {
+      // @ts-ignore
+      const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+      pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+    } catch {
+      const v = pdfjs.version || "5.7.284";
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${v}/pdf.worker.min.mjs`;
+    }
     const buf = await file.arrayBuffer();
     const pdf = await pdfjs.getDocument({ data: buf }).promise;
     let out = "";
