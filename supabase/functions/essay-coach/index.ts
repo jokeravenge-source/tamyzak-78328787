@@ -4,6 +4,8 @@ const corsHeaders = {
 };
 
 const MAX_STUDY_CHARS = 180000;
+const AI_MODEL = "google/gemini-2.5-pro";
+const MAX_PAGE_IMAGES = 20;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -18,20 +20,27 @@ Deno.serve(async (req) => {
 
     if (mode === "generate") {
       const text = String(body.text || "").slice(0, MAX_STUDY_CHARS);
+      const images = Array.isArray(body.pageImages) ? body.pageImages.filter((image) => typeof image === "string" && image.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
       const n = Math.max(1, Math.min(10, Number(body.count) || 5));
-      if (!text || text.trim().length < 50) {
+      if ((!text || text.trim().length < 50) && !images.length) {
         return new Response(JSON.stringify({ error: "Not enough text" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       const systemPrompt = `You are an expert science exam writer. Generate exactly ${n} open-ended SCIENTIFIC essay questions in ${language} based STRICTLY and ONLY on the provided study material. ABSOLUTE RULES:\n- Do NOT introduce any facts, examples, definitions, names, formulas, or concepts that are not explicitly present in the material.\n- Every question MUST be answerable using ONLY the material provided.\n- Focus on scientific reasoning: explanations of phenomena, causes/effects, processes, mechanisms, comparisons, definitions, derivations, applications, and analysis of scientific concepts found in the material.\n- Each question must require an explanatory paragraph answer (not yes/no, not one word).\n- The reference_answer MUST be derived word-for-meaning from the material only, with no outside information.\nReturn ONLY via the tool call.`;
-      const userPrompt = `Study material (use ONLY this content, nothing else):\n\n${text}\n\nGenerate ${n} scientific essay questions in ${language} grounded strictly in the material above.`;
+      const userPrompt = `Study material text extracted from the file (use ONLY this content and the attached page images, nothing else):\n\n${text || "No selectable text was extracted. Use the attached page images."}\n\n${images.length ? "Attached page images are sampled from the PDF. Read/OCR them and use them together with the extracted text." : ""}\n\nGenerate ${n} scientific essay questions in ${language} grounded strictly in the provided material.`;
+      const userContent = images.length
+        ? [
+            { type: "text", text: userPrompt },
+            ...images.map((url) => ({ type: "image_url", image_url: { url } })),
+          ]
+        : userPrompt;
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: AI_MODEL,
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            { role: "user", content: userContent },
           ],
           tools: [{
             type: "function",
@@ -84,7 +93,7 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: AI_MODEL,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
