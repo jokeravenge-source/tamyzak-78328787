@@ -29,6 +29,9 @@ import Essay from "./pages/Essay";
 import VideoNotes from "./pages/VideoNotes";
 import ZombieGuard from "./components/ZombieGuard";
 import EnglishCategoryPage, { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "./pages/EnglishCategory";
+import Basics, { type BasicsChoice } from "./pages/Basics";
+import BiologyDrawings from "./pages/BiologyDrawings";
+import { AnimatePresence } from "framer-motion";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -81,7 +84,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -108,6 +111,14 @@ const App = () => {
     localStorage.setItem(MENU_STORAGE_KEY, choice);
     setMenuChoice(choice);
   };
+  const handleBasicsSelect = (c: BasicsChoice) => {
+    if (c === "biologyDrawings") {
+      chooseMenu("biologyDrawings");
+    } else {
+      chooseMenu(c as MenuChoice);
+    }
+  };
+  const backToBasics = () => chooseMenu("basics");
   const resetRole = () => {
     localStorage.removeItem(ROLE_GATE_STORAGE_KEY);
     setAuthRole(null);
@@ -159,6 +170,10 @@ const App = () => {
         <Essay language={language} onBack={resetMenu} />
       ) : menuChoice === "videoNotes" ? (
         <VideoNotes language={language} onBack={resetMenu} />
+      ) : menuChoice === "basics" ? (
+        <Basics language={language} onBack={resetMenu} onSelect={handleBasicsSelect} />
+      ) : menuChoice === "biologyDrawings" ? (
+        <BiologyDrawings language={language} onBack={backToBasics} />
       ) : menuChoice === "malazam" ? (
         <Subjects language={language} onChangeLanguage={resetMenu} onSelectSubject={() => {}} mode="malazam" />
       ) : !subject ? (
