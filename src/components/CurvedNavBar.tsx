@@ -44,7 +44,7 @@ const CurvedNavBar = ({
       initial={{ y: 120, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 220, damping: 24, delay: 0.08 }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-[min(420px,calc(100vw-2rem))]"
+      className="fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-[min(420px,calc(100vw-2rem))] md:w-[560px]"
       dir="ltr"
     >
       <div className="relative pointer-events-auto" style={{ height: H }}>
@@ -187,12 +187,12 @@ const Tab = ({
       animate={{ scale: isActive ? 1.25 : 1, y: isActive ? -4 : 0 }}
       transition={spring}
     >
-      <Icon className="w-5 h-5" />
+      <Icon className="w-5 h-5 md:w-6 md:h-6" />
     </motion.span>
     <motion.span
       animate={{ opacity: isActive ? 1 : 0.75, y: isActive ? -2 : 0 }}
       transition={{ duration: 0.25 }}
-      className="text-[10px] font-semibold tracking-wide"
+      className="text-[10px] md:text-xs font-semibold tracking-wide"
     >
       {label}
     </motion.span>
