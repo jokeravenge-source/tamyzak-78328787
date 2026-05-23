@@ -25,65 +25,113 @@ const CurvedNavBar = ({
     onSelect(tab as MainMenuChoice);
   };
 
-  // Fixed pixel positions of the three tabs inside the 320px-wide bar
+  // Bar geometry — wider, properly curved, centered
+  const W = 420;
+  const H = 88;
+  // Tab x positions inside the bar (px)
   const positions: Record<TabKey, number> = {
-    basics: 36,
-    more: 160,
-    account: 284,
+    basics: 70,
+    more: W / 2,
+    account: W - 70,
   };
-  const indicatorX = active ? positions[active] : positions.basics;
+  const indicatorPct = ((active ? positions[active] : positions.basics) / W) * 100;
   const spring = { type: "spring" as const, stiffness: 320, damping: 28, mass: 0.6 };
 
   return (
     <motion.nav
       aria-label="Quick navigation"
-      initial={{ y: 100, opacity: 0 }}
+      initial={{ y: 120, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 260, damping: 26, delay: 0.05 }}
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+      transition={{ type: "spring", stiffness: 220, damping: 24, delay: 0.08 }}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-[min(420px,calc(100vw-2rem))]"
       dir="ltr"
     >
-      <div className="relative pointer-events-auto">
-        <svg width="320" height="80" viewBox="0 0 320 80" className="drop-shadow-[0_8px_30px_hsl(var(--primary)/0.35)]">
+      <div className="relative pointer-events-auto" style={{ height: H }}>
+        <svg
+          width="100%"
+          height={H}
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="none"
+          className="absolute inset-0 drop-shadow-[0_12px_40px_hsl(var(--primary)/0.45)]"
+        >
           <defs>
             <linearGradient id="curvedBg" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity="0.95" />
+              <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity="0.96" />
+              <stop offset="50%" stopColor="hsl(var(--secondary))" stopOpacity="0.98" />
+              <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity="0.96" />
+            </linearGradient>
+            <linearGradient id="curvedStroke" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="hsl(var(--primary) / 0.15)" />
+              <stop offset="50%" stopColor="hsl(var(--primary) / 0.7)" />
+              <stop offset="100%" stopColor="hsl(var(--primary) / 0.15)" />
             </linearGradient>
           </defs>
+          {/*
+            Curved bar with a smooth dip in the middle for the FAB.
+            W=420, H=88. Top edge: rounded-rect that curves inward at center (x=170..250).
+          */}
           <path
-            d="M0,40 Q0,15 25,15 L115,15 Q130,15 138,28 Q160,55 182,28 Q190,15 205,15 L295,15 Q320,15 320,40 L320,65 Q320,80 305,80 L15,80 Q0,80 0,65 Z"
+            d={`
+              M 24 16
+              L 168 16
+              C 184 16, 188 28, 196 40
+              C 204 56, 216 56, 224 40
+              C 232 28, 236 16, 252 16
+              L 396 16
+              Q 412 16 412 32
+              L 412 ${H - 16}
+              Q 412 ${H} 396 ${H}
+              L 24 ${H}
+              Q 8 ${H} 8 ${H - 16}
+              L 8 32
+              Q 8 16 24 16
+              Z
+            `}
             fill="url(#curvedBg)"
-            stroke="hsl(var(--primary) / 0.4)"
-            strokeWidth="1"
+            stroke="url(#curvedStroke)"
+            strokeWidth="1.2"
           />
         </svg>
 
-        {/* Sliding active indicator (smoothly animates between tab positions) */}
+        {/* Sliding glow halo behind active tab */}
         <motion.span
           aria-hidden
           initial={false}
-          animate={{ x: indicatorX, opacity: active ? 1 : 0 }}
+          animate={{ left: `${indicatorPct}%`, opacity: active ? 1 : 0, scale: active ? 1 : 0.6 }}
           transition={spring}
-          className="absolute top-0 left-0 -translate-x-1/2 w-10 h-1 rounded-full bg-primary shadow-[0_0_12px_hsl(var(--primary))]"
+          style={{ top: H / 2 }}
+          className="absolute -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-primary/15 blur-md"
+        />
+        {/* Top sliding indicator pill */}
+        <motion.span
+          aria-hidden
+          initial={false}
+          animate={{ left: `${indicatorPct}%`, opacity: active ? 1 : 0 }}
+          transition={spring}
+          className="absolute top-1.5 -translate-x-1/2 w-10 h-1 rounded-full bg-primary shadow-[0_0_14px_hsl(var(--primary))]"
         />
 
-        {/* Center floating button → More */}
+        {/* Center floating button → More (sits in the curve dip) */}
         <motion.button
           whileTap={{ scale: 0.88 }}
-          whileHover={{ scale: 1.06 }}
-          animate={{ y: active === "more" ? -4 : 0 }}
+          whileHover={{ scale: 1.08, rotate: 90 }}
+          animate={{
+            y: active === "more" ? -10 : -4,
+            rotate: active === "more" ? 90 : 0,
+          }}
           transition={spring}
           onClick={() => go("more")}
           aria-label={L.more}
-          className="absolute left-1/2 -translate-x-1/2 -top-2 w-14 h-14 rounded-full flex items-center justify-center shadow-[var(--shadow-glow)] bg-primary text-primary-foreground"
+          className="absolute left-1/2 -translate-x-1/2 w-16 h-16 rounded-full flex items-center justify-center shadow-[0_10px_30px_hsl(var(--primary)/0.6)] bg-gradient-to-br from-primary to-accent text-primary-foreground ring-4 ring-background/40"
+          style={{ top: -22 }}
         >
-          <MoreHorizontal className="w-6 h-6" />
+          <MoreHorizontal className="w-7 h-7" />
         </motion.button>
 
         {/* Left tab → Basics */}
         <Tab
           x={positions.basics}
+          y={H / 2 + 6}
           label={L.basics}
           isActive={active === "basics"}
           Icon={Sparkles}
@@ -94,6 +142,7 @@ const CurvedNavBar = ({
         {/* Right tab → Account */}
         <Tab
           x={positions.account}
+          y={H / 2 + 6}
           label={L.account}
           isActive={active === "account"}
           Icon={UserCog}
@@ -107,6 +156,7 @@ const CurvedNavBar = ({
 
 const Tab = ({
   x,
+  y,
   label,
   isActive,
   Icon,
@@ -114,6 +164,7 @@ const Tab = ({
   spring,
 }: {
   x: number;
+  y: number;
   label: string;
   isActive: boolean;
   Icon: React.ComponentType<{ className?: string }>;
@@ -121,24 +172,25 @@ const Tab = ({
   spring: object;
 }) => (
   <motion.button
-    whileTap={{ scale: 0.9 }}
+    whileTap={{ scale: 0.88 }}
+    whileHover={{ scale: 1.06 }}
     transition={spring}
     onClick={onClick}
-    style={{ left: x }}
-    className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 px-2 select-none ${
+    style={{ left: `${(x / 420) * 100}%`, top: y }}
+    className={`absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 px-3 py-1 select-none ${
       isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
     } transition-colors`}
   >
     <motion.span
-      animate={{ scale: isActive ? 1.25 : 1, y: isActive ? -2 : 0 }}
+      animate={{ scale: isActive ? 1.25 : 1, y: isActive ? -4 : 0 }}
       transition={spring}
     >
       <Icon className="w-5 h-5" />
     </motion.span>
     <motion.span
-      animate={{ opacity: isActive ? 1 : 0.75 }}
-      transition={{ duration: 0.2 }}
-      className="text-[10px] font-medium tracking-wide"
+      animate={{ opacity: isActive ? 1 : 0.75, y: isActive ? -2 : 0 }}
+      transition={{ duration: 0.25 }}
+      className="text-[10px] font-semibold tracking-wide"
     >
       {label}
     </motion.span>
