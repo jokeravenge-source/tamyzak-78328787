@@ -17,7 +17,7 @@ const DEFAULT_MAX_CHARS = 180000;
 const DEFAULT_MAX_PDF_PAGES = 450;
 const PDF_FRONT_PAGES = 25;
 const PDF_END_PAGES = 10;
-const PDF_IMAGE_PAGES = 12;
+const PDF_IMAGE_PAGES = 20;
 
 let pdfWorkerReady = false;
 
@@ -70,7 +70,7 @@ async function renderPdfPageImage(pdf: Awaited<ReturnType<typeof pdfjs.getDocume
   const page = await pdf.getPage(pageNumber);
   try {
     const baseViewport = page.getViewport({ scale: 1 });
-    const scale = Math.min(1.25, 950 / Math.max(baseViewport.width, 1));
+    const scale = Math.min(1.1, 760 / Math.max(baseViewport.width, 1));
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d", { alpha: false });
@@ -79,7 +79,7 @@ async function renderPdfPageImage(pdf: Awaited<ReturnType<typeof pdfjs.getDocume
     canvas.width = Math.ceil(viewport.width);
     canvas.height = Math.ceil(viewport.height);
     await page.render({ canvas, canvasContext: context, viewport } as Parameters<typeof page.render>[0]).promise;
-    const image = canvas.toDataURL("image/jpeg", 0.62);
+    const image = canvas.toDataURL("image/jpeg", 0.55);
     canvas.width = 0;
     canvas.height = 0;
     return image;
