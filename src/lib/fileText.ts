@@ -6,12 +6,18 @@ type ExtractOptions = {
   maxChars?: number;
 };
 
+type StudyMaterial = {
+  text: string;
+  pageImages?: string[];
+};
+
 const PDF_WORKER_SRC = "/pdf.worker.mjs";
 const PDF_ASSET_BASE = "/pdfjs";
 const DEFAULT_MAX_CHARS = 180000;
 const DEFAULT_MAX_PDF_PAGES = 450;
 const PDF_FRONT_PAGES = 25;
 const PDF_END_PAGES = 10;
+const PDF_IMAGE_PAGES = 12;
 
 let pdfWorkerReady = false;
 
@@ -56,7 +62,33 @@ const buildPagePlan = (totalPages: number, maxPages: number) => {
   return Array.from(pages).sort((a, b) => a - b).slice(0, maxPages);
 };
 
-async function extractPdfText(file: File, options: ExtractOptions = {}) {
+const buildImagePagePlan = (totalPages: number) => buildPagePlan(totalPages, Math.min(totalPages, PDF_IMAGE_PAGES));
+
+async function renderPdfPageImage(pdf: Awaited<ReturnType<typeof pdfjs.getDocument>["promise"]>, pageNumber: number) {
+  if (typeof document === "undefined") return null;
+
+  const page = await pdf.getPage(pageNumber);
+  try {
+    const baseViewport = page.getViewport({ scale: 1 });
+    const scale = Math.min(1.25, 950 / Math.max(baseViewport.width, 1));
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) return null;
+
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    await page.render({ canvasContext: context, viewport }).promise;
+    const image = canvas.toDataURL("image/jpeg", 0.62);
+    canvas.width = 0;
+    canvas.height = 0;
+    return image;
+  } finally {
+    page.cleanup();
+  }
+}
+
+async function extractPdfMaterial(file: File, options: ExtractOptions = {}): Promise<StudyMaterial> {
   configurePdfWorker();
 
   const maxPagesLimit = options.maxPages ?? DEFAULT_MAX_PDF_PAGES;
@@ -77,7 +109,9 @@ async function extractPdfText(file: File, options: ExtractOptions = {}) {
   try {
     const pdf = await loadingTask.promise;
     const pagePlan = buildPagePlan(pdf.numPages, Math.min(pdf.numPages, maxPagesLimit));
+    const imagePages = buildImagePagePlan(pdf.numPages);
     const chunks: string[] = [];
+    const pageImages: string[] = [];
     let totalLength = 0;
 
     for (let index = 0; index < pagePlan.length; index++) {
@@ -113,7 +147,17 @@ async function extractPdfText(file: File, options: ExtractOptions = {}) {
       }
     }
 
-    return chunks.join("\n\n").slice(0, maxChars);
+    for (let index = 0; index < imagePages.length; index++) {
+      try {
+        const image = await renderPdfPageImage(pdf, imagePages[index]);
+        if (image) pageImages.push(image);
+      } catch (error) {
+        console.warn(`Skipped PDF page image ${imagePages[index]}`, error);
+      }
+      if (index % 3 === 2) await waitForBrowser();
+    }
+
+    return { text: chunks.join("\n\n").slice(0, maxChars), pageImages };
   } finally {
     await loadingTask.destroy();
     if (objectUrl) URL.revokeObjectURL(objectUrl);
