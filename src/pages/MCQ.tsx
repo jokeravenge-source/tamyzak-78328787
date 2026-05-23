@@ -14,7 +14,7 @@ const copy = {
     desc: "Upload any study file and get instant multiple-choice questions with explanations.",
     back: "Back",
     pickFile: "Choose a file",
-    drop: "PDF, DOCX, or TXT — up to 1GB",
+    drop: "PDF, DOCX, or TXT — up to 100MB",
     selected: "Selected",
     count: "Number of questions",
     generate: "Generate Questions",
@@ -32,7 +32,7 @@ const copy = {
     yourScore: "Your Score",
     restart: "New Quiz",
     noText: "Could not read text from this file.",
-    tooBig: "File too large. Max 1GB.",
+    tooBig: "File too large. Max 100MB.",
     badType: "Unsupported file. Use PDF, DOCX, or TXT.",
   },
   ar: {
@@ -40,7 +40,7 @@ const copy = {
     desc: "ارفع أي ملف دراسي واحصل فوراً على أسئلة اختيار من متعدد مع الشرح.",
     back: "رجوع",
     pickFile: "اختر ملفاً",
-    drop: "PDF أو DOCX أو TXT — حتى 1 جيجابايت",
+    drop: "PDF أو DOCX أو TXT — حتى 100 ميجابايت",
     selected: "تم اختيار",
     count: "عدد الأسئلة",
     generate: "توليد الأسئلة",
@@ -58,7 +58,7 @@ const copy = {
     yourScore: "نتيجتك",
     restart: "اختبار جديد",
     noText: "تعذرت قراءة النص من هذا الملف.",
-    tooBig: "الملف كبير جداً. الحد الأقصى 1 جيجابايت.",
+    tooBig: "الملف كبير جداً. الحد الأقصى 100 ميجابايت.",
     badType: "نوع الملف غير مدعوم. استخدم PDF أو DOCX أو TXT.",
   },
 } as const;
@@ -83,7 +83,7 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
 
   const onFile = (f: File | null) => {
     if (!f) return;
-    if (f.size > 1024 * 1024 * 1024) { toast.error(t.tooBig); return; }
+    if (f.size > 100 * 1024 * 1024) { toast.error(t.tooBig); return; }
     const ok = /\.(pdf|docx|txt)$/i.test(f.name) || f.type === "application/pdf" || f.type.startsWith("text/");
     if (!ok) { toast.error(t.badType); return; }
     setFile(f);
