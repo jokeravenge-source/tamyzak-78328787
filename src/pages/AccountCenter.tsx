@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, User, Loader2, Save } from "lucide-react";
+import { User, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
+import CurvedNavBar from "@/components/CurvedNavBar";
+import type { MainMenuChoice } from "@/pages/MainMenu";
 
 const t = {
   en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Username updated" },
   ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الاسم" },
 } as const;
 
-const AccountCenter = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+const AccountCenter = ({
+  language,
+  onBack,
+  onNav,
+}: {
+  language: AppLanguage;
+  onBack: () => void;
+  onNav?: (c: MainMenuChoice) => void;
+}) => {
   const text = t[language];
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -51,13 +61,9 @@ const AccountCenter = ({ language, onBack }: { language: AppLanguage; onBack: ()
   };
 
   return (
-    <main className="min-h-screen px-4 py-12 md:py-20 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
+    <main className="min-h-screen px-4 py-12 md:py-20 pb-32 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-
-      <button onClick={onBack} aria-label={text.back} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all">
-        <ArrowLeft className="w-5 h-5" />
-      </button>
 
       <section className="relative z-10 max-w-md mx-auto rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-8 animate-fade-up">
         <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
@@ -84,6 +90,7 @@ const AccountCenter = ({ language, onBack }: { language: AppLanguage; onBack: ()
           </form>
         )}
       </section>
+      {onNav && <CurvedNavBar language={language} active="account" onSelect={onNav} />}
     </main>
   );
 };
