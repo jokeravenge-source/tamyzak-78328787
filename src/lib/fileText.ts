@@ -1,5 +1,5 @@
 import mammoth from "mammoth";
-import * as pdfjs from "pdfjs-dist";
+import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 
 type ExtractOptions = {
   maxPages?: number;
