@@ -3,6 +3,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const MAX_STUDY_CHARS = 180000;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -14,8 +16,7 @@ Deno.serve(async (req) => {
     const n = Math.max(1, Math.min(100, Number(count) || 10));
     const lang = language === "ar" ? "Arabic" : "English";
 
-    // Truncate to keep prompt manageable (~60k chars)
-    const content = text.slice(0, 60000);
+    const content = text.slice(0, MAX_STUDY_CHARS);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
