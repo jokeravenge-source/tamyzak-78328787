@@ -52,6 +52,7 @@ const More = ({
   ];
 
   return (
+    <>
     <motion.main
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
@@ -105,8 +106,9 @@ const More = ({
           );
         })}
       </motion.section>
-      <CurvedNavBar language={language} active="more" onSelect={onNav} />
     </motion.main>
+      <CurvedNavBar language={language} active="more" onSelect={onNav} />
+    </>
   );
 };
 
