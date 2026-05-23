@@ -1,0 +1,27 @@
+import type { Flashcard } from "./flashcards";
+
+export const flashcardsFrenchPluralAr: Flashcard[] = [
+  { q: "ما القاعدة العامة لجمع الأسماء والصفات المفردة؟", a: "نضيف حرف s إلى نهاية الكلمة. مثال: mot → mots، livre → livres." },
+  { q: "ماذا نفعل إذا كانت الكلمة تنتهي بـ s, x, z؟", a: "تبقى كما هي ولا تتغير. مثال: bras → bras، nez → nez، vieux → vieux." },
+  { q: "ما قاعدة الكلمات المنتهية بـ eau, au, eu؟", a: "نضيف x. مثال: feu → feux، eau → eaux، beau → beaux." },
+  { q: "ما الشواذ من قاعدة eu (تأخذ s)؟", a: "bleu → bleus، pneu → pneus." },
+  { q: "ما قاعدة الكلمات المنتهية بـ ou؟", a: "نضيف s. مثال: fou → fous، sou → sous، cou → cous، trou → trous." },
+  { q: "ما شواذ قاعدة ou (تأخذ x)؟", a: "bijou, caillou, genou, hibou, pou, chou, joujou → تأخذ x." },
+  { q: "ما قاعدة الكلمات المنتهية بـ al؟", a: "نحذف al ونضع aux. مثال: cheval → chevaux، animal → animaux، hôpital → hôpitaux." },
+  { q: "ما شواذ قاعدة al (تأخذ s)؟", a: "bal, festival, carnaval, banal, fatal, natal, naval → تأخذ s." },
+  { q: "ما قاعدة الكلمات المنتهية بـ ail؟", a: "نضيف s. مثال: détail → détails، rail → rails، portail → portails." },
+  { q: "ما الشواذ من قاعدة ail (تأخذ aux)؟", a: "travail → travaux، vitrail → vitraux، bail → baux." },
+  { q: "ما جمع الضمائر Je / Tu / Il / Elle؟", a: "Je → Nous، Tu → Vous، Il/Elle → Ils/Elles." },
+  { q: "ما جمع أدوات التعريف والتنكير؟", a: "Un/Une → Des، Le/La/L' → Les." },
+  { q: "ما جمع صفات الملكية والإشارة؟", a: "Mon/Ma → Mes، Ton/Ta → Tes، Son/Sa → Ses، Notre → Nos، Votre → Vos، Ce/Cet/Cette → Ces." },
+  { q: "ما الكلمات الشاذة كلياً في الجمع؟", a: "œil → yeux، ciel → cieux، monsieur → messieurs، madame → mesdames، mademoiselle → mesdemoiselles، tout → tous/toutes." },
+  { q: "حل وزاري: اجمع fils.", a: "fils (تنتهي بـ s فلا تتغير)." },
+  { q: "حل وزاري: اجمع ciel.", a: "cieux (شاذ)." },
+  { q: "حل وزاري: اجمع beau.", a: "beaux (eau تأخذ x)." },
+  { q: "حل وزاري: اجمع bijou.", a: "bijoux (شواذ قاعدة ou)." },
+  { q: "حل وزاري: اجمع travail.", a: "travaux (مستثنى من قاعدة ail)." },
+  { q: "حل وزاري: اجمع œil.", a: "yeux (شاذ)." },
+  { q: "حل وزاري: اجمع hôpital.", a: "hôpitaux (al تنقلب إلى aux)." },
+  { q: "حل وزاري: اجمع madame.", a: "mesdames (شاذ)." },
+  { q: "حل وزاري: اجمع ruisseau.", a: "ruisseaux (eau تأخذ x)." },
+];

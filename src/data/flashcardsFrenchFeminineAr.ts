@@ -1,3 +1,32 @@
-import type { Flashcard } with "./flashcards";
+import type { Flashcard } from "./flashcards";
 
-export const flashcardsFrenchFeminineAr: Flashcard[] = [];
+export const flashcardsFrenchFeminineAr: Flashcard[] = [
+  { q: "ما القاعدة العامة لتأنيث الصفات والأسماء؟", a: "نضيف حرف e إلى نهاية الكلمة المذكرة. مثال: grand → grande، voisin → voisine." },
+  { q: "ماذا نفعل إذا كانت الكلمة تنتهي أصلاً بحرف e؟", a: "تبقى كما هي بدون إضافة. مثال: rapide → rapide، riche → riche." },
+  { q: "ما قاعدة الكلمات المنتهية بـ f؟", a: "نحذف f ونضع ve. مثال: veuf → veuve، actif → active، neuf → neuve، bref → brève." },
+  { q: "ما قاعدة الكلمات المنتهية بـ x؟", a: "نحذف x ونضع se. مثال: sérieux → sérieuse، doux → douce." },
+  { q: "ما شواذ الكلمات المنتهية بـ x؟", a: "vieux → vieille، faux → fausse، roux → rousse." },
+  { q: "ما قاعدة الكلمات المنتهية بـ eur؟", a: "نحذف e الأخير ونضع euse. مثال: travailleur → travailleuse." },
+  { q: "ما شواذ قاعدة eur (تأخذ e فقط)؟", a: "meilleur, mineur, majeur, intérieur, extérieur, supérieur — تؤنث بإضافة e." },
+  { q: "ما قاعدة الكلمات المنتهية بـ teur؟", a: "نحذف teur ونضع trice. مثال: acteur → actrice، directeur → directrice." },
+  { q: "ما الشواذ من قاعدة teur (تأخذ teuse)؟", a: "porteur → porteuse، menteur → menteuse، chanteur → chanteuse، prometteur → prometteuse." },
+  { q: "ما قاعدة الكلمات المنتهية بـ el أو il؟", a: "نضاعف l ونضيف e. مثال: professionnel → professionnelle، gentil → gentille." },
+  { q: "ما قاعدة الكلمات المنتهية بـ an أو on أو en؟", a: "نضاعف n ونضيف e. مثال: ancien → ancienne، paysan → paysanne، espion → espionne." },
+  { q: "ما قاعدة الكلمات المنتهية بـ et أو ot؟", a: "نضاعف t ونضيف e. مثال: sot → sotte، net → nette، chat → chatte." },
+  { q: "ما شواذ قاعدة et (تأخذ è)؟", a: "inquiet → inquiète، complet → complète، discret → discrète، secret → secrète." },
+  { q: "ما قاعدة الكلمات المنتهية بـ as أو os؟", a: "نضاعف s ونضيف e. مثال: gros → grosse، bas → basse، las → lasse." },
+  { q: "ما قاعدة الكلمات المنتهية بـ is؟", a: "نضيف e فقط. مثال: gris → grise، anglais → anglaise." },
+  { q: "ما شواذ قاعدة is؟", a: "épais → épaisse، frais → fraîche." },
+  { q: "ما قاعدة الكلمات المنتهية بـ ou؟", a: "نحذف ou ونضع olle. مثال: fou → folle، mou → molle." },
+  { q: "ما قاعدة الكلمات المنتهية بـ eau؟", a: "نحذف eau ونضع elle. مثال: beau → belle، nouveau → nouvelle." },
+  { q: "ما قاعدة الكلمات المنتهية بـ c؟", a: "إما نقلبها إلى que (public → publique، turc → turque) أو إلى che (blanc → blanche، sec → sèche)." },
+  { q: "ما قاعدة الكلمات المنتهية بـ er؟", a: "نضع è قبل r ونضيف e. مثال: cher → chère، léger → légère، premier → première." },
+  { q: "ما أسماء المهن الشائعة التي لا تُؤنث؟", a: "Écrivain، Professeur، Médecin — تبقى مذكرة." },
+  { q: "ما الظروف الشائعة التي لا تُؤنث؟", a: "bien، mal، vite، mieux، un peu، beaucoup — ظروف ثابتة." },
+  { q: "حل وزاري 2008: أنث animateur.", a: "animatrice (شواذ قاعدة teur → trice)." },
+  { q: "حل وزاري 2008: أنث grec.", a: "grecque (الكلمات المنتهية بـ c تأخذ que)." },
+  { q: "حل وزاري 2009: أنث épais.", a: "épaisse (شواذ قاعدة is)." },
+  { q: "حل وزاري 2009: أنث extérieur.", a: "extérieure (شواذ قاعدة eur — تأخذ e فقط)." },
+  { q: "حل وزاري 2011: حوّل Ce méchant chat est إلى المؤنث.", a: "Cette méchante chatte est (مضاعفة t + e)." },
+  { q: "حل وزاري 2011: حوّل affectif.", a: "affective (حذف f وإضافة ve)." },
+];
