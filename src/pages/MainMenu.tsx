@@ -46,7 +46,7 @@ const copy = {
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes";
 
 const MainMenu = ({
   language,
@@ -103,7 +103,7 @@ const MainMenu = ({
     { key: "summaries", Icon: FileText, locked: false, ...text.items.summaries },
     { key: "mcq", Icon: HelpCircle, locked: false, ...text.items.mcq },
     { key: "sessions", Icon: GraduationCap, locked: false, ...text.items.sessions },
-    { key: "videoNotes", Icon: Headphones, locked: true, ...text.items.videoNotes },
+    { key: "videoNotes", Icon: Headphones, locked: false, ...text.items.videoNotes },
   ];
 
   const drawerItems = [
@@ -115,6 +115,7 @@ const MainMenu = ({
     { key: "advices" as const, Icon: MessageSquareQuote, ...text.items.advices },
     { key: "sessions" as const, Icon: GraduationCap, ...text.items.sessions },
     { key: "essay" as const, Icon: PenLine, ...text.items.essay },
+    { key: "videoNotes" as const, Icon: Headphones, ...text.items.videoNotes },
     { key: "account" as const, Icon: UserCog, ...text.items.account },
   ];
 
