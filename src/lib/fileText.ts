@@ -61,9 +61,9 @@ async function extractPdfText(file: File, options: ExtractOptions = {}) {
 
   const maxPagesLimit = options.maxPages ?? DEFAULT_MAX_PDF_PAGES;
   const maxChars = options.maxChars ?? DEFAULT_MAX_CHARS;
-  const data = new Uint8Array(await file.arrayBuffer());
-  const loadingTask = pdfjs.getDocument({
-    data,
+  const objectUrl = typeof URL !== "undefined" && URL.createObjectURL ? URL.createObjectURL(file) : null;
+  const pdfSource = {
+    ...(objectUrl ? { url: objectUrl } : { data: new Uint8Array(await file.arrayBuffer()) }),
     cMapUrl: `${PDF_ASSET_BASE}/cmaps/`,
     cMapPacked: true,
     standardFontDataUrl: `${PDF_ASSET_BASE}/standard_fonts/`,
@@ -71,7 +71,8 @@ async function extractPdfText(file: File, options: ExtractOptions = {}) {
     useSystemFonts: true,
     useWorkerFetch: false,
     disableFontFace: true,
-  });
+  };
+  const loadingTask = pdfjs.getDocument(pdfSource);
 
   try {
     const pdf = await loadingTask.promise;
@@ -115,6 +116,7 @@ async function extractPdfText(file: File, options: ExtractOptions = {}) {
     return chunks.join("\n\n").slice(0, maxChars);
   } finally {
     await loadingTask.destroy();
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
   }
 }
 
