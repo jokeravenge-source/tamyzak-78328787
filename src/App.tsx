@@ -31,7 +31,6 @@ import ZombieGuard from "./components/ZombieGuard";
 import EnglishCategoryPage, { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "./pages/EnglishCategory";
 import Basics, { type BasicsChoice } from "./pages/Basics";
 import BiologyDrawings from "./pages/BiologyDrawings";
-import { AnimatePresence } from "framer-motion";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
