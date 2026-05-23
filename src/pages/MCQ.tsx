@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { type AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import mammoth from "mammoth";
+import { extractTextFromFile } from "@/lib/fileText";
 
 const copy = {
   en: {
@@ -66,35 +66,6 @@ const copy = {
 type MCQ = { question: string; choices: string[]; answer_index: number; explanation: string; hint?: string };
 type Phase = "setup" | "quiz" | "result";
 
-async function extractText(file: File): Promise<string> {
-  const name = file.name.toLowerCase();
-  if (name.endsWith(".txt") || file.type.startsWith("text/")) {
-    return await file.text();
-  }
-  if (name.endsWith(".docx")) {
-    const buf = await file.arrayBuffer();
-    const { value } = await mammoth.extractRawText({ arrayBuffer: buf });
-    return value;
-  }
-  if (name.endsWith(".pdf") || file.type === "application/pdf") {
-    const pdfjs: any = await import("pdfjs-dist");
-    const v = pdfjs.version || "5.7.284";
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${v}/build/pdf.worker.min.mjs`;
-    const buf = await file.arrayBuffer();
-    const pdf = await pdfjs.getDocument({ data: buf }).promise;
-    let out = "";
-    const maxPages = Math.min(pdf.numPages, 200);
-    for (let i = 1; i <= maxPages; i++) {
-      const page = await pdf.getPage(i);
-      const tc = await page.getTextContent();
-      out += tc.items.map((it: any) => it.str).join(" ") + "\n\n";
-      if (out.length > 200000) break;
-    }
-    return out;
-  }
-  throw new Error("unsupported");
-}
-
 const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const t = copy[language];
   const rtl = language === "ar";
@@ -123,7 +94,7 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
     setLoading(true);
     try {
       toast.loading(t.extracting, { id: "ext" });
-      const text = await extractText(file);
+      const text = await extractTextFromFile(file);
       toast.dismiss("ext");
       if (!text || text.trim().length < 50) {
         toast.error(t.noText);
