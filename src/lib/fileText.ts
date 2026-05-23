@@ -32,7 +32,6 @@ async function extractPdfText(file: File, options: ExtractOptions = {}) {
   const data = new Uint8Array(await file.arrayBuffer());
   const loadingTask = pdfjs.getDocument({
     data,
-    isEvalSupported: false,
     useWorkerFetch: false,
   });
 
