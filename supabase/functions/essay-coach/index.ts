@@ -3,6 +3,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const MAX_STUDY_CHARS = 180000;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -15,7 +17,7 @@ Deno.serve(async (req) => {
     }
 
     if (mode === "generate") {
-      const text = String(body.text || "").slice(0, 60000);
+      const text = String(body.text || "").slice(0, MAX_STUDY_CHARS);
       const n = Math.max(1, Math.min(10, Number(body.count) || 5));
       if (!text || text.trim().length < 50) {
         return new Response(JSON.stringify({ error: "Not enough text" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
