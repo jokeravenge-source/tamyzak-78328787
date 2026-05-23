@@ -1,9 +1,9 @@
-import { Layers, GraduationCap, BookMarked, FileText, ListChecks, HelpCircle, MessageSquareQuote, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, UserCog, Menu, PenLine } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import StreakTree from "@/components/StreakTree";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerClose } from "@/components/ui/drawer";
+import CurvedNavBar from "@/components/CurvedNavBar";
 
 const copy = {
   en: {
@@ -106,19 +106,6 @@ const MainMenu = ({
     { key: "videoNotes", Icon: Headphones, locked: false, ...text.items.videoNotes },
   ];
 
-  const drawerItems = [
-    { key: "flashcards" as const, Icon: Layers, ...text.items.flashcards },
-    { key: "malazam" as const, Icon: BookMarked, ...text.items.malazam },
-    { key: "summaries" as const, Icon: FileText, ...text.items.summaries },
-    { key: "missions" as const, Icon: ListChecks, ...text.items.missions },
-    { key: "mcq" as const, Icon: HelpCircle, ...text.items.mcq },
-    { key: "advices" as const, Icon: MessageSquareQuote, ...text.items.advices },
-    { key: "sessions" as const, Icon: GraduationCap, ...text.items.sessions },
-    { key: "essay" as const, Icon: PenLine, ...text.items.essay },
-    { key: "videoNotes" as const, Icon: Headphones, ...text.items.videoNotes },
-    { key: "account" as const, Icon: UserCog, ...text.items.account },
-  ];
-
   const handleBack = () => {
     localStorage.removeItem(LANGUAGE_STORAGE_KEY);
     onChangeLanguage();
@@ -136,43 +123,6 @@ const MainMenu = ({
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
-
-      <Drawer>
-        <DrawerTrigger asChild>
-          <button
-            aria-label={language === "ar" ? "القائمة" : "Menu"}
-            className="absolute top-6 left-20 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        </DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle className="text-center gradient-text">{text.title}</DrawerTitle>
-          </DrawerHeader>
-          <div dir={language === "ar" ? "rtl" : "ltr"} className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 pb-8 max-h-[70vh] overflow-y-auto">
-            {drawerItems.map((it) => {
-              const Icon = it.Icon;
-              return (
-                <DrawerClose asChild key={it.key}>
-                  <button
-                    onClick={() => onSelect(it.key as MainMenuChoice)}
-                    className="flex items-center gap-3 rounded-2xl p-4 border border-primary/30 bg-secondary/40 hover:border-primary hover:bg-secondary/70 transition text-left"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-foreground">{it.title}</div>
-                      <div className="text-xs text-muted-foreground truncate">{it.subtitle}</div>
-                    </div>
-                  </button>
-                </DrawerClose>
-              );
-            })}
-          </div>
-        </DrawerContent>
-      </Drawer>
 
       <button
         onClick={signOut}
@@ -263,6 +213,7 @@ const MainMenu = ({
         })}
       </section>
       <StreakTree language={language} />
+      <CurvedNavBar language={language} onSelect={onSelect} />
     </main>
   );
 };
