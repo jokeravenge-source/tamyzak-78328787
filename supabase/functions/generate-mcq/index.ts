@@ -4,19 +4,22 @@ const corsHeaders = {
 };
 
 const MAX_STUDY_CHARS = 180000;
+const AI_MODEL = "google/gemini-2.5-pro";
+const MAX_PAGE_IMAGES = 20;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { text, count, language } = await req.json();
-    if (!text || typeof text !== "string") {
-      return new Response(JSON.stringify({ error: "Missing text" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const { text, pageImages, count, language } = await req.json();
+    const images = Array.isArray(pageImages) ? pageImages.filter((image) => typeof image === "string" && image.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
+    if ((!text || typeof text !== "string") && !images.length) {
+      return new Response(JSON.stringify({ error: "Missing study material" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const n = Math.max(1, Math.min(100, Number(count) || 10));
     const lang = language === "ar" ? "Arabic" : "English";
 
-    const content = text.slice(0, MAX_STUDY_CHARS);
+    const content = typeof text === "string" ? text.slice(0, MAX_STUDY_CHARS) : "";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -25,7 +28,13 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You are an expert quiz generator. Generate exactly ${n} high-quality multiple choice questions in ${lang} based ONLY on the provided study material. Each question must have 4 distinct choices, one correct answer, a short helpful hint (without revealing the answer) and a clear explanation derived from the material. Return ONLY valid JSON, no markdown.`;
 
-    const userPrompt = `Study material:\n\n${content}\n\nGenerate ${n} MCQs in ${lang}.`;
+    const userPrompt = `Study material text extracted from the file:\n\n${content || "No selectable text was extracted. Use the attached page images."}\n\n${images.length ? "Attached page images are sampled from the PDF. Read/OCR them and use them together with the extracted text." : ""}\n\nGenerate ${n} MCQs in ${lang}.`;
+    const userContent = images.length
+      ? [
+          { type: "text", text: userPrompt },
+          ...images.map((url) => ({ type: "image_url", image_url: { url } })),
+        ]
+      : userPrompt;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -34,10 +43,10 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: AI_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: "user", content: userContent },
         ],
         tools: [
           {
