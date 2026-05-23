@@ -50,28 +50,40 @@ const CurvedNavBar = ({ language, onSelect }: { language: AppLanguage; onSelect:
   return (
     <>
       {open && (
-        <div className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(null)}>
-          <div
-            dir={language === "ar" ? "rtl" : "ltr"}
-            onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-28 left-1/2 -translate-x-1/2 w-[92vw] max-w-md rounded-3xl border border-primary/30 bg-secondary/95 backdrop-blur-xl shadow-[var(--shadow-glow)] p-5 animate-fade-up"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold gradient-text text-lg">{L.title} — {L[open]}</h3>
-              <button onClick={() => setOpen(null)} className="text-muted-foreground hover:text-foreground p-1"><X className="w-5 h-5" /></button>
+        <div
+          dir={language === "ar" ? "rtl" : "ltr"}
+          className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-xl animate-fade-in overflow-y-auto"
+        >
+          <div className="min-h-screen flex flex-col px-5 py-8 md:py-14 max-w-5xl mx-auto w-full">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-2">{L.title}</p>
+                <h2 className="text-3xl md:text-4xl font-bold gradient-text">{L[open]}</h2>
+              </div>
+              <button
+                onClick={() => setOpen(null)}
+                aria-label="Close"
+                className="w-12 h-12 rounded-full border border-primary/30 bg-secondary/60 hover:border-primary hover:bg-primary/10 flex items-center justify-center transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[55vh] overflow-y-auto">
-              {groups[open].map(({ key, Icon }) => (
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+              {groups[open].map(({ key, Icon }, i) => (
                 <button
                   key={key}
                   onClick={() => { setOpen(null); onSelect(key); }}
-                  className="flex items-center gap-3 rounded-2xl p-3 border border-primary/30 bg-background/40 hover:bg-primary/10 hover:border-primary transition text-left"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                  className="group relative text-left rounded-3xl p-6 h-40 border border-primary/30 bg-secondary/40 backdrop-blur overflow-hidden hover:-translate-y-1 hover:border-primary hover:shadow-[var(--shadow-glow)] transition-all duration-500 animate-fade-up"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5 text-primary" />
+                  <div className="flex items-start justify-between">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center">
+                      <Icon className="w-7 h-7 text-primary" />
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <span className="font-medium flex-1 truncate">{T[key as keyof typeof T]}</span>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="mt-6 text-xl font-semibold">{T[key as keyof typeof T]}</h3>
                 </button>
               ))}
             </div>

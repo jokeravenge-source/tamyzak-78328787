@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Arabic font fallback to fix broken/garbled glyphs in some browsers */
+:root {
+  --font-arabic: "Cairo", "Noto Naskh Arabic", "Segoe UI", "Tahoma", sans-serif;
+}
+[dir="rtl"],
+[lang="ar"],
+html[lang="ar"] body {
+  font-family: var(--font-arabic);
+  font-feature-settings: "kern", "liga", "calt";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
 /* Zombie mode — bad UI overlay applied via .zombie-mode on <html> */
 html.zombie-mode {
   filter: hue-rotate(35deg) saturate(1.2) contrast(1.05);
