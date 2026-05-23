@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Upload, Heart, FileText, X, Loader2, Hash, Download, Sparkles } from "lucide-react";
+import { ArrowLeft, Upload, Heart, FileText, X, Loader2, Hash, Download, Sparkles, Bell, Clock, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -39,6 +39,8 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
   const [filter, setFilter] = useState<SubjectCode | "all">("all");
   const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [pending, setPending] = useState<SummaryRow[]>([]);
 
   // Upload form
   const [file, setFile] = useState<File | null>(null);
@@ -53,6 +55,26 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     setUserId(user?.id ?? null);
+    let admin = false;
+    if (user) {
+      const { data: r } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      admin = !!r;
+      setIsAdmin(admin);
+      const { data: pend } = await supabase
+        .from("summaries")
+        .select("*")
+        .eq("approved", false)
+        .order("created_at", { ascending: false });
+      // RLS already restricts: admins see all pending; users see their own.
+      setPending(((pend ?? []) as SummaryRow[]));
+    } else {
+      setPending([]);
+    }
     const { data: sums } = await supabase
       .from("summaries")
       .select("*")
@@ -82,6 +104,21 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
   };
 
   useEffect(() => { fetchAll(); }, []);
+
+  const approve = async (id: string) => {
+    const { error } = await supabase.from("summaries").update({ approved: true }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(t("Approved", "تمت الموافقة"));
+    fetchAll();
+  };
+  const rejectPending = async (id: string, path: string) => {
+    if (!confirm(t("Delete this submission?", "حذف هذا الطلب؟"))) return;
+    await supabase.storage.from("summaries").remove([path]);
+    const { error } = await supabase.from("summaries").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(t("Removed", "تم الحذف"));
+    fetchAll();
+  };
 
   const sorted = useMemo(() => {
     const filtered = filter === "all" ? rows : rows.filter((r) => r.subject === filter);
@@ -169,6 +206,41 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
         <h1 className="text-4xl md:text-6xl font-bold gradient-text leading-[1.1] mb-3">{t("Community Summaries", "ملخصات الطلاب")}</h1>
         <p className="text-muted-foreground md:text-lg">{t("Share PDF summaries and like the best ones. Top likes rise to the top.", "شارك ملخصاتك مع زملائك وادعم الأفضل. الأكثر إعجاباً يتصدر.")}</p>
       </header>
+
+      {pending.length > 0 && (
+        <div className="max-w-3xl mx-auto mt-8 space-y-2 relative z-10">
+          <div className="flex items-center gap-2 text-sm text-primary font-semibold">
+            <Bell className="w-4 h-4" />
+            {isAdmin
+              ? t(`${pending.length} pending submission(s) waiting for approval`, `${pending.length} ملخص بانتظار الموافقة`)
+              : t(`You have ${pending.length} pending submission(s)`, `لديك ${pending.length} ملخص قيد المراجعة`)}
+          </div>
+          {pending.map((p) => (
+            <div key={p.id} className="flex items-start gap-3 rounded-2xl p-3 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up">
+              <Clock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm truncate">{p.name}</p>
+                <p className="text-xs text-muted-foreground">{subjLabel(p.subject)} · {subjTag(p.subject)}</p>
+              </div>
+              {isAdmin ? (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button onClick={() => download(p.file_path, p.name)} title={t("Download", "تحميل")} className="w-8 h-8 rounded-lg border border-white/10 bg-background/40 hover:border-primary/40 flex items-center justify-center text-muted-foreground hover:text-foreground">
+                    <Download className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => approve(p.id)} title={t("Approve", "موافقة")} className="w-8 h-8 rounded-lg bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center">
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => rejectPending(p.id, p.file_path)} title={t("Reject", "رفض")} className="w-8 h-8 rounded-lg border border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs text-muted-foreground shrink-0">{t("Pending", "قيد المراجعة")}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto mt-10 flex flex-wrap items-center justify-between gap-3 relative z-10">
         <div className="flex flex-wrap gap-2">

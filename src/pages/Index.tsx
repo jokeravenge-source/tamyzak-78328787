@@ -35,6 +35,12 @@ import { flashcardsChemCh5Ar } from "@/data/flashcardsChemCh5Ar";
 import { flashcardsChemCh6Ar } from "@/data/flashcardsChemCh6Ar";
 import { flashcardsArabicLit1Ar } from "@/data/flashcardsArabicLit1Ar";
 import { flashcardsEngGrammar1 } from "@/data/flashcardsEngGrammar1";
+import { flashcardsFrenchNegationAr } from "@/data/flashcardsFrenchNegationAr";
+import { flashcardsFrenchInterrogationAr } from "@/data/flashcardsFrenchInterrogationAr";
+import { flashcardsFrenchRelativePronounsAr } from "@/data/flashcardsFrenchRelativePronounsAr";
+import { flashcardsFrenchFeminineAr } from "@/data/flashcardsFrenchFeminineAr";
+import { flashcardsFrenchPluralAr } from "@/data/flashcardsFrenchPluralAr";
+import { flashcardsFrenchAdverbsAr } from "@/data/flashcardsFrenchAdverbsAr";
 import { flashcardsCh1 } from "@/data/flashcardsCh1";
 import { flashcardsCh2 } from "@/data/flashcardsCh2";
 import { flashcardsCh4 } from "@/data/flashcardsCh4";
@@ -160,6 +166,25 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           eyebrow: language === "ar" ? "الإنجليزية · القواعد · الوحدة 1" : "English · Grammar · Unit 1",
           cards: flashcardsEngGrammar1,
         };
+      }
+
+      if (subject === "french") {
+        const frenchDecks: Record<string, { ar: string; en: string; cards: typeof flashcards }> = {
+          "1": { ar: "الفرنسية · النفي", en: "French · Negation", cards: flashcardsFrenchNegationAr },
+          "2": { ar: "الفرنسية · الاستفهام", en: "French · Interrogation", cards: flashcardsFrenchInterrogationAr },
+          "3": { ar: "الفرنسية · ضمائر الوصل", en: "French · Relative Pronouns", cards: flashcardsFrenchRelativePronounsAr },
+          "4": { ar: "الفرنسية · التأنيث", en: "French · Feminization", cards: flashcardsFrenchFeminineAr },
+          "5": { ar: "الفرنسية · الجمع", en: "French · Plural", cards: flashcardsFrenchPluralAr },
+          "6": { ar: "الفرنسية · اشتقاق الظروف", en: "French · Adverbs", cards: flashcardsFrenchAdverbsAr },
+        };
+        const d = frenchDecks[chapter];
+        if (d) {
+          return {
+            title: language === "ar" ? "بطاقات تعليمية" : "Flashcards",
+            eyebrow: language === "ar" ? d.ar : d.en,
+            cards: d.cards,
+          };
+        }
       }
 
       if (language === "ar" && chapter === "1") {
