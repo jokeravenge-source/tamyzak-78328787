@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
-const CHANNELS = ["@a6th_DHS", "@sad6ths"];
+const CHANNELS = ["@a6th_DHS", "@sad6ths", "@sadsworld"];
 
 async function deriveSecret(apiKey: string): Promise<string> {
   const data = new TextEncoder().encode(`telegram-webhook:${apiKey}`);
