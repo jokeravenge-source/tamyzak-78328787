@@ -15,41 +15,44 @@ const bacteria: DiagramDef = {
   title: { en: "Structure of Bacteria", ar: "تركيب البكتيريا" },
   aspect: "3/4",
   parts: [
-    { id: "pilus",    label: { en: "Sex pilus",       ar: "الأهداب الجنسية" }, ax: 50, ay: 6,  lx: 4,  ly: 4  },
-    { id: "cyto",     label: { en: "Cytoplasm",       ar: "السايتوبلازم" },    ax: 60, ay: 22, lx: 78, ly: 14 },
-    { id: "nucleoid", label: { en: "Nucleoid",        ar: "النيوكليويد" },     ax: 46, ay: 30, lx: 78, ly: 26 },
-    { id: "plasma",   label: { en: "Plasma membrane", ar: "الغشاء البلازمي" }, ax: 38, ay: 42, lx: 78, ly: 40 },
-    { id: "wall",     label: { en: "Cell wall",       ar: "الجدار الخلوي" },   ax: 32, ay: 54, lx: 78, ly: 54 },
-    { id: "capsule",  label: { en: "Capsule",         ar: "المحفظة" },         ax: 70, ay: 62, lx: 78, ly: 68 },
-    { id: "fimbriae", label: { en: "Fimbriae",        ar: "الزوائد" },         ax: 28, ay: 28, lx: 4,  ly: 26 },
-    { id: "flagella", label: { en: "Flagella",        ar: "الأسواط" },         ax: 50, ay: 72, lx: 4,  ly: 70 },
+    // ax 0-100 (viewBox x), ay 0-75 (viewBox y). lx/ly are container %.
+    { id: "pilus",    label: { en: "Sex pilus",       ar: "الأهداب الجنسية" }, ax: 44, ay: 9,  lx: 2,  ly: 16 },
+    { id: "cyto",     label: { en: "Cytoplasm",       ar: "السايتوبلازم" },    ax: 58, ay: 14, lx: 76, ly: 20 },
+    { id: "nucleoid", label: { en: "Nucleoid",        ar: "النيوكليويد" },     ax: 50, ay: 12, lx: 76, ly: 30 },
+    { id: "plasma",   label: { en: "Plasma membrane", ar: "الغشاء البلازمي" }, ax: 44, ay: 23, lx: 76, ly: 42 },
+    { id: "wall",     label: { en: "Cell wall",       ar: "الجدار الخلوي" },   ax: 58, ay: 27, lx: 76, ly: 52 },
+    { id: "capsule",  label: { en: "Capsule",         ar: "المحفظة" },         ax: 64, ay: 45, lx: 76, ly: 62 },
+    { id: "fimbriae", label: { en: "Fimbriae",        ar: "الزوائد" },         ax: 36, ay: 38, lx: 2,  ly: 50 },
+    { id: "flagella", label: { en: "Flagella",        ar: "الأسواط" },         ax: 50, ay: 66, lx: 2,  ly: 82 },
   ],
   art: h(Fragment, null,
-    // body (rod)
-    h("path", { d: "M40 10 Q40 6 50 6 Q60 6 60 10 L60 60 Q60 70 50 70 Q40 70 40 60 Z",
-                fill: `${P} / 0.25`, stroke: P, strokeWidth: 0.6, style: { fill: "hsl(var(--primary) / 0.25)" } }),
-    // capsule (outer halo)
-    h("path", { d: "M38 9 Q38 4 50 4 Q62 4 62 9 L62 60 Q62 72 50 72 Q38 72 38 60 Z",
-                fill: "none", stroke: A, strokeWidth: 0.4, strokeDasharray: "1 1" }),
-    // nucleoid (DNA tangle)
-    h("path", { d: "M44 22 Q47 18 50 22 T55 24 Q53 28 49 27 T44 30",
-                fill: "none", stroke: P, strokeWidth: 0.6, opacity: 0.8 }),
-    h("path", { d: "M45 28 Q48 32 52 30 T57 32",
-                fill: "none", stroke: P, strokeWidth: 0.6, opacity: 0.7 }),
-    // fimbriae (short hairs)
-    ...Array.from({ length: 10 }, (_, i) => h("line", {
-      key: `f${i}`, x1: 40, y1: 14 + i * 4, x2: 36, y2: 12 + i * 4.2,
-      stroke: A, strokeWidth: 0.35,
+    // capsule (outer dashed halo)
+    h("path", { d: "M36 8 Q36 3 50 3 Q64 3 64 8 L64 58 Q64 67 50 67 Q36 67 36 58 Z",
+                fill: "hsl(var(--accent) / 0.10)", stroke: A, strokeWidth: 0.35, strokeDasharray: "1 1" }),
+    // body (rod = cell wall outer)
+    h("path", { d: "M40 10 Q40 6 50 6 Q60 6 60 10 L60 60 Q60 65 50 65 Q40 65 40 60 Z",
+                fill: "hsl(var(--primary) / 0.22)", stroke: P, strokeWidth: 0.55 }),
+    // cell wall band (darker ring around middle)
+    h("path", { d: "M40 26 L60 26 L60 30 L40 30 Z", fill: "hsl(20 55% 45% / 0.55)", stroke: P, strokeWidth: 0.25 }),
+    // plasma membrane band (just inside the wall band)
+    h("path", { d: "M40 21 L60 21 L60 25 L40 25 Z", fill: "hsl(170 55% 55% / 0.55)", stroke: A, strokeWidth: 0.25 }),
+    // nucleoid (DNA tangle near top)
+    h("path", { d: "M44 10 q3 -3 6 1 t6 2 q-2 4 -6 3 t-6 2 q-2 -4 0 -8", fill: "none", stroke: "hsl(0 0% 12%)", strokeWidth: 0.45, opacity: 0.9 }),
+    h("path", { d: "M46 13 q3 2 6 0 t5 2", fill: "none", stroke: "hsl(0 0% 12%)", strokeWidth: 0.4, opacity: 0.8 }),
+    h("path", { d: "M47 16 q3 -2 6 1 t4 1", fill: "none", stroke: "hsl(0 0% 12%)", strokeWidth: 0.4, opacity: 0.8 }),
+    // fimbriae (short hairs both sides, along full body)
+    ...Array.from({ length: 14 }, (_, i) => h("line", {
+      key: `fl${i}`, x1: 40, y1: 8 + i * 4, x2: 35, y2: 7 + i * 4.1,
+      stroke: "hsl(0 0% 30%)", strokeWidth: 0.3,
     })),
-    ...Array.from({ length: 10 }, (_, i) => h("line", {
-      key: `fr${i}`, x1: 60, y1: 14 + i * 4, x2: 64, y2: 12 + i * 4.2,
-      stroke: A, strokeWidth: 0.35,
+    ...Array.from({ length: 14 }, (_, i) => h("line", {
+      key: `fr${i}`, x1: 60, y1: 8 + i * 4, x2: 65, y2: 7 + i * 4.1,
+      stroke: "hsl(0 0% 30%)", strokeWidth: 0.3,
     })),
-    // sex pilus (one longer hair on top)
-    h("line", { x1: 50, y1: 6, x2: 50, y2: -1, stroke: P, strokeWidth: 0.5 }),
-    // flagella (wavy tail)
-    h("path", { d: "M50 70 Q48 73 52 75 T48 78 T52 80",
-                fill: "none", stroke: P, strokeWidth: 0.6 }),
+    // sex pilus (longer hair from top-left of body)
+    h("line", { x1: 44, y1: 8, x2: 30, y2: 4, stroke: "hsl(0 0% 20%)", strokeWidth: 0.45 }),
+    // flagella (wavy tail from bottom)
+    h("path", { d: "M50 65 Q47 68 50 70 T50 73 Q53 71 56 73 T54 67", fill: "none", stroke: "hsl(0 0% 20%)", strokeWidth: 0.5 }),
   ),
 };
 
