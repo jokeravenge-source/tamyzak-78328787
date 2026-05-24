@@ -8,6 +8,7 @@ import { type AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { extractStudyMaterial } from "@/lib/fileText";
+import { awardPoints } from "@/lib/points";
 
 const copy = {
   en: {
@@ -143,7 +144,13 @@ const Essay = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   };
 
   const nextQuestion = () => {
-    if (current + 1 >= questions.length) { setPhase("result"); return; }
+    if (current + 1 >= questions.length) {
+      setPhase("result");
+      const total = grades.reduce((s, g) => s + g.score, 0);
+      const max = questions.length * 10;
+      if (max > 0 && total === max) awardPoints("essay");
+      return;
+    }
     setCurrent((c) => c + 1); setAnswer(""); setLastGrade(null);
   };
 
