@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Send, Check, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Send, Check, Sparkles, Loader2, RefreshCw, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "tg_channels_joined_v1";
 
@@ -10,19 +11,86 @@ const channels = [
 ];
 
 export const TelegramGate = ({ onUnlock }: { onUnlock: () => void }) => {
-  const [visited, setVisited] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
+  const [deepLink, setDeepLink] = useState<string | null>(null);
+  const [missing, setMissing] = useState<string[] | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const allVisited = channels.every((c) => visited[c.handle]);
+  // Bootstrap: ask backend for our personal deep link.
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        if (!u?.user) return;
+        setUserId(u.user.id);
+        const { data, error } = await supabase.functions.invoke("telegram-start");
+        if (error) throw error;
+        setDeepLink((data as { deepLink: string }).deepLink);
+        if ((data as { verified: boolean }).verified) {
+          localStorage.setItem(STORAGE_KEY, "1");
+          onUnlock();
+          return;
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to start verification");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [onUnlock]);
 
-  const handleJoin = (handle: string, url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
-    setVisited((v) => ({ ...v, [handle]: true }));
+  // Realtime: unlock the moment the webhook flips us to verified.
+  useEffect(() => {
+    if (!userId) return;
+    const ch = supabase
+      .channel(`tg-verify-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "telegram_verifications", filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const row = payload.new as { verified: boolean };
+          if (row.verified) {
+            localStorage.setItem(STORAGE_KEY, "1");
+            onUnlock();
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [userId, onUnlock]);
+
+  const openBot = () => {
+    if (deepLink) window.open(deepLink, "_blank", "noopener,noreferrer");
   };
 
-  const handleContinue = () => {
-    localStorage.setItem(STORAGE_KEY, "1");
-    onUnlock();
+  const recheck = async () => {
+    setChecking(true);
+    setError(null);
+    setMissing(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("telegram-recheck");
+      if (error) throw error;
+      const r = data as { ok: boolean; linked: boolean; verified?: boolean; missing?: string[]; error?: string };
+      if (!r.linked) {
+        setError("Open the bot in Telegram first and send /start.");
+      } else if (r.verified) {
+        localStorage.setItem(STORAGE_KEY, "1");
+        onUnlock();
+      } else {
+        setMissing(r.missing ?? []);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Re-check failed");
+    } finally {
+      setChecking(false);
+    }
   };
+
+  const signOut = async () => { await supabase.auth.signOut(); };
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
