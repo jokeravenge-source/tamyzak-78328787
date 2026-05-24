@@ -141,11 +141,23 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
   };
 
   const download = async (path: string, name: string) => {
-    const { data, error } = await supabase.storage.from("summaries").createSignedUrl(path, 60);
-    if (error || !data) return toast.error(error?.message ?? "Failed");
-    const a = document.createElement("a");
-    a.href = data.signedUrl; a.download = name; a.target = "_blank"; a.rel = "noopener noreferrer";
-    document.body.appendChild(a); a.click(); a.remove();
+    try {
+      const { data, error } = await supabase.storage.from("summaries").download(path);
+      if (error || !data) throw error ?? new Error("Failed");
+      // Preserve extension from the storage path if the display name doesn't have one.
+      const ext = path.split(".").pop();
+      const filename = /\.[^./]+$/.test(name) || !ext ? name : `${name}.${ext}`;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Download failed");
+    }
   };
 
   const onPickFile = (f: File | null) => {
