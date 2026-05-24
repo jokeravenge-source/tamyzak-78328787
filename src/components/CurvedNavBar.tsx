@@ -1,13 +1,13 @@
-import { Sparkles, MoreHorizontal, UserCog } from "lucide-react";
+import { Sparkles, MoreHorizontal, UserCog, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 
-type TabKey = "basics" | "more" | "account";
+type TabKey = "basics" | "more" | "leaderboard" | "account";
 
 const labels = {
-  en: { basics: "Basics", more: "More", account: "Account" },
-  ar: { basics: "الأساسيات", more: "المزيد", account: "الحساب" },
+  en: { basics: "Basics", more: "More", leaderboard: "Leaders", account: "Account" },
+  ar: { basics: "الأساسيات", more: "المزيد", leaderboard: "المتصدرون", account: "الحساب" },
 } as const;
 
 const CurvedNavBar = ({
@@ -23,6 +23,7 @@ const CurvedNavBar = ({
   const tabs: { key: TabKey; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
     { key: "basics", label: L.basics, Icon: Sparkles },
     { key: "more", label: L.more, Icon: MoreHorizontal },
+    { key: "leaderboard", label: L.leaderboard, Icon: Trophy },
     { key: "account", label: L.account, Icon: UserCog },
   ];
   const ease = [0.22, 1, 0.36, 1] as const;
@@ -34,7 +35,7 @@ const CurvedNavBar = ({
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.45, ease }}
-        className="w-[min(440px,calc(100vw-1.5rem))] md:w-[560px] pointer-events-auto"
+        className="w-[min(520px,calc(100vw-1.5rem))] md:w-[620px] pointer-events-auto"
         dir="ltr"
       >
         <div className="relative flex items-stretch rounded-2xl border border-white/10 bg-secondary/80 backdrop-blur-xl shadow-[0_10px_40px_hsl(var(--primary)/0.25)] overflow-hidden p-1.5">
