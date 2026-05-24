@@ -103,7 +103,7 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
       <p className="text-xs text-muted-foreground mb-4">{t.hint}</p>
 
       <div className="relative w-full bg-background/40 rounded-2xl overflow-hidden mb-5" style={{ aspectRatio: aspect }} dir="ltr">
-        <svg viewBox="0 0 100 75" preserveAspectRatio="xMidYMid meet" className="absolute inset-0 w-full h-full">
+        <svg viewBox="0 0 100 75" preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
           <defs>
             <marker id={`ah-${diagram.id}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
               <path d="M0,0 L10,5 L0,10 z" fill="hsl(var(--primary))" />
@@ -111,13 +111,15 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
           </defs>
           {diagram.art}
           {diagram.parts.map((p, i) => {
-            const sideX = p.lx > 50 ? -1 : 11;
-            const x2 = p.lx + sideX;
-            const y2 = p.ly + 4;
+            // label box is positioned at lx%, ly% of the container.
+            // SVG viewBox is 100 x 75, so container-y% -> viewBox y = ly * 0.75
+            const w = p.lw ?? 17;
+            const x2 = p.lx > 50 ? p.lx - 1.5 : p.lx + w + 1.5;
+            const y2 = (p.ly + 3) * 0.75;
             return (
               <motion.line
                 key={p.id}
-                x1={p.ax} y1={p.ay} x2={p.ax} y2={p.ay}
+                x1={p.ax} y1={p.ay * 0.75} x2={p.ax} y2={p.ay * 0.75}
                 animate={{ x2, y2 }}
                 transition={{ delay: 0.15 + i * 0.07, duration: 0.5, ease: "easeOut" }}
                 stroke="hsl(var(--primary))" strokeWidth="0.35"
