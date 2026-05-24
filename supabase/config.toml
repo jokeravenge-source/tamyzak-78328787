@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.setup-admins]
 verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
