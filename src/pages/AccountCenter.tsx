@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Loader2, Save, Trophy, Medal } from "lucide-react";
+import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
+import { ThemePicker } from "@/components/ThemePicker";
 
 const t = {
-  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Username updated", points: "Your Points", rank: "Rank", nextRank: "to next rank" },
-  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الاسم", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية" },
+  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Username updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback." },
+  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الاسم", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات." },
 } as const;
 
 const AccountCenter = ({
@@ -127,6 +128,33 @@ const AccountCenter = ({
           </form>
         )}
         </div>
+
+        <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+              <Palette className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold">{text.theme}</h2>
+          </div>
+          <ThemePicker language={language} variant="inline" />
+        </div>
+
+        <a
+          href="https://t.me/ias404"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6 hover:border-primary/40 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+              <MessageCircle className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">{text.support}</h2>
+              <p className="text-sm text-muted-foreground">{text.supportDesc}</p>
+            </div>
+          </div>
+        </a>
       </section>
       {onNav && <CurvedNavBar language={language} active="account" onSelect={onNav} />}
     </main>

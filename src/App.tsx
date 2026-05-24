@@ -10,7 +10,7 @@ import { useState } from "react";
 
 import { AppLanguage, LanguageGate, LANGUAGE_STORAGE_KEY } from "./components/LanguageGate";
 import Subjects, { SUBJECT_STORAGE_KEY, type AppSubject } from "./pages/Subjects";
-import { ThemePicker, applyTheme, getInitialTheme } from "./components/ThemePicker";
+import { applyTheme, getInitialTheme } from "./components/ThemePicker";
 import { useEffect } from "react";
 import Auth from "./pages/Auth";
 import { supabase } from "./integrations/supabase/client";
@@ -24,7 +24,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
 import { TelegramGate, TELEGRAM_GATE_STORAGE_KEY } from "./components/TelegramGate";
-import SupportButton from "./components/SupportButton";
 import AccountCenter from "./pages/AccountCenter";
 import Essay from "./pages/Essay";
 import VideoNotes from "./pages/VideoNotes";
@@ -145,8 +144,6 @@ const App = () => {
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <ThemePicker language={language ?? "en"} />
-      <SupportButton />
       <ZombieGuard />
       <PointsAwardOverlay language={language ?? "en"} />
       {!authRole ? (
