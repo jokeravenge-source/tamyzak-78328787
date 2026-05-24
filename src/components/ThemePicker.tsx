@@ -81,7 +81,7 @@ const base = (
   "--shadow-glow": shadowGlow,
 });
 
-const THEMES: ThemeDef[] = [
+export const THEMES: ThemeDef[] = [
   {
     id: "notion-light", name: "Notion Light", arName: "نوشن فاتح", mode: "light",
     swatch: ["#f7f6f3", "#ffffff", "#2383e2"],
@@ -242,7 +242,7 @@ export function getInitialTheme(): ThemeId {
   return prefersDark ? "notion-dark" : "notion-light";
 }
 
-export const ThemePicker = ({ language = "en" }: { language?: "en" | "ar" }) => {
+export const ThemePicker = ({ language = "en", variant = "floating" }: { language?: "en" | "ar"; variant?: "floating" | "inline" }) => {
   const [theme, setTheme] = useState<ThemeId>(() => getInitialTheme());
 
   useEffect(() => {
@@ -256,6 +256,62 @@ export const ThemePicker = ({ language = "en" }: { language?: "en" | "ar" }) => 
   const toggleLightDark = () => {
     setTheme(isDark ? "notion-light" : "notion-dark");
   };
+
+  const themeGrid = (
+    <div className="grid gap-1">
+      {THEMES.map((t) => {
+        const active = t.id === theme;
+        return (
+          <button
+            key={t.id}
+            onClick={() => setTheme(t.id)}
+            className={`flex items-center justify-between gap-3 px-2 py-2 rounded-md text-left transition-colors ${
+              active ? "bg-secondary" : "hover:bg-secondary/60"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-1.5">
+                {t.swatch.map((c, i) => (
+                  <span
+                    key={i}
+                    className="w-4 h-4 rounded-full border border-border"
+                    style={{ background: c }}
+                  />
+                ))}
+              </div>
+              <span className="text-sm font-medium">
+                {language === "ar" ? t.arName : t.name}
+              </span>
+            </div>
+            {active && <Check className="w-4 h-4 text-primary" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  if (variant === "inline") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">
+            {language === "ar" ? "الوضع" : "Mode"}
+          </span>
+          <button
+            onClick={toggleLightDark}
+            aria-label={isDark ? "Switch to light" : "Switch to dark"}
+            className="w-10 h-10 rounded-full border border-border bg-card text-foreground shadow-sm hover:bg-secondary transition-colors flex items-center justify-center"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
+        <div className="px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+          {language === "ar" ? "اختر الثيم" : "Choose theme"}
+        </div>
+        {themeGrid}
+      </div>
+    );
+  }
 
   return (
     <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2" dir="ltr">
@@ -285,36 +341,7 @@ export const ThemePicker = ({ language = "en" }: { language?: "en" | "ar" }) => 
           <div className="px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground">
             {language === "ar" ? "اختر الثيم" : "Choose theme"}
           </div>
-          <div className="grid gap-1">
-            {THEMES.map((t) => {
-              const active = t.id === theme;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setTheme(t.id)}
-                  className={`flex items-center justify-between gap-3 px-2 py-2 rounded-md text-left transition-colors ${
-                    active ? "bg-secondary" : "hover:bg-secondary/60"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex -space-x-1.5">
-                      {t.swatch.map((c, i) => (
-                        <span
-                          key={i}
-                          className="w-4 h-4 rounded-full border border-border"
-                          style={{ background: c }}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-sm font-medium">
-                      {language === "ar" ? t.arName : t.name}
-                    </span>
-                  </div>
-                  {active && <Check className="w-4 h-4 text-primary" />}
-                </button>
-              );
-            })}
-          </div>
+          {themeGrid}
         </PopoverContent>
       </Popover>
     </div>
