@@ -1,4 +1,4 @@
-import { Sparkles, MoreHorizontal, UserCog, Trophy } from "lucide-react";
+import { Sparkles, MoreHorizontal, UserCog, Trophy, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -6,8 +6,8 @@ import type { MainMenuChoice } from "@/pages/MainMenu";
 type TabKey = "basics" | "more" | "leaderboard" | "account";
 
 const labels = {
-  en: { basics: "Basics", more: "More", leaderboard: "Leaders", account: "Account" },
-  ar: { basics: "الأساسيات", more: "المزيد", leaderboard: "المتصدرون", account: "الحساب" },
+  en: { basics: "Basics", more: "More", leaderboard: "Leaders", account: "Account", donate: "Donate" },
+  ar: { basics: "الأساسيات", more: "المزيد", leaderboard: "المتصدرون", account: "الحساب", donate: "تبرع" },
 } as const;
 
 const CurvedNavBar = ({
@@ -66,6 +66,18 @@ const CurvedNavBar = ({
               </button>
             );
           })}
+          <a
+            href="https://t.me/ias404"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={language === "ar" ? "تبرع عبر تيليجرام" : "Donate on Telegram"}
+            className="relative flex-1 h-12 md:h-14 inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold select-none text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span className="relative inline-flex items-center gap-2">
+              <Heart className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="text-xs md:text-sm tracking-wide">{L.donate}</span>
+            </span>
+          </a>
         </div>
       </motion.nav>
     </div>
