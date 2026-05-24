@@ -4,7 +4,7 @@ const corsHeaders = {
 };
 
 const MAX_STUDY_CHARS = 180000;
-const AI_MODEL = "gemini-2.5-pro";
+const AI_MODEL = "gemini-2.5-flash";
 const AI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const MAX_PAGE_IMAGES = 20;
 
