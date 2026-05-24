@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, ListChecks, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { missionsData, missionsOrder, type MissionChapter } from "@/data/missions";
+
+// Always render these subjects in Arabic regardless of the app language.
+const ALWAYS_AR = new Set(["islamic", "arabic"]);
+const useAr = (subj: string | null | undefined, language: string) =>
+  language === "ar" || (subj ? ALWAYS_AR.has(subj) : false);
 import { type AppLanguage } from "@/components/LanguageGate";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -199,8 +204,8 @@ const Missions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                   className="group text-left rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5 hover:-translate-y-1 hover:border-primary transition-all animate-fade-up"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xl font-semibold text-foreground">
-                      {language === "ar" ? data.ar : data.en}
+                    <h3 className={`text-xl font-semibold text-foreground ${ALWAYS_AR.has(s) ? "text-right" : ""}`} dir={ALWAYS_AR.has(s) ? "rtl" : undefined}>
+                      {useAr(s, language) ? data.ar : data.en}
                     </h3>
                     <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -232,8 +237,8 @@ const Missions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                   className="group text-left rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5 hover:-translate-y-1 hover:border-primary transition-all animate-fade-up"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {language === "ar" ? c.ar : c.en}
+                    <h3 className={`text-lg font-semibold text-foreground ${useAr(subject, language) ? "text-right" : ""}`} dir={useAr(subject, language) ? "rtl" : undefined}>
+                      {useAr(subject, language) ? c.ar : c.en}
                     </h3>
                     <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -258,7 +263,7 @@ const Missions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                 <button
                   key={tp.key}
                   onClick={() =>
-                    toggle(tp.key, subject, language === "ar" ? tp.ar : tp.en)
+                    toggle(tp.key, subject, useAr(subject, language) ? tp.ar : tp.en)
                   }
                   style={{ animationDelay: `${i * 30}ms` }}
                   className={`w-full flex items-center gap-4 rounded-2xl border p-4 backdrop-blur transition-all animate-fade-up text-left ${
@@ -277,11 +282,12 @@ const Missions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                     {done && <Check className="w-4 h-4 text-primary-foreground" />}
                   </span>
                   <span
-                    className={`flex-1 text-sm md:text-base ${
+                    dir={useAr(subject, language) ? "rtl" : undefined}
+                    className={`flex-1 text-sm md:text-base ${useAr(subject, language) ? "text-right" : ""} ${
                       done ? "text-muted-foreground line-through" : "text-foreground"
                     }`}
                   >
-                    {language === "ar" ? tp.ar : tp.en}
+                    {useAr(subject, language) ? tp.ar : tp.en}
                   </span>
                 </button>
               );
