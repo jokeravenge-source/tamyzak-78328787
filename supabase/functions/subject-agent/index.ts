@@ -99,13 +99,13 @@ Deno.serve(async (req) => {
     }
 
     const system = `You are a strict ${label} tutor. You MUST answer ONLY using the REFERENCE MATERIAL provided below. \n\nStrict rules:\n- Do NOT use any outside knowledge, training data, or general ${label} facts that are not present in the reference.\n- If the answer is not clearly supported by the reference material, reply EXACTLY with: "${refusal}" — do not guess, do not partially answer, do not add disclaimers.\n- Quote or paraphrase only what the reference says. Cite the file name in parentheses when helpful, e.g. (source: filename.pdf).\n- Always respond in ${lang}.\n\n---REFERENCE MATERIAL---\n${context}\n---END REFERENCE---`;
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const apiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+    const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gemini-2.5-flash",
         messages: [{ role: "system", content: system }, ...messages],
       }),
     });
