@@ -294,6 +294,42 @@ export type Database = {
           },
         ]
       }
+      telegram_verifications: {
+        Row: {
+          created_at: string
+          last_checked_at: string | null
+          last_error: string | null
+          telegram_user_id: number | null
+          telegram_username: string | null
+          token: string
+          updated_at: string
+          user_id: string
+          verified: boolean
+        }
+        Insert: {
+          created_at?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          telegram_user_id?: number | null
+          telegram_username?: string | null
+          token: string
+          updated_at?: string
+          user_id: string
+          verified?: boolean
+        }
+        Update: {
+          created_at?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          telegram_user_id?: number | null
+          telegram_username?: string | null
+          token?: string
+          updated_at?: string
+          user_id?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           created_at: string
