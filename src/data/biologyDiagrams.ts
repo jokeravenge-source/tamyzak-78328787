@@ -60,48 +60,83 @@ const bacteria: DiagramDef = {
 const animalCell: DiagramDef = {
   id: "ch1-animal-cell",
   title: { en: "Animal Cell", ar: "الخلية الحيوانية" },
+  aspect: "1/1",
   parts: [
-    { id: "membrane", label: { en: "Cell membrane",  ar: "الغشاء البلازمي" },     ax: 14, ay: 38, lx: 2,  ly: 18 },
-    { id: "nucleus",  label: { en: "Nucleus",        ar: "النواة" },              ax: 50, ay: 40, lx: 78, ly: 8  },
-    { id: "nucleolus",label: { en: "Nucleolus",      ar: "النوية" },              ax: 52, ay: 38, lx: 78, ly: 20 },
-    { id: "mito",     label: { en: "Mitochondrion",  ar: "الميتوكوندريا" },       ax: 72, ay: 60, lx: 80, ly: 56 },
-    { id: "rer",      label: { en: "Rough ER",       ar: "الشبكة الخشنة" },        ax: 30, ay: 22, lx: 2,  ly: 4  },
-    { id: "ser",      label: { en: "Smooth ER",      ar: "الشبكة الملساء" },       ax: 26, ay: 50, lx: 2,  ly: 44 },
-    { id: "golgi",    label: { en: "Golgi apparatus",ar: "جهاز جولجي" },          ax: 70, ay: 30, lx: 80, ly: 32 },
-    { id: "lyso",     label: { en: "Lysosome",       ar: "الليسوسوم" },           ax: 38, ay: 58, lx: 2,  ly: 58 },
-    { id: "ribo",     label: { en: "Ribosome",       ar: "الرايبوسوم" },          ax: 60, ay: 60, lx: 2,  ly: 74 },
-    { id: "centro",   label: { en: "Centrioles",     ar: "الجسيمات المركزية" },   ax: 64, ay: 50, lx: 80, ly: 74 },
-    { id: "cyto",     label: { en: "Cytoplasm",      ar: "السايتوبلازم" },        ax: 20, ay: 32, lx: 2,  ly: 30 },
+    // Right side
+    { id: "mito",     label: { en: "Mitochondrion",       ar: "الميتوكوندريا" },        ax: 66, ay: 11,  lx: 80, ly: 4,  lw: 18 },
+    { id: "golgi",    label: { en: "Golgi apparatus",     ar: "جهاز جولجي" },           ax: 52, ay: 18,  lx: 80, ly: 16, lw: 18 },
+    { id: "nucleolus",label: { en: "Nucleolus",           ar: "النوية" },               ax: 50, ay: 27,  lx: 80, ly: 26, lw: 18 },
+    { id: "nucleus",  label: { en: "Nucleus",             ar: "النواة" },               ax: 54, ay: 34.5,lx: 80, ly: 36, lw: 18 },
+    { id: "centro",   label: { en: "Centrioles",          ar: "الجسيمات المركزية" },    ax: 50, ay: 43.5,lx: 80, ly: 48, lw: 18 },
+    { id: "micro",    label: { en: "Microtubules",        ar: "أنابيب دقيقة" },         ax: 72, ay: 51,  lx: 80, ly: 60, lw: 18 },
+    { id: "cyto",     label: { en: "Cytoplasm",           ar: "السايتوبلازم" },         ax: 56, ay: 60,  lx: 80, ly: 74, lw: 18 },
+    { id: "ribo",     label: { en: "Ribosome",            ar: "الرايبوسوم" },           ax: 70, ay: 64.5,lx: 80, ly: 86, lw: 18 },
+    // Left side
+    { id: "pino",     label: { en: "Pinocytotic vesicle", ar: "حويصلة قاذفة" },         ax: 44, ay: 6,   lx: 2,  ly: 2,  lw: 24 },
+    { id: "lyso",     label: { en: "Lysosome",            ar: "الليسوسوم" },            ax: 32, ay: 13,  lx: 2,  ly: 14, lw: 18 },
+    { id: "gvesi",    label: { en: "Golgi vesicles",      ar: "حويصلات جولجي" },        ax: 40, ay: 18,  lx: 2,  ly: 26, lw: 18 },
+    { id: "rer",      label: { en: "Rough ER",            ar: "الشبكة الخشنة" },        ax: 24, ay: 25,  lx: 2,  ly: 38, lw: 18 },
+    { id: "ser",      label: { en: "Smooth ER",           ar: "الشبكة الملساء" },       ax: 28, ay: 38,  lx: 2,  ly: 54, lw: 18 },
+    { id: "membrane", label: { en: "Cell (plasma) membrane", ar: "الغشاء البلازمي" },   ax: 12, ay: 48,  lx: 2,  ly: 76, lw: 24 },
   ],
   art: h(Fragment, null,
-    h("defs", null, h("radialGradient", { id: "anCell", cx: "50%", cy: "50%", r: "55%" },
-      h("stop", { offset: "0%",  stopColor: "hsl(var(--primary) / 0.30)" }),
-      h("stop", { offset: "100%", stopColor: "hsl(var(--primary) / 0.05)" }),
+    // Cell body (cream oval = plasma membrane outline)
+    h("ellipse", { cx: 50, cy: 37.5, rx: 42, ry: 34, fill: "hsl(50 70% 94%)", stroke: "hsl(30 40% 55%)", strokeWidth: 0.6 }),
+    // Nucleus (large pink oval, center)
+    h("ellipse", { cx: 50, cy: 32, rx: 11, ry: 10, fill: "hsl(350 55% 90%)", stroke: "hsl(350 40% 55%)", strokeWidth: 0.35 }),
+    // Nucleolus (small purple inside nucleus, upper)
+    h("circle", { cx: 50, cy: 27, r: 2.2, fill: "hsl(280 45% 55%)" }),
+    // Mitochondria (top-right + two bottom-center)
+    ...[[66, 11],[40, 52.5],[55, 52.5]].map(([cx, cy], i) => h("g", { key: `mt${i}` },
+      h("ellipse", { cx, cy, rx: 5, ry: 2.3, fill: "hsl(15 65% 82%)", stroke: "hsl(15 55% 50%)", strokeWidth: 0.3 }),
+      h("path", { d: `M${cx-3.6} ${cy} q1 -1.6 2 0 q1 1.6 2 0 q1 -1.6 2 0 q1 1.6 2 0`, fill: "none", stroke: "hsl(25 60% 45%)", strokeWidth: 0.35 }),
     )),
-    h("ellipse", { cx: 50, cy: 40, rx: 38, ry: 28, fill: "url(#anCell)", stroke: P, strokeWidth: 0.5 }),
-    // nucleus
-    h("ellipse", { cx: 50, cy: 40, rx: 9, ry: 7, fill: "hsl(var(--primary) / 0.55)", stroke: P, strokeWidth: 0.4 }),
-    h("circle",  { cx: 52, cy: 38, r: 2.2, fill: P, opacity: 0.85 }),
-    // mitochondrion
-    h("ellipse", { cx: 72, cy: 60, rx: 6, ry: 2.6, fill: "hsl(var(--accent) / 0.5)", stroke: A, strokeWidth: 0.3 }),
-    h("path", { d: "M67 60 q1.5 -1.5 3 0 q1.5 1.5 3 0 q1.5 -1.5 3 0", fill: "none", stroke: A, strokeWidth: 0.3 }),
-    // Golgi
-    h("path", { d: "M65 28 Q70 26 75 28 M65 30 Q70 28 75 30 M65 32 Q70 30 75 32", fill: "none", stroke: A, strokeWidth: 0.5 }),
-    // rough ER + dots
-    h("path", { d: "M22 18 Q30 16 36 20 Q40 24 34 26 Q26 28 22 24 Z", fill: "none", stroke: P, strokeWidth: 0.4 }),
-    ...[[24,19],[28,17],[33,19],[36,22],[32,25],[26,25]].map(([x,y],i)=>h("circle",{key:`r${i}`,cx:x,cy:y,r:0.45,fill:P})),
-    // smooth ER
-    h("path", { d: "M22 46 Q28 44 30 48 Q32 52 26 54 Q22 52 22 48 Z", fill: "none", stroke: P, strokeWidth: 0.4 }),
-    // lysosomes
-    h("circle", { cx: 38, cy: 58, r: 1.6, fill: A, opacity: 0.7 }),
-    h("circle", { cx: 42, cy: 60, r: 1.2, fill: A, opacity: 0.6 }),
-    // ribosomes
-    ...[[58,60],[62,58],[60,62],[56,58]].map(([x,y],i)=>h("circle",{key:`rb${i}`,cx:x,cy:y,r:0.55,fill:P})),
-    // centrioles
+    // Golgi apparatus (stacked cisternae, top-center)
+    h("path", { d: "M46 16 Q52 14 58 16 M46 18 Q52 16 58 18 M46 20 Q52 18 58 20 M46 22 Q52 20 58 22",
+                fill: "none", stroke: "hsl(35 75% 55%)", strokeWidth: 0.5 }),
+    // Golgi vesicles (small empty circles next to Golgi)
+    ...[[38, 17],[41, 18.5],[43, 17],[40, 20]].map(([x, y], i) =>
+      h("circle", { key: `gv${i}`, cx: x, cy: y, r: 0.7, fill: "none", stroke: "hsl(40 60% 50%)", strokeWidth: 0.3 })),
+    // Lysosome (yellow oval, upper-left)
+    h("ellipse", { cx: 32, cy: 13, rx: 2.6, ry: 1.4, fill: "hsl(55 85% 65%)", stroke: "hsl(45 70% 45%)", strokeWidth: 0.3 }),
+    // Pinocytotic vesicle (small empty circle near top edge)
+    h("circle", { cx: 44, cy: 6, r: 1.2, fill: "none", stroke: "hsl(220 30% 45%)", strokeWidth: 0.35 }),
+    h("circle", { cx: 47, cy: 7.5, r: 0.8, fill: "none", stroke: "hsl(220 30% 45%)", strokeWidth: 0.3 }),
+    // Rough ER (wavy loops with ribosome dots, left side)
+    h("path", { d: "M22 21 q-3 2 0 4 q3 2 0 4 q-3 2 0 4 q3 2 0 4 q-3 2 0 4", fill: "none", stroke: "hsl(200 55% 55%)", strokeWidth: 0.4 }),
+    h("path", { d: "M27 21 q-3 2 0 4 q3 2 0 4 q-3 2 0 4 q3 2 0 4 q-3 2 0 4", fill: "none", stroke: "hsl(200 55% 55%)", strokeWidth: 0.4 }),
+    ...Array.from({ length: 14 }, (_, i) => h("circle", {
+      key: `rerd${i}`, cx: 21 + (i % 2) * 7, cy: 22 + i * 1.4, r: 0.35, fill: "hsl(0 0% 15%)",
+    })),
+    // Rough ER mirror on right side
+    h("path", { d: "M73 21 q3 2 0 4 q-3 2 0 4 q3 2 0 4 q-3 2 0 4 q3 2 0 4", fill: "none", stroke: "hsl(200 55% 55%)", strokeWidth: 0.4 }),
+    h("path", { d: "M78 21 q3 2 0 4 q-3 2 0 4 q3 2 0 4 q-3 2 0 4 q3 2 0 4", fill: "none", stroke: "hsl(200 55% 55%)", strokeWidth: 0.4 }),
+    ...Array.from({ length: 14 }, (_, i) => h("circle", {
+      key: `rerdr${i}`, cx: 72 + (i % 2) * 7, cy: 22 + i * 1.4, r: 0.35, fill: "hsl(0 0% 15%)",
+    })),
+    // Smooth ER (no dots, left mid)
+    h("path", { d: "M26 36 q-3 2 0 4 q3 2 0 4 q-3 2 0 4", fill: "none", stroke: "hsl(200 55% 55%)", strokeWidth: 0.4 }),
+    h("path", { d: "M31 36 q-3 2 0 4 q3 2 0 4 q-3 2 0 4", fill: "none", stroke: "hsl(200 55% 55%)", strokeWidth: 0.4 }),
+    // Centrioles (two small barrels below nucleus)
     h("g", null,
-      h("rect", { x: 62, y: 49, width: 4, height: 1.4, fill: A, opacity: 0.8 }),
-      h("rect", { x: 64, y: 47, width: 1.4, height: 4, fill: A, opacity: 0.8 }),
+      h("rect", { x: 47, y: 42, width: 4, height: 1.6, rx: 0.3, fill: "hsl(320 40% 75%)", stroke: "hsl(320 35% 45%)", strokeWidth: 0.25 }),
+      h("rect", { x: 49.2, y: 44, width: 1.6, height: 4, rx: 0.3, fill: "hsl(320 40% 75%)", stroke: "hsl(320 35% 45%)", strokeWidth: 0.25 }),
     ),
+    // Microtubules (crossing diagonal lines)
+    ...[
+      [60, 46, 80, 56], [62, 50, 78, 60], [25, 56, 42, 50],
+      [20, 60, 38, 54], [55, 60, 75, 52], [44, 58, 66, 66],
+      [22, 50, 36, 60],
+    ].map(([x1, y1, x2, y2], i) => h("line", {
+      key: `mt${i}`, x1, y1, x2, y2, stroke: "hsl(95 35% 45%)", strokeWidth: 0.5,
+    })),
+    // Free ribosomes scattered
+    ...[[68, 64],[72, 66],[60, 64],[34, 60],[40, 64],[50, 62],[64, 60]].map(([x, y], i) =>
+      h("circle", { key: `rb${i}`, cx: x, cy: y, r: 0.45, fill: "hsl(0 0% 15%)" })),
+    // Extra cytoplasm dots
+    ...Array.from({ length: 10 }, (_, i) => h("circle", {
+      key: `cyd${i}`, cx: 20 + i * 6, cy: 65 + (i % 3) * 1.5, r: 0.3, fill: "hsl(30 40% 55%)", opacity: 0.6,
+    })),
   ),
 };
 
