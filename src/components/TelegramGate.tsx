@@ -104,56 +104,76 @@ export const TelegramGate = ({ onUnlock }: { onUnlock: () => void }) => {
         </div>
 
         <h1 className="text-3xl md:text-4xl font-bold gradient-text leading-tight mb-3">
-          Join our Telegram channels
+          Subscribe to unlock the app
         </h1>
-        <p className="text-muted-foreground mb-8">
-          To unlock the flashcards, please join both channels below. Tap each one, then continue.
+        <p className="text-muted-foreground mb-6">
+          Join all three Telegram channels below, then verify with our bot. We check your subscription automatically — no shortcuts.
         </p>
 
-        <div className="space-y-3 mb-8">
+        <div className="space-y-2 mb-6">
           {channels.map((c) => {
-            const joined = visited[c.handle];
+            const isMissing = missing?.includes(c.handle);
             return (
-              <button
+              <a
                 key={c.handle}
-                onClick={() => handleJoin(c.handle, c.url)}
-                className="w-full flex items-center justify-between gap-4 px-5 py-4 rounded-2xl border border-white/10 bg-background/40 hover:border-primary/40 hover:bg-background/60 transition-all duration-300 group"
+                href={c.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-full flex items-center justify-between gap-4 px-4 py-3 rounded-2xl border bg-background/40 transition-all duration-300 ${
+                  isMissing ? "border-destructive/60" : "border-white/10 hover:border-primary/40"
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center">
                     <Send className="w-4 h-4 text-primary" />
                   </div>
-                  <div className="text-left">
-                    <div className="font-semibold">{c.handle}</div>
-                    <div className="text-xs text-muted-foreground">Telegram channel</div>
-                  </div>
+                  <div className="font-semibold">{c.handle}</div>
                 </div>
-                {joined ? (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
-                    <Check className="w-4 h-4" /> Opened
-                  </span>
+                {isMissing ? (
+                  <span className="text-xs font-medium text-destructive">Not joined</span>
                 ) : (
-                  <span className="text-xs uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
-                    Join
-                  </span>
+                  <ExternalLink className="w-4 h-4 text-muted-foreground" />
                 )}
-              </button>
+              </a>
             );
           })}
         </div>
 
+        {error && (
+          <div className="mb-4 px-4 py-3 rounded-xl border border-destructive/40 bg-destructive/10 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
         <button
-          onClick={handleContinue}
-          disabled={!allVisited}
-          className="w-full py-4 rounded-2xl font-semibold text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.01]"
+          onClick={openBot}
+          disabled={loading || !deepLink}
+          className="w-full py-4 rounded-2xl font-semibold text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.01] flex items-center justify-center gap-2"
           style={{ background: "var(--gradient-primary)" }}
         >
-          {allVisited ? "Enter the app" : "Join both channels to continue"}
+          {loading ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> Preparing…</>
+          ) : (
+            <><Send className="w-4 h-4" /> Verify with our Telegram bot</>
+          )}
+        </button>
+
+        <button
+          onClick={recheck}
+          disabled={checking}
+          className="mt-3 w-full py-3 rounded-2xl font-medium border border-white/10 bg-background/40 hover:border-primary/40 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          I've joined — re-check
         </button>
 
         <p className="text-center text-xs text-muted-foreground mt-4">
-          By continuing, you confirm you've joined both channels.
+          Tap "Verify", press <span className="font-semibold">Start</span> in Telegram, then come back. The app will unlock automatically once all three subscriptions are confirmed.
         </p>
+
+        <button onClick={signOut} className="mt-6 w-full text-xs text-muted-foreground hover:text-foreground transition-colors">
+          Sign out
+        </button>
       </div>
     </main>
   );
