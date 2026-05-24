@@ -119,7 +119,7 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
             return (
               <motion.line
                 key={p.id}
-                x1={p.ax} y1={p.ay * 0.75} x2={p.ax} y2={p.ay * 0.75}
+                x1={p.ax} y1={p.ay} x2={p.ax} y2={p.ay}
                 animate={{ x2, y2 }}
                 transition={{ delay: 0.15 + i * 0.07, duration: 0.5, ease: "easeOut" }}
                 stroke="hsl(var(--primary))" strokeWidth="0.35"
