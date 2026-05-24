@@ -7,6 +7,7 @@ import { type AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { extractStudyMaterial } from "@/lib/fileText";
+import { awardPoints } from "@/lib/points";
 
 const copy = {
   en: {
@@ -130,7 +131,13 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
   };
 
   const nextQuestion = () => {
-    if (current + 1 >= questions.length) { setPhase("result"); return; }
+    if (current + 1 >= questions.length) {
+      setPhase("result");
+      if (score === questions.length && questions.length > 0) {
+        awardPoints("mcq");
+      }
+      return;
+    }
     setCurrent((c) => c + 1); setSelected(null); setRevealed(false); setHintShown(false);
   };
 

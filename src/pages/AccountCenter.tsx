@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Loader2, Save } from "lucide-react";
+import { User, Loader2, Save, Trophy, Medal } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
+import { rankFor, RANKS } from "@/lib/points";
 
 const t = {
-  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Username updated" },
-  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الاسم" },
+  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Username updated", points: "Your Points", rank: "Rank", nextRank: "to next rank" },
+  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الاسم", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية" },
 } as const;
 
 const AccountCenter = ({
@@ -25,6 +26,7 @@ const AccountCenter = ({
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [points, setPoints] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -33,6 +35,8 @@ const AccountCenter = ({
       setEmail(u.user.email ?? "");
       const { data: p } = await supabase.from("profiles").select("display_name").eq("user_id", u.user.id).maybeSingle();
       setName(p?.display_name ?? "");
+      const { data: pts } = await supabase.from("user_points").select("points").eq("user_id", u.user.id);
+      setPoints((pts ?? []).reduce((s: number, r: any) => s + (r.points ?? 0), 0));
       setLoading(false);
     })();
   }, []);
@@ -60,12 +64,45 @@ const AccountCenter = ({
     } finally { setSaving(false); }
   };
 
+  const rank = rankFor(points);
+  const nextRank = RANKS.find((r) => r.min > points);
+  const toNext = nextRank ? nextRank.min - points : 0;
+
   return (
     <main className="min-h-screen px-4 py-12 md:py-20 pb-32 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
-      <section className="relative z-10 max-w-md mx-auto rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-8 animate-fade-up">
+      <section className="relative z-10 max-w-md mx-auto space-y-5 animate-fade-up">
+        {!loading && (
+          <div className="rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/15 via-secondary/60 to-accent/15 backdrop-blur-xl p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-1">{text.points}</p>
+                <p className="text-5xl font-bold gradient-text leading-none">{points}</p>
+              </div>
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center">
+                <Trophy className="w-7 h-7 text-primary" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between">
+              <span
+                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold"
+                style={{ backgroundColor: `${rank.color}22`, color: rank.color, border: `1px solid ${rank.color}66` }}
+              >
+                <Medal className="w-3.5 h-3.5" />
+                {language === "ar" ? rank.label.ar : rank.label.en}
+              </span>
+              {nextRank && (
+                <span className="text-xs text-muted-foreground">
+                  {toNext} {text.nextRank} ({language === "ar" ? nextRank.label.ar : nextRank.label.en})
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-8">
         <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
           <User className="w-7 h-7 text-primary" />
         </div>
@@ -89,6 +126,7 @@ const AccountCenter = ({
             </button>
           </form>
         )}
+        </div>
       </section>
       {onNav && <CurvedNavBar language={language} active="account" onSelect={onNav} />}
     </main>
