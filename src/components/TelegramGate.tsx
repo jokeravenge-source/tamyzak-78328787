@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Send, Check, Sparkles, Loader2, RefreshCw, ExternalLink } from "lucide-react";
+import { Send, Sparkles, Loader2, RefreshCw, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "tg_channels_joined_v1";
