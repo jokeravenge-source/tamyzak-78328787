@@ -7,6 +7,7 @@ const STORAGE_KEY = "tg_channels_joined_v1";
 const channels = [
   { handle: "@a6th_DHS", url: "https://t.me/a6th_DHS" },
   { handle: "@sad6ths", url: "https://t.me/sad6ths" },
+  { handle: "@sadsworld", url: "https://t.me/sadsworld" },
 ];
 
 export const TelegramGate = ({ onUnlock }: { onUnlock: () => void }) => {
