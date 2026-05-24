@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Sparkles, Microscope, BookOpen, Pencil, X, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Sparkles, Microscope, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import LabeledDiagram from "@/components/LabeledDiagram";
@@ -9,40 +9,26 @@ const copy = {
   en: {
     badge: "Biology Drawings",
     title: "Biology Drawings",
-    description: "Pick a chapter to study or practice labeling.",
+    description: "Pick a chapter to practice labeling.",
     chapter: "Chapter",
-    studyTab: "Study sheets",
     practiceTab: "Drag & drop",
-    soon: "No required drawings for this chapter.",
-    practiceSoon: "Interactive drawings for this chapter are coming soon.",
+    soon: "Interactive drawings for this chapter are coming soon.",
     prev: "Previous", next: "Next", of: "of",
   },
   ar: {
     badge: "رسومات الأحياء",
     title: "رسومات الأحياء",
-    description: "اختر الفصل للدراسة أو لتدريب التسميات.",
+    description: "اختر الفصل لتدرب على التسميات.",
     chapter: "الفصل",
-    studyTab: "صفحات الدراسة",
     practiceTab: "سحب وإفلات",
-    soon: "لا توجد رسومات مطلوبة في هذا الفصل.",
-    practiceSoon: "الرسومات التفاعلية لهذا الفصل قريباً.",
+    soon: "الرسومات التفاعلية لهذا الفصل قريباً.",
     prev: "السابق", next: "التالي", of: "من",
   },
 } as const;
 
-const CHAPTER_IMAGES: Record<number, string[]> = {
-  1: ["/drawings/p-03.jpg","/drawings/p-04.jpg","/drawings/p-05.jpg","/drawings/p-06.jpg","/drawings/p-07.jpg","/drawings/p-08.jpg","/drawings/p-09.jpg","/drawings/p-10.jpg"],
-  2: ["/drawings/p-12.jpg","/drawings/p-13.jpg","/drawings/p-14.jpg","/drawings/p-15.jpg","/drawings/p-16.jpg"],
-  3: ["/drawings/p-18.jpg","/drawings/p-19.jpg","/drawings/p-20.jpg","/drawings/p-21.jpg","/drawings/p-22.jpg","/drawings/p-23.jpg","/drawings/p-24.jpg"],
-  4: [],
-  5: ["/drawings/p-27.jpg"],
-};
-
 const BiologyDrawings = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const t = copy[language];
   const [chapter, setChapter] = useState<number | null>(null);
-  const [tab, setTab] = useState<"study" | "practice">("study");
-  const [lightbox, setLightbox] = useState<string | null>(null);
   const [diagramIdx, setDiagramIdx] = useState(0);
 
   return (
@@ -83,7 +69,7 @@ const BiologyDrawings = ({ language, onBack }: { language: AppLanguage; onBack: 
                 initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.07 }}
                 whileHover={{ y: -4, scale: 1.04 }} whileTap={{ scale: 0.95 }}
-                onClick={() => { setChapter(n); setTab("study"); setDiagramIdx(0); }}
+                onClick={() => { setChapter(n); setDiagramIdx(0); }}
                 className="group relative aspect-square rounded-3xl border border-primary/40 bg-secondary/40 backdrop-blur flex flex-col items-center justify-center gap-2 hover:border-primary hover:shadow-[var(--shadow-glow)] transition-all"
               >
                 <Sparkles className="w-5 h-5 text-primary opacity-60 group-hover:opacity-100 transition" />
@@ -100,55 +86,19 @@ const BiologyDrawings = ({ language, onBack }: { language: AppLanguage; onBack: 
             className="max-w-5xl mx-auto mt-10 z-10 relative"
           >
             <div className="flex justify-center mb-6">
-              <div className="inline-flex p-1 rounded-2xl border border-white/10 bg-secondary/50 backdrop-blur">
-                <TabBtn active={tab === "study"}    onClick={() => setTab("study")}    icon={<BookOpen className="w-4 h-4" />} label={t.studyTab} />
-                <TabBtn active={tab === "practice"} onClick={() => setTab("practice")} icon={<Pencil   className="w-4 h-4" />} label={t.practiceTab} />
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-white/10 bg-secondary/50 backdrop-blur text-sm font-medium text-primary-foreground">
+                <Pencil className="w-4 h-4" />
+                <span>{t.practiceTab}</span>
               </div>
             </div>
 
-            {tab === "practice" ? (
-              <PracticeView chapter={chapter} idx={diagramIdx} setIdx={setDiagramIdx} language={language} t={t} />
-            ) : (
-              <DrawingsGallery images={CHAPTER_IMAGES[chapter] ?? []} soon={t.soon} onOpen={setLightbox} />
-            )}
+            <PracticeView chapter={chapter} idx={diagramIdx} setIdx={setDiagramIdx} language={language} t={t} />
           </motion.section>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {lightbox && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center p-4"
-            onClick={() => setLightbox(null)}
-          >
-            <button className="absolute top-6 right-6 w-11 h-11 rounded-full border border-white/10 bg-secondary/80 flex items-center justify-center hover:border-primary/40 transition">
-              <X className="w-5 h-5" />
-            </button>
-            <motion.img
-              key={lightbox} initial={{ scale: 0.9 }} animate={{ scale: 1 }}
-              src={lightbox} alt="drawing"
-              onClick={(e) => e.stopPropagation()}
-              className="max-h-[90vh] max-w-[95vw] rounded-2xl shadow-[var(--shadow-elegant)] border border-white/10 bg-white"
-            />
-          </motion.div>
         )}
       </AnimatePresence>
     </main>
   );
 };
-
-const TabBtn = ({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) => (
-  <button
-    onClick={onClick}
-    className={`relative px-4 py-2 rounded-xl text-sm font-medium inline-flex items-center gap-2 transition ${active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-  >
-    {active && (
-      <motion.div layoutId="bio-tab-active" className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent shadow-[0_6px_20px_hsl(var(--primary)/0.4)]" transition={{ type: "spring", stiffness: 380, damping: 32 }} />
-    )}
-    <span className="relative z-10 inline-flex items-center gap-2">{icon}{label}</span>
-  </button>
-);
 
 const PracticeView = ({
   chapter, idx, setIdx, language, t,
@@ -160,7 +110,7 @@ const PracticeView = ({
   if (!diagrams.length) {
     return (
       <div className="rounded-3xl border border-primary/30 bg-secondary/40 backdrop-blur p-12 text-center text-muted-foreground">
-        {t.practiceSoon}
+        {t.soon}
       </div>
     );
   }
@@ -215,35 +165,6 @@ const PracticeView = ({
           <LabeledDiagram diagram={current} language={language} />
         </motion.div>
       </AnimatePresence>
-    </div>
-  );
-};
-
-const DrawingsGallery = ({ images, soon, onOpen }: { images: string[]; soon: string; onOpen: (src: string) => void }) => {
-  if (!images.length) {
-    return (
-      <div className="rounded-3xl border border-primary/30 bg-secondary/40 backdrop-blur p-12 text-center text-muted-foreground">
-        {soon}
-      </div>
-    );
-  }
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {images.map((src, i) => (
-        <motion.button
-          key={src}
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.04 }}
-          whileHover={{ y: -3 }}
-          onClick={() => onOpen(src)}
-          className="group relative rounded-2xl overflow-hidden border border-white/10 bg-white shadow-[0_8px_30px_hsl(var(--primary)/0.15)] hover:border-primary/50 hover:shadow-[var(--shadow-glow)] transition"
-        >
-          <img src={src} loading="lazy" alt={`drawing ${i + 1}`} className="w-full aspect-[3/4] object-cover" />
-          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
-            <span className="inline-flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> #{i + 1}</span>
-          </div>
-        </motion.button>
-      ))}
     </div>
   );
 };
