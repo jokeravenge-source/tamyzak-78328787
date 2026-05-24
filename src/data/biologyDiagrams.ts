@@ -317,9 +317,5 @@ const plasmaMembrane: DiagramDef = {
 };
 
 export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
-  1: [bacteria, animalCell, plantCell, mitochondrion, chloroplast, plasmaMembrane],
-  2: [],
-  3: [],
-  4: [],
-  5: [],
+  1: [bacteria, animalCell, plantCell],
 };
