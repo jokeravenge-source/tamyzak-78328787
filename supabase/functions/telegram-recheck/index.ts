@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
-const CHANNELS = ["@HD_PHYS", "@a6th_DHS", "@sad6ths"];
+const CHANNELS = ["@a6th_DHS", "@sad6ths"];
 
 async function tg(method: string, body: unknown) {
   const res = await fetch(`${GATEWAY_URL}/${method}`, {

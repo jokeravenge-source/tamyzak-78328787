@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 const STORAGE_KEY = "tg_channels_joined_v1";
 
 const channels = [
-  { handle: "@HD_PHYS", url: "https://t.me/HD_PHYS" },
   { handle: "@a6th_DHS", url: "https://t.me/a6th_DHS" },
   { handle: "@sad6ths", url: "https://t.me/sad6ths" },
 ];
