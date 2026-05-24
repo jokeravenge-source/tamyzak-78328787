@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, Sparkles, Microscope, RotateCcw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Sparkles, Microscope, RotateCcw, BookOpen, Pencil, X, ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 
@@ -7,53 +7,67 @@ const copy = {
   en: {
     badge: "Biology Drawings",
     title: "Biology Drawings",
-    description: "Pick a chapter to start labeling diagrams.",
+    description: "Pick a chapter to study or practice labeling.",
     chapter: "Chapter",
-    pickChapter: "Choose a chapter",
     cellTitle: "The Animal Cell",
-    cellHint: "Type the name of each pointed structure in the empty box.",
+    cellHint: "Drag each label to its matching arrow.",
     reset: "Reset labels",
-    placeholder: "Label…",
-    soon: "More drawings coming soon for this chapter.",
+    studyTab: "Study sheets",
+    practiceTab: "Drag & drop",
+    soon: "No required drawings for this chapter.",
+    correct: "Correct!",
+    wrong: "Try again",
+    bank: "Label bank",
+    drop: "Drop",
   },
   ar: {
     badge: "رسومات الأحياء",
     title: "رسومات الأحياء",
-    description: "اختر الفصل لتبدأ تمييز الرسومات.",
+    description: "اختر الفصل للدراسة أو لتدريب التسميات.",
     chapter: "الفصل",
-    pickChapter: "اختر الفصل",
     cellTitle: "الخلية الحيوانية",
-    cellHint: "اكتب اسم كل جزء مُشار إليه في الصندوق الفارغ.",
+    cellHint: "اسحب كل تسمية إلى السهم المطابق لها.",
     reset: "مسح الإجابات",
-    placeholder: "الاسم…",
-    soon: "المزيد من الرسومات قريباً لهذا الفصل.",
+    studyTab: "صفحات الدراسة",
+    practiceTab: "سحب وإفلات",
+    soon: "لا توجد رسومات مطلوبة في هذا الفصل.",
+    correct: "صحيح!",
+    wrong: "حاول مرة أخرى",
+    bank: "بنك التسميات",
+    drop: "أفلت هنا",
   },
 } as const;
 
 type Part = {
   id: string;
-  // anchor on the cell (where arrow starts), in %
-  ax: number;
-  ay: number;
-  // label box position, in %
-  lx: number;
-  ly: number;
+  label: { en: string; ar: string };
+  ax: number; ay: number; // arrow anchor on cell
+  lx: number; ly: number; // drop box position
 };
 
-// Arrows fan out from various organelles inside the cell to empty boxes around it.
 const PARTS: Part[] = [
-  { id: "nucleus", ax: 50, ay: 48, lx: 78, ly: 18 },
-  { id: "membrane", ax: 8, ay: 50, lx: 2, ly: 30 },
-  { id: "mitochondrion", ax: 70, ay: 65, lx: 88, ly: 78 },
-  { id: "ribosome", ax: 38, ay: 70, lx: 12, ly: 88 },
-  { id: "er", ax: 60, ay: 35, lx: 84, ly: 6 },
-  { id: "golgi", ax: 32, ay: 32, lx: 6, ly: 10 },
+  { id: "nucleus",       label: { en: "Nucleus",       ar: "النواة" },              ax: 50, ay: 48, lx: 78, ly: 18 },
+  { id: "membrane",      label: { en: "Cell membrane", ar: "الغشاء الخلوي" },        ax: 8,  ay: 50, lx: 2,  ly: 30 },
+  { id: "mitochondrion", label: { en: "Mitochondrion", ar: "الميتوكوندريا" },        ax: 70, ay: 65, lx: 86, ly: 78 },
+  { id: "ribosome",      label: { en: "Ribosome",      ar: "الرايبوسوم" },           ax: 38, ay: 70, lx: 10, ly: 86 },
+  { id: "er",            label: { en: "ER",            ar: "الشبكة الإندوبلازمية" }, ax: 60, ay: 35, lx: 84, ly: 6  },
+  { id: "golgi",         label: { en: "Golgi",         ar: "جهاز جولجي" },           ax: 32, ay: 32, lx: 4,  ly: 6  },
 ];
+
+// Chapter image files in /public/drawings
+const CHAPTER_IMAGES: Record<number, string[]> = {
+  1: ["/drawings/p-03.jpg","/drawings/p-04.jpg","/drawings/p-05.jpg","/drawings/p-06.jpg","/drawings/p-07.jpg","/drawings/p-08.jpg","/drawings/p-09.jpg","/drawings/p-10.jpg"],
+  2: ["/drawings/p-12.jpg","/drawings/p-13.jpg","/drawings/p-14.jpg","/drawings/p-15.jpg","/drawings/p-16.jpg"],
+  3: ["/drawings/p-18.jpg","/drawings/p-19.jpg","/drawings/p-20.jpg","/drawings/p-21.jpg","/drawings/p-22.jpg","/drawings/p-23.jpg","/drawings/p-24.jpg"],
+  4: [],
+  5: ["/drawings/p-27.jpg"],
+};
 
 const BiologyDrawings = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const t = copy[language];
   const [chapter, setChapter] = useState<number | null>(null);
-  const [labels, setLabels] = useState<Record<string, string>>({});
+  const [tab, setTab] = useState<"study" | "practice">("study");
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   return (
     <main className="min-h-screen px-4 py-12 md:py-20 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -97,7 +111,7 @@ const BiologyDrawings = ({ language, onBack }: { language: AppLanguage; onBack: 
                 transition={{ delay: i * 0.07 }}
                 whileHover={{ y: -4, scale: 1.04 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => { setChapter(n); setLabels({}); }}
+                onClick={() => { setChapter(n); setTab("study"); }}
                 className="group relative aspect-square rounded-3xl border border-primary/40 bg-secondary/40 backdrop-blur flex flex-col items-center justify-center gap-2 hover:border-primary hover:shadow-[var(--shadow-glow)] transition-all"
               >
                 <Sparkles className="w-5 h-5 text-primary opacity-60 group-hover:opacity-100 transition" />
@@ -115,60 +129,161 @@ const BiologyDrawings = ({ language, onBack }: { language: AppLanguage; onBack: 
             transition={{ duration: 0.35 }}
             className="max-w-5xl mx-auto mt-10 z-10 relative"
           >
-            {chapter === 1 ? (
-              <CellDiagram
-                title={t.cellTitle}
-                hint={t.cellHint}
-                placeholder={t.placeholder}
-                resetLabel={t.reset}
-                labels={labels}
-                setLabels={setLabels}
-                dir={language === "ar" ? "rtl" : "ltr"}
-              />
-            ) : (
-              <div className="rounded-3xl border border-primary/30 bg-secondary/40 backdrop-blur p-12 text-center text-muted-foreground">
-                {t.soon}
+            {/* Tabs */}
+            <div className="flex justify-center mb-6">
+              <div className="inline-flex p-1 rounded-2xl border border-white/10 bg-secondary/50 backdrop-blur">
+                <TabBtn active={tab === "study"} onClick={() => setTab("study")} icon={<BookOpen className="w-4 h-4" />} label={t.studyTab} />
+                {chapter === 1 && (
+                  <TabBtn active={tab === "practice"} onClick={() => setTab("practice")} icon={<Pencil className="w-4 h-4" />} label={t.practiceTab} />
+                )}
               </div>
+            </div>
+
+            {tab === "practice" && chapter === 1 ? (
+              <CellDiagram t={t} language={language} />
+            ) : (
+              <DrawingsGallery images={CHAPTER_IMAGES[chapter] ?? []} soon={t.soon} onOpen={setLightbox} />
             )}
           </motion.section>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setLightbox(null)}
+          >
+            <button className="absolute top-6 right-6 w-11 h-11 rounded-full border border-white/10 bg-secondary/80 flex items-center justify-center hover:border-primary/40 transition">
+              <X className="w-5 h-5" />
+            </button>
+            <motion.img
+              key={lightbox}
+              initial={{ scale: 0.9 }} animate={{ scale: 1 }}
+              src={lightbox}
+              alt="drawing"
+              onClick={(e) => e.stopPropagation()}
+              className="max-h-[90vh] max-w-[95vw] rounded-2xl shadow-[var(--shadow-elegant)] border border-white/10 bg-white"
+            />
+          </motion.div>
         )}
       </AnimatePresence>
     </main>
   );
 };
 
-const CellDiagram = ({
-  title,
-  hint,
-  placeholder,
-  resetLabel,
-  labels,
-  setLabels,
-  dir,
-}: {
-  title: string;
-  hint: string;
-  placeholder: string;
-  resetLabel: string;
-  labels: Record<string, string>;
-  setLabels: (l: Record<string, string>) => void;
-  dir: "ltr" | "rtl";
-}) => {
+const TabBtn = ({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) => (
+  <button
+    onClick={onClick}
+    className={`relative px-4 py-2 rounded-xl text-sm font-medium inline-flex items-center gap-2 transition ${active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+  >
+    {active && (
+      <motion.div layoutId="bio-tab-active" className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent shadow-[0_6px_20px_hsl(var(--primary)/0.4)]" transition={{ type: "spring", stiffness: 380, damping: 32 }} />
+    )}
+    <span className="relative z-10 inline-flex items-center gap-2">{icon}{label}</span>
+  </button>
+);
+
+const DrawingsGallery = ({ images, soon, onOpen }: { images: string[]; soon: string; onOpen: (src: string) => void }) => {
+  if (!images.length) {
+    return (
+      <div className="rounded-3xl border border-primary/30 bg-secondary/40 backdrop-blur p-12 text-center text-muted-foreground">
+        {soon}
+      </div>
+    );
+  }
   return (
-    <div className="rounded-3xl border border-primary/30 bg-secondary/40 backdrop-blur p-6 md:p-8">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {images.map((src, i) => (
+        <motion.button
+          key={src}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.04 }}
+          whileHover={{ y: -3 }}
+          onClick={() => onOpen(src)}
+          className="group relative rounded-2xl overflow-hidden border border-white/10 bg-white shadow-[0_8px_30px_hsl(var(--primary)/0.15)] hover:border-primary/50 hover:shadow-[var(--shadow-glow)] transition"
+        >
+          <img src={src} loading="lazy" alt={`drawing ${i + 1}`} className="w-full aspect-[3/4] object-cover" />
+          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 px-3 py-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs">
+            <span className="inline-flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> #{i + 1}</span>
+          </div>
+        </motion.button>
+      ))}
+    </div>
+  );
+};
+
+/* ---------------- Drag & Drop Cell Diagram ---------------- */
+
+type Placement = Record<string, string | null>; // partId -> labelId placed
+const shuffle = <T,>(arr: T[]) => arr.slice().sort(() => Math.random() - 0.5);
+
+const CellDiagram = ({ t, language }: { t: typeof copy["en"] | typeof copy["ar"]; language: AppLanguage }) => {
+  const dir = language === "ar" ? "rtl" : "ltr";
+  const [placed, setPlaced] = useState<Placement>({});
+  const [bank, setBank] = useState<string[]>(() => shuffle(PARTS.map((p) => p.id)));
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+
+  const reset = () => {
+    setPlaced({});
+    setBank(shuffle(PARTS.map((p) => p.id)));
+  };
+
+  const onDropTo = (partId: string) => {
+    if (!dragId) return;
+    setPlaced((prev) => {
+      const next: Placement = { ...prev };
+      // if target already has a chip, send it back to bank
+      const previous = next[partId];
+      next[partId] = dragId;
+      // remove dragged chip from anywhere else
+      Object.keys(next).forEach((k) => {
+        if (k !== partId && next[k] === dragId) next[k] = null;
+      });
+      setBank((b) => {
+        let nb = b.filter((id) => id !== dragId);
+        if (previous && !nb.includes(previous)) nb = [...nb, previous];
+        return nb;
+      });
+      return next;
+    });
+    setDragId(null);
+    setOverId(null);
+  };
+
+  const onDropToBank = () => {
+    if (!dragId) return;
+    setPlaced((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((k) => { if (next[k] === dragId) next[k] = null; });
+      return next;
+    });
+    setBank((b) => (b.includes(dragId) ? b : [...b, dragId]));
+    setDragId(null);
+    setOverId(null);
+  };
+
+  const labelText = (id: string) => PARTS.find((p) => p.id === id)?.label[language] ?? "";
+
+  const allCorrect = useMemo(() => PARTS.every((p) => placed[p.id] === p.id), [placed]);
+
+  return (
+    <div className="rounded-3xl border border-primary/30 bg-secondary/40 backdrop-blur p-5 md:p-7">
       <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
-        <h2 className="text-2xl font-semibold">{title}</h2>
+        <h2 className="text-2xl font-semibold">{t.cellTitle}</h2>
         <button
-          onClick={() => setLabels({})}
+          onClick={reset}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition px-3 py-1.5 rounded-full border border-white/10 hover:border-primary/40"
         >
-          <RotateCcw className="w-3.5 h-3.5" /> {resetLabel}
+          <RotateCcw className="w-3.5 h-3.5" /> {t.reset}
         </button>
       </div>
-      <p className="text-sm text-muted-foreground mb-6">{hint}</p>
+      <p className="text-sm text-muted-foreground mb-5">{t.cellHint}</p>
 
-      <div className="relative w-full aspect-[4/3] bg-background/40 rounded-2xl overflow-hidden" dir="ltr">
-        {/* SVG arrows + cell */}
+      <div className="relative w-full aspect-[4/3] bg-background/40 rounded-2xl overflow-hidden mb-5" dir="ltr">
         <svg viewBox="0 0 100 75" preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
           <defs>
             <radialGradient id="cellGrad" cx="50%" cy="50%" r="50%">
@@ -180,28 +295,17 @@ const CellDiagram = ({
               <path d="M0,0 L10,5 L0,10 z" fill="hsl(var(--primary))" />
             </marker>
           </defs>
-
-          {/* Cell membrane */}
           <ellipse cx="50" cy="50" rx="32" ry="22" fill="url(#cellGrad)" stroke="hsl(var(--primary))" strokeWidth="0.6" />
-          {/* Nucleus */}
           <ellipse cx="50" cy="48" rx="9" ry="7" fill="hsl(var(--primary) / 0.5)" stroke="hsl(var(--primary))" strokeWidth="0.4" />
           <circle cx="50" cy="48" r="2.5" fill="hsl(var(--primary))" opacity="0.7" />
-          {/* Mitochondria */}
           <ellipse cx="70" cy="60" rx="5" ry="2.5" fill="hsl(var(--accent) / 0.5)" stroke="hsl(var(--accent))" strokeWidth="0.3" />
-          {/* ER squiggles */}
           <path d="M55 38 Q60 36 62 40 Q64 44 68 41" stroke="hsl(var(--primary))" strokeWidth="0.5" fill="none" opacity="0.7" />
-          {/* Golgi */}
           <path d="M28 30 Q32 28 36 30 M28 32 Q32 30 36 32 M28 34 Q32 32 36 34" stroke="hsl(var(--accent))" strokeWidth="0.5" fill="none" />
-          {/* Ribosomes */}
           <g fill="hsl(var(--primary))">
             <circle cx="36" cy="64" r="0.8" /><circle cx="40" cy="66" r="0.8" /><circle cx="42" cy="62" r="0.8" />
           </g>
-
-          {/* Arrows with animation */}
           {PARTS.map((p, i) => {
-            // shorten line so it stops at box edge
-            const x1 = p.ax;
-            const y1 = p.ay;
+            const x1 = p.ax, y1 = p.ay;
             const x2 = p.lx + (p.lx > 50 ? -2 : 10);
             const y2 = p.ly + 4;
             return (
@@ -209,7 +313,7 @@ const CellDiagram = ({
                 key={p.id}
                 x1={x1} y1={y1} x2={x1} y2={y1}
                 animate={{ x2, y2 }}
-                transition={{ delay: 0.2 + i * 0.12, duration: 0.6, ease: "easeOut" }}
+                transition={{ delay: 0.2 + i * 0.1, duration: 0.5, ease: "easeOut" }}
                 stroke="hsl(var(--primary))"
                 strokeWidth="0.4"
                 markerEnd="url(#arrowHead)"
@@ -218,25 +322,82 @@ const CellDiagram = ({
           })}
         </svg>
 
-        {/* Empty label boxes */}
-        {PARTS.map((p, i) => (
+        {PARTS.map((p, i) => {
+          const chipId = placed[p.id] ?? null;
+          const correct = chipId && chipId === p.id;
+          const wrong = chipId && chipId !== p.id;
+          return (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 + i * 0.1 }}
+              className="absolute"
+              style={{ left: `${p.lx}%`, top: `${p.ly}%`, width: "16%", minWidth: 96 }}
+              dir={dir}
+              onDragOver={(e) => { e.preventDefault(); setOverId(p.id); }}
+              onDragLeave={() => setOverId((v) => (v === p.id ? null : v))}
+              onDrop={() => onDropTo(p.id)}
+            >
+              {chipId ? (
+                <button
+                  draggable
+                  onDragStart={() => setDragId(chipId)}
+                  onClick={() => onDropToBank()}
+                  className={`w-full text-xs md:text-sm px-2 py-1.5 rounded-md border bg-background/90 backdrop-blur text-foreground truncate cursor-grab active:cursor-grabbing transition ${correct ? "border-emerald-500/70 ring-2 ring-emerald-500/30" : wrong ? "border-rose-500/70 ring-2 ring-rose-500/30" : "border-primary/50"}`}
+                  title={labelText(chipId)}
+                >
+                  {labelText(chipId)}
+                </button>
+              ) : (
+                <div className={`w-full text-[10px] md:text-xs px-2 py-1.5 rounded-md border-2 border-dashed text-muted-foreground/70 bg-background/40 text-center transition ${overId === p.id ? "border-primary bg-primary/10" : "border-primary/40"}`}>
+                  {t.drop}
+                </div>
+              )}
+            </motion.div>
+          );
+        })}
+
+        {allCorrect && (
           <motion.div
-            key={p.id}
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.6 + i * 0.12, duration: 0.35 }}
-            className="absolute"
-            style={{ left: `${p.lx}%`, top: `${p.ly}%`, width: "13%", minWidth: 80 }}
-            dir={dir}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-xs font-medium"
           >
-            <input
-              value={labels[p.id] ?? ""}
-              onChange={(e) => setLabels({ ...labels, [p.id]: e.target.value })}
-              placeholder={placeholder}
-              className="w-full text-xs md:text-sm px-2 py-1.5 rounded-md border border-primary/50 bg-background/80 backdrop-blur text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition"
-            />
+            ✓ {t.correct}
           </motion.div>
-        ))}
+        )}
+      </div>
+
+      {/* Label bank */}
+      <div
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={onDropToBank}
+        className="rounded-2xl border border-white/10 bg-background/40 p-3"
+      >
+        <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-2">{t.bank}</div>
+        <div className="flex flex-wrap gap-2 min-h-[2.5rem]">
+          <AnimatePresence>
+            {bank.map((id) => (
+              <motion.button
+                key={id}
+                layout
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85 }}
+                draggable
+                onDragStart={() => setDragId(id)}
+                onDragEnd={() => setDragId(null)}
+                className="px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-br from-primary/90 to-accent/90 text-primary-foreground shadow-[0_4px_14px_hsl(var(--primary)/0.4)] cursor-grab active:cursor-grabbing hover:scale-105 transition"
+              >
+                {labelText(id)}
+              </motion.button>
+            ))}
+          </AnimatePresence>
+          {bank.length === 0 && (
+            <div className="text-xs text-muted-foreground py-1.5">—</div>
+          )}
+        </div>
       </div>
     </div>
   );
