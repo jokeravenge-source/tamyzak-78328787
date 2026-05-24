@@ -109,40 +109,76 @@ const animalCell: DiagramDef = {
 const plantCell: DiagramDef = {
   id: "ch1-plant-cell",
   title: { en: "Plant Cell", ar: "الخلية النباتية" },
+  aspect: "1/1",
   parts: [
-    { id: "wall",     label: { en: "Cell wall",          ar: "الجدار الخلوي" },        ax: 10, ay: 18, lx: 2,  ly: 4  },
-    { id: "membrane", label: { en: "Cell membrane",      ar: "الغشاء البلازمي" },      ax: 14, ay: 24, lx: 2,  ly: 18 },
-    { id: "chloro",   label: { en: "Chloroplast",        ar: "البلاستيدة الخضراء" },   ax: 22, ay: 36, lx: 2,  ly: 36 },
-    { id: "vacuole",  label: { en: "Central vacuole",    ar: "الفجوة المركزية" },      ax: 50, ay: 40, lx: 78, ly: 6  },
-    { id: "nucleus",  label: { en: "Nucleus",            ar: "النواة" },               ax: 30, ay: 56, lx: 2,  ly: 56 },
-    { id: "nucleolus",label: { en: "Nucleolus",          ar: "النوية" },               ax: 32, ay: 54, lx: 2,  ly: 70 },
-    { id: "mito",     label: { en: "Mitochondrion",      ar: "الميتوكوندريا" },        ax: 70, ay: 58, lx: 80, ly: 56 },
-    { id: "golgi",    label: { en: "Golgi apparatus",    ar: "جهاز جولجي" },           ax: 68, ay: 28, lx: 80, ly: 22 },
-    { id: "rer",      label: { en: "Rough ER",           ar: "الشبكة الخشنة" },        ax: 64, ay: 18, lx: 80, ly: 38 },
-    { id: "cyto",     label: { en: "Cytoplasm",          ar: "السايتوبلازم" },         ax: 76, ay: 46, lx: 80, ly: 70 },
+    // Right side labels
+    { id: "wall",     label: { en: "Cell wall",         ar: "الجدار الخلوي" },        ax: 88, ay: 3,    lx: 80, ly: 2,  lw: 18 },
+    { id: "membrane", label: { en: "Cell membrane",     ar: "الغشاء البلازمي" },      ax: 86, ay: 7.5,  lx: 80, ly: 10, lw: 18 },
+    { id: "golgi",    label: { en: "Golgi apparatus",   ar: "جهاز جولجي" },           ax: 58, ay: 15,   lx: 80, ly: 18, lw: 18 },
+    { id: "chloro",   label: { en: "Chloroplast",       ar: "البلاستيدة الخضراء" },   ax: 80, ay: 22.5, lx: 80, ly: 30, lw: 18 },
+    { id: "vacmem",   label: { en: "Vacuole membrane",  ar: "غشاء الفجوة" },          ax: 66, ay: 34.5, lx: 80, ly: 42, lw: 18 },
+    { id: "mito",     label: { en: "Mitochondrion",     ar: "الميتوكوندريا" },        ax: 76, ay: 54,   lx: 80, ly: 64, lw: 18 },
+    { id: "cyto",     label: { en: "Cytoplasm",         ar: "السايتوبلازم" },         ax: 50, ay: 66,   lx: 80, ly: 82, lw: 18 },
+    // Left side labels
+    { id: "gvesi",    label: { en: "Golgi vesicles",    ar: "حويصلات جولجي" },        ax: 36, ay: 12,   lx: 2,  ly: 4,  lw: 18 },
+    { id: "ribo",     label: { en: "Ribosome",          ar: "الرايبوسوم" },           ax: 28, ay: 16,   lx: 2,  ly: 12, lw: 18 },
+    { id: "ser",      label: { en: "Smooth ER",         ar: "الشبكة الملساء" },       ax: 24, ay: 24,   lx: 2,  ly: 20, lw: 18 },
+    { id: "nucleolus",label: { en: "Nucleolus",         ar: "النوية" },               ax: 30, ay: 31.5, lx: 2,  ly: 30, lw: 18 },
+    { id: "nucleus",  label: { en: "Nucleus",           ar: "النواة" },               ax: 32, ay: 36,   lx: 2,  ly: 40, lw: 18 },
+    { id: "rer",      label: { en: "Rough ER",          ar: "الشبكة الخشنة" },        ax: 24, ay: 42,   lx: 2,  ly: 50, lw: 18 },
+    { id: "vacuole",  label: { en: "Central vacuole",   ar: "الفجوة المركزية" },      ax: 50, ay: 45,   lx: 2,  ly: 66, lw: 18 },
+    { id: "amylo",    label: { en: "Amyloplast",        ar: "بلاستيدة نشوية" },       ax: 20, ay: 60,   lx: 2,  ly: 80, lw: 18 },
   ],
   art: h(Fragment, null,
-    h("defs", null, h("linearGradient", { id: "plCell", x1: "0", x2: "0", y1: "0", y2: "1" },
-      h("stop", { offset: "0%",  stopColor: "hsl(140 50% 55% / 0.35)" }),
-      h("stop", { offset: "100%", stopColor: "hsl(140 50% 35% / 0.18)" }),
+    // Cell wall (dark outer rounded rect)
+    h("rect", { x: 10, y: 3,   width: 80, height: 68, rx: 4, fill: "hsl(95 45% 78%)", stroke: "hsl(95 40% 35%)", strokeWidth: 0.7 }),
+    // Cell membrane (just inside)
+    h("rect", { x: 13, y: 5.5, width: 74, height: 63, rx: 4, fill: "hsl(95 50% 82%)", stroke: "hsl(95 40% 45%)", strokeWidth: 0.35 }),
+    // Large central vacuole (off-white blob, vacuole membrane = its border)
+    h("path", { d: "M33 22 Q33 17 40 17 L62 17 Q72 17 72 27 L72 56 Q72 64 60 64 L40 64 Q33 64 33 56 Z",
+                fill: "hsl(50 60% 96%)", stroke: "hsl(40 50% 55%)", strokeWidth: 0.4 }),
+    // Chloroplasts (green ovals with stripes)
+    ...[[80, 22.5],[80, 33],[80, 44],[26, 50],[54, 62]].map(([cx, cy], i) => h("g", { key: `cp${i}` },
+      h("ellipse", { cx, cy, rx: 4, ry: 2, fill: "hsl(95 55% 60%)", stroke: "hsl(95 50% 30%)", strokeWidth: 0.3 }),
+      ...Array.from({ length: 4 }, (_, k) => h("line", {
+        key: k, x1: cx - 2.8 + k * 1.6, y1: cy - 1.4, x2: cx - 2.8 + k * 1.6, y2: cy + 1.4,
+        stroke: "hsl(95 55% 30%)", strokeWidth: 0.3,
+      })),
     )),
-    // cell wall (outer rect)
-    h("rect", { x: 8,  y: 8,  width: 84, height: 60, rx: 3, fill: "none", stroke: P, strokeWidth: 0.8 }),
-    // plasma membrane
-    h("rect", { x: 11, y: 11, width: 78, height: 54, rx: 3, fill: "url(#plCell)", stroke: A, strokeWidth: 0.4 }),
-    // large central vacuole
-    h("rect", { x: 24, y: 22, width: 52, height: 32, rx: 4, fill: "hsl(200 70% 60% / 0.25)", stroke: P, strokeWidth: 0.4 }),
-    // chloroplasts (lens shapes)
-    ...[[20,36],[22,46],[78,30],[80,42],[40,16],[58,16]].map(([x,y],i)=>h("ellipse",{key:`c${i}`,cx:x,cy:y,rx:3,ry:1.6,fill:"hsl(140 60% 45% / 0.85)",stroke:"hsl(140 50% 30%)",strokeWidth:0.2})),
-    // nucleus
-    h("ellipse", { cx: 30, cy: 58, rx: 5, ry: 3.5, fill: "hsl(var(--primary) / 0.55)", stroke: P, strokeWidth: 0.4 }),
-    h("circle",  { cx: 32, cy: 56, r: 1.3, fill: P }),
-    // mitochondria
-    h("ellipse", { cx: 70, cy: 58, rx: 4, ry: 1.8, fill: "hsl(var(--accent) / 0.5)", stroke: A, strokeWidth: 0.3 }),
-    // Golgi
-    h("path", { d: "M62 26 Q68 24 74 26 M62 28 Q68 26 74 28 M62 30 Q68 28 74 30", fill: "none", stroke: A, strokeWidth: 0.5 }),
-    // rough ER
-    h("path", { d: "M55 16 Q62 14 68 18 Q72 22 64 24 Q56 22 55 18 Z", fill: "none", stroke: P, strokeWidth: 0.4 }),
+    // Mitochondria (pink/orange ovals with cristae)
+    ...[[76, 54],[44, 64]].map(([cx, cy], i) => h("g", { key: `mt${i}` },
+      h("ellipse", { cx, cy, rx: 4, ry: 2, fill: "hsl(15 65% 80%)", stroke: "hsl(15 55% 50%)", strokeWidth: 0.3 }),
+      h("path", { d: `M${cx-3} ${cy} q1 -1.6 2 0 q1 1.6 2 0 q1 -1.6 2 0`, fill: "none", stroke: "hsl(25 60% 50%)", strokeWidth: 0.35 }),
+    )),
+    // Nucleus (pink oval)
+    h("ellipse", { cx: 30, cy: 35, rx: 6, ry: 5.5, fill: "hsl(320 50% 88%)", stroke: "hsl(320 40% 55%)", strokeWidth: 0.35 }),
+    // Nucleolus (small purple inside nucleus)
+    h("circle",  { cx: 30, cy: 32, r: 1.6, fill: "hsl(280 50% 50%)" }),
+    // Smooth ER (wavy stacked curves, no dots)
+    h("path", { d: "M19 22 Q23 20 27 22 M19 24 Q23 22 27 24 M19 26 Q23 24 27 26 M19 28 Q23 26 27 28",
+                fill: "none", stroke: "hsl(200 55% 55%)", strokeWidth: 0.35 }),
+    // Rough ER (wavy stacks with ribosome dots)
+    h("path", { d: "M19 41 Q23 39 27 41 M19 43 Q23 41 27 43 M19 45 Q23 43 27 45",
+                fill: "none", stroke: "hsl(200 55% 55%)", strokeWidth: 0.35 }),
+    ...Array.from({ length: 8 }, (_, i) => h("circle", {
+      key: `rerd${i}`, cx: 19 + (i % 4) * 2.6, cy: 40 + Math.floor(i / 4) * 2.2 + (i % 2) * 0.3,
+      r: 0.35, fill: "hsl(0 0% 15%)",
+    })),
+    // Ribosome cluster (free)
+    ...[[26, 16],[28, 15.5],[30, 17],[27, 18],[29, 19],[31, 18.5]].map(([x, y], i) =>
+      h("circle", { key: `rb${i}`, cx: x, cy: y, r: 0.5, fill: "hsl(0 0% 12%)" })),
+    // Golgi vesicles (small empty circles)
+    ...[[34, 13],[37, 14],[40, 12.5],[42, 14.5],[36, 11]].map(([x, y], i) =>
+      h("circle", { key: `gv${i}`, cx: x, cy: y, r: 0.7, fill: "none", stroke: "hsl(40 60% 50%)", strokeWidth: 0.3 })),
+    // Golgi apparatus (stacked curved cisternae)
+    h("path", { d: "M48 13 Q54 11 60 13 M48 15 Q54 13 60 15 M48 17 Q54 15 60 17 M48 19 Q54 17 60 19",
+                fill: "none", stroke: "hsl(35 75% 55%)", strokeWidth: 0.55 }),
+    // Amyloplast (concentric spiral - starch grain)
+    h("g", null,
+      h("circle", { cx: 20, cy: 60, r: 2.2, fill: "hsl(220 15% 88%)", stroke: "hsl(220 20% 55%)", strokeWidth: 0.3 }),
+      h("circle", { cx: 20, cy: 60, r: 1.5, fill: "none", stroke: "hsl(220 20% 55%)", strokeWidth: 0.25 }),
+      h("circle", { cx: 20, cy: 60, r: 0.8, fill: "none", stroke: "hsl(220 20% 55%)", strokeWidth: 0.25 }),
+    ),
   ),
 };
 
