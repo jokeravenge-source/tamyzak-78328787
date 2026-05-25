@@ -11,8 +11,10 @@ import track3 from "@/assets/music/track3.mp3";
 import track4 from "@/assets/music/track4.mp3";
 import track5 from "@/assets/music/track5.mp3";
 import track6 from "@/assets/music/track6.mp3";
+import quranTrack from "@/assets/music/quran.mp3";
 
-const TRACKS = [track1, track2, track3, track4, track5, track6];
+const MUSIC_TRACKS = [track1, track2, track3, track4, track5, track6];
+const QURAN_TRACKS = [quranTrack];
 const MAX_SECONDS = 48 * 3600;
 const PERSIST_KEY = "study_session_state_v1";
 
@@ -32,7 +34,7 @@ const T = {
     title: "Study Sessions", desc: "Pick a subject, set a mission, and earn points.",
     leaderboard: "Leaderboard", mission: "Mission for this session", missionPh: "e.g. Finish chapter 3 exercises",
     start: "Start", pause: "Pause", resume: "Resume", stop: "Stop & save",
-    completed: "Mark mission completed", points: "pts", noOne: "No scores yet.",
+    completed: "Mark mission completed", points: "pts", hours: "hours", noOne: "No scores yet.",
     saved: "Session saved",
     pointsTitle: "How points work",
     pointsLine1: "You earn 1 point for every full hour you study.",
@@ -43,7 +45,7 @@ const T = {
     title: "جلسات الدراسة", desc: "اختر مادة وحدد مهمتك واكسب النقاط.",
     leaderboard: "لوحة المتصدرين", mission: "مهمة هذه الجلسة", missionPh: "مثلاً: إنهاء تمارين الفصل 3",
     start: "ابدأ", pause: "إيقاف مؤقت", resume: "متابعة", stop: "إيقاف وحفظ",
-    completed: "تم إنجاز المهمة", points: "نقطة", noOne: "لا توجد نتائج بعد.",
+    completed: "تم إنجاز المهمة", points: "نقطة", hours: "ساعة", noOne: "لا توجد نتائج بعد.",
     saved: "تم حفظ الجلسة",
     pointsTitle: "كيف تُحسب النقاط",
     pointsLine1: "تحصل على نقطة واحدة لكل ساعة دراسة كاملة.",
@@ -73,7 +75,9 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [displayName, setDisplayName] = useState("");
   const intervalRef = useRef<number | null>(null);
   const [trackIdx, setTrackIdx] = useState(0);
+  const [playlist, setPlaylist] = useState<"music" | "quran">("music");
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const TRACKS = playlist === "quran" ? QURAN_TRACKS : MUSIC_TRACKS;
   const [volume, setVolume] = useState(0.5);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const savingRef = useRef(false);
@@ -219,7 +223,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     savingRef.current = true;
     setRunning(false);
     const hours = seconds / 3600;
-    const points = Math.floor(hours) + (completed ? 1 : 0);
+    const points = Math.floor(hours);
     const { data: inserted, error } = await supabase.from("study_sessions").insert({
       user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
       mission_completed: completed, points,
@@ -245,6 +249,13 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   };
   const nextTrack = () => {
     setTrackIdx((i) => (i + 1) % TRACKS.length);
+    setTimeout(() => { if (musicPlaying) audioRef.current?.play().catch(() => {}); }, 50);
+  };
+
+  const switchPlaylist = (p: "music" | "quran") => {
+    if (p === playlist) return;
+    setPlaylist(p);
+    setTrackIdx(0);
     setTimeout(() => { if (musicPlaying) audioRef.current?.play().catch(() => {}); }, 50);
   };
 
@@ -333,6 +344,10 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
         <div className="mt-6 rounded-2xl border border-white/10 bg-secondary/30 backdrop-blur p-4 flex items-center gap-3 flex-wrap">
           <Music className="w-5 h-5 text-primary" />
+          <div className="flex rounded-full border border-white/10 overflow-hidden text-xs">
+            <button onClick={() => switchPlaylist("music")} className={`px-3 py-1 ${playlist === "music" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground"}`}>{language === "ar" ? "موسيقى" : "Music"}</button>
+            <button onClick={() => switchPlaylist("quran")} className={`px-3 py-1 ${playlist === "quran" ? "bg-primary text-primary-foreground" : "bg-transparent text-muted-foreground"}`}>{language === "ar" ? "قرآن" : "Quran"}</button>
+          </div>
           <span className="text-sm font-medium">{language === "ar" ? `موسيقى ${trackIdx + 1}/${TRACKS.length}` : `Track ${trackIdx + 1}/${TRACKS.length}`}</span>
           <Button size="sm" variant="secondary" onClick={toggleMusic} className="gap-2">
             {musicPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -358,7 +373,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i < 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{i + 1}</span>
                     <span>{r.name}</span>
                   </div>
-                  <span className="font-semibold text-primary">{r.points} {L.points}</span>
+                  <span className="font-semibold text-primary">{r.points} {L.hours}</span>
                 </li>
               ))}
             </ol>
