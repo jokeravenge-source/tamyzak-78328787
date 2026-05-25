@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RotateCcw, Check } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -42,6 +42,9 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
   const [bank, setBank] = useState<string[]>(() => shuffle(diagram.parts.map((p) => p.id)));
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  const ghostRef = useRef<HTMLDivElement | null>(null);
+  const dragIdRef = useRef<string | null>(null);
+  const movedRef = useRef(false);
 
   useEffect(() => {
     setPlaced({});
@@ -81,6 +84,86 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
     });
     setBank((b) => (b.includes(drag) ? b : [...b, drag]));
     setDragId(null); setOverId(null);
+  };
+
+  // Pointer-based drag for touch + mouse (works on mobile/tablet/desktop)
+  const resolveDropTarget = (x: number, y: number): { type: "part"; id: string } | { type: "bank" } | null => {
+    // Temporarily hide ghost so elementFromPoint sees what's underneath
+    const ghost = ghostRef.current;
+    const prevDisplay = ghost?.style.display;
+    if (ghost) ghost.style.display = "none";
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    if (ghost && prevDisplay !== undefined) ghost.style.display = prevDisplay;
+    if (!el) return null;
+    const partEl = el.closest('[data-drop-part]') as HTMLElement | null;
+    if (partEl) return { type: "part", id: partEl.getAttribute("data-drop-part")! };
+    const bankEl = el.closest('[data-drop-bank]');
+    if (bankEl) return { type: "bank" };
+    return null;
+  };
+
+  const startPointerDrag = (id: string, e: React.PointerEvent) => {
+    // Only act on primary button / touch / pen
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    e.preventDefault();
+    dragIdRef.current = id;
+    movedRef.current = false;
+    setDragId(id);
+    const labelTxt = labelText(id);
+
+    const ghost = document.createElement("div");
+    ghost.textContent = labelTxt;
+    ghost.style.cssText =
+      "position:fixed;left:0;top:0;z-index:9999;pointer-events:none;padding:6px 12px;border-radius:9999px;" +
+      "font-size:12px;font-weight:600;color:hsl(var(--primary-foreground));" +
+      "background:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--accent)));" +
+      "box-shadow:0 6px 20px hsl(var(--primary)/0.45);transform:translate(-50%,-50%) scale(1.05);opacity:0.95";
+    document.body.appendChild(ghost);
+    ghostRef.current = ghost;
+    ghost.style.left = `${e.clientX}px`;
+    ghost.style.top = `${e.clientY}px`;
+
+    const onMove = (ev: PointerEvent) => {
+      movedRef.current = true;
+      if (ghostRef.current) {
+        ghostRef.current.style.left = `${ev.clientX}px`;
+        ghostRef.current.style.top = `${ev.clientY}px`;
+      }
+      const target = resolveDropTarget(ev.clientX, ev.clientY);
+      setOverId(target && target.type === "part" ? target.id : null);
+    };
+    const cleanup = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      if (ghostRef.current) { ghostRef.current.remove(); ghostRef.current = null; }
+    };
+    const onUp = (ev: PointerEvent) => {
+      const target = resolveDropTarget(ev.clientX, ev.clientY);
+      cleanup();
+      const draggedId = dragIdRef.current;
+      dragIdRef.current = null;
+      if (!draggedId) { setDragId(null); setOverId(null); return; }
+      // Use latest id when calling handlers
+      if (target?.type === "part") {
+        setDragId(draggedId);
+        // call after state set in next tick to ensure dragId truthy in handler closure
+        queueMicrotask(() => onDropTo(target.id));
+      } else if (target?.type === "bank") {
+        setDragId(draggedId);
+        queueMicrotask(() => onDropToBank());
+      } else if (!movedRef.current) {
+        // treat as click → send back to bank if currently placed
+        setDragId(draggedId);
+        queueMicrotask(() => onDropToBank());
+      } else {
+        setDragId(null); setOverId(null);
+      }
+    };
+    const onCancel = () => { cleanup(); dragIdRef.current = null; setDragId(null); setOverId(null); };
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
   };
 
   const labelText = (id: string) => diagram.parts.find((p) => p.id === id)?.label[language] ?? "";
@@ -143,6 +226,7 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
               className="absolute"
               style={{ left: `${p.lx}%`, top: `${p.ly}%`, width: `${w}%`, minWidth: 92 }}
               dir={dir}
+              data-drop-part={p.id}
               onDragOver={(e) => { e.preventDefault(); setOverId(p.id); }}
               onDragLeave={() => setOverId((v) => (v === p.id ? null : v))}
               onDrop={() => onDropTo(p.id)}
@@ -151,8 +235,9 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
                 <button
                   draggable
                   onDragStart={() => setDragId(chipId)}
+                  onPointerDown={(e) => startPointerDrag(chipId, e)}
                   onClick={onDropToBank}
-                  className={`w-full text-[11px] md:text-xs px-2 py-1.5 rounded-md border bg-background/95 backdrop-blur text-foreground truncate cursor-grab active:cursor-grabbing transition ${correct ? "border-emerald-500/80 ring-2 ring-emerald-500/40" : wrong ? "border-rose-500/80 ring-2 ring-rose-500/40" : "border-primary/60"}`}
+                  className={`w-full text-[11px] md:text-xs px-2 py-1.5 rounded-md border bg-background/95 backdrop-blur text-foreground truncate cursor-grab active:cursor-grabbing transition touch-none select-none ${correct ? "border-emerald-500/80 ring-2 ring-emerald-500/40" : wrong ? "border-rose-500/80 ring-2 ring-rose-500/40" : "border-primary/60"}`}
                   title={labelText(chipId)}
                 >
                   {labelText(chipId)}
@@ -179,6 +264,7 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
       </div>
 
       <div
+        data-drop-bank
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDropToBank}
         className="rounded-2xl border border-white/10 bg-background/40 p-3"
@@ -196,7 +282,8 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
                 draggable
                 onDragStart={() => setDragId(id)}
                 onDragEnd={() => setDragId(null)}
-                className="px-3 py-1.5 rounded-full text-xs md:text-sm font-medium bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-[0_4px_14px_hsl(var(--primary)/0.4)] cursor-grab active:cursor-grabbing hover:scale-105 transition"
+                onPointerDown={(e) => startPointerDrag(id, e)}
+                className="px-3 py-1.5 rounded-full text-xs md:text-sm font-medium bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-[0_4px_14px_hsl(var(--primary)/0.4)] cursor-grab active:cursor-grabbing hover:scale-105 transition touch-none select-none"
               >
                 {labelText(id)}
               </motion.button>
