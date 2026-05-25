@@ -7,12 +7,37 @@ import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
 import { ThemePicker } from "@/components/ThemePicker";
-import { CharacterAvatar, type Gender } from "@/components/CharacterAvatar";
+import {
+  CharacterAvatar,
+  type Gender,
+  type CharacterTraits,
+  SKIN_COLORS,
+  HAIR_COLORS,
+  SHIRT_COLORS,
+  MALE_HAIRSTYLES,
+  FEMALE_HAIRSTYLES,
+  getAvatarStyle,
+} from "@/components/CharacterAvatar";
 
 const t = {
-  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character" },
-  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك" },
+  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", on: "On", off: "Off", randomize: "Randomize" },
+  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", on: "نعم", off: "لا", randomize: "عشوائي" },
 } as const;
+
+const HAIR_LABELS: Record<string, { en: string; ar: string }> = {
+  short: { en: "Short", ar: "قصير" },
+  buzz: { en: "Buzz", ar: "حلاقة" },
+  spiky: { en: "Spiky", ar: "منتصب" },
+  curly: { en: "Curly", ar: "مجعد" },
+  fade: { en: "Fade", ar: "متدرج" },
+  messy: { en: "Messy", ar: "فوضوي" },
+  long: { en: "Long", ar: "طويل" },
+  bun: { en: "Bun", ar: "كعكة" },
+  ponytail: { en: "Ponytail", ar: "ذيل حصان" },
+  bob: { en: "Bob", ar: "بوب" },
+  curly_long: { en: "Curly Long", ar: "مجعد طويل" },
+  braids: { en: "Braids", ar: "ضفائر" },
+};
 
 const AccountCenter = ({
   language,
@@ -31,6 +56,7 @@ const AccountCenter = ({
   const [points, setPoints] = useState(0);
   const [userId, setUserId] = useState<string>("");
   const [gender, setGender] = useState<Gender | null>(null);
+  const [traits, setTraits] = useState<CharacterTraits | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -38,9 +64,10 @@ const AccountCenter = ({
       if (!u.user) return;
       setEmail(u.user.email ?? "");
       setUserId(u.user.id);
-      const { data: p } = await supabase.from("profiles").select("display_name, gender").eq("user_id", u.user.id).maybeSingle();
+      const { data: p } = await supabase.from("profiles").select("display_name, gender, character").eq("user_id", u.user.id).maybeSingle();
       setName(p?.display_name ?? "");
       setGender((p?.gender as Gender) ?? null);
+      setTraits(((p as any)?.character as CharacterTraits) ?? null);
       const { data: pts } = await supabase.from("user_points").select("points").eq("user_id", u.user.id);
       setPoints((pts ?? []).reduce((s: number, r: any) => s + (r.points ?? 0), 0));
       setLoading(false);
@@ -72,6 +99,8 @@ const AccountCenter = ({
 
   const pickGender = async (g: Gender) => {
     setGender(g);
+    const base = getAvatarStyle(userId || "anon", g);
+    setTraits((prev) => prev ?? base);
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
@@ -83,6 +112,29 @@ const AccountCenter = ({
       }
     } catch {}
   };
+
+  const updateTraits = async (patch: Partial<CharacterTraits>) => {
+    const next: CharacterTraits = {
+      ...(traits ?? getAvatarStyle(userId || "anon", gender ?? "male")),
+      ...patch,
+    };
+    setTraits(next);
+    try {
+      if (!userId) return;
+      await supabase.from("profiles").update({ character: next as any }).eq("user_id", userId);
+    } catch {}
+  };
+
+  const randomize = () => {
+    if (!gender) return;
+    const seed = String(Date.now()) + Math.random();
+    updateTraits(getAvatarStyle(seed, gender));
+  };
+
+  const effective: CharacterTraits | null = gender
+    ? { ...getAvatarStyle(userId || "anon", gender), ...(traits ?? {}) }
+    : null;
+  const hairOptions = gender === "female" ? FEMALE_HAIRSTYLES : MALE_HAIRSTYLES;
 
   const rank = rankFor(points);
   const nextRank = RANKS.find((r) => r.min > points);
@@ -98,23 +150,104 @@ const AccountCenter = ({
           <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6">
             <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-4">{text.character}</p>
             {gender ? (
-              <div className="flex items-center gap-5">
-                <div className="rounded-2xl bg-background/40 border border-white/10 p-2">
-                  <CharacterAvatar seed={userId} gender={gender} size={96} />
+              <div className="space-y-5">
+                <div className="flex items-center gap-5">
+                  <div className="rounded-2xl bg-background/40 border border-white/10 p-2">
+                    <CharacterAvatar seed={userId} gender={gender} traits={effective} size={120} />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => pickGender("male")}
+                        className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition ${gender === "male" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                      >{text.male}</button>
+                      <button
+                        onClick={() => pickGender("female")}
+                        className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition ${gender === "female" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                      >{text.female}</button>
+                    </div>
+                    <button
+                      onClick={randomize}
+                      className="w-full h-9 rounded-lg text-xs font-semibold border border-white/10 bg-background/40 text-muted-foreground hover:text-foreground transition"
+                    >🎲 {text.randomize}</button>
+                  </div>
                 </div>
-                <div className="flex-1 flex gap-2">
-                  <button
-                    onClick={() => pickGender("male")}
-                    className={`flex-1 h-10 rounded-xl text-sm font-semibold border transition ${gender === "male" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
-                  >
-                    {text.male}
-                  </button>
-                  <button
-                    onClick={() => pickGender("female")}
-                    className={`flex-1 h-10 rounded-xl text-sm font-semibold border transition ${gender === "female" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
-                  >
-                    {text.female}
-                  </button>
+
+                {/* Skin */}
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.skin}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {SKIN_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => updateTraits({ skin: c })}
+                        className={`w-8 h-8 rounded-full border-2 transition ${effective?.skin === c ? "border-primary scale-110" : "border-white/20 hover:border-white/40"}`}
+                        style={{ backgroundColor: c }}
+                        aria-label={c}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Hair style */}
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.hairStyle}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {hairOptions.map((h) => (
+                      <button
+                        key={h}
+                        onClick={() => updateTraits({ hair: h })}
+                        className={`h-9 px-2 rounded-lg text-[11px] font-semibold border transition ${effective?.hair === h ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                      >{HAIR_LABELS[h]?.[language] ?? h}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Hair color */}
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.hairColor}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {HAIR_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => updateTraits({ hairColor: c })}
+                        className={`w-8 h-8 rounded-full border-2 transition ${effective?.hairColor === c ? "border-primary scale-110" : "border-white/20 hover:border-white/40"}`}
+                        style={{ backgroundColor: c }}
+                        aria-label={c}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Shirt color */}
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.shirt}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {SHIRT_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => updateTraits({ shirt: c })}
+                        className={`w-8 h-8 rounded-full border-2 transition ${effective?.shirt === c ? "border-primary scale-110" : "border-white/20 hover:border-white/40"}`}
+                        style={{ backgroundColor: c }}
+                        aria-label={c}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Glasses */}
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.glasses}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => updateTraits({ accessory: "glasses" })}
+                      className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition ${effective?.accessory === "glasses" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                    >{text.on}</button>
+                    <button
+                      onClick={() => updateTraits({ accessory: null })}
+                      className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition ${effective?.accessory == null ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                    >{text.off}</button>
+                  </div>
                 </div>
               </div>
             ) : (

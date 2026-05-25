@@ -21,21 +21,30 @@ function mulberry32(seed: number) {
   };
 }
 
-const SKIN = ["#f4d3b3", "#e6b48a", "#c98e62", "#8d5a3b", "#5b3922"];
-const HAIR_COLORS = ["#1a1a1a", "#3b2412", "#6b3a1a", "#b8742a", "#d9a441", "#7a3b9a", "#e85d3a"];
-const SHIRT_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#6366f1", "#14b8a6", "#a855f7"];
+export const SKIN_COLORS = ["#f4d3b3", "#e6b48a", "#c98e62", "#8d5a3b", "#5b3922"] as const;
+export const HAIR_COLORS = ["#1a1a1a", "#3b2412", "#6b3a1a", "#b8742a", "#d9a441", "#7a3b9a", "#e85d3a"] as const;
+export const SHIRT_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#6366f1", "#14b8a6", "#a855f7"] as const;
 
-const MALE_HAIRSTYLES = ["short", "buzz", "spiky", "curly", "fade", "messy"] as const;
-const FEMALE_HAIRSTYLES = ["long", "bun", "ponytail", "bob", "curly_long", "braids"] as const;
+export const MALE_HAIRSTYLES = ["short", "buzz", "spiky", "curly", "fade", "messy"] as const;
+export const FEMALE_HAIRSTYLES = ["long", "bun", "ponytail", "bob", "curly_long", "braids"] as const;
+
+export type CharacterTraits = {
+  skin: string;
+  hairColor: string;
+  shirt: string;
+  hair: string;
+  accessory: "glasses" | null;
+  blush: boolean;
+};
 
 function pick<T>(arr: readonly T[], r: number): T {
   return arr[Math.floor(r * arr.length) % arr.length];
 }
 
-export function getAvatarStyle(seed: string, gender: Gender) {
+export function getAvatarStyle(seed: string, gender: Gender): CharacterTraits {
   const rand = mulberry32(hashStr(seed + ":" + gender));
   return {
-    skin: pick(SKIN, rand()),
+    skin: pick(SKIN_COLORS, rand()),
     hairColor: pick(HAIR_COLORS, rand()),
     shirt: pick(SHIRT_COLORS, rand()),
     hair: gender === "male" ? pick(MALE_HAIRSTYLES, rand()) : pick(FEMALE_HAIRSTYLES, rand()),
@@ -130,14 +139,17 @@ export function CharacterAvatar({
   gender,
   size = 96,
   className = "",
+  traits,
 }: {
   seed: string;
   gender: Gender | null | undefined;
   size?: number;
   className?: string;
+  traits?: Partial<CharacterTraits> | null;
 }) {
   const g: Gender = gender ?? "male";
-  const s = getAvatarStyle(seed || "anon", g);
+  const base = getAvatarStyle(seed || "anon", g);
+  const s: CharacterTraits = { ...base, ...(traits ?? {}) } as CharacterTraits;
 
   return (
     <svg
