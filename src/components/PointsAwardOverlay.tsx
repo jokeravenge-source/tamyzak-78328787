@@ -63,7 +63,10 @@ const PointsAwardOverlay = ({ language }: { language: "en" | "ar" }) => {
               {isAr ? "تهانينا!" : "Congratulations!"}
             </div>
             <p className="text-base font-semibold text-foreground mb-1">
-              {isAr ? COPY[current.source].ar : COPY[current.source].en}
+              {(() => {
+                const c = COPY[current.source] ?? { en: "Nice work!", ar: "أحسنت!" };
+                return isAr ? c.ar : c.en;
+              })()}
             </p>
             <p className="text-sm text-muted-foreground">
               {isAr ? "لقد ربحت" : "You earned"}{" "}
