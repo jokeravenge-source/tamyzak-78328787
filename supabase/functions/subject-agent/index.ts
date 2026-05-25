@@ -6,15 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SUBJECT_FOLDERS: Record<string, string> = {
-  biology: "biology",
-  physics: "physics",
-  chemistry: "chemistry",
-  arabic: "arabic",
-  french: "french",
-  english: "english",
-};
-
 const SUBJECT_LABELS: Record<string, string> = {
   biology: "Biology",
   physics: "Physics",
@@ -28,40 +19,45 @@ const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = "google/gemini-2.5-flash";
 const MAX_CONTEXT_CHARS = 40000;
 const MAX_FILE_CHARS = 12000;
-const MAX_FILES = 8;
+const MAX_FILES = 3;
 const MAX_CHAT_MESSAGES = 10;
 
 async function fetchSubjectContext(subject: string): Promise<string> {
-  const folder = SUBJECT_FOLDERS[subject];
-  if (!folder) return "";
   const url = Deno.env.get("SUPABASE_URL")!;
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, key);
-  const { data: files, error } = await admin.storage.from("files").list(folder, {
-    limit: MAX_FILES,
-    sortBy: { column: "name", order: "asc" },
-  });
-  if (error || !files?.length) return "";
+
+  const { data: summaries, error } = await admin
+    .from("summaries")
+    .select("name, file_path, mime_type")
+    .eq("approved", true)
+    .eq("subject", subject)
+    .order("created_at", { ascending: false })
+    .limit(MAX_FILES);
+
+  if (error || !summaries?.length) return "";
+
   const parts: string[] = [];
   let total = 0;
   const MAX = MAX_CONTEXT_CHARS;
-  for (const f of files) {
+  for (const f of summaries) {
     if (total >= MAX) break;
-    if (!f.name || f.name.startsWith(".")) continue;
-    const path = `${folder}/${f.name}`;
-    const { data: blob } = await admin.storage.from("files").download(path);
+    if (!f.file_path) continue;
+    const { data: blob } = await admin.storage.from("summaries").download(f.file_path);
     if (!blob) continue;
+
     const isText =
-      f.name.endsWith(".txt") ||
-      f.name.endsWith(".md") ||
-      f.name.endsWith(".json") ||
-      f.name.endsWith(".csv") ||
+      f.file_path.endsWith(".txt") ||
+      f.file_path.endsWith(".md") ||
+      f.file_path.endsWith(".json") ||
+      f.file_path.endsWith(".csv") ||
       (blob.type || "").startsWith("text/");
+
     if (isText) {
       const text = (await blob.text()).slice(0, MAX_FILE_CHARS);
       parts.push(`### File: ${f.name}\n${text}`);
       total += text.length;
-    } else if (f.name.toLowerCase().endsWith(".pdf") || (blob.type || "") === "application/pdf") {
+    } else if (f.file_path.toLowerCase().endsWith(".pdf") || f.mime_type === "application/pdf" || (blob.type || "") === "application/pdf") {
       try {
         const buf = new Uint8Array(await blob.arrayBuffer());
         const pdf = await getDocumentProxy(buf);
@@ -72,8 +68,6 @@ async function fetchSubjectContext(subject: string): Promise<string> {
       } catch (err) {
         parts.push(`### File: ${f.name} (failed to parse PDF: ${String(err)})`);
       }
-    } else {
-      parts.push(`### File: ${f.name} (binary, ${blob.type || "unknown"}, ${f.metadata?.size ?? "?"} bytes)`);
     }
   }
   return parts.join("\n\n");
