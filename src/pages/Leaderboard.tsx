@@ -5,8 +5,9 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
+import { CharacterAvatar, type Gender } from "@/components/CharacterAvatar";
 
-type Row = { user_id: string; name: string; points: number };
+type Row = { user_id: string; name: string; points: number; gender: Gender | null };
 
 const Leaderboard = ({
   language,
@@ -29,16 +30,20 @@ const Leaderboard = ({
       setMe(u.user?.id ?? null);
       const [pointsRes, profilesRes] = await Promise.all([
         supabase.from("user_points").select("user_id, points"),
-        supabase.from("profiles").select("user_id, display_name"),
+        supabase.from("profiles").select("user_id, display_name, gender"),
       ]);
       const totals = new Map<string, number>();
       (pointsRes.data ?? []).forEach((r: any) => {
         totals.set(r.user_id, (totals.get(r.user_id) ?? 0) + (r.points ?? 0));
       });
       const names = new Map<string, string>();
-      (profilesRes.data ?? []).forEach((p: any) => names.set(p.user_id, p.display_name || "Student"));
+      const genders = new Map<string, Gender | null>();
+      (profilesRes.data ?? []).forEach((p: any) => {
+        names.set(p.user_id, p.display_name || "Student");
+        genders.set(p.user_id, (p.gender as Gender) ?? null);
+      });
       const list: Row[] = Array.from(totals.entries())
-        .map(([user_id, points]) => ({ user_id, points, name: names.get(user_id) || "Student" }))
+        .map(([user_id, points]) => ({ user_id, points, name: names.get(user_id) || "Student", gender: genders.get(user_id) ?? null }))
         .sort((a, b) => b.points - a.points);
       setRows(list);
       setLoading(false);
@@ -84,6 +89,9 @@ const Leaderboard = ({
                   >
                     <div className="w-9 text-center text-lg font-bold text-muted-foreground">
                       {medal ?? `#${i + 1}`}
+                    </div>
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-background/40 border border-white/10 shrink-0">
+                      <CharacterAvatar seed={r.user_id} gender={r.gender ?? "male"} size={48} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold truncate">{r.name}{isMe && <span className="text-primary text-xs ml-2">({t("you", "أنت")})</span>}</p>
