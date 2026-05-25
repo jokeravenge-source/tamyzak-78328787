@@ -301,6 +301,47 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               </div>
             )}
           </div>
+        ) : tab === "news" ? (
+          <div className="space-y-6">
+            <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur space-y-3">
+              <h3 className="font-semibold flex items-center gap-2"><Newspaper className="w-4 h-4 text-primary" /> Post news</h3>
+              <input value={newsForm.title} onChange={(e) => setNewsForm({ ...newsForm, title: e.target.value })} placeholder="Title" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
+              <textarea value={newsForm.description} onChange={(e) => setNewsForm({ ...newsForm, description: e.target.value })} placeholder="Description" rows={4} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
+              <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 bg-background text-sm cursor-pointer hover:border-primary/40">
+                <Upload className="w-4 h-4" />
+                <span>{newsForm.file ? newsForm.file.name : "Choose image (optional)"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setNewsForm({ ...newsForm, file: e.target.files?.[0] ?? null })} />
+              </label>
+              <div>
+                <button disabled={newsBusy} onClick={postNews} className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
+                  {newsBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Post & notify
+                </button>
+              </div>
+            </div>
+            {news.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10">No news yet.</p>
+            ) : (
+              <div className="grid gap-3">
+                {news.map((n) => (
+                  <article key={n.id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex items-start gap-4">
+                    {n.image_path ? (
+                      <img src={newsImageUrl(n.image_path)!} alt={n.title} className="w-24 h-24 rounded-xl object-cover shrink-0" />
+                    ) : (
+                      <div className="w-24 h-24 rounded-xl bg-primary/15 flex items-center justify-center shrink-0"><Newspaper className="w-6 h-6 text-primary" /></div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold">{n.title}</h4>
+                      {n.description && <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap line-clamp-3">{n.description}</p>}
+                      <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
+                    </div>
+                    <button onClick={() => delNews(n)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm">
+                      <Trash2 className="w-4 h-4" /> Delete
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
         ) : loading ? (
           <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : rows.length === 0 ? (
