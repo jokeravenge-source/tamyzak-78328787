@@ -289,6 +289,19 @@ const plasmaMembrane: DiagramDef = {
     { id: "carrier",    label: { en: "Carrier proteins",       ar: "بروتينات ناقلة" },      ax: 64, ay: 58, lx: 60, ly: 86 },
   ],
   art: h(Fragment, null,
+    // pink membrane background band
+    h("rect", { x: 6, y: 26, width: 88, height: 30, fill: "hsl(320 50% 88% / 0.55)" }),
+    // tilted orange carrier proteins (capsules across the bilayer)
+    ...[
+      { x: 38, rot: -12 },
+      { x: 58, rot: 14 },
+      { x: 72, rot: -10 },
+      { x: 86, rot: 12 },
+    ].map(({ x, rot }, i) => h("rect", {
+      key: `cp${i}`, x: x - 2.2, y: 24, width: 4.4, height: 36, rx: 2.2,
+      fill: "hsl(20 80% 62%)", opacity: 0.85, stroke: "hsl(20 70% 45%)", strokeWidth: 0.3,
+      transform: `rotate(${rot} ${x} 42)`,
+    })),
     // top heads (extracellular row)
     ...Array.from({ length: 14 }, (_, i) => h("circle", {
       key: `ht${i}`, cx: 10 + i * 6, cy: 28, r: 2, fill: "hsl(210 70% 70%)", stroke: P, strokeWidth: 0.2,
@@ -309,13 +322,18 @@ const plasmaMembrane: DiagramDef = {
     })),
     // protein channel (vertical pill across membrane on left)
     h("rect", { x: 22, y: 24, width: 4, height: 36, rx: 2, fill: A, opacity: 0.85 }),
-    // hole carrier in middle (open at top)
-    h("path", { d: "M46 26 q4 4 0 14 q-4 4 0 14 q4 -4 8 0 q4 -4 0 -14 q4 -4 0 -14 z", fill: A, opacity: 0.5, stroke: A, strokeWidth: 0.3 }),
+    // hole (open gap straight through middle)
+    h("rect", { x: 49, y: 24, width: 2, height: 36, fill: "hsl(0 0% 100% / 0.9)", stroke: P, strokeWidth: 0.25 }),
     // floating transporting materials
     ...[[58,18],[62,12],[66,16],[70,20],[54,16]].map(([x,y],i)=>h("circle",{key:`m${i}`,cx:x,cy:y,r:0.8,fill:P})),
+    // particle traveling through hole into intracellular space
+    h("circle", { cx: 50, cy: 62, r: 1, fill: P }),
+    // extracellular / intracellular text
+    h("text", { x: 50, y: 22, textAnchor: "middle", fontSize: 3.5, fill: "hsl(210 80% 55%)", fontStyle: "italic" }, "Extracellular"),
+    h("text", { x: 50, y: 68, textAnchor: "middle", fontSize: 3.5, fill: "hsl(210 80% 55%)", fontStyle: "italic" }, "Intracellular"),
   ),
 };
 
 export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
-  1: [bacteria, animalCell, plantCell],
+  1: [bacteria, animalCell, plantCell, plasmaMembrane],
 };
