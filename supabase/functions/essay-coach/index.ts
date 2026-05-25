@@ -4,8 +4,8 @@ const corsHeaders = {
 };
 
 const MAX_STUDY_CHARS = 180000;
-const AI_MODEL = "gemini-2.5-flash";
-const AI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const AI_MODEL = "google/gemini-2.5-flash";
+const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MAX_PAGE_IMAGES = 20;
 
 Deno.serve(async (req) => {
@@ -14,9 +14,9 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const mode = body.mode as "generate" | "grade";
     const language = body.language === "ar" ? "Arabic" : "English";
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: "GEMINI_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (mode === "generate") {
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
         : userPrompt;
       const res = await fetch(AI_URL, {
         method: "POST",
-        headers: { Authorization: `Bearer ${GEMINI_API_KEY}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: AI_MODEL,
           messages: [
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       const userPrompt = `Question:\n${question}\n\nReference answer:\n${reference}\n\nStudent answer:\n${answer}\n\nGrade from 1 to 10 and give brief feedback.`;
       const res = await fetch(AI_URL, {
         method: "POST",
-        headers: { Authorization: `Bearer ${GEMINI_API_KEY}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: AI_MODEL,
           messages: [
