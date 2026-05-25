@@ -109,7 +109,7 @@ const Essay = ({ language, onBack }: { language: AppLanguage; onBack: () => void
       });
       toast.dismiss("gen");
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.message || data.error);
       const qs: Question[] = (data?.questions || []).slice(0, 10);
       if (!qs.length) throw new Error("No questions returned");
       setQuestions(qs);
@@ -132,7 +132,7 @@ const Essay = ({ language, onBack }: { language: AppLanguage; onBack: () => void
         body: { mode: "grade", question: q.question, reference: q.reference_answer, answer, language },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.message || data.error);
       const g: Grade = { score: Math.max(1, Math.min(10, Number(data.score) || 1)), feedback: String(data.feedback || "") };
       setLastGrade(g);
       setGrades((prev) => [...prev, g]);
