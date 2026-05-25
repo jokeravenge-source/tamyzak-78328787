@@ -55,7 +55,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         body: { url: url.trim(), language },
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
       setNotes((data as any).notes || "");
     } catch (e: any) {
       console.error(e);
