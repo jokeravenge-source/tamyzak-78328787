@@ -17,6 +17,7 @@ const copy = {
     desc: "Track your progress chapter by chapter. Each topic is a mission.",
     back: "Back",
     overall: "Overall progress",
+    bySubject: "By subject",
     chapters: "chapters",
     missions: "missions",
     done: "done",
@@ -31,6 +32,7 @@ const copy = {
     desc: "تابع تقدمك فصلاً بفصل. كل موضوع يمثل مهمة.",
     back: "رجوع",
     overall: "التقدم الكلي",
+    bySubject: "حسب المادة",
     chapters: "فصول",
     missions: "مهام",
     done: "منجزة",
@@ -182,6 +184,31 @@ const Missions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             <Progress value={overall.pct} className="h-2" />
             <div className="text-xs text-muted-foreground mt-2">
               {overall.done} / {overall.total} {t.missions} {t.done}
+            </div>
+          </div>
+        )}
+        {userId && (
+          <div className="mt-4 max-w-xl mx-auto rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5 text-left">
+            <div className="text-sm text-muted-foreground mb-3">{t.bySubject}</div>
+            <div className="space-y-3">
+              {missionsOrder.map((s) => {
+                const data = missionsData[s];
+                const st = subjectStats(s);
+                const isAr = useAr(s, language);
+                return (
+                  <div key={s}>
+                    <div className="flex items-center justify-between mb-1 text-xs">
+                      <span dir={isAr ? "rtl" : undefined} className={`text-foreground/90 ${isAr ? "text-right" : ""}`}>
+                        {isAr ? data.ar : data.en}
+                      </span>
+                      <span className="text-primary font-semibold tabular-nums">
+                        {st.done}/{st.total} · {st.pct}%
+                      </span>
+                    </div>
+                    <Progress value={st.pct} className="h-1.5" />
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
