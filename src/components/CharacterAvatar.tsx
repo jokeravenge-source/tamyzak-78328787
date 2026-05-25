@@ -45,75 +45,79 @@ export function getAvatarStyle(seed: string, gender: Gender) {
 }
 
 function Hair({ style, color }: { style: string; color: string }) {
+  // Base cap that fully covers the top of the head (head: cx=50, cy=48, rx=20, ry=22).
+  // Solid filled crown from (28,50) over (50,22) to (72,50).
+  const baseCap = "M 28 50 Q 28 22 50 22 Q 72 22 72 50 Z";
   switch (style) {
     case "buzz":
-      return <path d="M30 42 Q50 22 70 42 L70 50 L30 50 Z" fill={color} opacity="0.85" />;
+      return <path d={baseCap} fill={color} opacity="0.9" />;
     case "spiky":
       return (
-        <path
-          d="M28 48 L32 30 L38 44 L42 26 L48 42 L52 24 L58 42 L62 28 L68 44 L72 32 L72 50 L28 50 Z"
-          fill={color}
-        />
+        <g fill={color}>
+          <path d={baseCap} />
+          <path d="M30 28 L34 14 L38 26 L42 12 L46 24 L50 10 L54 24 L58 12 L62 26 L66 14 L70 28 Z" />
+        </g>
       );
     case "curly":
       return (
         <g fill={color}>
-          <circle cx="35" cy="38" r="8" />
-          <circle cx="45" cy="32" r="9" />
-          <circle cx="55" cy="32" r="9" />
-          <circle cx="65" cy="38" r="8" />
-          <rect x="28" y="40" width="44" height="12" />
+          <path d={baseCap} />
+          <circle cx="32" cy="28" r="6" />
+          <circle cx="42" cy="22" r="7" />
+          <circle cx="52" cy="20" r="7" />
+          <circle cx="62" cy="22" r="7" />
+          <circle cx="70" cy="28" r="6" />
         </g>
       );
     case "fade":
-      return <path d="M32 46 Q50 28 68 46 L68 52 L32 52 Z" fill={color} />;
+      return <path d="M 30 50 Q 30 26 50 26 Q 70 26 70 50 Z" fill={color} />;
     case "messy":
       return (
-        <path
-          d="M28 50 Q30 30 40 32 Q42 24 52 30 Q60 22 66 34 Q74 32 72 50 Z"
-          fill={color}
-        />
+        <g fill={color}>
+          <path d={baseCap} />
+          <path d="M30 28 Q34 18 40 24 Q44 14 50 22 Q56 12 62 24 Q68 18 72 28 L72 34 L28 34 Z" />
+        </g>
       );
     case "short":
-      return <path d="M28 48 Q50 24 72 48 L72 52 L28 52 Z" fill={color} />;
+      return <path d={baseCap} fill={color} />;
     case "long":
       return (
         <g fill={color}>
-          <path d="M26 50 Q26 28 50 26 Q74 28 74 50 L74 85 L66 85 L66 55 L34 55 L34 85 L26 85 Z" />
+          <path d="M26 50 Q26 22 50 22 Q74 22 74 50 L74 88 L66 88 L66 56 L34 56 L34 88 L26 88 Z" />
         </g>
       );
     case "bun":
       return (
         <g fill={color}>
-          <circle cx="50" cy="22" r="10" />
-          <path d="M28 48 Q50 26 72 48 L72 54 L28 54 Z" />
+          <circle cx="50" cy="16" r="9" />
+          <path d={baseCap} />
         </g>
       );
     case "ponytail":
       return (
         <g fill={color}>
-          <path d="M28 50 Q30 26 50 26 Q70 26 72 50 L72 54 L28 54 Z" />
-          <path d="M68 46 Q82 60 76 80 L70 78 Q74 62 64 52 Z" />
+          <path d={baseCap} />
+          <path d="M70 44 Q84 58 78 80 L70 78 Q76 60 64 50 Z" />
         </g>
       );
     case "bob":
-      return <path d="M26 58 Q26 28 50 26 Q74 28 74 58 L70 60 L66 52 L34 52 L30 60 Z" fill={color} />;
+      return <path d="M26 60 Q26 22 50 22 Q74 22 74 60 L70 62 L66 54 L34 54 L30 62 Z" fill={color} />;
     case "curly_long":
       return (
         <g fill={color}>
-          <circle cx="32" cy="40" r="9" />
-          <circle cx="44" cy="30" r="10" />
-          <circle cx="56" cy="30" r="10" />
-          <circle cx="68" cy="40" r="9" />
-          <path d="M26 44 L26 78 L34 78 L34 56 L66 56 L66 78 L74 78 L74 44 Z" />
+          <path d="M26 50 Q26 22 50 22 Q74 22 74 50 L74 78 L66 78 L66 58 L34 58 L34 78 L26 78 Z" />
+          <circle cx="30" cy="28" r="7" />
+          <circle cx="42" cy="22" r="8" />
+          <circle cx="54" cy="22" r="8" />
+          <circle cx="66" cy="28" r="7" />
         </g>
       );
     case "braids":
       return (
         <g fill={color}>
-          <path d="M28 50 Q30 26 50 26 Q70 26 72 50 L72 54 L28 54 Z" />
-          <rect x="22" y="50" width="8" height="36" rx="4" />
-          <rect x="70" y="50" width="8" height="36" rx="4" />
+          <path d={baseCap} />
+          <rect x="22" y="48" width="8" height="38" rx="4" />
+          <rect x="70" y="48" width="8" height="38" rx="4" />
         </g>
       );
     default:
