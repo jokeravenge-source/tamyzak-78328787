@@ -7,10 +7,11 @@ import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
 import { ThemePicker } from "@/components/ThemePicker";
+import { CharacterAvatar, type Gender } from "@/components/CharacterAvatar";
 
 const t = {
-  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Username updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback." },
-  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الاسم", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات." },
+  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character" },
+  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك" },
 } as const;
 
 const AccountCenter = ({
@@ -28,14 +29,18 @@ const AccountCenter = ({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [points, setPoints] = useState(0);
+  const [userId, setUserId] = useState<string>("");
+  const [gender, setGender] = useState<Gender | null>(null);
 
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
       setEmail(u.user.email ?? "");
-      const { data: p } = await supabase.from("profiles").select("display_name").eq("user_id", u.user.id).maybeSingle();
+      setUserId(u.user.id);
+      const { data: p } = await supabase.from("profiles").select("display_name, gender").eq("user_id", u.user.id).maybeSingle();
       setName(p?.display_name ?? "");
+      setGender((p?.gender as Gender) ?? null);
       const { data: pts } = await supabase.from("user_points").select("points").eq("user_id", u.user.id);
       setPoints((pts ?? []).reduce((s: number, r: any) => s + (r.points ?? 0), 0));
       setLoading(false);
@@ -51,10 +56,10 @@ const AccountCenter = ({
       if (!u.user) throw new Error("Not signed in");
       const { data: existing } = await supabase.from("profiles").select("id").eq("user_id", u.user.id).maybeSingle();
       if (existing) {
-        const { error } = await supabase.from("profiles").update({ display_name: name.trim() }).eq("user_id", u.user.id);
+        const { error } = await supabase.from("profiles").update({ display_name: name.trim(), gender }).eq("user_id", u.user.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("profiles").insert({ user_id: u.user.id, display_name: name.trim() });
+        const { error } = await supabase.from("profiles").insert({ user_id: u.user.id, display_name: name.trim(), gender });
         if (error) throw error;
       }
       localStorage.setItem("app_display_name_v1", name.trim());
@@ -63,6 +68,20 @@ const AccountCenter = ({
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");
     } finally { setSaving(false); }
+  };
+
+  const pickGender = async (g: Gender) => {
+    setGender(g);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data: existing } = await supabase.from("profiles").select("id").eq("user_id", u.user.id).maybeSingle();
+      if (existing) {
+        await supabase.from("profiles").update({ gender: g }).eq("user_id", u.user.id);
+      } else {
+        await supabase.from("profiles").insert({ user_id: u.user.id, display_name: name.trim() || "Student", gender: g });
+      }
+    } catch {}
   };
 
   const rank = rankFor(points);
@@ -75,6 +94,53 @@ const AccountCenter = ({
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
       <section className="relative z-10 max-w-md mx-auto space-y-5 animate-fade-up">
+        {!loading && (
+          <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-4">{text.character}</p>
+            {gender ? (
+              <div className="flex items-center gap-5">
+                <div className="rounded-2xl bg-background/40 border border-white/10 p-2">
+                  <CharacterAvatar seed={userId} gender={gender} size={96} />
+                </div>
+                <div className="flex-1 flex gap-2">
+                  <button
+                    onClick={() => pickGender("male")}
+                    className={`flex-1 h-10 rounded-xl text-sm font-semibold border transition ${gender === "male" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {text.male}
+                  </button>
+                  <button
+                    onClick={() => pickGender("female")}
+                    className={`flex-1 h-10 rounded-xl text-sm font-semibold border transition ${gender === "female" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {text.female}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-muted-foreground mb-4">{text.pickGender}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => pickGender("male")}
+                    className="rounded-2xl border border-white/10 bg-background/40 p-4 hover:border-primary/60 transition flex flex-col items-center gap-2"
+                  >
+                    <CharacterAvatar seed={userId} gender="male" size={80} />
+                    <span className="text-sm font-semibold">{text.male}</span>
+                  </button>
+                  <button
+                    onClick={() => pickGender("female")}
+                    className="rounded-2xl border border-white/10 bg-background/40 p-4 hover:border-primary/60 transition flex flex-col items-center gap-2"
+                  >
+                    <CharacterAvatar seed={userId} gender="female" size={80} />
+                    <span className="text-sm font-semibold">{text.female}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {!loading && (
           <div className="rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/15 via-secondary/60 to-accent/15 backdrop-blur-xl p-6">
             <div className="flex items-center justify-between">
