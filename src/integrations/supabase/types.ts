@@ -112,6 +112,30 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_usage: {
+        Row: {
+          created_at: string
+          feature: string
+          id: string
+          used_on: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature: string
+          id?: string
+          used_on?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature?: string
+          id?: string
+          used_on?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mission_progress: {
         Row: {
           completed: boolean
@@ -386,6 +410,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_daily_feature: { Args: { _feature: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
