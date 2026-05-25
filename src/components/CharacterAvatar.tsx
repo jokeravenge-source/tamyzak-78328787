@@ -54,79 +54,114 @@ export function getAvatarStyle(seed: string, gender: Gender): CharacterTraits {
 }
 
 function Hair({ style, color }: { style: string; color: string }) {
-  // Base cap that fully covers the top of the head (head: cx=50, cy=48, rx=20, ry=22).
-  // Solid filled crown from (28,50) over (50,22) to (72,50).
-  const baseCap = "M 28 50 Q 28 22 50 22 Q 72 22 72 50 Z";
   switch (style) {
+    // very thin shaved cap with subtle stubble dots
     case "buzz":
-      return <path d={baseCap} fill={color} opacity="0.9" />;
+      return (
+        <g fill={color}>
+          <path d="M 30 44 Q 30 30 50 30 Q 70 30 70 44 L 70 38 Q 70 32 50 32 Q 30 32 30 38 Z" opacity="0.55" />
+          <path d="M 30 40 Q 30 28 50 28 Q 70 28 70 40 Q 70 33 50 33 Q 30 33 30 40 Z" opacity="0.35" />
+        </g>
+      );
+    // side-parted short cut
+    case "short":
+      return (
+        <g fill={color}>
+          <path d="M 28 50 Q 28 22 50 22 Q 72 22 72 48 L 68 40 Q 60 30 50 32 Q 38 34 32 44 Z" />
+        </g>
+      );
+    // tall sharp spikes
     case "spiky":
       return (
         <g fill={color}>
-          <path d={baseCap} />
-          <path d="M30 28 L34 14 L38 26 L42 12 L46 24 L50 10 L54 24 L58 12 L62 26 L66 14 L70 28 Z" />
+          <path d="M 30 42 Q 30 30 50 30 Q 70 30 70 42 Z" />
+          <path d="M30 32 L34 12 L40 28 L44 10 L50 26 L54 8 L60 26 L66 10 L70 32 Z" />
         </g>
       );
+    // round curly afro top
     case "curly":
       return (
         <g fill={color}>
-          <path d={baseCap} />
-          <circle cx="32" cy="28" r="6" />
-          <circle cx="42" cy="22" r="7" />
-          <circle cx="52" cy="20" r="7" />
-          <circle cx="62" cy="22" r="7" />
-          <circle cx="70" cy="28" r="6" />
+          <circle cx="32" cy="32" r="9" />
+          <circle cx="42" cy="22" r="10" />
+          <circle cx="52" cy="18" r="11" />
+          <circle cx="62" cy="22" r="10" />
+          <circle cx="68" cy="32" r="9" />
+          <path d="M 30 44 Q 30 32 50 32 Q 70 32 70 44 Z" />
         </g>
       );
+    // high-top fade: tall block on crown, shaved sides
     case "fade":
-      return <path d="M 30 50 Q 30 26 50 26 Q 70 26 70 50 Z" fill={color} />;
+      return (
+        <g fill={color}>
+          <rect x="36" y="14" width="28" height="22" rx="6" />
+          <path d="M 32 44 Q 32 36 50 36 Q 68 36 68 44 Z" opacity="0.5" />
+        </g>
+      );
+    // messy tufts going every direction
     case "messy":
       return (
         <g fill={color}>
-          <path d={baseCap} />
-          <path d="M30 28 Q34 18 40 24 Q44 14 50 22 Q56 12 62 24 Q68 18 72 28 L72 34 L28 34 Z" />
+          <path d="M 28 46 Q 28 22 50 22 Q 72 22 72 46 Z" />
+          <path d="M28 28 Q26 16 36 20 Q34 10 44 18 Q46 6 52 18 Q58 8 62 20 Q72 14 70 28 Q66 24 60 28 Q54 22 48 28 Q40 24 34 30 Z" />
         </g>
       );
-    case "short":
-      return <path d={baseCap} fill={color} />;
+    // long straight hair past shoulders
     case "long":
       return (
         <g fill={color}>
-          <path d="M26 50 Q26 22 50 22 Q74 22 74 50 L74 88 L66 88 L66 56 L34 56 L34 88 L26 88 Z" />
+          <path d="M22 56 Q22 22 50 22 Q78 22 78 56 L78 92 L66 92 L66 60 L34 60 L34 92 L22 92 Z" />
         </g>
       );
+    // top bun with cap
     case "bun":
       return (
         <g fill={color}>
-          <circle cx="50" cy="16" r="9" />
-          <path d={baseCap} />
+          <circle cx="50" cy="14" r="11" />
+          <path d="M 28 48 Q 28 22 50 22 Q 72 22 72 48 Z" />
+          <line x1="50" y1="22" x2="50" y2="14" stroke={color} strokeWidth="3" />
         </g>
       );
+    // side ponytail
     case "ponytail":
       return (
         <g fill={color}>
-          <path d={baseCap} />
-          <path d="M70 44 Q84 58 78 80 L70 78 Q76 60 64 50 Z" />
+          <path d="M 28 50 Q 28 22 50 22 Q 72 22 72 50 Z" />
+          <path d="M70 40 Q92 56 82 86 L72 82 Q80 60 64 50 Z" />
         </g>
       );
+    // chin-length bob frame
     case "bob":
-      return <path d="M26 60 Q26 22 50 22 Q74 22 74 60 L70 62 L66 54 L34 54 L30 62 Z" fill={color} />;
+      return (
+        <g fill={color}>
+          <path d="M22 64 Q22 22 50 22 Q78 22 78 64 L72 70 L68 56 L32 56 L28 70 Z" />
+        </g>
+      );
+    // long curly hair
     case "curly_long":
       return (
         <g fill={color}>
-          <path d="M26 50 Q26 22 50 22 Q74 22 74 50 L74 78 L66 78 L66 58 L34 58 L34 78 L26 78 Z" />
-          <circle cx="30" cy="28" r="7" />
-          <circle cx="42" cy="22" r="8" />
-          <circle cx="54" cy="22" r="8" />
-          <circle cx="66" cy="28" r="7" />
+          <path d="M22 56 Q22 22 50 22 Q78 22 78 56 L78 84 L66 84 L66 60 L34 60 L34 84 L22 84 Z" />
+          <circle cx="26" cy="32" r="8" />
+          <circle cx="38" cy="20" r="9" />
+          <circle cx="50" cy="16" r="10" />
+          <circle cx="62" cy="20" r="9" />
+          <circle cx="74" cy="32" r="8" />
+          <circle cx="24" cy="70" r="7" />
+          <circle cx="76" cy="70" r="7" />
         </g>
       );
+    // two long braids on each side
     case "braids":
       return (
         <g fill={color}>
-          <path d={baseCap} />
-          <rect x="22" y="48" width="8" height="38" rx="4" />
-          <rect x="70" y="48" width="8" height="38" rx="4" />
+          <path d="M 28 50 Q 28 22 50 22 Q 72 22 72 50 Z" />
+          <ellipse cx="24" cy="58" rx="6" ry="8" />
+          <ellipse cx="24" cy="72" rx="6" ry="8" />
+          <ellipse cx="24" cy="86" rx="6" ry="8" />
+          <ellipse cx="76" cy="58" rx="6" ry="8" />
+          <ellipse cx="76" cy="72" rx="6" ry="8" />
+          <ellipse cx="76" cy="86" rx="6" ry="8" />
         </g>
       );
     default:

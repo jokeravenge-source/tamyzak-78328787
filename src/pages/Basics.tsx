@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Sparkles, Layers, BookMarked, FileText, GraduationCap, Microscope, LogOut, Bell, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Layers, BookMarked, FileText, GraduationCap, Microscope, LogOut, Bell, X, ListChecks } from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,8 @@ export type BasicsChoice =
   | "malazam"
   | "summaries"
   | "sessions"
-  | "biologyDrawings";
+  | "biologyDrawings"
+  | "todo";
 
 const copy = {
   en: {
@@ -26,6 +27,7 @@ const copy = {
       summaries: { title: "Notes & Summaries", subtitle: "Upload and browse approved notes." },
       sessions: { title: "Sessions", subtitle: "Track study time and climb the board." },
       biologyDrawings: { title: "Biology Drawings", subtitle: "Label diagrams chapter by chapter." },
+      todo: { title: "To-Do List", subtitle: "Plan tasks and celebrate when you finish." },
     },
   },
   ar: {
@@ -39,6 +41,7 @@ const copy = {
       summaries: { title: "ملاحظات وملخصات", subtitle: "ارفع وتصفّح الملاحظات المعتمدة." },
       sessions: { title: "الجلسات", subtitle: "احسب وقت دراستك وتصدّر اللوحة." },
       biologyDrawings: { title: "رسومات الأحياء", subtitle: "ميّز أجزاء الرسومات فصلاً بفصل." },
+      todo: { title: "قائمة المهام", subtitle: "نظّم مهامك واحتفل بإنجازها." },
     },
   },
 } as const;
@@ -63,6 +66,7 @@ const Basics = ({
     { key: "summaries", Icon: FileText },
     { key: "sessions", Icon: GraduationCap },
     { key: "biologyDrawings", Icon: Microscope },
+    { key: "todo", Icon: ListChecks },
   ];
 
   const READ_KEY = "notif_read_ids_v1";

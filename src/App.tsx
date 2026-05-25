@@ -34,6 +34,7 @@ import BiologyDrawings from "./pages/BiologyDrawings";
 import More from "./pages/More";
 import Leaderboard from "./pages/Leaderboard";
 import PointsAwardOverlay from "./components/PointsAwardOverlay";
+import TodoList from "./pages/TodoList";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -89,7 +90,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -119,6 +120,8 @@ const App = () => {
   const handleBasicsSelect = (c: BasicsChoice) => {
     if (c === "biologyDrawings") {
       chooseMenu("biologyDrawings");
+    } else if (c === "todo") {
+      chooseMenu("todo");
     } else {
       chooseMenu(c as MenuChoice);
     }
@@ -183,6 +186,8 @@ const App = () => {
         <VideoNotes language={language} onBack={resetMenu} />
       ) : menuChoice === "biologyDrawings" ? (
         <BiologyDrawings language={language} onBack={backToBasics} />
+      ) : menuChoice === "todo" ? (
+        <TodoList language={language} onBack={backToBasics} />
       ) : menuChoice === "more" ? (
         <More language={language} onSelect={(c) => chooseMenu(c)} onNav={chooseMenu} />
       ) : menuChoice === "leaderboard" ? (
