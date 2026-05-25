@@ -187,6 +187,31 @@ const Missions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             </div>
           </div>
         )}
+        {userId && (
+          <div className="mt-4 max-w-xl mx-auto rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5 text-left">
+            <div className="text-sm text-muted-foreground mb-3">{t.bySubject}</div>
+            <div className="space-y-3">
+              {missionsOrder.map((s) => {
+                const data = missionsData[s];
+                const st = subjectStats(s);
+                const isAr = useAr(s, language);
+                return (
+                  <div key={s}>
+                    <div className="flex items-center justify-between mb-1 text-xs">
+                      <span dir={isAr ? "rtl" : undefined} className={`text-foreground/90 ${isAr ? "text-right" : ""}`}>
+                        {isAr ? data.ar : data.en}
+                      </span>
+                      <span className="text-primary font-semibold tabular-nums">
+                        {st.done}/{st.total} · {st.pct}%
+                      </span>
+                    </div>
+                    <Progress value={st.pct} className="h-1.5" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {!userId && !loading && (
           <p className="mt-6 text-sm text-muted-foreground">{t.signIn}</p>
         )}
