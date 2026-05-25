@@ -5,9 +5,9 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
-import { CharacterAvatar, type Gender } from "@/components/CharacterAvatar";
+import { CharacterAvatar, type Gender, type CharacterTraits } from "@/components/CharacterAvatar";
 
-type Row = { user_id: string; name: string; points: number; gender: Gender | null };
+type Row = { user_id: string; name: string; points: number; gender: Gender | null; traits: Partial<CharacterTraits> | null };
 
 const Leaderboard = ({
   language,
@@ -30,7 +30,7 @@ const Leaderboard = ({
       setMe(u.user?.id ?? null);
       const [pointsRes, profilesRes] = await Promise.all([
         supabase.from("user_points").select("user_id, points"),
-        supabase.from("profiles").select("user_id, display_name, gender"),
+        supabase.from("profiles").select("user_id, display_name, gender, character"),
       ]);
       const totals = new Map<string, number>();
       (pointsRes.data ?? []).forEach((r: any) => {
@@ -38,12 +38,14 @@ const Leaderboard = ({
       });
       const names = new Map<string, string>();
       const genders = new Map<string, Gender | null>();
+      const characters = new Map<string, Partial<CharacterTraits> | null>();
       (profilesRes.data ?? []).forEach((p: any) => {
         names.set(p.user_id, p.display_name || "Student");
         genders.set(p.user_id, (p.gender as Gender) ?? null);
+        characters.set(p.user_id, (p.character as Partial<CharacterTraits>) ?? null);
       });
       const list: Row[] = Array.from(totals.entries())
-        .map(([user_id, points]) => ({ user_id, points, name: names.get(user_id) || "Student", gender: genders.get(user_id) ?? null }))
+        .map(([user_id, points]) => ({ user_id, points, name: names.get(user_id) || "Student", gender: genders.get(user_id) ?? null, traits: characters.get(user_id) ?? null }))
         .sort((a, b) => b.points - a.points);
       setRows(list);
       setLoading(false);
@@ -91,7 +93,7 @@ const Leaderboard = ({
                       {medal ?? `#${i + 1}`}
                     </div>
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-background/40 border border-white/10 shrink-0">
-                      <CharacterAvatar seed={r.user_id} gender={r.gender ?? "male"} size={48} />
+                      <CharacterAvatar seed={r.user_id} gender={r.gender ?? "male"} traits={r.traits} size={48} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold truncate">{r.name}{isMe && <span className="text-primary text-xs ml-2">({t("you", "أنت")})</span>}</p>
