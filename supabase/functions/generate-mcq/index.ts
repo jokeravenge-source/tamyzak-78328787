@@ -6,8 +6,8 @@ const corsHeaders = {
 };
 
 const MAX_STUDY_CHARS = 180000;
-const AI_MODEL = "gemini-2.5-flash";
-const AI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const AI_MODEL = "google/gemini-2.5-flash";
+const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MAX_PAGE_IMAGES = 20;
 
 Deno.serve(async (req) => {
@@ -30,9 +30,9 @@ Deno.serve(async (req) => {
 
     const content = typeof text === "string" ? text.slice(0, MAX_STUDY_CHARS) : "";
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: "GEMINI_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const systemPrompt = `You are an expert quiz generator. Generate exactly ${n} high-quality multiple choice questions in ${lang} based ONLY on the provided study material. Each question must have 4 distinct choices, one correct answer, a short helpful hint (without revealing the answer) and a clear explanation derived from the material. Return ONLY valid JSON, no markdown.`;
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const res = await fetch(AI_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${GEMINI_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
