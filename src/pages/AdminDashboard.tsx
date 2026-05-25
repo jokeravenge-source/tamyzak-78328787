@@ -100,6 +100,49 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setNotifs((r) => r.filter((x) => x.id !== id));
   };
 
+  // News state
+  type NewsRow = { id: string; title: string; description: string; image_path: string | null; created_at: string };
+  const [news, setNews] = useState<NewsRow[]>([]);
+  const [newsForm, setNewsForm] = useState<{ title: string; description: string; file: File | null }>({ title: "", description: "", file: null });
+  const [newsBusy, setNewsBusy] = useState(false);
+  const loadNews = async () => {
+    const { data } = await supabase.from("news").select("*").order("created_at", { ascending: false });
+    setNews((data ?? []) as NewsRow[]);
+  };
+  useEffect(() => { if (tab === "news") loadNews(); }, [tab]);
+  const newsImageUrl = (p: string | null) => p ? supabase.storage.from("news").getPublicUrl(p).data.publicUrl : null;
+  const postNews = async () => {
+    if (!newsForm.title.trim()) return toast.error("Title required");
+    setNewsBusy(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      let image_path: string | null = null;
+      if (newsForm.file) {
+        const ext = newsForm.file.name.split(".").pop() || "jpg";
+        const path = `${u.user?.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("news").upload(path, newsForm.file);
+        if (upErr) throw upErr;
+        image_path = path;
+      }
+      const { error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, created_by: u.user?.id });
+      if (error) throw error;
+      toast.success("News posted — all users notified");
+      setNewsForm({ title: "", description: "", file: null });
+      loadNews();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    } finally {
+      setNewsBusy(false);
+    }
+  };
+  const delNews = async (n: NewsRow) => {
+    if (!confirm("Delete this news item?")) return;
+    if (n.image_path) await supabase.storage.from("news").remove([n.image_path]);
+    const { error } = await supabase.from("news").delete().eq("id", n.id);
+    if (error) return toast.error(error.message);
+    setNews((r) => r.filter((x) => x.id !== n.id));
+  };
+
   const approve = async (id: string) => {
     const { error } = await supabase.from("summaries").update({ approved: true }).eq("id", id);
     if (error) return toast.error(error.message);
