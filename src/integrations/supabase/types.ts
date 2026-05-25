@@ -192,6 +192,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          character: Json | null
           created_at: string
           display_name: string
           gender: string | null
@@ -200,6 +201,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          character?: Json | null
           created_at?: string
           display_name?: string
           gender?: string | null
@@ -208,6 +210,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          character?: Json | null
           created_at?: string
           display_name?: string
           gender?: string | null
