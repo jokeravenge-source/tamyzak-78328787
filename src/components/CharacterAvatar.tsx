@@ -54,25 +54,39 @@ export function getAvatarStyle(seed: string, gender: Gender): CharacterTraits {
 }
 
 function Hair({ style, color }: { style: string; color: string }) {
+  // Guaranteed scalp cap — ensures the top of the head (ellipse cx=50,cy=48,rx=20,ry=22)
+  // is always covered by hair color, no matter which decorative style is picked.
+  const Cap = () => (
+    <path d="M 30 50 Q 30 26 50 26 Q 70 26 70 50 Z" fill={color} />
+  );
+  const withCap = (decoration: React.ReactNode) => (
+    <g>
+      <Cap />
+      {decoration}
+    </g>
+  );
   switch (style) {
     // very thin shaved cap with subtle stubble dots
     case "buzz":
-      return (
+      return withCap(
         <g fill={color}>
-          <path d="M 30 44 Q 30 30 50 30 Q 70 30 70 44 L 70 38 Q 70 32 50 32 Q 30 32 30 38 Z" opacity="0.55" />
-          <path d="M 30 40 Q 30 28 50 28 Q 70 28 70 40 Q 70 33 50 33 Q 30 33 30 40 Z" opacity="0.35" />
+          <circle cx="40" cy="36" r="0.8" opacity="0.5" />
+          <circle cx="46" cy="32" r="0.8" opacity="0.5" />
+          <circle cx="52" cy="34" r="0.8" opacity="0.5" />
+          <circle cx="58" cy="32" r="0.8" opacity="0.5" />
+          <circle cx="62" cy="38" r="0.8" opacity="0.5" />
         </g>
       );
     // side-parted short cut
     case "short":
-      return (
+      return withCap(
         <g fill={color}>
           <path d="M 28 50 Q 28 22 50 22 Q 72 22 72 48 L 68 40 Q 60 30 50 32 Q 38 34 32 44 Z" />
         </g>
       );
     // tall sharp spikes
     case "spiky":
-      return (
+      return withCap(
         <g fill={color}>
           <path d="M 30 42 Q 30 30 50 30 Q 70 30 70 42 Z" />
           <path d="M30 32 L34 12 L40 28 L44 10 L50 26 L54 8 L60 26 L66 10 L70 32 Z" />
@@ -80,7 +94,7 @@ function Hair({ style, color }: { style: string; color: string }) {
       );
     // round curly afro top
     case "curly":
-      return (
+      return withCap(
         <g fill={color}>
           <circle cx="32" cy="32" r="9" />
           <circle cx="42" cy="22" r="10" />
@@ -92,15 +106,14 @@ function Hair({ style, color }: { style: string; color: string }) {
       );
     // high-top fade: tall block on crown, shaved sides
     case "fade":
-      return (
+      return withCap(
         <g fill={color}>
           <rect x="36" y="14" width="28" height="22" rx="6" />
-          <path d="M 32 44 Q 32 36 50 36 Q 68 36 68 44 Z" opacity="0.5" />
         </g>
       );
     // messy tufts going every direction
     case "messy":
-      return (
+      return withCap(
         <g fill={color}>
           <path d="M 28 46 Q 28 22 50 22 Q 72 22 72 46 Z" />
           <path d="M28 28 Q26 16 36 20 Q34 10 44 18 Q46 6 52 18 Q58 8 62 20 Q72 14 70 28 Q66 24 60 28 Q54 22 48 28 Q40 24 34 30 Z" />
@@ -108,14 +121,14 @@ function Hair({ style, color }: { style: string; color: string }) {
       );
     // long straight hair past shoulders
     case "long":
-      return (
+      return withCap(
         <g fill={color}>
           <path d="M22 56 Q22 22 50 22 Q78 22 78 56 L78 92 L66 92 L66 60 L34 60 L34 92 L22 92 Z" />
         </g>
       );
     // top bun with cap
     case "bun":
-      return (
+      return withCap(
         <g fill={color}>
           <circle cx="50" cy="14" r="11" />
           <path d="M 28 48 Q 28 22 50 22 Q 72 22 72 48 Z" />
@@ -124,7 +137,7 @@ function Hair({ style, color }: { style: string; color: string }) {
       );
     // side ponytail
     case "ponytail":
-      return (
+      return withCap(
         <g fill={color}>
           <path d="M 28 50 Q 28 22 50 22 Q 72 22 72 50 Z" />
           <path d="M70 40 Q92 56 82 86 L72 82 Q80 60 64 50 Z" />
@@ -132,14 +145,14 @@ function Hair({ style, color }: { style: string; color: string }) {
       );
     // chin-length bob frame
     case "bob":
-      return (
+      return withCap(
         <g fill={color}>
           <path d="M22 64 Q22 22 50 22 Q78 22 78 64 L72 70 L68 56 L32 56 L28 70 Z" />
         </g>
       );
     // long curly hair
     case "curly_long":
-      return (
+      return withCap(
         <g fill={color}>
           <path d="M22 56 Q22 22 50 22 Q78 22 78 56 L78 84 L66 84 L66 60 L34 60 L34 84 L22 84 Z" />
           <circle cx="26" cy="32" r="8" />
@@ -153,7 +166,7 @@ function Hair({ style, color }: { style: string; color: string }) {
       );
     // two long braids on each side
     case "braids":
-      return (
+      return withCap(
         <g fill={color}>
           <path d="M 28 50 Q 28 22 50 22 Q 72 22 72 50 Z" />
           <ellipse cx="24" cy="58" rx="6" ry="8" />
@@ -165,7 +178,7 @@ function Hair({ style, color }: { style: string; color: string }) {
         </g>
       );
     default:
-      return null;
+      return <Cap />;
   }
 }
 
