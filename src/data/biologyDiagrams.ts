@@ -223,22 +223,51 @@ const mitochondrion: DiagramDef = {
   title: { en: "Mitochondrion", ar: "الميتوكوندريا" },
   aspect: "16/9",
   parts: [
-    { id: "cristae", label: { en: "Cristae",        ar: "الأعراف" },           ax: 30, ay: 26, lx: 2,  ly: 4  },
-    { id: "matrix",  label: { en: "Matrix",         ar: "المطرس" },            ax: 50, ay: 50, lx: 42, ly: 86 },
-    { id: "inner",   label: { en: "Inner membrane", ar: "الغشاء الداخلي" },     ax: 70, ay: 30, lx: 82, ly: 6  },
-    { id: "outer",   label: { en: "Outer membrane", ar: "الغشاء الخارجي" },     ax: 90, ay: 42, lx: 82, ly: 30 },
+    { id: "cristae", label: { en: "Cristae",        ar: "الأعراف" },           ax: 22, ay: 32, lx: 2,  ly: 78, lw: 18 },
+    { id: "matrix",  label: { en: "Matrix",         ar: "المطرس" },            ax: 46, ay: 50, lx: 32, ly: 92, lw: 16 },
+    { id: "inner",   label: { en: "Inner membrane", ar: "الغشاء الداخلي" },     ax: 64, ay: 30, lx: 58, ly: 92, lw: 18 },
+    { id: "outer",   label: { en: "Outer membrane", ar: "الغشاء الخارجي" },     ax: 90, ay: 38, lx: 80, ly: 92, lw: 18 },
   ],
-  art: h(Fragment, null,
-    // outer membrane
-    h("ellipse", { cx: 50, cy: 38, rx: 42, ry: 22, fill: "hsl(40 80% 70% / 0.25)", stroke: P, strokeWidth: 0.7 }),
-    // inner membrane
-    h("ellipse", { cx: 50, cy: 38, rx: 38, ry: 18, fill: "hsl(40 80% 60% / 0.35)", stroke: A, strokeWidth: 0.4 }),
-    // cristae (folded inner)
-    ...Array.from({ length: 7 }, (_, i) => h("path", {
-      key: `cr${i}`, d: `M${20 + i * 9} 30 q3 6 6 0 q3 -6 6 0`,
-      fill: "none", stroke: A, strokeWidth: 0.5, transform: `translate(${i * 0.2}, 0)`,
-    })),
-  ),
+  art: (() => {
+    const TAN = "hsl(38 55% 72%)";
+    const TAN_DARK = "hsl(28 45% 35%)";
+    const RED = "hsl(0 70% 60%)";
+    const GREEN = "hsl(85 45% 55%)";
+    // capsule path for outer membrane (rounded ends)
+    const outer = "M 14 22 Q 8 22 8 38 Q 8 54 14 54 L 86 54 Q 92 54 92 38 Q 92 22 86 22 Z";
+    const inner = "M 16 24 Q 11 24 11 38 Q 11 52 16 52 L 84 52 Q 89 52 89 38 Q 89 24 84 24 Z";
+    // wavy cristae paths inside the matrix
+    const cristae = [
+      "M 18 32 q 3 -4 6 0 q 3 4 6 0 q 3 -4 6 0",
+      "M 20 42 q 4 3 8 0 q 4 -3 8 0 q 4 3 8 0",
+      "M 34 30 q 2 5 5 2 q 3 -3 6 1 q 3 4 6 0",
+      "M 50 28 q 3 4 6 0 q 3 -4 6 0 q 3 4 6 0",
+      "M 56 44 q 3 -4 6 0 q 3 4 6 0 q 3 -4 6 0",
+      "M 70 32 q 3 5 6 1 q 3 -4 6 0 q 2 3 4 0",
+      "M 24 48 q 4 -3 8 0 q 4 3 8 -1",
+      "M 44 46 q 3 -3 6 0 q 3 3 6 0 q 3 -3 6 0",
+      "M 64 26 q 2 4 5 1 q 3 -3 5 0",
+      "M 18 38 q 4 -2 7 0 q 3 3 6 0",
+    ];
+    return h(Fragment, null,
+      // outer membrane (tan capsule)
+      h("path", { d: outer, fill: TAN, stroke: TAN_DARK, strokeWidth: 0.8, strokeLinejoin: "round" }),
+      // inner membrane (slightly inset)
+      h("path", { d: inner, fill: "none", stroke: TAN_DARK, strokeWidth: 0.6 }),
+      // cristae folds (wavy interior)
+      ...cristae.map((d, i) => h("path", {
+        key: `cr${i}`, d, fill: "none", stroke: TAN_DARK, strokeWidth: 0.7, strokeLinecap: "round", strokeLinejoin: "round",
+      })),
+      // red granules (ribosome-like) in matrix
+      ...[[22, 36], [34, 44], [44, 34], [58, 38], [70, 44], [78, 32], [50, 46]].map(([x, y], i) =>
+        h("circle", { key: `rd${i}`, cx: x, cy: y, r: 1.6, fill: RED, opacity: 0.9 })
+      ),
+      // small green dots in matrix
+      ...[[28, 40], [40, 40], [52, 42], [62, 34], [74, 38], [36, 36], [48, 38]].map(([x, y], i) =>
+        h("circle", { key: `gd${i}`, cx: x, cy: y, r: 0.9, fill: GREEN, opacity: 0.9 })
+      ),
+    );
+  })(),
 };
 
 /* Chloroplast (A for memorizing) */
