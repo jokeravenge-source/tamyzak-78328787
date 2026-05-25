@@ -220,11 +220,16 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     setRunning(false);
     const hours = seconds / 3600;
     const points = Math.floor(hours) + (completed ? 1 : 0);
-    const { error } = await supabase.from("study_sessions").insert({
+    const { data: inserted, error } = await supabase.from("study_sessions").insert({
       user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
       mission_completed: completed, points,
-    });
+    }).select("id").single();
     if (error) { savingRef.current = false; toast.error(error.message); return; }
+    if (points > 0 && inserted?.id) {
+      await supabase.from("user_points").insert({
+        user_id: userId, source: "session", points, ref_id: inserted.id,
+      });
+    }
     toast.success(`${L.saved} (+${points} ${L.points})`);
     setStarted(false); setSeconds(0); setMission(""); setCompleted(false);
     localStorage.removeItem(PERSIST_KEY);
