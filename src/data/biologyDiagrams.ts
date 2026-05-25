@@ -279,59 +279,85 @@ const plasmaMembrane: DiagramDef = {
   title: { en: "Plasma Membrane", ar: "الغشاء البلازمي" },
   aspect: "16/9",
   parts: [
-    { id: "transport",  label: { en: "Transporting materials", ar: "مواد منقولة" },        ax: 56, ay: 14, lx: 60, ly: 2,  lw: 22 },
-    { id: "hHead",      label: { en: "Hydrophilic head",       ar: "الرأس المحب للماء" },   ax: 18, ay: 26, lx: 2,  ly: 14 },
-    { id: "hTail",      label: { en: "Hydrophobic tail",       ar: "الذيل الكاره للماء" },  ax: 30, ay: 40, lx: 2,  ly: 32 },
-    { id: "phos",       label: { en: "Phospholipids",          ar: "الدهون الفسفورية" },    ax: 70, ay: 28, lx: 80, ly: 18 },
-    { id: "plasma",     label: { en: "Plasma membrane",        ar: "الغشاء البلازمي" },     ax: 80, ay: 44, lx: 80, ly: 38 },
-    { id: "channel",    label: { en: "Protein channel",        ar: "قناة بروتينية" },       ax: 24, ay: 50, lx: 2,  ly: 58 },
-    { id: "hole",       label: { en: "Hole",                   ar: "فتحة" },                ax: 50, ay: 44, lx: 32, ly: 86 },
-    { id: "carrier",    label: { en: "Carrier proteins",       ar: "بروتينات ناقلة" },      ax: 64, ay: 58, lx: 60, ly: 86 },
+    { id: "transport",  label: { en: "Transporting materials", ar: "مواد منقولة" },        ax: 60, ay: 10, lx: 58, ly: 2,  lw: 28 },
+    { id: "hHead",      label: { en: "Hydrophilic head",       ar: "الرأس المحب للماء" },   ax: 16, ay: 26, lx: 2,  ly: 8,  lw: 22 },
+    { id: "hTail",      label: { en: "Hydrophobic tail",       ar: "الذيل الكاره للماء" },  ax: 16, ay: 34, lx: 2,  ly: 30, lw: 22 },
+    { id: "phos",       label: { en: "Phospholipids",          ar: "الدهون الفسفورية" },    ax: 84, ay: 27, lx: 80, ly: 8,  lw: 20 },
+    { id: "plasma",     label: { en: "Plasma membrane",        ar: "الغشاء البلازمي" },     ax: 92, ay: 37, lx: 80, ly: 38, lw: 20 },
+    { id: "channel",    label: { en: "Protein channel",        ar: "قناة بروتينية" },       ax: 22, ay: 42, lx: 2,  ly: 64, lw: 22 },
+    { id: "hole",       label: { en: "Hole",                   ar: "فتحة" },                ax: 50, ay: 50, lx: 32, ly: 92, lw: 14 },
+    { id: "carrier",    label: { en: "Carrier proteins",       ar: "بروتينات ناقلة" },      ax: 70, ay: 50, lx: 56, ly: 92, lw: 20 },
+    { id: "extra",      label: { en: "Extracellular",          ar: "خارج الخلية" },         ax: 50, ay: 18, lx: 40, ly: 16, lw: 20 },
+    { id: "intra",      label: { en: "Intracellular",          ar: "داخل الخلية" },         ax: 50, ay: 56, lx: 40, ly: 80, lw: 20 },
   ],
-  art: h(Fragment, null,
-    // pink membrane background band
-    h("rect", { x: 6, y: 26, width: 88, height: 30, fill: "hsl(320 50% 88% / 0.55)" }),
-    // tilted orange carrier proteins (capsules across the bilayer)
-    ...[
-      { x: 38, rot: -12 },
-      { x: 58, rot: 14 },
-      { x: 72, rot: -10 },
-      { x: 86, rot: 12 },
-    ].map(({ x, rot }, i) => h("rect", {
-      key: `cp${i}`, x: x - 2.2, y: 24, width: 4.4, height: 36, rx: 2.2,
-      fill: "hsl(20 80% 62%)", opacity: 0.85, stroke: "hsl(20 70% 45%)", strokeWidth: 0.3,
-      transform: `rotate(${rot} ${x} 42)`,
-    })),
-    // top heads (extracellular row)
-    ...Array.from({ length: 14 }, (_, i) => h("circle", {
-      key: `ht${i}`, cx: 10 + i * 6, cy: 28, r: 2, fill: "hsl(210 70% 70%)", stroke: P, strokeWidth: 0.2,
-    })),
-    // top tails
-    ...Array.from({ length: 14 }, (_, i) => h("line", {
-      key: `tt${i}`, x1: 10 + i * 6, y1: 30, x2: 10 + i * 6, y2: 42,
-      stroke: "hsl(20 80% 60%)", strokeWidth: 1.2,
-    })),
-    // bottom tails
-    ...Array.from({ length: 14 }, (_, i) => h("line", {
-      key: `bt${i}`, x1: 10 + i * 6, y1: 42, x2: 10 + i * 6, y2: 54,
-      stroke: "hsl(20 80% 60%)", strokeWidth: 1.2,
-    })),
-    // bottom heads
-    ...Array.from({ length: 14 }, (_, i) => h("circle", {
-      key: `hb${i}`, cx: 10 + i * 6, cy: 56, r: 2, fill: "hsl(210 70% 70%)", stroke: P, strokeWidth: 0.2,
-    })),
-    // protein channel (vertical pill across membrane on left)
-    h("rect", { x: 22, y: 24, width: 4, height: 36, rx: 2, fill: A, opacity: 0.85 }),
-    // hole (open gap straight through middle)
-    h("rect", { x: 49, y: 24, width: 2, height: 36, fill: "hsl(0 0% 100% / 0.9)", stroke: P, strokeWidth: 0.25 }),
-    // floating transporting materials
-    ...[[58,18],[62,12],[66,16],[70,20],[54,16]].map(([x,y],i)=>h("circle",{key:`m${i}`,cx:x,cy:y,r:0.8,fill:P})),
-    // particle traveling through hole into intracellular space
-    h("circle", { cx: 50, cy: 62, r: 1, fill: P }),
-    // extracellular / intracellular text
-    h("text", { x: 50, y: 22, textAnchor: "middle", fontSize: 3.5, fill: "hsl(210 80% 55%)", fontStyle: "italic" }, "Extracellular"),
-    h("text", { x: 50, y: 68, textAnchor: "middle", fontSize: 3.5, fill: "hsl(210 80% 55%)", fontStyle: "italic" }, "Intracellular"),
-  ),
+  art: (() => {
+    // Bilayer geometry (viewBox 100 x 75)
+    const HEAD_R = 2.4;
+    const TOP_HEAD_Y = 27;
+    const BOT_HEAD_Y = 48;
+    const MID_Y = 37.5;
+    const N = 18;
+    const X0 = 8;
+    const STEP = (84) / (N - 1); // span 8..92
+    const HEAD_FILL = "hsl(220 65% 78%)";
+    const HEAD_STROKE = "hsl(220 45% 45%)";
+    const TAIL = "hsl(20 75% 60%)";
+    const PROT = "hsl(20 80% 58%)";
+    const PROT_STROKE = "hsl(20 70% 38%)";
+    return h(Fragment, null,
+      // soft pink membrane background band
+      h("rect", { x: 4, y: 24, width: 92, height: 27, rx: 1, fill: "hsl(320 55% 90% / 0.5)" }),
+
+      // ---- phospholipid tails (drawn under heads) ----
+      ...Array.from({ length: N }, (_, i) => {
+        const x = X0 + i * STEP;
+        return h(Fragment, { key: `pl${i}` },
+          // top tail (slight wave)
+          h("path", { d: `M${x} ${TOP_HEAD_Y + HEAD_R} q 0.6 2 0 4 q -0.6 2 0 4`, stroke: TAIL, strokeWidth: 0.9, fill: "none", strokeLinecap: "round" }),
+          // bottom tail
+          h("path", { d: `M${x} ${BOT_HEAD_Y - HEAD_R} q 0.6 -2 0 -4 q -0.6 -2 0 -4`, stroke: TAIL, strokeWidth: 0.9, fill: "none", strokeLinecap: "round" }),
+        );
+      }),
+
+      // ---- carrier proteins (3 tilted orange capsules) ----
+      ...[{ x: 40, rot: -14 }, { x: 64, rot: 16 }, { x: 82, rot: -12 }].map(({ x, rot }, i) =>
+        h("rect", {
+          key: `cp${i}`, x: x - 3, y: 21, width: 6, height: 33, rx: 3,
+          fill: PROT, stroke: PROT_STROKE, strokeWidth: 0.4, opacity: 0.95,
+          transform: `rotate(${rot} ${x} ${MID_Y})`,
+        })
+      ),
+
+      // ---- protein channel (vertical capsule on the left) ----
+      h("rect", { x: 19, y: 21, width: 6, height: 33, rx: 3, fill: PROT, stroke: PROT_STROKE, strokeWidth: 0.4 }),
+      // hole through the channel
+      h("rect", { x: 21.2, y: 21, width: 1.6, height: 33, fill: "hsl(0 0% 100% / 0.95)" }),
+
+      // ---- top heads (extracellular row) ----
+      ...Array.from({ length: N }, (_, i) => h("circle", {
+        key: `th${i}`, cx: X0 + i * STEP, cy: TOP_HEAD_Y, r: HEAD_R,
+        fill: HEAD_FILL, stroke: HEAD_STROKE, strokeWidth: 0.35,
+      })),
+      // ---- bottom heads (intracellular row) ----
+      ...Array.from({ length: N }, (_, i) => h("circle", {
+        key: `bh${i}`, cx: X0 + i * STEP, cy: BOT_HEAD_Y, r: HEAD_R,
+        fill: HEAD_FILL, stroke: HEAD_STROKE, strokeWidth: 0.35,
+      })),
+
+      // ---- transporting materials (above membrane) ----
+      ...[[40, 8], [46, 12], [52, 6], [58, 11], [64, 8], [54, 16], [48, 18]].map(([x, y], i) =>
+        h("circle", { key: `tm${i}`, cx: x, cy: y, r: 1.2, fill: HEAD_FILL, stroke: HEAD_STROKE, strokeWidth: 0.25 })
+      ),
+      // particle entering the hole
+      h("circle", { cx: 22, cy: 22, r: 1.2, fill: HEAD_FILL, stroke: HEAD_STROKE, strokeWidth: 0.25 }),
+      // particle exiting into intracellular space
+      h("circle", { cx: 22, cy: 58, r: 1.2, fill: HEAD_FILL, stroke: HEAD_STROKE, strokeWidth: 0.25 }),
+
+      // ---- environment text ----
+      h("text", { x: 50, y: 20, textAnchor: "middle", fontSize: 3.4, fontStyle: "italic", fill: "hsl(210 80% 55%)" }, "Extracellular"),
+      h("text", { x: 50, y: 58, textAnchor: "middle", fontSize: 3.4, fontStyle: "italic", fill: "hsl(210 80% 55%)" }, "Intracellular"),
+    );
+  })(),
 };
 
 export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
