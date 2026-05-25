@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -16,7 +16,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news";
   const [tab, setTab] = useState<Tab>("pending");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +100,49 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setNotifs((r) => r.filter((x) => x.id !== id));
   };
 
+  // News state
+  type NewsRow = { id: string; title: string; description: string; image_path: string | null; created_at: string };
+  const [news, setNews] = useState<NewsRow[]>([]);
+  const [newsForm, setNewsForm] = useState<{ title: string; description: string; file: File | null }>({ title: "", description: "", file: null });
+  const [newsBusy, setNewsBusy] = useState(false);
+  const loadNews = async () => {
+    const { data } = await supabase.from("news").select("*").order("created_at", { ascending: false });
+    setNews((data ?? []) as NewsRow[]);
+  };
+  useEffect(() => { if (tab === "news") loadNews(); }, [tab]);
+  const newsImageUrl = (p: string | null) => p ? supabase.storage.from("news").getPublicUrl(p).data.publicUrl : null;
+  const postNews = async () => {
+    if (!newsForm.title.trim()) return toast.error("Title required");
+    setNewsBusy(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      let image_path: string | null = null;
+      if (newsForm.file) {
+        const ext = newsForm.file.name.split(".").pop() || "jpg";
+        const path = `${u.user?.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("news").upload(path, newsForm.file);
+        if (upErr) throw upErr;
+        image_path = path;
+      }
+      const { error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, created_by: u.user?.id });
+      if (error) throw error;
+      toast.success("News posted — all users notified");
+      setNewsForm({ title: "", description: "", file: null });
+      loadNews();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    } finally {
+      setNewsBusy(false);
+    }
+  };
+  const delNews = async (n: NewsRow) => {
+    if (!confirm("Delete this news item?")) return;
+    if (n.image_path) await supabase.storage.from("news").remove([n.image_path]);
+    const { error } = await supabase.from("news").delete().eq("id", n.id);
+    if (error) return toast.error(error.message);
+    setNews((r) => r.filter((x) => x.id !== n.id));
+  };
+
   const approve = async (id: string) => {
     const { error } = await supabase.from("summaries").update({ approved: true }).eq("id", id);
     if (error) return toast.error(error.message);
@@ -163,6 +206,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           </button>
           <button onClick={() => setTab("notifications")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === "notifications" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Bell className="w-4 h-4 inline mr-1.5" />Notifications
+          </button>
+          <button onClick={() => setTab("news")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === "news" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            <Newspaper className="w-4 h-4 inline mr-1.5" />News
           </button>
         </div>
 
@@ -248,6 +294,47 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                       <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
                     </div>
                     <button onClick={() => delNotif(n.id)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm">
+                      <Trash2 className="w-4 h-4" /> Delete
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : tab === "news" ? (
+          <div className="space-y-6">
+            <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur space-y-3">
+              <h3 className="font-semibold flex items-center gap-2"><Newspaper className="w-4 h-4 text-primary" /> Post news</h3>
+              <input value={newsForm.title} onChange={(e) => setNewsForm({ ...newsForm, title: e.target.value })} placeholder="Title" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
+              <textarea value={newsForm.description} onChange={(e) => setNewsForm({ ...newsForm, description: e.target.value })} placeholder="Description" rows={4} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
+              <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 bg-background text-sm cursor-pointer hover:border-primary/40">
+                <Upload className="w-4 h-4" />
+                <span>{newsForm.file ? newsForm.file.name : "Choose image (optional)"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setNewsForm({ ...newsForm, file: e.target.files?.[0] ?? null })} />
+              </label>
+              <div>
+                <button disabled={newsBusy} onClick={postNews} className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
+                  {newsBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Post & notify
+                </button>
+              </div>
+            </div>
+            {news.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10">No news yet.</p>
+            ) : (
+              <div className="grid gap-3">
+                {news.map((n) => (
+                  <article key={n.id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex items-start gap-4">
+                    {n.image_path ? (
+                      <img src={newsImageUrl(n.image_path)!} alt={n.title} className="w-24 h-24 rounded-xl object-cover shrink-0" />
+                    ) : (
+                      <div className="w-24 h-24 rounded-xl bg-primary/15 flex items-center justify-center shrink-0"><Newspaper className="w-6 h-6 text-primary" /></div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold">{n.title}</h4>
+                      {n.description && <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap line-clamp-3">{n.description}</p>}
+                      <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
+                    </div>
+                    <button onClick={() => delNews(n)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm">
                       <Trash2 className="w-4 h-4" /> Delete
                     </button>
                   </article>
