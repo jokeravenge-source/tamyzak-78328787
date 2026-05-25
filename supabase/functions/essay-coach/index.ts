@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
       const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authHeader } } });
       const { data: claimed, error: claimErr } = await sb.rpc("claim_daily_feature", { _feature: "essay-coach" });
       if (claimErr) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (!claimed) return new Response(JSON.stringify({ error: "daily_limit", message: language === "Arabic" ? "لقد استخدمت مدرّب المقالات اليوم. حاول مجددًا غدًا." : "You've already used the Essay Coach today. Try again tomorrow." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!claimed) return new Response(JSON.stringify({ error: "daily_limit", message: language === "Arabic" ? "لقد استخدمت مدرّب المقالات اليوم. حاول مجددًا غدًا." : "You've already used the Essay Coach today. Try again tomorrow." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       const text = String(body.text || "").slice(0, MAX_STUDY_CHARS);
       const images = Array.isArray(body.pageImages) ? body.pageImages.filter((image) => typeof image === "string" && image.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
       const n = Math.max(1, Math.min(10, Number(body.count) || 5));

@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authHeader } } });
     const { data: claimed, error: claimErr } = await sb.rpc("claim_daily_feature", { _feature: "generate-mcq" });
     if (claimErr) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    if (!claimed) return new Response(JSON.stringify({ error: "daily_limit", message: lang0 === "ar" ? "لقد استخدمت مولّد الأسئلة اليوم. حاول مجددًا غدًا." : "You've already used the MCQ Generator today. Try again tomorrow." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!claimed) return new Response(JSON.stringify({ error: "daily_limit", message: lang0 === "ar" ? "لقد استخدمت مولّد الأسئلة اليوم. حاول مجددًا غدًا." : "You've already used the MCQ Generator today. Try again tomorrow." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     const images = Array.isArray(pageImages) ? pageImages.filter((image) => typeof image === "string" && image.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
     if ((!text || typeof text !== "string") && !images.length) {
       return new Response(JSON.stringify({ error: "Missing study material" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
