@@ -56,9 +56,9 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
     setBank(shuffle(diagram.parts.map((p) => p.id)));
   };
 
-  const onDropTo = (partId: string) => {
-    if (!dragId) return;
-    const drag = dragId;
+  const onDropTo = (partId: string, explicitDrag?: string) => {
+    const drag = explicitDrag ?? dragId;
+    if (!drag) return;
     setPlaced((prev) => {
       const next = { ...prev };
       const previous = next[partId];
@@ -74,9 +74,9 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
     setDragId(null); setOverId(null);
   };
 
-  const onDropToBank = () => {
-    if (!dragId) return;
-    const drag = dragId;
+  const onDropToBank = (explicitDrag?: string) => {
+    const drag = explicitDrag ?? dragId;
+    if (!drag) return;
     setPlaced((prev) => {
       const next = { ...prev };
       Object.keys(next).forEach((k) => { if (next[k] === drag) next[k] = null; });
@@ -146,16 +146,11 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
       if (!draggedId) { setDragId(null); setOverId(null); return; }
       // Use latest id when calling handlers
       if (target?.type === "part") {
-        setDragId(draggedId);
-        // call after state set in next tick to ensure dragId truthy in handler closure
-        queueMicrotask(() => onDropTo(target.id));
+        onDropTo(target.id, draggedId);
       } else if (target?.type === "bank") {
-        setDragId(draggedId);
-        queueMicrotask(() => onDropToBank());
+        onDropToBank(draggedId);
       } else if (!movedRef.current) {
-        // treat as click → send back to bank if currently placed
-        setDragId(draggedId);
-        queueMicrotask(() => onDropToBank());
+        onDropToBank(draggedId);
       } else {
         setDragId(null); setOverId(null);
       }
