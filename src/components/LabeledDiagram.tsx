@@ -231,7 +231,7 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
                   draggable
                   onDragStart={() => setDragId(chipId)}
                   onPointerDown={(e) => startPointerDrag(chipId, e)}
-                  onClick={onDropToBank}
+                  onClick={() => onDropToBank()}
                   className={`w-full text-[11px] md:text-xs px-2 py-1.5 rounded-md border bg-background/95 backdrop-blur text-foreground truncate cursor-grab active:cursor-grabbing transition touch-none select-none ${correct ? "border-emerald-500/80 ring-2 ring-emerald-500/40" : wrong ? "border-rose-500/80 ring-2 ring-rose-500/40" : "border-primary/60"}`}
                   title={labelText(chipId)}
                 >
@@ -261,7 +261,7 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
       <div
         data-drop-bank
         onDragOver={(e) => e.preventDefault()}
-        onDrop={onDropToBank}
+        onDrop={() => onDropToBank()}
         className="rounded-2xl border border-white/10 bg-background/40 p-3"
       >
         <div className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mb-2">{t.bank}</div>
