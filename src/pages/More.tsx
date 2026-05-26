@@ -1,4 +1,4 @@
-import { ArrowRight, Sparkles, HelpCircle, ListChecks, MessageSquareQuote, PenLine, Headphones } from "lucide-react";
+import { ArrowRight, Sparkles, HelpCircle, ListChecks, MessageSquareQuote, PenLine, Headphones, Crown } from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -15,6 +15,7 @@ const copy = {
       advices: { title: "Advices", subtitle: "Read tips from top students or share yours." },
       essay: { title: "Essay Coach", subtitle: "Get essay questions graded 1–10 by AI." },
       videoNotes: { title: "Video to Notes", subtitle: "Paste a YouTube link, get study notes." },
+      premium: { title: "Premium", subtitle: "Unlimited AI, premium badge & exclusive character styles." },
     },
   },
   ar: {
@@ -27,11 +28,12 @@ const copy = {
       advices: { title: "النصائح", subtitle: "اقرأ نصائح المتفوقين أو شارك نصيحتك." },
       essay: { title: "مدرّب المقالات", subtitle: "أسئلة مقالية مُقيَّمة من 1 إلى 10." },
       videoNotes: { title: "من الفيديو إلى ملاحظات", subtitle: "ألصق رابط يوتيوب واحصل على ملاحظات." },
+      premium: { title: "بريميوم", subtitle: "ذكاء اصطناعي غير محدود، شارة بريميوم وأزياء حصرية." },
     },
   },
 } as const;
 
-type MoreKey = "mcq" | "missions" | "advices" | "essay" | "videoNotes";
+type MoreKey = "mcq" | "missions" | "advices" | "essay" | "videoNotes" | "premium";
 
 const More = ({
   language,
@@ -44,6 +46,7 @@ const More = ({
 }) => {
   const t = copy[language];
   const items: { key: MoreKey; Icon: React.ComponentType<{ className?: string }> }[] = [
+    { key: "premium", Icon: Crown },
     { key: "mcq", Icon: HelpCircle },
     { key: "missions", Icon: ListChecks },
     { key: "advices", Icon: MessageSquareQuote },
