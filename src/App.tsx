@@ -36,6 +36,8 @@ import Leaderboard from "./pages/Leaderboard";
 import PointsAwardOverlay from "./components/PointsAwardOverlay";
 import TodoList from "./pages/TodoList";
 import News from "./pages/News";
+import Premium from "./pages/Premium";
+import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -91,7 +93,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -152,6 +154,7 @@ const App = () => {
       <Sonner />
       <ZombieGuard />
       <PointsAwardOverlay language={language ?? "en"} />
+      <PaymentTestModeBanner />
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authRole === "admin" && !authed ? (
@@ -193,6 +196,8 @@ const App = () => {
         <TodoList language={language} onBack={backToBasics} />
       ) : menuChoice === "news" ? (
         <News language={language} onBack={backToBasics} />
+      ) : menuChoice === "premium" ? (
+        <Premium language={language} onBack={resetMenu} />
       ) : menuChoice === "more" ? (
         <More language={language} onSelect={(c) => chooseMenu(c)} onNav={chooseMenu} />
       ) : menuChoice === "leaderboard" ? (
