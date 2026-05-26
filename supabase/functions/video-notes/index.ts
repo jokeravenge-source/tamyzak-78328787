@@ -15,11 +15,7 @@ Deno.serve(async (req) => {
     if (!url || typeof url !== "string") {
       return new Response(JSON.stringify({ error: "Missing url" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authHeader } } });
-    const { data: claimed, error: claimErr } = await sb.rpc("claim_daily_feature", { _feature: "video-notes" });
-    if (claimErr) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    if (!claimed) return new Response(JSON.stringify({ error: "daily_limit", message: lang0 === "ar" ? "لقد استخدمت ميزة تحويل الفيديو إلى ملاحظات اليوم. حاول مجددًا غدًا." : "You've already used Video to Notes today. Try again tomorrow." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Daily limit removed
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
