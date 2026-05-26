@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle } from "lucide-react";
+import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle, Crown, Settings, Lock } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
 import { ThemePicker } from "@/components/ThemePicker";
+import { PremiumBadge } from "@/components/PremiumBadge";
+import { useSubscription } from "@/hooks/useSubscription";
+import { getPaddleEnvironment } from "@/lib/paddle";
 import {
   CharacterAvatar,
   type Gender,
@@ -17,11 +20,14 @@ import {
   MALE_HAIRSTYLES,
   FEMALE_HAIRSTYLES,
   getAvatarStyle,
+  PREMIUM_SKIN_COLORS,
+  PREMIUM_HAIR_COLORS,
+  PREMIUM_SHIRT_COLORS,
 } from "@/components/CharacterAvatar";
 
 const t = {
-  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", on: "On", off: "Off", randomize: "Randomize" },
-  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", on: "نعم", off: "لا", randomize: "عشوائي" },
+  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", crown: "Crown", on: "On", off: "Off", randomize: "Randomize", premiumOnly: "Premium only", upgrade: "Upgrade to unlock", manageSub: "Manage subscription", openingPortal: "Opening…" },
+  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", crown: "تاج", on: "نعم", off: "لا", randomize: "عشوائي", premiumOnly: "للبريميوم فقط", upgrade: "رقّ لفتح هذه الميزة", manageSub: "إدارة الاشتراك", openingPortal: "جاري الفتح…" },
 } as const;
 
 const HAIR_LABELS: Record<string, { en: string; ar: string }> = {
@@ -57,6 +63,34 @@ const AccountCenter = ({
   const [userId, setUserId] = useState<string>("");
   const [gender, setGender] = useState<Gender | null>(null);
   const [traits, setTraits] = useState<CharacterTraits | null>(null);
+  const { isPremium, subscription } = useSubscription();
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const tryPremium = (apply: () => void) => {
+    if (!isPremium) {
+      toast.error(text.upgrade, {
+        action: onNav ? { label: language === "ar" ? "افتح" : "Open", onClick: () => onNav("premium") } : undefined,
+      });
+      return;
+    }
+    apply();
+  };
+
+  const openPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("paddle-portal", {
+        body: { environment: getPaddleEnvironment() },
+      });
+      if (error) throw error;
+      if (!data?.url && !data?.overview) throw new Error("No portal URL");
+      window.open(data.url || data.overview, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to open portal");
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
