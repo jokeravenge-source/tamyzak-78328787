@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,7 +17,10 @@ Deno.serve(async (req) => {
   try {
     const { text, pageImages, count, language } = await req.json();
     const lang0 = language === "ar" ? "ar" : "en";
-    // Daily limit removed
+    const ent = await claimFeature(req, "mcq");
+    if (!ent.ok) {
+      return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), { status: ent.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const images = Array.isArray(pageImages) ? pageImages.filter((image) => typeof image === "string" && image.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
     if ((!text || typeof text !== "string") && !images.length) {
       return new Response(JSON.stringify({ error: "Missing study material" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
