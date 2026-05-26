@@ -38,6 +38,7 @@ import TodoList from "./pages/TodoList";
 import News from "./pages/News";
 import Premium from "./pages/Premium";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
+import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -155,6 +156,7 @@ const App = () => {
       <ZombieGuard />
       <PointsAwardOverlay language={language ?? "en"} />
       <PaymentTestModeBanner />
+      {language && <PremiumWelcomeOverlay language={language} />}
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authRole === "admin" && !authed ? (

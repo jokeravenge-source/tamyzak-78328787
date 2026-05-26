@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,7 +23,10 @@ Deno.serve(async (req) => {
     }
 
     if (mode === "generate") {
-      // Daily limit removed
+      const ent = await claimFeature(req, "essay");
+      if (!ent.ok) {
+        return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), { status: ent.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const text = String(body.text || "").slice(0, MAX_STUDY_CHARS);
       const images = Array.isArray(body.pageImages) ? body.pageImages.filter((image) => typeof image === "string" && image.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
       const n = Math.max(1, Math.min(10, Number(body.count) || 5));

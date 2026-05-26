@@ -71,8 +71,33 @@ async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
     .eq('environment', env);
 }
 
+async function logPaymentEvent(event: any, env: PaddleEnv) {
+  const data = event.data ?? {};
+  const subId = data.subscriptionId ?? data.id ?? null;
+  let userId: string | null = data.customData?.userId ?? null;
+  if (!userId && subId) {
+    const { data: row } = await getSupabase()
+      .from('subscriptions')
+      .select('user_id')
+      .eq('paddle_subscription_id', subId)
+      .maybeSingle();
+    userId = (row as any)?.user_id ?? null;
+  }
+  await getSupabase().from('payment_events').upsert({
+    event_id: event.eventId,
+    event_type: event.eventType,
+    user_id: userId,
+    paddle_subscription_id: subId,
+    paddle_customer_id: data.customerId ?? null,
+    environment: env,
+    payload: data,
+  }, { onConflict: 'event_id' });
+}
+
 async function handleWebhook(req: Request, env: PaddleEnv) {
   const event = await verifyWebhook(req, env);
+  // Always log first so admins can audit even if a handler throws.
+  try { await logPaymentEvent(event, env); } catch (e) { console.error('logPaymentEvent failed', e); }
   switch (event.eventType) {
     case EventName.SubscriptionCreated:
       await handleSubscriptionCreated(event.data, env);
@@ -82,6 +107,10 @@ async function handleWebhook(req: Request, env: PaddleEnv) {
       break;
     case EventName.SubscriptionCanceled:
       await handleSubscriptionCanceled(event.data, env);
+      break;
+    case EventName.TransactionCompleted:
+    case EventName.TransactionPaymentFailed:
+      // Recorded via logPaymentEvent above; nothing else to do.
       break;
     default:
       console.log('Unhandled event:', event.eventType);

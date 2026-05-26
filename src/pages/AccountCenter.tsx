@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle } from "lucide-react";
+import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle, Crown, Settings, Lock } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
 import { ThemePicker } from "@/components/ThemePicker";
+import { PremiumBadge } from "@/components/PremiumBadge";
+import { useSubscription } from "@/hooks/useSubscription";
+import { getPaddleEnvironment } from "@/lib/paddle";
 import {
   CharacterAvatar,
   type Gender,
@@ -17,11 +20,14 @@ import {
   MALE_HAIRSTYLES,
   FEMALE_HAIRSTYLES,
   getAvatarStyle,
+  PREMIUM_SKIN_COLORS,
+  PREMIUM_HAIR_COLORS,
+  PREMIUM_SHIRT_COLORS,
 } from "@/components/CharacterAvatar";
 
 const t = {
-  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", on: "On", off: "Off", randomize: "Randomize" },
-  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", on: "نعم", off: "لا", randomize: "عشوائي" },
+  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", crown: "Crown", on: "On", off: "Off", randomize: "Randomize", premiumOnly: "Premium only", upgrade: "Upgrade to unlock", manageSub: "Manage subscription", openingPortal: "Opening…" },
+  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", crown: "تاج", on: "نعم", off: "لا", randomize: "عشوائي", premiumOnly: "للبريميوم فقط", upgrade: "رقّ لفتح هذه الميزة", manageSub: "إدارة الاشتراك", openingPortal: "جاري الفتح…" },
 } as const;
 
 const HAIR_LABELS: Record<string, { en: string; ar: string }> = {
@@ -57,6 +63,34 @@ const AccountCenter = ({
   const [userId, setUserId] = useState<string>("");
   const [gender, setGender] = useState<Gender | null>(null);
   const [traits, setTraits] = useState<CharacterTraits | null>(null);
+  const { isPremium, subscription } = useSubscription();
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  const tryPremium = (apply: () => void) => {
+    if (!isPremium) {
+      toast.error(text.upgrade, {
+        action: onNav ? { label: language === "ar" ? "افتح" : "Open", onClick: () => onNav("premium") } : undefined,
+      });
+      return;
+    }
+    apply();
+  };
+
+  const openPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("paddle-portal", {
+        body: { environment: getPaddleEnvironment() },
+      });
+      if (error) throw error;
+      if (!data?.url && !data?.overview) throw new Error("No portal URL");
+      window.open(data.url || data.overview, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to open portal");
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -175,7 +209,7 @@ const AccountCenter = ({
 
                 {/* Skin */}
                 <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.skin}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">{text.skin}</p>
                   <div className="flex flex-wrap gap-2">
                     {SKIN_COLORS.map((c) => (
                       <button
@@ -185,6 +219,17 @@ const AccountCenter = ({
                         style={{ backgroundColor: c }}
                         aria-label={c}
                       />
+                    ))}
+                    {PREMIUM_SKIN_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => tryPremium(() => updateTraits({ skin: c }))}
+                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.skin === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
+                        style={{ backgroundColor: c }}
+                        aria-label={`${c} (premium)`}
+                      >
+                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -216,6 +261,17 @@ const AccountCenter = ({
                         aria-label={c}
                       />
                     ))}
+                    {PREMIUM_HAIR_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => tryPremium(() => updateTraits({ hairColor: c }))}
+                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.hairColor === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
+                        style={{ backgroundColor: c }}
+                        aria-label={`${c} (premium)`}
+                      >
+                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -232,6 +288,17 @@ const AccountCenter = ({
                         aria-label={c}
                       />
                     ))}
+                    {PREMIUM_SHIRT_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => tryPremium(() => updateTraits({ shirt: c }))}
+                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.shirt === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
+                        style={{ backgroundColor: c }}
+                        aria-label={`${c} (premium)`}
+                      >
+                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -247,6 +314,13 @@ const AccountCenter = ({
                       onClick={() => updateTraits({ accessory: null })}
                       className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition ${effective?.accessory == null ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
                     >{text.off}</button>
+                    <button
+                      onClick={() => tryPremium(() => updateTraits({ accessory: "crown" }))}
+                      className={`relative flex-1 h-9 rounded-lg text-xs font-semibold border transition inline-flex items-center justify-center gap-1 ${effective?.accessory === "crown" ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 border-amber-400" : "border-amber-400/40 bg-background/40 text-amber-300 hover:border-amber-400"} ${!isPremium ? "opacity-80" : ""}`}
+                    >
+                      <Crown className="w-3.5 h-3.5" />{text.crown}
+                      {!isPremium && <Lock className="w-3 h-3 absolute -top-1 -right-1 bg-amber-600 text-amber-50 rounded-full p-0.5" />}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -324,6 +398,20 @@ const AccountCenter = ({
             <button type="submit" disabled={saving || !name.trim()} className="w-full h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2">
               {saving ? <><Loader2 className="w-4 h-4 animate-spin" />{text.saving}</> : <><Save className="w-4 h-4" />{text.save}</>}
             </button>
+            {isPremium && (
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <PremiumBadge size="sm" />
+                <button
+                  type="button"
+                  onClick={openPortal}
+                  disabled={portalLoading}
+                  className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-lg border border-amber-400/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 transition disabled:opacity-60"
+                >
+                  {portalLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Settings className="w-3.5 h-3.5" />}
+                  {portalLoading ? text.openingPortal : text.manageSub}
+                </button>
+              </div>
+            )}
           </form>
         )}
         </div>

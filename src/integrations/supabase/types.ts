@@ -220,6 +220,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_events: {
+        Row: {
+          created_at: string
+          environment: string
+          event_id: string | null
+          event_type: string
+          id: string
+          paddle_customer_id: string | null
+          paddle_subscription_id: string | null
+          payload: Json
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          environment?: string
+          event_id?: string | null
+          event_type: string
+          id?: string
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
+          payload: Json
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          event_id?: string | null
+          event_type?: string
+          id?: string
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
+          payload?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           character: Json | null
@@ -492,6 +528,7 @@ export type Database = {
     }
     Functions: {
       claim_daily_feature: { Args: { _feature: string }; Returns: boolean }
+      feature_usage_today: { Args: { _feature: string }; Returns: number }
       has_active_premium: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean

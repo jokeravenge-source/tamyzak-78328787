@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
+import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,6 +81,13 @@ Deno.serve(async (req) => {
     if (!subject || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "subject and messages required" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const ent = await claimFeature(req, "agent");
+    if (!ent.ok) {
+      return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), {
+        status: ent.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
