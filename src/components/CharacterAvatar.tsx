@@ -226,11 +226,37 @@ export function CharacterAvatar({
     >
       {/* background */}
       <rect width="100" height="100" rx="50" fill={s.shirt} opacity="0.15" />
-      {/* shirt / shoulders */}
-      <path d="M15 100 Q15 75 35 70 L65 70 Q85 75 85 100 Z" fill={s.shirt} />
+      {/* shirt / shoulders (broadens when muscle is on) */}
+      {s.muscle ? (
+        <>
+          <path d="M6 100 Q6 70 28 64 L72 64 Q94 70 94 100 Z" fill={s.shirt} />
+          {/* pec definition */}
+          <path d="M30 72 Q40 78 48 72 L48 86 Q40 88 32 86 Z" fill="#000" opacity="0.12" />
+          <path d="M52 72 Q60 78 70 72 L68 86 Q60 88 52 86 Z" fill="#000" opacity="0.12" />
+        </>
+      ) : (
+        <path d="M15 100 Q15 75 35 70 L65 70 Q85 75 85 100 Z" fill={s.shirt} />
+      )}
       <path d="M40 70 Q50 78 60 70 L60 74 Q50 82 40 74 Z" fill="#ffffff" opacity="0.25" />
       {/* neck */}
       <rect x="44" y="60" width="12" height="14" rx="3" fill={s.skin} />
+      {/* necklace */}
+      {s.necklace === "gold" && (
+        <g>
+          <path d="M34 70 Q50 82 66 70" fill="none" stroke="#fbbf24" strokeWidth="1.6" />
+          <path d="M46 78 L50 86 L54 78 Z" fill="#fbbf24" stroke="#b45309" strokeWidth="0.5" />
+        </g>
+      )}
+      {s.necklace === "pearl" && (
+        <g fill="#fdf6e3" stroke="#cbb994" strokeWidth="0.4">
+          {Array.from({ length: 9 }).map((_, i) => {
+            const t = i / 8;
+            const x = 34 + t * 32;
+            const y = 70 + Math.sin(t * Math.PI) * 8;
+            return <circle key={i} cx={x} cy={y} r={1.4} />;
+          })}
+        </g>
+      )}
       {/* head */}
       <ellipse cx="50" cy="48" rx="20" ry="22" fill={s.skin} />
       {/* ears */}
@@ -238,6 +264,26 @@ export function CharacterAvatar({
       <ellipse cx="71" cy="50" rx="3" ry="5" fill={s.skin} />
       {/* hair */}
       <Hair style={s.hair} color={s.hairColor} />
+      {/* headband (sits over the hair) */}
+      {s.headband && (
+        <g>
+          <path
+            d="M28 38 Q50 30 72 38 L72 44 Q50 36 28 44 Z"
+            fill={s.headband}
+            stroke="#000"
+            strokeOpacity="0.25"
+            strokeWidth="0.6"
+          />
+          <circle cx="50" cy="38" r="1.8" fill="#fff" opacity="0.6" />
+        </g>
+      )}
+      {/* eyeshadow (premium) */}
+      {s.eyeshadow && (
+        <g fill={s.eyeshadow} opacity="0.55">
+          <path d="M37 47 Q42 44 47 47 L47 49 Q42 47 37 49 Z" />
+          <path d="M53 47 Q58 44 63 47 L63 49 Q58 47 53 49 Z" />
+        </g>
+      )}
       {/* eyes */}
       <circle cx="42" cy="50" r="2" fill="#1a1a1a" />
       <circle cx="58" cy="50" r="2" fill="#1a1a1a" />
@@ -248,8 +294,21 @@ export function CharacterAvatar({
           <circle cx="61" cy="56" r="2.5" fill="#ff8aa8" opacity="0.5" />
         </>
       )}
-      {/* mouth */}
-      <path d="M45 60 Q50 64 55 60" stroke="#1a1a1a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      {/* mouth / lipstick */}
+      {s.lipstick ? (
+        <g>
+          <path
+            d="M44 60 Q47 58 50 60 Q53 58 56 60 Q53 64 50 64 Q47 64 44 60 Z"
+            fill={s.lipstick}
+            stroke="#000"
+            strokeOpacity="0.25"
+            strokeWidth="0.5"
+          />
+          <path d="M46 60 Q50 61.5 54 60" stroke="#fff" strokeOpacity="0.5" strokeWidth="0.6" fill="none" />
+        </g>
+      ) : (
+        <path d="M45 60 Q50 64 55 60" stroke="#1a1a1a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      )}
       {/* glasses */}
       {s.accessory === "glasses" && (
         <g stroke="#1a1a1a" strokeWidth="1.5" fill="none">
@@ -258,20 +317,43 @@ export function CharacterAvatar({
           <line x1="47" y1="50" x2="53" y2="50" />
         </g>
       )}
-      {/* premium crown */}
+      {/* premium crown — cute rounded heart-tipped tiara */}
       {s.accessory === "crown" && (
         <g>
+          <defs>
+            <linearGradient id="crownGold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#fde68a" />
+              <stop offset="55%" stopColor="#fbbf24" />
+              <stop offset="100%" stopColor="#d97706" />
+            </linearGradient>
+          </defs>
+          {/* soft rounded tiara body */}
           <path
-            d="M 32 28 L 38 18 L 44 26 L 50 14 L 56 26 L 62 18 L 68 28 L 68 32 L 32 32 Z"
-            fill="#fbbf24"
+            d="M30 32 Q30 22 36 22 Q38 14 44 20 Q50 10 56 20 Q62 14 64 22 Q70 22 70 32 Z"
+            fill="url(#crownGold)"
             stroke="#b45309"
-            strokeWidth="1"
+            strokeWidth="0.9"
             strokeLinejoin="round"
           />
-          <circle cx="38" cy="20" r="1.5" fill="#ef4444" />
-          <circle cx="50" cy="16" r="1.8" fill="#06b6d4" />
-          <circle cx="62" cy="20" r="1.5" fill="#a855f7" />
-          <rect x="32" y="30" width="36" height="2" fill="#b45309" />
+          {/* base band */}
+          <rect x="29" y="31" width="42" height="3" rx="1.5" fill="#f59e0b" stroke="#b45309" strokeWidth="0.6" />
+          {/* heart on top */}
+          <path
+            d="M50 14 Q47 10 44.5 12.5 Q42 15 50 20 Q58 15 55.5 12.5 Q53 10 50 14 Z"
+            fill="#f472b6"
+            stroke="#be185d"
+            strokeWidth="0.5"
+          />
+          {/* pastel gems */}
+          <circle cx="37" cy="24" r="1.6" fill="#a78bfa" stroke="#7c3aed" strokeWidth="0.3" />
+          <circle cx="50" cy="26" r="1.8" fill="#22d3ee" stroke="#0e7490" strokeWidth="0.3" />
+          <circle cx="63" cy="24" r="1.6" fill="#fb7185" stroke="#be123c" strokeWidth="0.3" />
+          {/* sparkles */}
+          <g fill="#fff" opacity="0.9">
+            <circle cx="34" cy="28" r="0.6" />
+            <circle cx="66" cy="28" r="0.6" />
+            <circle cx="50" cy="32" r="0.5" />
+          </g>
         </g>
       )}
     </svg>
