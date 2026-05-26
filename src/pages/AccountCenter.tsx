@@ -20,14 +20,14 @@ import {
   MALE_HAIRSTYLES,
   FEMALE_HAIRSTYLES,
   getAvatarStyle,
-  PREMIUM_SKIN_COLORS,
-  PREMIUM_HAIR_COLORS,
-  PREMIUM_SHIRT_COLORS,
+  LIPSTICK_COLORS,
+  EYESHADOW_COLORS,
+  HEADBAND_COLORS,
 } from "@/components/CharacterAvatar";
 
 const t = {
-  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", crown: "Crown", on: "On", off: "Off", randomize: "Randomize", premiumOnly: "Premium only", upgrade: "Upgrade to unlock", manageSub: "Manage subscription", openingPortal: "Opening…" },
-  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", crown: "تاج", on: "نعم", off: "لا", randomize: "عشوائي", premiumOnly: "للبريميوم فقط", upgrade: "رقّ لفتح هذه الميزة", manageSub: "إدارة الاشتراك", openingPortal: "جاري الفتح…" },
+  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", crown: "Crown", on: "On", off: "Off", randomize: "Randomize", premiumOnly: "Premium only", upgrade: "Upgrade to unlock", manageSub: "Manage subscription", openingPortal: "Opening…", makeupRoom: "Makeup Room", lipstick: "Lipstick", eyeshadow: "Eyeshadow", musclePack: "Muscle Pack", muscleDesc: "Show off those gains", headband: "Headband", accessories: "Accessories", necklaceGold: "Gold chain", necklacePearl: "Pearl necklace", none: "None" },
+  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", crown: "تاج", on: "نعم", off: "لا", randomize: "عشوائي", premiumOnly: "للبريميوم فقط", upgrade: "رقّ لفتح هذه الميزة", manageSub: "إدارة الاشتراك", openingPortal: "جاري الفتح…", makeupRoom: "غرفة المكياج", lipstick: "أحمر الشفاه", eyeshadow: "ظلال العيون", musclePack: "حزمة العضلات", muscleDesc: "أظهر عضلاتك", headband: "عصابة الرأس", accessories: "إكسسوارات", necklaceGold: "سلسلة ذهبية", necklacePearl: "عقد لؤلؤ", none: "بدون" },
 } as const;
 
 const HAIR_LABELS: Record<string, { en: string; ar: string }> = {
@@ -220,17 +220,6 @@ const AccountCenter = ({
                         aria-label={c}
                       />
                     ))}
-                    {PREMIUM_SKIN_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => tryPremium(() => updateTraits({ skin: c }))}
-                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.skin === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
-                        style={{ backgroundColor: c }}
-                        aria-label={`${c} (premium)`}
-                      >
-                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
-                      </button>
-                    ))}
                   </div>
                 </div>
 
@@ -261,17 +250,6 @@ const AccountCenter = ({
                         aria-label={c}
                       />
                     ))}
-                    {PREMIUM_HAIR_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => tryPremium(() => updateTraits({ hairColor: c }))}
-                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.hairColor === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
-                        style={{ backgroundColor: c }}
-                        aria-label={`${c} (premium)`}
-                      >
-                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
-                      </button>
-                    ))}
                   </div>
                 </div>
 
@@ -287,17 +265,6 @@ const AccountCenter = ({
                         style={{ backgroundColor: c }}
                         aria-label={c}
                       />
-                    ))}
-                    {PREMIUM_SHIRT_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => tryPremium(() => updateTraits({ shirt: c }))}
-                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.shirt === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
-                        style={{ backgroundColor: c }}
-                        aria-label={`${c} (premium)`}
-                      >
-                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
-                      </button>
                     ))}
                   </div>
                 </div>
@@ -321,6 +288,127 @@ const AccountCenter = ({
                       <Crown className="w-3.5 h-3.5" />{text.crown}
                       {!isPremium && <Lock className="w-3 h-3 absolute -top-1 -right-1 bg-amber-600 text-amber-50 rounded-full p-0.5" />}
                     </button>
+                  </div>
+                </div>
+
+                {/* PREMIUM — Makeup Room (female only) */}
+                {gender === "female" && (
+                  <div className="relative rounded-2xl border border-pink-400/40 bg-gradient-to-br from-pink-500/10 via-fuchsia-500/5 to-rose-500/10 p-4 space-y-3 overflow-hidden">
+                    <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-pink-500/20 blur-2xl" />
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">💄</span>
+                        <p className="text-[11px] uppercase tracking-wider font-bold bg-gradient-to-r from-pink-400 to-fuchsia-400 bg-clip-text text-transparent">{text.makeupRoom}</p>
+                      </div>
+                      {!isPremium && <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-300"><Lock className="w-2.5 h-2.5" />{text.premiumOnly}</span>}
+                    </div>
+
+                    <div className="relative">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">💋 {text.lipstick}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => tryPremium(() => updateTraits({ lipstick: null }))}
+                          className={`px-2 h-7 rounded-full text-[10px] font-semibold border transition ${!effective?.lipstick ? "bg-pink-500/30 border-pink-300 text-pink-100" : "border-white/10 bg-background/40 text-muted-foreground"}`}
+                        >{text.none}</button>
+                        {LIPSTICK_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => tryPremium(() => updateTraits({ lipstick: c }))}
+                            className={`w-7 h-7 rounded-full border-2 transition ${effective?.lipstick === c ? "border-pink-200 scale-110 shadow-lg" : "border-white/30 hover:border-pink-200"} ${!isPremium ? "opacity-80" : ""}`}
+                            style={{ backgroundColor: c, boxShadow: effective?.lipstick === c ? `0 0 12px ${c}` : undefined }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">👁️ {text.eyeshadow}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => tryPremium(() => updateTraits({ eyeshadow: null }))}
+                          className={`px-2 h-7 rounded-full text-[10px] font-semibold border transition ${!effective?.eyeshadow ? "bg-fuchsia-500/30 border-fuchsia-300 text-fuchsia-100" : "border-white/10 bg-background/40 text-muted-foreground"}`}
+                        >{text.none}</button>
+                        {EYESHADOW_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => tryPremium(() => updateTraits({ eyeshadow: c }))}
+                            className={`w-7 h-7 rounded-full border-2 transition ${effective?.eyeshadow === c ? "border-fuchsia-200 scale-110 shadow-lg" : "border-white/30 hover:border-fuchsia-200"} ${!isPremium ? "opacity-80" : ""}`}
+                            style={{ backgroundColor: c, boxShadow: effective?.eyeshadow === c ? `0 0 12px ${c}` : undefined }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* PREMIUM — Boys: muscle + headband */}
+                {gender === "male" && (
+                  <div className="relative rounded-2xl border border-cyan-400/40 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-indigo-500/10 p-4 space-y-3 overflow-hidden">
+                    <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-cyan-500/20 blur-2xl" />
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">💪</span>
+                        <p className="text-[11px] uppercase tracking-wider font-bold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">{text.musclePack}</p>
+                      </div>
+                      {!isPremium && <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-300"><Lock className="w-2.5 h-2.5" />{text.premiumOnly}</span>}
+                    </div>
+
+                    <div className="relative flex items-center justify-between gap-3 rounded-lg bg-background/40 px-3 py-2">
+                      <div>
+                        <p className="text-xs font-semibold">{text.musclePack}</p>
+                        <p className="text-[10px] text-muted-foreground">{text.muscleDesc}</p>
+                      </div>
+                      <button
+                        onClick={() => tryPremium(() => updateTraits({ muscle: !effective?.muscle }))}
+                        className={`relative w-12 h-7 rounded-full transition ${effective?.muscle ? "bg-gradient-to-r from-cyan-400 to-blue-500" : "bg-background/60 border border-white/10"} ${!isPremium ? "opacity-80" : ""}`}
+                      >
+                        <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full transition-all ${effective?.muscle ? "left-[22px]" : "left-0.5"}`} />
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">🎽 {text.headband}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => tryPremium(() => updateTraits({ headband: null }))}
+                          className={`px-2 h-7 rounded-full text-[10px] font-semibold border transition ${!effective?.headband ? "bg-cyan-500/30 border-cyan-300 text-cyan-100" : "border-white/10 bg-background/40 text-muted-foreground"}`}
+                        >{text.none}</button>
+                        {HEADBAND_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => tryPremium(() => updateTraits({ headband: c }))}
+                            className={`w-7 h-7 rounded-full border-2 transition ${effective?.headband === c ? "border-cyan-200 scale-110 shadow-lg" : "border-white/30 hover:border-cyan-200"} ${!isPremium ? "opacity-80" : ""}`}
+                            style={{ backgroundColor: c }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* PREMIUM — Necklace (both) */}
+                <div className="relative rounded-2xl border border-amber-400/40 bg-gradient-to-br from-amber-500/10 via-yellow-500/5 to-orange-500/10 p-4 space-y-3 overflow-hidden">
+                  <div className="absolute -top-6 -left-6 w-24 h-24 rounded-full bg-amber-500/20 blur-2xl" />
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">✨</span>
+                      <p className="text-[11px] uppercase tracking-wider font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">{text.accessories}</p>
+                    </div>
+                    {!isPremium && <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-300"><Lock className="w-2.5 h-2.5" />{text.premiumOnly}</span>}
+                  </div>
+                  <div className="relative grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => tryPremium(() => updateTraits({ necklace: null }))}
+                      className={`h-10 rounded-lg text-[11px] font-semibold border transition ${!effective?.necklace ? "bg-amber-500/20 border-amber-400 text-amber-100" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                    >{text.none}</button>
+                    <button
+                      onClick={() => tryPremium(() => updateTraits({ necklace: "gold" }))}
+                      className={`h-10 rounded-lg text-[11px] font-semibold border transition inline-flex items-center justify-center gap-1 ${effective?.necklace === "gold" ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 border-amber-300" : "border-amber-400/40 bg-background/40 text-amber-300 hover:border-amber-300"} ${!isPremium ? "opacity-80" : ""}`}
+                    >🔗 {text.necklaceGold}</button>
+                    <button
+                      onClick={() => tryPremium(() => updateTraits({ necklace: "pearl" }))}
+                      className={`h-10 rounded-lg text-[11px] font-semibold border transition inline-flex items-center justify-center gap-1 ${effective?.necklace === "pearl" ? "bg-gradient-to-r from-pink-200/40 to-rose-200/40 text-pink-100 border-pink-200" : "border-pink-200/30 bg-background/40 text-pink-200 hover:border-pink-200"} ${!isPremium ? "opacity-80" : ""}`}
+                    >🦪 {text.necklacePearl}</button>
                   </div>
                 </div>
               </div>
