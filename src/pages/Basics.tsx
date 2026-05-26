@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import StreakTree from "@/components/StreakTree";
 import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
+import { PremiumBadge } from "@/components/PremiumBadge";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export type BasicsChoice =
   | "flashcards"
@@ -63,6 +65,7 @@ const Basics = ({
   onNav: (c: MainMenuChoice) => void;
 }) => {
   const t = copy[language];
+  const { isActive: isPremium } = useSubscription();
   const items: { key: BasicsChoice; Icon: React.ComponentType<{ className?: string }> }[] = [
     { key: "flashcards", Icon: Layers },
     { key: "malazam", Icon: BookMarked },
@@ -165,7 +168,10 @@ const Basics = ({
         <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">{t.title}</h1>
         <p className="text-muted-foreground md:text-lg max-w-xl mx-auto">{t.description}</p>
         {username && (
-          <p className="mt-3 text-sm text-primary font-medium">{t.hi}, {username} 👋</p>
+          <p className="mt-3 text-sm text-primary font-medium inline-flex items-center gap-2 justify-center">
+            {t.hi}, {username} 👋
+            {isPremium && <PremiumBadge size="sm" />}
+          </p>
         )}
       </header>
 
