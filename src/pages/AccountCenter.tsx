@@ -209,7 +209,7 @@ const AccountCenter = ({
 
                 {/* Skin */}
                 <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.skin}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">{text.skin}</p>
                   <div className="flex flex-wrap gap-2">
                     {SKIN_COLORS.map((c) => (
                       <button
@@ -219,6 +219,17 @@ const AccountCenter = ({
                         style={{ backgroundColor: c }}
                         aria-label={c}
                       />
+                    ))}
+                    {PREMIUM_SKIN_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => tryPremium(() => updateTraits({ skin: c }))}
+                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.skin === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
+                        style={{ backgroundColor: c }}
+                        aria-label={`${c} (premium)`}
+                      >
+                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -250,6 +261,17 @@ const AccountCenter = ({
                         aria-label={c}
                       />
                     ))}
+                    {PREMIUM_HAIR_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => tryPremium(() => updateTraits({ hairColor: c }))}
+                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.hairColor === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
+                        style={{ backgroundColor: c }}
+                        aria-label={`${c} (premium)`}
+                      >
+                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -266,6 +288,17 @@ const AccountCenter = ({
                         aria-label={c}
                       />
                     ))}
+                    {PREMIUM_SHIRT_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => tryPremium(() => updateTraits({ shirt: c }))}
+                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.shirt === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
+                        style={{ backgroundColor: c }}
+                        aria-label={`${c} (premium)`}
+                      >
+                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -281,6 +314,13 @@ const AccountCenter = ({
                       onClick={() => updateTraits({ accessory: null })}
                       className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition ${effective?.accessory == null ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
                     >{text.off}</button>
+                    <button
+                      onClick={() => tryPremium(() => updateTraits({ accessory: "crown" }))}
+                      className={`relative flex-1 h-9 rounded-lg text-xs font-semibold border transition inline-flex items-center justify-center gap-1 ${effective?.accessory === "crown" ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 border-amber-400" : "border-amber-400/40 bg-background/40 text-amber-300 hover:border-amber-400"} ${!isPremium ? "opacity-80" : ""}`}
+                    >
+                      <Crown className="w-3.5 h-3.5" />{text.crown}
+                      {!isPremium && <Lock className="w-3 h-3 absolute -top-1 -right-1 bg-amber-600 text-amber-50 rounded-full p-0.5" />}
+                    </button>
                   </div>
                 </div>
               </div>
