@@ -220,17 +220,6 @@ const AccountCenter = ({
                         aria-label={c}
                       />
                     ))}
-                    {PREMIUM_SKIN_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => tryPremium(() => updateTraits({ skin: c }))}
-                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.skin === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
-                        style={{ backgroundColor: c }}
-                        aria-label={`${c} (premium)`}
-                      >
-                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
-                      </button>
-                    ))}
                   </div>
                 </div>
 
@@ -261,17 +250,6 @@ const AccountCenter = ({
                         aria-label={c}
                       />
                     ))}
-                    {PREMIUM_HAIR_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => tryPremium(() => updateTraits({ hairColor: c }))}
-                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.hairColor === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
-                        style={{ backgroundColor: c }}
-                        aria-label={`${c} (premium)`}
-                      >
-                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
-                      </button>
-                    ))}
                   </div>
                 </div>
 
@@ -287,17 +265,6 @@ const AccountCenter = ({
                         style={{ backgroundColor: c }}
                         aria-label={c}
                       />
-                    ))}
-                    {PREMIUM_SHIRT_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => tryPremium(() => updateTraits({ shirt: c }))}
-                        className={`relative w-8 h-8 rounded-full border-2 transition ${effective?.shirt === c ? "border-amber-400 scale-110" : "border-amber-400/60 hover:border-amber-400"} ${!isPremium ? "opacity-70" : ""}`}
-                        style={{ backgroundColor: c }}
-                        aria-label={`${c} (premium)`}
-                      >
-                        {!isPremium && <Lock className="w-3 h-3 text-amber-200 absolute -top-1 -right-1 bg-amber-600 rounded-full p-0.5" />}
-                      </button>
                     ))}
                   </div>
                 </div>
