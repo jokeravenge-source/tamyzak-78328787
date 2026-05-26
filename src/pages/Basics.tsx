@@ -65,7 +65,7 @@ const Basics = ({
   onNav: (c: MainMenuChoice) => void;
 }) => {
   const t = copy[language];
-  const { isActive: isPremium } = useSubscription();
+  const { isPremium } = useSubscription();
   const items: { key: BasicsChoice; Icon: React.ComponentType<{ className?: string }> }[] = [
     { key: "flashcards", Icon: Layers },
     { key: "malazam", Icon: BookMarked },
