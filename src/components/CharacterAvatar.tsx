@@ -28,12 +28,17 @@ export const SHIRT_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef444
 export const MALE_HAIRSTYLES = ["short", "buzz", "spiky", "curly", "fade", "messy"] as const;
 export const FEMALE_HAIRSTYLES = ["long", "bun", "ponytail", "bob", "curly_long", "braids"] as const;
 
+// Premium-only cosmetics — gated in the UI via the user's subscription
+export const PREMIUM_SKIN_COLORS = ["#ffd9b3", "#d4b896", "#a87d52"] as const;
+export const PREMIUM_HAIR_COLORS = ["#06b6d4", "#ec4899", "#22d3ee", "#f0abfc"] as const;
+export const PREMIUM_SHIRT_COLORS = ["#fbbf24", "#06b6d4", "#a78bfa", "#f0abfc", "#22d3ee"] as const;
+
 export type CharacterTraits = {
   skin: string;
   hairColor: string;
   shirt: string;
   hair: string;
-  accessory: "glasses" | null;
+  accessory: "glasses" | "crown" | null;
   blush: boolean;
 };
 
@@ -239,6 +244,22 @@ export function CharacterAvatar({
           <circle cx="42" cy="50" r="5" />
           <circle cx="58" cy="50" r="5" />
           <line x1="47" y1="50" x2="53" y2="50" />
+        </g>
+      )}
+      {/* premium crown */}
+      {s.accessory === "crown" && (
+        <g>
+          <path
+            d="M 32 28 L 38 18 L 44 26 L 50 14 L 56 26 L 62 18 L 68 28 L 68 32 L 32 32 Z"
+            fill="#fbbf24"
+            stroke="#b45309"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+          <circle cx="38" cy="20" r="1.5" fill="#ef4444" />
+          <circle cx="50" cy="16" r="1.8" fill="#06b6d4" />
+          <circle cx="62" cy="20" r="1.5" fill="#a855f7" />
+          <rect x="32" y="30" width="36" height="2" fill="#b45309" />
         </g>
       )}
     </svg>
