@@ -398,6 +398,20 @@ const AccountCenter = ({
             <button type="submit" disabled={saving || !name.trim()} className="w-full h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2">
               {saving ? <><Loader2 className="w-4 h-4 animate-spin" />{text.saving}</> : <><Save className="w-4 h-4" />{text.save}</>}
             </button>
+            {isPremium && (
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <PremiumBadge size="sm" />
+                <button
+                  type="button"
+                  onClick={openPortal}
+                  disabled={portalLoading}
+                  className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-lg border border-amber-400/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 transition disabled:opacity-60"
+                >
+                  {portalLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Settings className="w-3.5 h-3.5" />}
+                  {portalLoading ? text.openingPortal : text.manageSub}
+                </button>
+              </div>
+            )}
           </form>
         )}
         </div>
