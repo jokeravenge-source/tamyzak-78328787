@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.telegram-webhook]
 verify_jwt = false
+
+[functions.payments-webhook]
+verify_jwt = false
+
+[functions.get-paddle-price]
+verify_jwt = false
