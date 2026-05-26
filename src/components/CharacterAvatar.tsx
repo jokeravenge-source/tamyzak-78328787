@@ -28,10 +28,11 @@ export const SHIRT_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef444
 export const MALE_HAIRSTYLES = ["short", "buzz", "spiky", "curly", "fade", "messy"] as const;
 export const FEMALE_HAIRSTYLES = ["long", "bun", "ponytail", "bob", "curly_long", "braids"] as const;
 
-// Premium-only cosmetics — gated in the UI via the user's subscription
-export const PREMIUM_SKIN_COLORS = ["#ffd9b3", "#d4b896", "#a87d52"] as const;
-export const PREMIUM_HAIR_COLORS = ["#06b6d4", "#ec4899", "#22d3ee", "#f0abfc"] as const;
-export const PREMIUM_SHIRT_COLORS = ["#fbbf24", "#06b6d4", "#a78bfa", "#f0abfc", "#22d3ee"] as const;
+// Premium-only cosmetic option palettes
+export const LIPSTICK_COLORS = ["#dc2626", "#e11d48", "#be185d", "#9d174d", "#f43f5e", "#c026d3"] as const;
+export const EYESHADOW_COLORS = ["#a855f7", "#ec4899", "#06b6d4", "#10b981", "#f59e0b", "#6366f1"] as const;
+export const HEADBAND_COLORS = ["#ef4444", "#3b82f6", "#10b981", "#1a1a1a", "#ffffff", "#f59e0b"] as const;
+export type NecklaceKind = "gold" | "pearl" | null;
 
 export type CharacterTraits = {
   skin: string;
@@ -40,6 +41,12 @@ export type CharacterTraits = {
   hair: string;
   accessory: "glasses" | "crown" | null;
   blush: boolean;
+  // Premium-only (null/false when not applied)
+  lipstick?: string | null;
+  eyeshadow?: string | null;
+  muscle?: boolean;
+  headband?: string | null;
+  necklace?: NecklaceKind;
 };
 
 function pick<T>(arr: readonly T[], r: number): T {
@@ -55,6 +62,11 @@ export function getAvatarStyle(seed: string, gender: Gender): CharacterTraits {
     hair: gender === "male" ? pick(MALE_HAIRSTYLES, rand()) : pick(FEMALE_HAIRSTYLES, rand()),
     accessory: rand() > 0.75 ? "glasses" : null,
     blush: gender === "female" || rand() > 0.7,
+    lipstick: null,
+    eyeshadow: null,
+    muscle: false,
+    headband: null,
+    necklace: null,
   };
 }
 
