@@ -60,6 +60,8 @@ export function CharacterAvatar({
   const g: Gender = gender ?? "male";
   const src = g === "female" ? girlImg : boyImg;
   const hasCrown = traits?.accessory === "crown";
+  const skin = traits?.skin ?? SKIN_COLORS[0];
+  const tinted = useSkinTinted(src, skin);
   return (
     <div
       className={className}
@@ -73,7 +75,7 @@ export function CharacterAvatar({
       }}
     >
       <img
-        src={src}
+        src={tinted ?? src}
         alt={g === "female" ? "Character" : "Character"}
         width={size}
         height={size}
@@ -106,3 +108,82 @@ export function CharacterAvatar({
 }
 
 export default CharacterAvatar;
+
+/* ------------------------------------------------------------------ */
+/* Skin recoloring                                                     */
+/* ------------------------------------------------------------------ */
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+// Reference skin tone present in the source PNGs (pale peach).
+const REF_SKIN: [number, number, number] = [254, 235, 228];
+const REF_BLUSH: [number, number, number] = [232, 190, 184];
+
+function tintSkin(img: HTMLImageElement, targetHex: string): string {
+  const c = document.createElement("canvas");
+  c.width = img.naturalWidth;
+  c.height = img.naturalHeight;
+  const ctx = c.getContext("2d");
+  if (!ctx) return img.src;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, c.width, c.height);
+  const px = data.data;
+  const [tr, tg, tb] = hexToRgb(targetHex);
+  // luminance ratio for blush variant
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
+    if (a < 8) continue;
+    const dSkin = Math.abs(r - REF_SKIN[0]) + Math.abs(g - REF_SKIN[1]) + Math.abs(b - REF_SKIN[2]);
+    const dBlush = Math.abs(r - REF_BLUSH[0]) + Math.abs(g - REF_BLUSH[1]) + Math.abs(b - REF_BLUSH[2]);
+    if (dSkin <= 45) {
+      // tonal preserve: keep brightness offset from REF
+      px[i] = clamp(tr + (r - REF_SKIN[0]) * 0.5);
+      px[i + 1] = clamp(tg + (g - REF_SKIN[1]) * 0.5);
+      px[i + 2] = clamp(tb + (b - REF_SKIN[2]) * 0.5);
+    } else if (dBlush <= 40) {
+      // pinker variant for cheeks
+      px[i] = clamp(tr + 18);
+      px[i + 1] = clamp(tg - 8);
+      px[i + 2] = clamp(tb - 4);
+    }
+  }
+  ctx.putImageData(data, 0, 0);
+  return c.toDataURL("image/png");
+}
+
+function clamp(v: number) {
+  return Math.max(0, Math.min(255, Math.round(v)));
+}
+
+function useSkinTinted(src: string, skinHex: string): string | null {
+  const [out, setOut] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    const cacheKey = `${src}|${skinHex}`;
+    if (tintCache.has(cacheKey)) {
+      setOut(tintCache.get(cacheKey)!);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      if (cancelled) return;
+      try {
+        const url = tintSkin(img, skinHex);
+        tintCache.set(cacheKey, url);
+        setOut(url);
+      } catch {
+        setOut(null);
+      }
+    };
+    img.src = src;
+    return () => { cancelled = true; };
+  }, [src, skinHex]);
+  return out;
+}
+
+const tintCache = new Map<string, string>();
