@@ -5,7 +5,7 @@ import girlImg from "@/assets/character-girl.png";
 export type Gender = "male" | "female";
 
 // Kept for API compatibility with AccountCenter / Leaderboard.
-export const SKIN_COLORS = ["#fde7d3", "#f4cfa8", "#d9a679", "#a8714a", "#6b4226"] as const;
+export const SKIN_COLORS = ["#fff6f1", "#feede6", "#ffe6d5", "#f1cfc5", "#d2b0a2", "#a17c6a"] as const;
 export const HAIR_COLORS = ["#1a1410", "#2a1e16", "#4a2a18", "#7a4a22", "#b8742a", "#d9a441", "#6b3a8a"] as const;
 export const SHIRT_COLORS = ["#161616", "#1f1f1f", "#3b3b3b", "#4f46e5", "#0ea5e9", "#10b981", "#ef4444", "#ec4899", "#a855f7"] as const;
 export const MALE_HAIRSTYLES = ["short", "buzz", "spiky", "curly", "fade", "messy"] as const;
