@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 export type EntitlementResult =
   | { ok: true; userId: string; bypassed: boolean }
@@ -23,12 +23,11 @@ export async function claimFeature(req: Request, feature: string): Promise<Entit
     { global: { headers: { Authorization: authHeader } } },
   );
 
-  const token = authHeader.replace("Bearer ", "");
-  const { data: claims, error: claimsErr } = await supabase.auth.getClaims(token);
-  if (claimsErr || !claims?.claims) {
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData?.user) {
     return { ok: false, status: 401, error: "Invalid session." };
   }
-  const userId = claims.claims.sub as string;
+  const userId = userData.user.id;
 
   const { data: allowed, error } = await supabase.rpc("claim_daily_feature", { _feature: feature });
   if (error) {
