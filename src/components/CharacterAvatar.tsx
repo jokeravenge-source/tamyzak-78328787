@@ -119,8 +119,8 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 // Reference skin tone present in the source PNGs (pale peach).
-const REF_SKIN: [number, number, number] = [245, 213, 197];
-const REF_BLUSH: [number, number, number] = [240, 196, 196];
+const REF_SKIN: [number, number, number] = [254, 235, 228];
+const REF_BLUSH: [number, number, number] = [232, 190, 184];
 
 function tintSkin(img: HTMLImageElement, targetHex: string): string {
   const c = document.createElement("canvas");
