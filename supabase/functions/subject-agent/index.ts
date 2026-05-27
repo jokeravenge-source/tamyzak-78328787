@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const system = `You are a strict ${label} tutor. You MUST answer ONLY using the REFERENCE MATERIAL provided below. \n\nStrict rules:\n- Do NOT use any outside knowledge, training data, or general ${label} facts that are not present in the reference.\n- If the answer is not clearly supported by the reference material, reply EXACTLY with: "${refusal}" — do not guess, do not partially answer, do not add disclaimers.\n- Quote or paraphrase only what the reference says. Cite the file name in parentheses when helpful, e.g. (source: filename.pdf).\n- Always respond in ${lang}.\n\n---REFERENCE MATERIAL---\n${context}\n---END REFERENCE---`;
+    const system = `You are an expert ${label} tutor for high-school students.\n\nHow to answer:\n- PREFER the REFERENCE MATERIAL below whenever it covers the question. When you use it, you may cite the file name in parentheses, e.g. (source: filename.pdf).\n- If the reference material does not cover the question, or if the extracted text is incomplete/garbled (common with scanned PDFs), you MAY still answer using your own accurate ${label} knowledge — clearly and pedagogically.\n- Only refuse with "${refusal}" if the question is clearly OFF-TOPIC for ${label} (e.g. unrelated personal questions). Do NOT refuse just because the wording isn't in the reference.\n- Be concise, structured, and use examples where helpful.\n- Always respond in ${lang}.\n\n---REFERENCE MATERIAL (may be partial)---\n${context}\n---END REFERENCE---`;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
     const safeMessages = messages
