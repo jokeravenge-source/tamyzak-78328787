@@ -28,23 +28,31 @@ async function fetchSubjectContext(subject: string): Promise<string> {
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, key);
 
-  const { data: summaries, error } = await admin
-    .from("summaries")
-    .select("name, file_path, mime_type")
-    .eq("approved", true)
-    .eq("subject", subject)
-    .order("created_at", { ascending: false })
-    .limit(MAX_FILES);
+  // List files from the `files` storage bucket, organized by subject folder.
+  const { data: objects, error } = await admin.storage
+    .from("files")
+    .list(subject, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
 
-  if (error || !summaries?.length) return "";
+  if (error || !objects?.length) return "";
+
+  const files = objects
+    .filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep")
+    .slice(0, MAX_FILES)
+    .map((o) => ({
+      name: o.name,
+      file_path: `${subject}/${o.name}`,
+      mime_type: (o.metadata as { mimetype?: string } | null)?.mimetype ?? "",
+    }));
+
+  if (!files.length) return "";
 
   const parts: string[] = [];
   let total = 0;
   const MAX = MAX_CONTEXT_CHARS;
-  for (const f of summaries) {
+  for (const f of files) {
     if (total >= MAX) break;
     if (!f.file_path) continue;
-    const { data: blob } = await admin.storage.from("summaries").download(f.file_path);
+    const { data: blob } = await admin.storage.from("files").download(f.file_path);
     if (!blob) continue;
 
     const isText =
