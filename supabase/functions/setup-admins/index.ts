@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ user_id: userId, role: "admin" }),
         });
       }
-      results.push({ email: a.email, userId, created: !!createData?.id, raw: createData });
+      results.push({ email: a.email, userId, created: !!createData?.id });
     }
     return new Response(JSON.stringify({ ok: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
