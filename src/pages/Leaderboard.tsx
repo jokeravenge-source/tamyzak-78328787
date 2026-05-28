@@ -85,15 +85,15 @@ const Leaderboard = ({
                 return (
                   <li
                     key={r.user_id}
-                    className={`flex items-center gap-4 rounded-2xl p-4 md:p-5 border transition ${
+                    className={`flex items-center gap-4 rounded-2xl p-3 md:p-4 border transition ${
                       isMe ? "border-primary bg-primary/10" : "border-white/5 bg-background/30"
                     }`}
                   >
                     <div className="w-9 text-center text-lg font-bold text-muted-foreground">
                       {medal ?? `#${i + 1}`}
                     </div>
-                    <div className="w-[160px] h-[160px] rounded-full overflow-hidden bg-background/40 border border-white/10 shrink-0">
-                      <CharacterAvatar seed={r.user_id} gender={r.gender ?? "male"} traits={r.traits} size={160} />
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-background/40 border border-white/10 shrink-0">
+                      <CharacterAvatar seed={r.user_id} gender={r.gender ?? "male"} traits={r.traits} size={48} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold truncate">{r.name}{isMe && <span className="text-primary text-xs ml-2">({t("you", "أنت")})</span>}</p>
