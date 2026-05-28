@@ -12,6 +12,7 @@ import track4 from "@/assets/music/track4.mp3";
 import track5 from "@/assets/music/track5.mp3";
 import track6 from "@/assets/music/track6.mp3";
 import quranTrack from "@/assets/music/quran.mp3";
+import StudyRoom from "@/components/StudyRoom";
 
 const MUSIC_TRACKS = [track1, track2, track3, track4, track5, track6];
 const QURAN_TRACKS = [quranTrack];
@@ -81,6 +82,44 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [volume, setVolume] = useState(0.5);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const savingRef = useRef(false);
+  const heartbeatRef = useRef<number | null>(null);
+
+  // --- Live presence helpers ---
+  const upsertPresence = async (subj: string, miss: string) => {
+    if (!userId) return;
+    await supabase.from("active_sessions").upsert({
+      user_id: userId,
+      subject: subj,
+      mission: miss.slice(0, 200),
+      last_seen_at: new Date().toISOString(),
+    });
+  };
+  const clearPresence = async () => {
+    if (!userId) return;
+    await supabase.from("active_sessions").delete().eq("user_id", userId);
+  };
+
+  // Heartbeat while running so the room shows the user as active
+  useEffect(() => {
+    if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+    if (running && userId && subject) {
+      upsertPresence(subject, mission);
+      heartbeatRef.current = window.setInterval(() => {
+        supabase.from("active_sessions").update({ last_seen_at: new Date().toISOString() }).eq("user_id", userId);
+      }, 30000);
+    }
+    return () => {
+      if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running, userId, subject]);
+
+  // Remove presence when leaving the page/tab
+  useEffect(() => {
+    const onUnload = () => { if (userId) navigator.sendBeacon?.; };
+    window.addEventListener("beforeunload", onUnload);
+    return () => window.removeEventListener("beforeunload", onUnload);
+  }, [userId]);
 
   // Restore persisted session on mount
   useEffect(() => {
@@ -222,6 +261,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     }
     savingRef.current = true;
     setRunning(false);
+    clearPresence();
     const hours = seconds / 3600;
     const points = Math.floor(hours);
     const { data: inserted, error } = await supabase.from("study_sessions").insert({
