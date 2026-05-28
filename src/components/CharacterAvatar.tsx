@@ -1,8 +1,18 @@
 import React from "react";
-import boyImg from "@/assets/character-boy.png";
-import girlImg from "@/assets/character-girl.png";
+import boy1 from "@/assets/character-boy-1.png";
+import boy2 from "@/assets/character-boy-2.png";
+import boy3 from "@/assets/character-boy-3.png";
+import boy4 from "@/assets/character-boy-4.png";
+import girl1 from "@/assets/character-girl-1.png";
+import girl2 from "@/assets/character-girl-2.png";
+import girl3 from "@/assets/character-girl-3.png";
+import girl4 from "@/assets/character-girl-4.png";
 
 export type Gender = "male" | "female";
+
+export const MALE_VARIANTS = [boy1, boy2, boy3, boy4] as const;
+export const FEMALE_VARIANTS = [girl1, girl2, girl3, girl4] as const;
+export type CharacterVariant = 1 | 2 | 3 | 4;
 
 // Kept for API compatibility with AccountCenter / Leaderboard.
 export const SKIN_COLORS = ["#fff6f1", "#feede6", "#ffe6d5", "#f1cfc5", "#d2b0a2", "#a17c6a"] as const;
@@ -27,6 +37,7 @@ export type CharacterTraits = {
   muscle?: boolean;
   headband?: string | null;
   necklace?: NecklaceKind;
+  variant?: CharacterVariant;
 };
 
 export function getAvatarStyle(_seed: string, gender: Gender): CharacterTraits {
@@ -42,6 +53,7 @@ export function getAvatarStyle(_seed: string, gender: Gender): CharacterTraits {
     muscle: false,
     headband: null,
     necklace: null,
+    variant: 1,
   };
 }
 
@@ -58,7 +70,9 @@ export function CharacterAvatar({
   traits?: Partial<CharacterTraits> | null;
 }) {
   const g: Gender = gender ?? "male";
-  const src = g === "female" ? girlImg : boyImg;
+  const variant = (traits?.variant ?? 1) as CharacterVariant;
+  const idx = Math.max(0, Math.min(3, variant - 1));
+  const src = g === "female" ? FEMALE_VARIANTS[idx] : MALE_VARIANTS[idx];
   const hasCrown = traits?.accessory === "crown";
   const skin = traits?.skin ?? SKIN_COLORS[0];
   const tinted = useSkinTinted(src, skin);
