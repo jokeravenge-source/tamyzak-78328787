@@ -310,6 +310,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-3">{L.title}</h1>
           <p className="text-muted-foreground">{L.desc}</p>
         </header>
+        <StudyRoom language={language} />
         <div className="max-w-2xl mx-auto mb-8 rounded-2xl border border-primary/30 bg-primary/5 backdrop-blur p-5">
           <div className="flex items-center gap-2 mb-2 text-primary font-semibold">
             <Info className="w-4 h-4" />
