@@ -116,9 +116,10 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   // Remove presence when leaving the page/tab
   useEffect(() => {
-    const onUnload = () => { if (userId) navigator.sendBeacon?.; };
+    const onUnload = () => { if (userId) { clearPresence(); } };
     window.addEventListener("beforeunload", onUnload);
     return () => window.removeEventListener("beforeunload", onUnload);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   // Restore persisted session on mount
