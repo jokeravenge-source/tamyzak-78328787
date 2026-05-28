@@ -189,8 +189,8 @@ const AccountCenter = ({
             {gender ? (
               <div className="space-y-5">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="rounded-3xl bg-background/40 border border-white/10 p-3">
-                    <CharacterAvatar seed={userId} gender={gender} traits={effective} size={320} />
+                  <div className="rounded-3xl bg-background/40 border border-white/10 p-4">
+                    <CharacterAvatar seed={userId} gender={gender} traits={effective} size={420} />
                   </div>
                   <div className="w-full space-y-2">
                     <div className="flex gap-2">
