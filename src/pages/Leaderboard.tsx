@@ -92,8 +92,8 @@ const Leaderboard = ({
                     <div className="w-9 text-center text-lg font-bold text-muted-foreground">
                       {medal ?? `#${i + 1}`}
                     </div>
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-background/40 border border-white/10 shrink-0">
-                      <CharacterAvatar seed={r.user_id} gender={r.gender ?? "male"} traits={r.traits} size={64} />
+                    <div className="w-20 h-20 rounded-full overflow-hidden bg-background/40 border border-white/10 shrink-0">
+                      <CharacterAvatar seed={r.user_id} gender={r.gender ?? "male"} traits={r.traits} size={80} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold truncate">{r.name}{isMe && <span className="text-primary text-xs ml-2">({t("you", "أنت")})</span>}</p>
