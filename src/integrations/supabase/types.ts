@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_sessions: {
+        Row: {
+          last_seen_at: string
+          mission: string
+          started_at: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          mission?: string
+          started_at?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          mission?: string
+          started_at?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       advice_comments: {
         Row: {
           author_name: string
