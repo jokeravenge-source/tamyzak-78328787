@@ -190,7 +190,7 @@ const AccountCenter = ({
               <div className="space-y-5">
                 <div className="flex items-center gap-5">
                   <div className="rounded-2xl bg-background/40 border border-white/10 p-2">
-                    <CharacterAvatar seed={userId} gender={gender} traits={effective} size={120} />
+                    <CharacterAvatar seed={userId} gender={gender} traits={effective} size={200} />
                   </div>
                   <div className="flex-1 space-y-2">
                     <div className="flex gap-2">
