@@ -107,6 +107,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       heartbeatRef.current = window.setInterval(() => {
         supabase.from("active_sessions").update({ last_seen_at: new Date().toISOString() }).eq("user_id", userId);
       }, 30000);
+    } else if (!running && userId) {
+      clearPresence();
     }
     return () => {
       if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
