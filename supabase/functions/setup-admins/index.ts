@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
       });
       const createData = await createRes.json();
       let userId: string | null = createData?.id ?? null;
+      const createError = !userId ? createData : null;
 
       if (!userId) {
         // Look up existing user by paginating through admin/users
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ user_id: userId, role: "admin" }),
         });
       }
-      results.push({ email: a.email, userId, created: !!createData?.id });
+      results.push({ email: a.email, userId, created: !!createData?.id, createError });
     }
     return new Response(JSON.stringify({ ok: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
