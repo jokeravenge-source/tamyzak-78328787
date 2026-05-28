@@ -120,7 +120,6 @@ function hexToRgb(hex: string): [number, number, number] {
 
 // Reference skin tone present in the source PNGs (pale peach).
 const REF_SKIN: [number, number, number] = [254, 235, 228];
-const REF_BLUSH: [number, number, number] = [232, 190, 184];
 
 function tintSkin(img: HTMLImageElement, targetHex: string): string {
   const c = document.createElement("canvas");
@@ -133,23 +132,24 @@ function tintSkin(img: HTMLImageElement, targetHex: string): string {
   const data = ctx.getImageData(0, 0, c.width, c.height);
   const px = data.data;
   const [tr, tg, tb] = hexToRgb(targetHex);
-  // luminance ratio for blush variant
+  // Recolor any warm/peach pixel (skin, shadow, blush) while preserving
+  // its relative tone vs the reference skin (ratio multiply).
   for (let i = 0; i < px.length; i += 4) {
     const r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
-    if (a < 8) continue;
-    const dSkin = Math.abs(r - REF_SKIN[0]) + Math.abs(g - REF_SKIN[1]) + Math.abs(b - REF_SKIN[2]);
-    const dBlush = Math.abs(r - REF_BLUSH[0]) + Math.abs(g - REF_BLUSH[1]) + Math.abs(b - REF_BLUSH[2]);
-    if (dSkin <= 45) {
-      // tonal preserve: keep brightness offset from REF
-      px[i] = clamp(tr + (r - REF_SKIN[0]) * 0.5);
-      px[i + 1] = clamp(tg + (g - REF_SKIN[1]) * 0.5);
-      px[i + 2] = clamp(tb + (b - REF_SKIN[2]) * 0.5);
-    } else if (dBlush <= 40) {
-      // pinker variant for cheeks
-      px[i] = clamp(tr + 18);
-      px[i + 1] = clamp(tg - 8);
-      px[i + 2] = clamp(tb - 4);
-    }
+    if (a < 32) continue;
+    const sum = r + g + b;
+    // Must be warm peach: R >= G >= B, redder than blue, not pure white, not too dark.
+    if (!(r >= g && g >= b)) continue;
+    if (r - b < 8 || r - b > 80) continue;
+    if (sum < 380) continue; // skip dark outlines / hair
+    if (sum > 755) continue; // skip pure white background remnants
+    // Ratio-preserve shading.
+    const nr = (r / REF_SKIN[0]) * tr;
+    const ng = (g / REF_SKIN[1]) * tg;
+    const nb = (b / REF_SKIN[2]) * tb;
+    px[i] = clamp(nr);
+    px[i + 1] = clamp(ng);
+    px[i + 2] = clamp(nb);
   }
   ctx.putImageData(data, 0, 0);
   return c.toDataURL("image/png");
@@ -169,7 +169,6 @@ function useSkinTinted(src: string, skinHex: string): string | null {
       return;
     }
     const img = new Image();
-    img.crossOrigin = "anonymous";
     img.onload = () => {
       if (cancelled) return;
       try {
