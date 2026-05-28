@@ -4,12 +4,14 @@ const corsHeaders = {
 };
 
 const ADMINS = [
+  { email: "majs11@gmail.com", password: "majs11" },
   { email: "mustafa@gmail.com", password: "adminmustafa123" },
   { email: "abdallah6dhs@gmail.com", password: "adminabdallah123" },
   { email: "haneenherself@gmail.com", password: "adminhaneen123" },
-  { email: "Kszolg0-dwldbx-txxeyzasmamohammed848@gmail.com", password: "Asmamohammed20102010" },
-  { email: "neneworkforDHS@gamil.com", password: "nene0work0for0DHS" },
-  { email: "Sx97623@gmail.com", password: "adminmustafa123" },
+  { email: "kszolg0-dwldbx-txxeyzasmamohammed848@gmail.com", password: "Asmamohammed20102010" },
+  { email: "neneworkfordhs@gamil.com", password: "nene0work0for0DHS" },
+  { email: "sx97623@gmail.com", password: "adminmustafa123" },
+  { email: "asmamohammed848@gmail.com", password: "Asmamohammed20102010" },
 ];
 
 Deno.serve(async (req) => {
