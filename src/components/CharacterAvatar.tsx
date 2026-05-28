@@ -169,7 +169,6 @@ function useSkinTinted(src: string, skinHex: string): string | null {
       return;
     }
     const img = new Image();
-    img.crossOrigin = "anonymous";
     img.onload = () => {
       if (cancelled) return;
       try {
