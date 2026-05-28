@@ -221,6 +221,27 @@ const AccountCenter = ({
                     ))}
                   </div>
                 </div>
+
+                {/* Character style */}
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{language === "ar" ? "الشخصية" : "Character"}</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {(gender === "female" ? FEMALE_VARIANTS : MALE_VARIANTS).map((src, i) => {
+                      const v = (i + 1) as CharacterVariant;
+                      const active = (effective?.variant ?? 1) === v;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => updateTraits({ variant: v })}
+                          className={`aspect-square rounded-xl border-2 bg-background/40 transition flex items-center justify-center overflow-hidden ${active ? "border-primary scale-105" : "border-white/10 hover:border-white/30"}`}
+                          aria-label={`Style ${v}`}
+                        >
+                          <img src={src} alt="" className="w-full h-full object-contain" draggable={false} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             ) : (
               <div>
