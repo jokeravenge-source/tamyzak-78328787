@@ -18,10 +18,56 @@ export type BasicsChoice =
   | "todo"
   | "news";
 
+const MOTIVATIONAL_PHRASES = {
+  en: [
+    "Believe in yourself!",
+    "You are unstoppable!",
+    "Dream big, work hard!",
+    "One step closer to greatness!",
+    "Your future starts now!",
+    "Knowledge is power!",
+    "Stay curious, stay winning!",
+    "Make today count!",
+    "Success is a journey!",
+    "You are capable of amazing things!",
+    "Push your limits!",
+    "Excellence is a habit!",
+    "Study now, shine later!",
+    "Every effort matters!",
+    "You got this!",
+    "Progress, not perfection!",
+    "Keep moving forward!",
+    "Your time is now!",
+    "Hard work pays off!",
+    "Be the best version of you!",
+  ],
+  ar: [
+    "آمن بنفسك!",
+    "أنت لا يُقهر!",
+    "احلم كبيراً، اجتهد كثيراً!",
+    "خطوة أقرب إلى العظمة!",
+    "مستقبلك يبدأ الآن!",
+    "العلم قوة!",
+    "كن فضولياً، كن منتصراً!",
+    "اجعل هذا اليوم يُحتسب!",
+    "النجاح رحلة!",
+    "أنت قادر على أمور مذهلة!",
+    "ادفع حدودك!",
+    "التميز عادة!",
+    "ادرس الآن، تلألأ لاحقاً!",
+    "كل جهد يهم!",
+    "أنت تستطيع!",
+    "التقدم، لا الكمال!",
+    "استمر بالتقدم!",
+    "وقتك هو الآن!",
+    "العمل الشاق يُثمر!",
+    "كن النسخة الأفضل من نفسك!",
+  ],
+} as const;
+
 const copy = {
   en: {
     badge: "Home",
-    title: "The Basics",
     description: "Your essential study tools, all in one place.",
     hi: "Hi",
     items: {
@@ -36,7 +82,6 @@ const copy = {
   },
   ar: {
     badge: "الرئيسية",
-    title: "الأساسيات",
     description: "أدواتك الدراسية الأساسية في مكان واحد.",
     hi: "أهلاً",
     items: {
@@ -65,6 +110,8 @@ const Basics = ({
   onNav: (c: MainMenuChoice) => void;
 }) => {
   const t = copy[language];
+  const phrases = MOTIVATIONAL_PHRASES[language];
+  const [motivationalPhrase] = useState(() => phrases[Math.floor(Math.random() * phrases.length)]);
   const { isPremium } = useSubscription();
   const items: { key: BasicsChoice; Icon: React.ComponentType<{ className?: string }> }[] = [
     { key: "flashcards", Icon: Layers },
@@ -221,7 +268,7 @@ const Basics = ({
           <Sparkles className="w-3.5 h-3.5 text-primary" />
           <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{t.badge}</span>
         </div>
-        <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">{t.title}</h1>
+        <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">{motivationalPhrase}</h1>
         <p className="text-muted-foreground md:text-lg max-w-xl mx-auto">{t.description}</p>
         {username && (
           <p className="mt-3 text-sm text-primary font-medium inline-flex items-center gap-2 justify-center">
