@@ -194,20 +194,20 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
       </header>
 
       <div className="max-w-6xl mx-auto relative z-10">
-        <div className="flex gap-2 border-b border-white/10 mb-6">
-          <button onClick={() => setTab("pending")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === "pending" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+        <div className="flex gap-2 border-b border-white/10 mb-6 overflow-x-auto no-scrollbar">
+          <button onClick={() => setTab("pending")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "pending" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Clock className="w-4 h-4 inline mr-1.5" />Summaries — Pending
           </button>
-          <button onClick={() => setTab("approved")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === "approved" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          <button onClick={() => setTab("approved")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "approved" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Check className="w-4 h-4 inline mr-1.5" />Summaries — Approved
           </button>
-          <button onClick={() => setTab("flashcards")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === "flashcards" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          <button onClick={() => setTab("flashcards")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "flashcards" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Layers className="w-4 h-4 inline mr-1.5" />Flashcards
           </button>
-          <button onClick={() => setTab("notifications")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === "notifications" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          <button onClick={() => setTab("notifications")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "notifications" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Bell className="w-4 h-4 inline mr-1.5" />Notifications
           </button>
-          <button onClick={() => setTab("news")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === "news" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+          <button onClick={() => setTab("news")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "news" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Newspaper className="w-4 h-4 inline mr-1.5" />News
           </button>
         </div>

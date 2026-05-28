@@ -301,4 +301,6 @@ html.zombie-mode .gradient-text {
     background-clip: text;
     color: transparent;
   }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
