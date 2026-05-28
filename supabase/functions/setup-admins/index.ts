@@ -37,13 +37,21 @@ Deno.serve(async (req) => {
       let userId: string | null = createData?.id ?? null;
 
       if (!userId) {
-        // Look up existing user
-        const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(a.email)}`, {
-          headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
-        });
-        const listData = await listRes.json();
-        const found = listData?.users?.find((u: any) => u.email?.toLowerCase() === a.email.toLowerCase());
-        userId = found?.id ?? null;
+        // Look up existing user by paginating through admin/users
+        const target = a.email.toLowerCase();
+        let page = 1;
+        while (!userId && page <= 50) {
+          const listRes = await fetch(
+            `${SUPABASE_URL}/auth/v1/admin/users?page=${page}&per_page=1000`,
+            { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
+          );
+          const listData = await listRes.json();
+          const users: any[] = listData?.users ?? [];
+          if (users.length === 0) break;
+          const found = users.find((u: any) => u.email?.toLowerCase() === target);
+          if (found) { userId = found.id; break; }
+          page += 1;
+        }
 
         // Ensure password is set to the requested value
         if (userId) {
