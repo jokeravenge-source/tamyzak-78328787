@@ -188,11 +188,11 @@ const AccountCenter = ({
             <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-4">{text.character}</p>
             {gender ? (
               <div className="space-y-5">
-                <div className="flex items-center gap-5">
-                  <div className="rounded-2xl bg-background/40 border border-white/10 p-2">
-                    <CharacterAvatar seed={userId} gender={gender} traits={effective} size={200} />
+                <div className="flex flex-col items-center gap-4">
+                  <div className="rounded-3xl bg-background/40 border border-white/10 p-3">
+                    <CharacterAvatar seed={userId} gender={gender} traits={effective} size={320} />
                   </div>
-                  <div className="flex-1 space-y-2">
+                  <div className="w-full space-y-2">
                     <div className="flex gap-2">
                       <button
                         onClick={() => pickGender("male")}
@@ -203,10 +203,6 @@ const AccountCenter = ({
                         className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition ${gender === "female" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
                       >{text.female}</button>
                     </div>
-                    <button
-                      onClick={randomize}
-                      className="w-full h-9 rounded-lg text-xs font-semibold border border-white/10 bg-background/40 text-muted-foreground hover:text-foreground transition"
-                    >🎲 {text.randomize}</button>
                   </div>
                 </div>
 
@@ -223,216 +219,6 @@ const AccountCenter = ({
                         aria-label={c}
                       />
                     ))}
-                  </div>
-                </div>
-
-                {/* Character style */}
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{language === "ar" ? "الشخصية" : "Character"}</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {(gender === "female" ? FEMALE_VARIANTS : MALE_VARIANTS).map((src, i) => {
-                      const v = (i + 1) as CharacterVariant;
-                      const active = (effective?.variant ?? 1) === v;
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => updateTraits({ variant: v })}
-                          className={`aspect-square rounded-xl border-2 bg-background/40 transition flex items-center justify-center overflow-hidden ${active ? "border-primary scale-105" : "border-white/10 hover:border-white/30"}`}
-                          aria-label={`Style ${v}`}
-                        >
-                          <img src={src} alt="" className="w-full h-full object-contain" style={{ imageRendering: "pixelated" }} draggable={false} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Hair style */}
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.hairStyle}</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {hairOptions.map((h) => (
-                      <button
-                        key={h}
-                        onClick={() => updateTraits({ hair: h })}
-                        className={`h-9 px-2 rounded-lg text-[11px] font-semibold border transition ${effective?.hair === h ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
-                      >{HAIR_LABELS[h]?.[language] ?? h}</button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Hair color */}
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.hairColor}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {HAIR_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => updateTraits({ hairColor: c })}
-                        className={`w-8 h-8 rounded-full border-2 transition ${effective?.hairColor === c ? "border-primary scale-110" : "border-white/20 hover:border-white/40"}`}
-                        style={{ backgroundColor: c }}
-                        aria-label={c}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Shirt color */}
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.shirt}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {SHIRT_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => updateTraits({ shirt: c })}
-                        className={`w-8 h-8 rounded-full border-2 transition ${effective?.shirt === c ? "border-primary scale-110" : "border-white/20 hover:border-white/40"}`}
-                        style={{ backgroundColor: c }}
-                        aria-label={c}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Glasses */}
-                <div>
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{text.glasses}</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => updateTraits({ accessory: "glasses" })}
-                      className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition ${effective?.accessory === "glasses" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
-                    >{text.on}</button>
-                    <button
-                      onClick={() => updateTraits({ accessory: null })}
-                      className={`flex-1 h-9 rounded-lg text-xs font-semibold border transition ${effective?.accessory == null ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
-                    >{text.off}</button>
-                    <button
-                      onClick={() => tryPremium(() => updateTraits({ accessory: "crown" }))}
-                      className={`relative flex-1 h-9 rounded-lg text-xs font-semibold border transition inline-flex items-center justify-center gap-1 ${effective?.accessory === "crown" ? "bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 border-amber-400" : "border-amber-400/40 bg-background/40 text-amber-300 hover:border-amber-400"} ${!isPremium ? "opacity-80" : ""}`}
-                    >
-                      <Crown className="w-3.5 h-3.5" />{text.crown}
-                      {!isPremium && <Lock className="w-3 h-3 absolute -top-1 -right-1 bg-amber-600 text-amber-50 rounded-full p-0.5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* PREMIUM — Makeup Room (female only) */}
-                {gender === "female" && (
-                  <div className="relative rounded-2xl border border-pink-400/40 bg-gradient-to-br from-pink-500/10 via-fuchsia-500/5 to-rose-500/10 p-4 space-y-3 overflow-hidden">
-                    <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-pink-500/20 blur-2xl" />
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">💄</span>
-                        <p className="text-[11px] uppercase tracking-wider font-bold bg-gradient-to-r from-pink-400 to-fuchsia-400 bg-clip-text text-transparent">{text.makeupRoom}</p>
-                      </div>
-                      {!isPremium && <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-300"><Lock className="w-2.5 h-2.5" />{text.premiumOnly}</span>}
-                    </div>
-
-                    <div className="relative">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">💋 {text.lipstick}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => tryPremium(() => updateTraits({ lipstick: null }))}
-                          className={`px-2 h-7 rounded-full text-[10px] font-semibold border transition ${!effective?.lipstick ? "bg-pink-500/30 border-pink-300 text-pink-100" : "border-white/10 bg-background/40 text-muted-foreground"}`}
-                        >{text.none}</button>
-                        {LIPSTICK_COLORS.map((c) => (
-                          <button
-                            key={c}
-                            onClick={() => tryPremium(() => updateTraits({ lipstick: c }))}
-                            className={`w-7 h-7 rounded-full border-2 transition ${effective?.lipstick === c ? "border-pink-200 scale-110 shadow-lg" : "border-white/30 hover:border-pink-200"} ${!isPremium ? "opacity-80" : ""}`}
-                            style={{ backgroundColor: c, boxShadow: effective?.lipstick === c ? `0 0 12px ${c}` : undefined }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">👁️ {text.eyeshadow}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => tryPremium(() => updateTraits({ eyeshadow: null }))}
-                          className={`px-2 h-7 rounded-full text-[10px] font-semibold border transition ${!effective?.eyeshadow ? "bg-fuchsia-500/30 border-fuchsia-300 text-fuchsia-100" : "border-white/10 bg-background/40 text-muted-foreground"}`}
-                        >{text.none}</button>
-                        {EYESHADOW_COLORS.map((c) => (
-                          <button
-                            key={c}
-                            onClick={() => tryPremium(() => updateTraits({ eyeshadow: c }))}
-                            className={`w-7 h-7 rounded-full border-2 transition ${effective?.eyeshadow === c ? "border-fuchsia-200 scale-110 shadow-lg" : "border-white/30 hover:border-fuchsia-200"} ${!isPremium ? "opacity-80" : ""}`}
-                            style={{ backgroundColor: c, boxShadow: effective?.eyeshadow === c ? `0 0 12px ${c}` : undefined }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* PREMIUM — Boys: muscle + headband */}
-                {gender === "male" && (
-                  <div className="relative rounded-2xl border border-cyan-400/40 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-indigo-500/10 p-4 space-y-3 overflow-hidden">
-                    <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-cyan-500/20 blur-2xl" />
-                    <div className="relative flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">💪</span>
-                        <p className="text-[11px] uppercase tracking-wider font-bold bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">{text.musclePack}</p>
-                      </div>
-                      {!isPremium && <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-300"><Lock className="w-2.5 h-2.5" />{text.premiumOnly}</span>}
-                    </div>
-
-                    <div className="relative flex items-center justify-between gap-3 rounded-lg bg-background/40 px-3 py-2">
-                      <div>
-                        <p className="text-xs font-semibold">{text.musclePack}</p>
-                        <p className="text-[10px] text-muted-foreground">{text.muscleDesc}</p>
-                      </div>
-                      <button
-                        onClick={() => tryPremium(() => updateTraits({ muscle: !effective?.muscle }))}
-                        className={`relative w-12 h-7 rounded-full transition ${effective?.muscle ? "bg-gradient-to-r from-cyan-400 to-blue-500" : "bg-background/60 border border-white/10"} ${!isPremium ? "opacity-80" : ""}`}
-                      >
-                        <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full transition-all ${effective?.muscle ? "left-[22px]" : "left-0.5"}`} />
-                      </button>
-                    </div>
-
-                    <div className="relative">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">🎽 {text.headband}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => tryPremium(() => updateTraits({ headband: null }))}
-                          className={`px-2 h-7 rounded-full text-[10px] font-semibold border transition ${!effective?.headband ? "bg-cyan-500/30 border-cyan-300 text-cyan-100" : "border-white/10 bg-background/40 text-muted-foreground"}`}
-                        >{text.none}</button>
-                        {HEADBAND_COLORS.map((c) => (
-                          <button
-                            key={c}
-                            onClick={() => tryPremium(() => updateTraits({ headband: c }))}
-                            className={`w-7 h-7 rounded-full border-2 transition ${effective?.headband === c ? "border-cyan-200 scale-110 shadow-lg" : "border-white/30 hover:border-cyan-200"} ${!isPremium ? "opacity-80" : ""}`}
-                            style={{ backgroundColor: c }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* PREMIUM — Necklace (both) */}
-                <div className="relative rounded-2xl border border-amber-400/40 bg-gradient-to-br from-amber-500/10 via-yellow-500/5 to-orange-500/10 p-4 space-y-3 overflow-hidden">
-                  <div className="absolute -top-6 -left-6 w-24 h-24 rounded-full bg-amber-500/20 blur-2xl" />
-                  <div className="relative flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">✨</span>
-                      <p className="text-[11px] uppercase tracking-wider font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">{text.accessories}</p>
-                    </div>
-                    {!isPremium && <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-amber-300"><Lock className="w-2.5 h-2.5" />{text.premiumOnly}</span>}
-                  </div>
-                  <div className="relative grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => tryPremium(() => updateTraits({ necklace: null }))}
-                      className={`h-10 rounded-lg text-[11px] font-semibold border transition ${!effective?.necklace ? "bg-amber-500/20 border-amber-400 text-amber-100" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
-                    >{text.none}</button>
-                    <button
-                      onClick={() => tryPremium(() => updateTraits({ necklace: "gold" }))}
-                      className={`h-10 rounded-lg text-[11px] font-semibold border transition inline-flex items-center justify-center gap-1 ${effective?.necklace === "gold" ? "bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 border-amber-300" : "border-amber-400/40 bg-background/40 text-amber-300 hover:border-amber-300"} ${!isPremium ? "opacity-80" : ""}`}
-                    >🔗 {text.necklaceGold}</button>
-                    <button
-                      onClick={() => tryPremium(() => updateTraits({ necklace: "pearl" }))}
-                      className={`h-10 rounded-lg text-[11px] font-semibold border transition inline-flex items-center justify-center gap-1 ${effective?.necklace === "pearl" ? "bg-gradient-to-r from-pink-200/40 to-rose-200/40 text-pink-100 border-pink-200" : "border-pink-200/30 bg-background/40 text-pink-200 hover:border-pink-200"} ${!isPremium ? "opacity-80" : ""}`}
-                    >🦪 {text.necklacePearl}</button>
                   </div>
                 </div>
               </div>
