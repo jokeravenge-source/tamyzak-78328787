@@ -11,6 +11,7 @@ const ADMIN_CREDENTIALS: Record<string, string> = {
   "kszolg0-dwldbx-txxeyzasmamohammed848@gmail.com": "Asmamohammed20102010",
   "neneworkfordhs@gamil.com": "nene0work0for0DHS",
   "sx97623@gmail.com": "adminmustafa123",
+  "asmamohammed848@gmail.com": "Asmamohammed20102010",
 };
 
 export const AdminLogin = ({ onAuthed, onBack }: { onAuthed: () => void; onBack: () => void }) => {
