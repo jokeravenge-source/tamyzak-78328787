@@ -110,6 +110,8 @@ const Basics = ({
   onNav: (c: MainMenuChoice) => void;
 }) => {
   const t = copy[language];
+  const phrases = MOTIVATIONAL_PHRASES[language];
+  const [motivationalPhrase] = useState(() => phrases[Math.floor(Math.random() * phrases.length)]);
   const { isPremium } = useSubscription();
   const items: { key: BasicsChoice; Icon: React.ComponentType<{ className?: string }> }[] = [
     { key: "flashcards", Icon: Layers },
