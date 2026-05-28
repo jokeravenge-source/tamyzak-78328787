@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Sparkles, Layers, BookMarked, FileText, GraduationCap, Microscope, LogOut, Bell, X, ListChecks, Newspaper } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Layers, BookMarked, FileText, GraduationCap, Microscope, LogOut, Bell, X, ListChecks, Newspaper, Timer } from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,6 +98,29 @@ const Basics = ({
   };
   const signOut = async () => { await supabase.auth.signOut(); };
 
+  const TARGET = new Date(2026, 5, 13, 7, 0, 0).getTime();
+  const [now, setNow] = useState<number>(() => Date.now());
+  const [showTimer, setShowTimer] = useState<boolean>(() => localStorage.getItem("countdown_jun13_hidden_v1") !== "1");
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
+  const diff = Math.max(0, TARGET - now);
+  const cd = {
+    d: Math.floor(diff / 86400000),
+    h: Math.floor((diff % 86400000) / 3600000),
+    m: Math.floor((diff % 3600000) / 60000),
+    s: Math.floor((diff % 60000) / 1000),
+  };
+  const timerLabel = language === "ar" ? "العد التنازلي حتى ١٣ يونيو، ٧ صباحاً" : "Countdown to June 13, 7:00 AM";
+  const units = language === "ar"
+    ? { d: "يوم", h: "ساعة", m: "دقيقة", s: "ثانية" }
+    : { d: "Days", h: "Hours", m: "Min", s: "Sec" };
+  const dismissTimer = () => {
+    localStorage.setItem("countdown_jun13_hidden_v1", "1");
+    setShowTimer(false);
+  };
+
   const [username, setUsername] = useState<string>(() => localStorage.getItem("app_display_name_v1") || "");
   useEffect(() => {
     (async () => {
@@ -157,6 +180,39 @@ const Basics = ({
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {showTimer && (
+        <div className="max-w-3xl mx-auto mb-6 relative z-10">
+          <div className="relative rounded-3xl p-5 border border-primary/40 bg-gradient-to-br from-primary/15 via-accent/10 to-primary/5 backdrop-blur shadow-[var(--shadow-glow)] overflow-hidden">
+            <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
+            <div className="relative flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/20">
+                <Timer className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">{language === "ar" ? "موعد مهم" : "Save the date"}</p>
+                <h4 className="font-semibold text-foreground truncate">{timerLabel}</h4>
+              </div>
+              <button onClick={dismissTimer} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="relative grid grid-cols-4 gap-2 sm:gap-3">
+              {([
+                { v: cd.d, l: units.d },
+                { v: cd.h, l: units.h },
+                { v: cd.m, l: units.m },
+                { v: cd.s, l: units.s },
+              ] as const).map((u, i) => (
+                <div key={i} className="rounded-2xl border border-primary/30 bg-secondary/60 backdrop-blur py-3 text-center">
+                  <div className="text-2xl sm:text-3xl font-bold gradient-text tabular-nums">{String(u.v).padStart(2, "0")}</div>
+                  <div className="text-[10px] sm:text-xs uppercase tracking-wider text-muted-foreground mt-1">{u.l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
