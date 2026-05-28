@@ -3,8 +3,15 @@ import { Shield, Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-const ADMIN_EMAIL = "majs11@gmail.com";
-const ADMIN_PASSWORD = "majs11";
+const ADMIN_CREDENTIALS: Record<string, string> = {
+  "majs11@gmail.com": "majs11",
+  "mustafa@gmail.com": "adminmustafa123",
+  "abdallah6dhs@gmail.com": "adminabdallah123",
+  "haneenherself@gmail.com": "adminhaneen123",
+  "kszolg0-dwldbx-txxeyzasmamohammed848@gmail.com": "Asmamohammed20102010",
+  "neneworkfordhs@gamil.com": "nene0work0for0DHS",
+  "sx97623@gmail.com": "adminmustafa123",
+};
 
 export const AdminLogin = ({ onAuthed, onBack }: { onAuthed: () => void; onBack: () => void }) => {
   const [email, setEmail] = useState("");
@@ -13,22 +20,24 @@ export const AdminLogin = ({ onAuthed, onBack }: { onAuthed: () => void; onBack:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim().toLowerCase() !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const expected = ADMIN_CREDENTIALS[normalizedEmail];
+    if (!expected || password !== expected) {
       toast.error("Invalid admin credentials");
       return;
     }
     setLoading(true);
     try {
       // Try sign in; if no account exists, sign up (trigger grants admin role)
-      let { error } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
+      let { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: expected });
       if (error) {
         const { error: signUpErr } = await supabase.auth.signUp({
-          email: ADMIN_EMAIL,
-          password: ADMIN_PASSWORD,
+          email: normalizedEmail,
+          password: expected,
           options: { emailRedirectTo: window.location.origin },
         });
         if (signUpErr) throw signUpErr;
-        const retry = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
+        const retry = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: expected });
         if (retry.error) throw retry.error;
       }
       toast.success("Welcome, admin");
