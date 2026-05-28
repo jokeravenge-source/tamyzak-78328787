@@ -132,17 +132,47 @@ function tintSkin(img: HTMLImageElement, targetHex: string): string {
   const data = ctx.getImageData(0, 0, c.width, c.height);
   const px = data.data;
   const [tr, tg, tb] = hexToRgb(targetHex);
-  // Recolor any warm/peach pixel (skin, shadow, blush) while preserving
-  // its relative tone vs the reference skin (ratio multiply).
+  const total = c.width * c.height;
+  const seed = new Uint8Array(total);
+  const allowed = new Uint8Array(total);
+  const skinMask = new Uint8Array(total);
+
   for (let i = 0; i < px.length; i += 4) {
     const r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
-    if (a < 32) continue;
-    const sum = r + g + b;
-    // Must be warm peach: R >= G >= B, redder than blue, not pure white, not too dark.
-    if (!(r >= g && g >= b)) continue;
-    if (r - b < 8 || r - b > 80) continue;
-    if (sum < 380) continue; // skip dark outlines / hair
-    if (sum > 755) continue; // skip pure white background remnants
+    const p = i / 4;
+    seed[p] = isCoreSkinPixel(r, g, b, a) ? 1 : 0;
+    allowed[p] = isNearbySkinPixel(r, g, b, a) ? 1 : 0;
+  }
+
+  // Female reference art has soft pink/white cheek and ear highlights that are
+  // not strictly peach. Grow the mask from confirmed skin pixels so those
+  // connected highlights recolor, while disconnected hair/clothes stay intact.
+  for (let p = 0; p < total; p++) {
+    if (!seed[p] || skinMask[p]) continue;
+    const stack = [p];
+    skinMask[p] = 1;
+    while (stack.length) {
+      const cur = stack.pop()!;
+      const x = cur % c.width;
+      const y = Math.floor(cur / c.width);
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || nx >= c.width || ny < 0 || ny >= c.height) continue;
+          const next = ny * c.width + nx;
+          if (!allowed[next] || skinMask[next]) continue;
+          skinMask[next] = 1;
+          stack.push(next);
+        }
+      }
+    }
+  }
+
+  for (let i = 0; i < px.length; i += 4) {
+    if (!skinMask[i / 4]) continue;
+    const r = px[i], g = px[i + 1], b = px[i + 2];
     // Ratio-preserve shading.
     const nr = (r / REF_SKIN[0]) * tr;
     const ng = (g / REF_SKIN[1]) * tg;
@@ -153,6 +183,18 @@ function tintSkin(img: HTMLImageElement, targetHex: string): string {
   }
   ctx.putImageData(data, 0, 0);
   return c.toDataURL("image/png");
+}
+
+function isCoreSkinPixel(r: number, g: number, b: number, a: number): boolean {
+  if (a < 32) return false;
+  const sum = r + g + b;
+  return r >= g && g >= b && r - b >= 8 && r - b <= 80 && sum >= 380 && sum <= 755;
+}
+
+function isNearbySkinPixel(r: number, g: number, b: number, a: number): boolean {
+  if (a < 32) return false;
+  const sum = r + g + b;
+  return r >= 120 && sum >= 300 && sum <= 765 && r >= g - 12 && r >= b - 8 && r - Math.min(g, b) >= 2 && g - b >= -45;
 }
 
 function clamp(v: number) {
