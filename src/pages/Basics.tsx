@@ -268,7 +268,7 @@ const Basics = ({
           <Sparkles className="w-3.5 h-3.5 text-primary" />
           <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{t.badge}</span>
         </div>
-        <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">{t.title}</h1>
+        <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">{motivationalPhrase}</h1>
         <p className="text-muted-foreground md:text-lg max-w-xl mx-auto">{t.description}</p>
         {username && (
           <p className="mt-3 text-sm text-primary font-medium inline-flex items-center gap-2 justify-center">
