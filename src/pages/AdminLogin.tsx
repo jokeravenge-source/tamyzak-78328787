@@ -3,17 +3,6 @@ import { Shield, Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-const ADMIN_CREDENTIALS: Record<string, string> = {
-  "majs11@gmail.com": "majs11",
-  "mustafa@gmail.com": "adminmustafa123",
-  "abdallah6dhs@gmail.com": "adminabdallah123",
-  "haneenherself@gmail.com": "adminhaneen123",
-  "kszolg0-dwldbx-txxeyzasmamohammed848@gmail.com": "Asmamohammed20102010",
-  "neneworkfordhs@gamil.com": "nene0work0for0DHS",
-  "sx97623@gmail.com": "adminmustafa123",
-  "asmamohammed848@gmail.com": "Asmamohammed20102010",
-};
-
 export const AdminLogin = ({ onAuthed, onBack }: { onAuthed: () => void; onBack: () => void }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,25 +11,23 @@ export const AdminLogin = ({ onAuthed, onBack }: { onAuthed: () => void; onBack:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
-    const expected = ADMIN_CREDENTIALS[normalizedEmail];
-    if (!expected || password !== expected) {
-      toast.error("Invalid admin credentials");
-      return;
-    }
     setLoading(true);
     try {
-      // Try sign in; if no account exists, sign up (trigger grants admin role)
-      let { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: expected });
-      if (error) {
-        const { error: signUpErr } = await supabase.auth.signUp({
-          email: normalizedEmail,
-          password: expected,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (signUpErr) throw signUpErr;
-        const retry = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: expected });
-        if (retry.error) throw retry.error;
+      // Verify credentials server-side (credentials never live in the client bundle).
+      const { data, error: fnErr } = await supabase.functions.invoke("admin-auth", {
+        body: { email: normalizedEmail, password },
+      });
+      if (fnErr || !data?.ok) {
+        toast.error("Invalid admin credentials");
+        setLoading(false);
+        return;
       }
+      // Server has guaranteed the user exists with this password; now sign in.
+      const { error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+      if (error) throw error;
       toast.success("Welcome, admin");
       onAuthed();
     } catch (err: any) {
