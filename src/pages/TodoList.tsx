@@ -3,15 +3,36 @@ import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, PartyPopper } from "luci
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 
-type Todo = { id: string; text: string; done: boolean };
+type Todo = { id: string; text: string; done: boolean; day?: string };
 
 const STORAGE_KEY = "app_todos_v1";
 const CELEBRATED_KEY = "app_todos_celebrated_v1";
+const WEEK_KEY = "app_todos_week_v1";
+
+function getISOWeek(d = new Date()): string {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${date.getUTCFullYear()}-W${weekNo}`;
+}
+
+const DAY_ORDER_EN = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const DAY_ORDER_AR = ["السبت", "الأحد", "الإثنين", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
+function dayRank(day?: string): number {
+  if (!day) return 99;
+  const en = DAY_ORDER_EN.indexOf(day);
+  if (en >= 0) return en;
+  const ar = DAY_ORDER_AR.indexOf(day);
+  if (ar >= 0) return ar === 3 ? 2 : ar > 3 ? ar - 1 : ar;
+  return 50;
+}
 
 const t = {
   en: {
     title: "To-Do List",
-    subtitle: "Plan your day, check things off, and finish strong.",
+    subtitle: "Resets every week. Plan, check off, finish strong.",
     add: "Add",
     placeholder: "Add a task…",
     empty: "No tasks yet. Add your first one above.",
@@ -24,7 +45,7 @@ const t = {
   },
   ar: {
     title: "قائمة المهام",
-    subtitle: "خطّط يومك، أنجز مهامك، وأنهِ بقوة.",
+    subtitle: "تُعاد كل أسبوع. خطّط، أنجز، وأنهِ بقوة.",
     add: "إضافة",
     placeholder: "أضف مهمة…",
     empty: "لا توجد مهام بعد. أضف أول مهمة بالأعلى.",
@@ -40,10 +61,26 @@ const t = {
 const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const text = t[language];
   const [todos, setTodos] = useState<Todo[]>(() => {
+    const currentWeek = getISOWeek();
+    const storedWeek = localStorage.getItem(WEEK_KEY);
+    if (storedWeek !== currentWeek) {
+      localStorage.setItem(WEEK_KEY, currentWeek);
+      localStorage.setItem(STORAGE_KEY, "[]");
+      localStorage.removeItem(CELEBRATED_KEY);
+      return [];
+    }
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
   });
   const [input, setInput] = useState("");
   const [showCongrats, setShowCongrats] = useState(false);
+
+  useEffect(() => {
+    const onChange = () => {
+      try { setTodos(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]")); } catch { /* noop */ }
+    };
+    window.addEventListener("app:todos-changed", onChange);
+    return () => window.removeEventListener("app:todos-changed", onChange);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
@@ -113,39 +150,62 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </div>
         )}
 
-        <ul className="space-y-2">
-          {todos.length === 0 && (
-            <li className="rounded-2xl border border-dashed border-white/10 bg-secondary/30 p-6 text-center text-sm text-muted-foreground">
-              {text.empty}
-            </li>
-          )}
-          <AnimatePresence initial={false}>
-            {todos.map((todo) => (
-              <motion.li
-                key={todo.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: language === "ar" ? -20 : 20 }}
-                transition={{ duration: 0.2 }}
-                className={`flex items-center gap-3 rounded-2xl border p-4 backdrop-blur transition ${todo.done ? "border-primary/40 bg-primary/10" : "border-white/10 bg-secondary/40"}`}
-              >
-                <button onClick={() => toggle(todo.id)} className="shrink-0">
-                  {todo.done ? (
-                    <CheckCircle2 className="w-6 h-6 text-primary" />
-                  ) : (
-                    <Circle className="w-6 h-6 text-muted-foreground" />
+        {todos.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-white/10 bg-secondary/30 p-6 text-center text-sm text-muted-foreground">
+            {text.empty}
+          </div>
+        ) : (() => {
+          const groups = new Map<string, Todo[]>();
+          for (const td of todos) {
+            const key = td.day || "__none__";
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key)!.push(td);
+          }
+          const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
+            if (a === "__none__") return 1;
+            if (b === "__none__") return -1;
+            return dayRank(a) - dayRank(b);
+          });
+          return (
+            <div className="space-y-6">
+              {sortedKeys.map((key) => (
+                <div key={key}>
+                  {key !== "__none__" && (
+                    <h3 className="text-xs uppercase tracking-[0.2em] text-primary mb-2 px-1">{key}</h3>
                   )}
-                </button>
-                <span className={`flex-1 text-sm ${todo.done ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                  {todo.text}
-                </span>
-                <button onClick={() => remove(todo.id)} aria-label="delete" className="text-muted-foreground hover:text-destructive transition">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </ul>
+                  <ul className="space-y-2">
+                    <AnimatePresence initial={false}>
+                      {groups.get(key)!.map((todo) => (
+                        <motion.li
+                          key={todo.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, x: language === "ar" ? -20 : 20 }}
+                          transition={{ duration: 0.2 }}
+                          className={`flex items-center gap-3 rounded-2xl border p-4 backdrop-blur transition ${todo.done ? "border-primary/40 bg-primary/10" : "border-white/10 bg-secondary/40"}`}
+                        >
+                          <button onClick={() => toggle(todo.id)} className="shrink-0">
+                            {todo.done ? (
+                              <CheckCircle2 className="w-6 h-6 text-primary" />
+                            ) : (
+                              <Circle className="w-6 h-6 text-muted-foreground" />
+                            )}
+                          </button>
+                          <span className={`flex-1 text-sm ${todo.done ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                            {todo.text}
+                          </span>
+                          <button onClick={() => remove(todo.id)} aria-label="delete" className="text-muted-foreground hover:text-destructive transition">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </motion.li>
+                      ))}
+                    </AnimatePresence>
+                  </ul>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </section>
 
       <AnimatePresence>

@@ -8,6 +8,7 @@ import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import { useSubscription } from "@/hooks/useSubscription";
+import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 
 export type BasicsChoice =
   | "flashcards"
@@ -316,6 +317,7 @@ const Basics = ({
       <StreakTree language={language} />
     </motion.main>
       <CurvedNavBar language={language} active="basics" onSelect={onNav} />
+      <ExcellenceCompanion language={language} />
       </>
   );
 };
