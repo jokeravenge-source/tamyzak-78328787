@@ -150,39 +150,62 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </div>
         )}
 
-        <ul className="space-y-2">
-          {todos.length === 0 && (
-            <li className="rounded-2xl border border-dashed border-white/10 bg-secondary/30 p-6 text-center text-sm text-muted-foreground">
-              {text.empty}
-            </li>
-          )}
-          <AnimatePresence initial={false}>
-            {todos.map((todo) => (
-              <motion.li
-                key={todo.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: language === "ar" ? -20 : 20 }}
-                transition={{ duration: 0.2 }}
-                className={`flex items-center gap-3 rounded-2xl border p-4 backdrop-blur transition ${todo.done ? "border-primary/40 bg-primary/10" : "border-white/10 bg-secondary/40"}`}
-              >
-                <button onClick={() => toggle(todo.id)} className="shrink-0">
-                  {todo.done ? (
-                    <CheckCircle2 className="w-6 h-6 text-primary" />
-                  ) : (
-                    <Circle className="w-6 h-6 text-muted-foreground" />
+        {todos.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-white/10 bg-secondary/30 p-6 text-center text-sm text-muted-foreground">
+            {text.empty}
+          </div>
+        ) : (() => {
+          const groups = new Map<string, Todo[]>();
+          for (const td of todos) {
+            const key = td.day || "__none__";
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key)!.push(td);
+          }
+          const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
+            if (a === "__none__") return 1;
+            if (b === "__none__") return -1;
+            return dayRank(a) - dayRank(b);
+          });
+          return (
+            <div className="space-y-6">
+              {sortedKeys.map((key) => (
+                <div key={key}>
+                  {key !== "__none__" && (
+                    <h3 className="text-xs uppercase tracking-[0.2em] text-primary mb-2 px-1">{key}</h3>
                   )}
-                </button>
-                <span className={`flex-1 text-sm ${todo.done ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                  {todo.text}
-                </span>
-                <button onClick={() => remove(todo.id)} aria-label="delete" className="text-muted-foreground hover:text-destructive transition">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </ul>
+                  <ul className="space-y-2">
+                    <AnimatePresence initial={false}>
+                      {groups.get(key)!.map((todo) => (
+                        <motion.li
+                          key={todo.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, x: language === "ar" ? -20 : 20 }}
+                          transition={{ duration: 0.2 }}
+                          className={`flex items-center gap-3 rounded-2xl border p-4 backdrop-blur transition ${todo.done ? "border-primary/40 bg-primary/10" : "border-white/10 bg-secondary/40"}`}
+                        >
+                          <button onClick={() => toggle(todo.id)} className="shrink-0">
+                            {todo.done ? (
+                              <CheckCircle2 className="w-6 h-6 text-primary" />
+                            ) : (
+                              <Circle className="w-6 h-6 text-muted-foreground" />
+                            )}
+                          </button>
+                          <span className={`flex-1 text-sm ${todo.done ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                            {todo.text}
+                          </span>
+                          <button onClick={() => remove(todo.id)} aria-label="delete" className="text-muted-foreground hover:text-destructive transition">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </motion.li>
+                      ))}
+                    </AnimatePresence>
+                  </ul>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </section>
 
       <AnimatePresence>
