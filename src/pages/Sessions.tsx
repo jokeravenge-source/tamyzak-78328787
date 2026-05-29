@@ -305,8 +305,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   if (!subject) {
     return (
-      <main className="min-h-screen px-4 py-10 md:py-16" dir={dir}>
-        <button onClick={onBack} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground">
+    <main className="relative min-h-screen px-4 py-10 md:py-16" dir={dir}>
+      <button onClick={onBack} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <header className="text-center max-w-2xl mx-auto mb-10">
@@ -346,8 +346,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const subj = SUBJECTS.find((s) => s.code === subject)!;
 
   return (
-    <main className="min-h-screen px-4 py-10 md:py-16" dir={dir}>
-      <button onClick={() => { if (running) return; setSubject(null); }} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground">
+    <main className="relative min-h-screen px-4 py-10 md:py-16" dir={dir}>
+      <button onClick={() => { if (running) return; setSubject(null); }} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
         <ArrowLeft className="w-5 h-5" />
       </button>
       <div className="max-w-3xl mx-auto">
