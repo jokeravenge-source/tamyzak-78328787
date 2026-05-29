@@ -92,6 +92,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       subject: subj,
       mission: miss.slice(0, 200),
       last_seen_at: new Date().toISOString(),
+      started_at: new Date().toISOString(),
     });
   };
   const clearPresence = async () => {
@@ -312,7 +313,6 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-3">{L.title}</h1>
           <p className="text-muted-foreground">{L.desc}</p>
         </header>
-        <StudyRoom language={language} />
         <div className="max-w-2xl mx-auto mb-8 rounded-2xl border border-primary/30 bg-primary/5 backdrop-blur p-5">
           <div className="flex items-center gap-2 mb-2 text-primary font-semibold">
             <Info className="w-4 h-4" />
@@ -324,15 +324,18 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             <li>{L.pointsLine3}</li>
           </ul>
         </div>
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {SUBJECTS.map((s) => {
             const SIcon = s.Icon;
             return (
-              <button key={s.code} onClick={() => setSubject(s.code)}
-                className="rounded-2xl border border-primary/40 bg-secondary/40 backdrop-blur p-6 h-32 hover:-translate-y-1 hover:border-primary transition-all text-left">
-                <SIcon className="w-6 h-6 text-primary mb-3" />
-                <div className="font-semibold text-lg">{language === "ar" ? s.ar : s.en}</div>
-              </button>
+              <div key={s.code} className="rounded-2xl border border-primary/40 bg-secondary/40 backdrop-blur p-4 hover:border-primary transition-all">
+                <button onClick={() => setSubject(s.code)} className="w-full flex items-center gap-3 mb-3 text-left">
+                  <SIcon className="w-6 h-6 text-primary" />
+                  <div className="font-semibold text-lg flex-1">{language === "ar" ? s.ar : s.en}</div>
+                  <span className="text-xs text-primary underline">{language === "ar" ? "ادخل" : "Enter"}</span>
+                </button>
+                <StudyRoom language={language} subject={s.code} currentUserId={userId} />
+              </div>
             );
           })}
         </div>
