@@ -92,6 +92,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       subject: subj,
       mission: miss.slice(0, 200),
       last_seen_at: new Date().toISOString(),
+      started_at: new Date().toISOString(),
     });
   };
   const clearPresence = async () => {
