@@ -124,7 +124,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         return {
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "الأحياء · التكاثر" : "Biology · Reproduction",
-          cards: flashcardsBioCh3En,
+          cards: language === "ar" ? flashcardsBioCh3Ar : flashcardsBioCh3En,
         };
       }
       if (subject === "biology" && chapter === "5") {
