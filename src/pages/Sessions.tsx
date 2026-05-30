@@ -347,7 +347,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   return (
     <main className="relative min-h-screen px-4 py-10 md:py-16" dir={dir}>
-      <button onClick={() => { if (running) return; setSubject(null); }} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
+      <button onClick={() => setSubject(null)} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
         <ArrowLeft className="w-5 h-5" />
       </button>
       <div className="max-w-3xl mx-auto">
@@ -355,6 +355,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           <h1 className="text-3xl md:text-4xl font-bold gradient-text">{language === "ar" ? subj.ar : subj.en}</h1>
           <p className="text-muted-foreground mt-1">{displayName}</p>
         </header>
+
+        <StudyRoom language={language} subject={subject} currentUserId={userId} />
 
         <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur p-8 space-y-5">
           <label className="block">
