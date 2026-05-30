@@ -83,25 +83,26 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const savingRef = useRef(false);
   const heartbeatRef = useRef<number | null>(null);
+  // Mirror the studying timer so presence writes can reflect accumulated seconds
+  // (paused-aware), making the room timer match the user's own timer exactly.
+  const secondsRef = useRef(0);
+  useEffect(() => { secondsRef.current = seconds; }, [seconds]);
 
   // --- Live presence helpers ---
   const upsertPresence = async (subj: string, miss: string) => {
     if (!userId) return;
-    // Check if a row already exists so we don't reset started_at on every heartbeat.
-    const { data: existing } = await supabase
-      .from("active_sessions")
-      .select("user_id,subject,started_at")
-      .eq("user_id", userId)
-      .maybeSingle();
-    const nowIso = new Date().toISOString();
-    const sameSubject = existing && existing.subject === subj;
+    const nowMs = Date.now();
+    // started_at = now - elapsedSeconds so room renders the same elapsed time
+    // as the in-page studying timer (and freezes naturally while paused).
+    const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
+    const nowIso = new Date(nowMs).toISOString();
     await supabase.from("active_sessions").upsert(
       {
         user_id: userId,
         subject: subj,
         mission: miss.slice(0, 200),
         last_seen_at: nowIso,
-        started_at: sameSubject ? (existing!.started_at as string) : nowIso,
+        started_at: startedIso,
       },
       { onConflict: "user_id" }
     );
@@ -118,12 +119,22 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     if (userId && subject) {
       upsertPresence(subject, mission);
       heartbeatRef.current = window.setInterval(() => {
-        supabase.from("active_sessions").update({ last_seen_at: new Date().toISOString() }).eq("user_id", userId);
+        const nowMs = Date.now();
+        const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
+        supabase
+          .from("active_sessions")
+          .update({ last_seen_at: new Date(nowMs).toISOString(), started_at: startedIso })
+          .eq("user_id", userId);
       }, 20000);
       // Also refresh on tab focus (setInterval is throttled in background tabs).
       const onVis = () => {
         if (document.visibilityState === "visible" && userId) {
-          supabase.from("active_sessions").update({ last_seen_at: new Date().toISOString() }).eq("user_id", userId);
+          const nowMs = Date.now();
+          const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
+          supabase
+            .from("active_sessions")
+            .update({ last_seen_at: new Date(nowMs).toISOString(), started_at: startedIso })
+            .eq("user_id", userId);
         }
       };
       document.addEventListener("visibilitychange", onVis);
