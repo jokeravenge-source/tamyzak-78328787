@@ -3,16 +3,16 @@ import boy1 from "@/assets/character-boy-1.png";
 import boy2 from "@/assets/character-boy-2.png";
 import boy3 from "@/assets/character-boy-3.png";
 import boy4 from "@/assets/character-boy-4.png";
-import boy5 from "@/assets/character-boy-5.jpg";
-import boy6 from "@/assets/character-boy-6.jpg";
-import boy7 from "@/assets/character-boy-7.jpg";
+import boy5 from "@/assets/character-boy-5.png";
+import boy6 from "@/assets/character-boy-6.png";
+import boy7 from "@/assets/character-boy-7.png";
 import girl1 from "@/assets/character-girl-1.png";
 import girl2 from "@/assets/character-girl-2.png";
 import girl3 from "@/assets/character-girl-3.png";
 import girl4 from "@/assets/character-girl-4.png";
-import girl5 from "@/assets/character-girl-5.jpg";
-import girl6 from "@/assets/character-girl-6.jpg";
-import girl7 from "@/assets/character-girl-7.jpg";
+import girl5 from "@/assets/character-girl-5.png";
+import girl6 from "@/assets/character-girl-6.png";
+import girl7 from "@/assets/character-girl-7.png";
 
 export type Gender = "male" | "female";
 
