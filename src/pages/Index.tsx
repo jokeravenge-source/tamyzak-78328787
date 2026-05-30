@@ -21,6 +21,7 @@ import { flashcardsBioCh5Ar } from "@/data/flashcardsBioCh5Ar";
 import { flashcardsBioCh1En } from "@/data/flashcardsBioCh1En";
 import { flashcardsBioCh2En } from "@/data/flashcardsBioCh2En";
 import { flashcardsBioCh3En } from "@/data/flashcardsBioCh3En";
+import { flashcardsBioCh3Ar } from "@/data/flashcardsBioCh3Ar";
 import { flashcardsBioCh5En } from "@/data/flashcardsBioCh5En";
 import { flashcardsChemCh1En } from "@/data/flashcardsChemCh1En";
 import { flashcardsChemCh2En } from "@/data/flashcardsChemCh2En";
@@ -123,7 +124,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         return {
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "الأحياء · التكاثر" : "Biology · Reproduction",
-          cards: flashcardsBioCh3En,
+          cards: language === "ar" ? flashcardsBioCh3Ar : flashcardsBioCh3En,
         };
       }
       if (subject === "biology" && chapter === "5") {
