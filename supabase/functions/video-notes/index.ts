@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SUPADATA_API_KEY = "sd_dae1dd54e036d269cd3e42b7d14ef292";
+const SUPADATA_API_KEY = Deno.env.get("SUPADATA_API_KEY") ?? "sd_dae1dd54e036d269cd3e42b7d14ef292";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -40,8 +40,18 @@ Deno.serve(async (req) => {
     });
     if (!tRes.ok) {
       const errText = await tRes.text();
-      return new Response(JSON.stringify({ error: `Transcript failed: ${errText}` }), {
-        status: 502,
+      let parsed: any = null;
+      try { parsed = JSON.parse(errText); } catch { /* ignore */ }
+      const isQuota = tRes.status === 429 || parsed?.error === "limit-exceeded";
+      const friendly = isQuota
+        ? (lang0 === "ar"
+            ? "خدمة تفريغ الفيديو وصلت إلى حدّها. يرجى المحاولة لاحقاً أو تحديث مفتاح SUPADATA_API_KEY."
+            : "Video transcript service quota reached. Please try again later or update the SUPADATA_API_KEY.")
+        : (lang0 === "ar"
+            ? "تعذّر جلب نص الفيديو. تأكد من الرابط وحاول مجدداً."
+            : "Could not fetch the video transcript. Check the link and try again.");
+      return new Response(JSON.stringify({ error: friendly, detail: errText }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
