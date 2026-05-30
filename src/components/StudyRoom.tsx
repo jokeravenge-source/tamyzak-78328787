@@ -177,23 +177,23 @@ export default function StudyRoom({
             <p className="text-sm text-muted-foreground bg-background/60 backdrop-blur px-4 py-2 rounded-full">{empty}</p>
           </div>
         ) : (
-          <div className="relative z-10 pt-4 pb-4 px-3 flex flex-wrap gap-3 justify-center items-end" style={{ minHeight: 240 }}>
+          <div className="relative z-10 pt-6 pb-6 px-4 flex flex-wrap gap-5 justify-center items-end" style={{ minHeight: 280 }}>
             {people.map((p) => {
               const isMe = currentUserId && p.user_id === currentUserId;
               return (
-                <div key={p.user_id} className="flex flex-col items-center" style={{ width: 88 }}>
-                  <div className={`mb-1 px-2 py-0.5 rounded-full backdrop-blur border text-[11px] font-medium max-w-[88px] truncate ${isMe ? "bg-primary text-primary-foreground border-primary" : "bg-background/80 border-primary/30"}`}>
+                <div key={p.user_id} className="flex flex-col items-center" style={{ width: 120 }}>
+                  <div className={`mb-1 px-2 py-0.5 rounded-full backdrop-blur border text-xs font-medium max-w-[120px] truncate ${isMe ? "bg-primary text-primary-foreground border-primary" : "bg-background/80 border-primary/30"}`}>
                     {isMe ? (language === "ar" ? "أنت" : "You") : p.display_name}
                   </div>
                   <div className="relative">
-                    <CharacterAvatar gender={p.gender} traits={p.character ?? undefined} size={64} />
-                    <div className="w-16 h-2.5 -mt-2 mx-auto rounded-sm bg-gradient-to-b from-primary/40 to-primary/20 border border-primary/40" />
-                    <div className="flex justify-between w-14 mx-auto">
-                      <div className="w-0.5 h-2.5 bg-primary/40" />
-                      <div className="w-0.5 h-2.5 bg-primary/40" />
+                    <CharacterAvatar gender={p.gender} traits={p.character ?? undefined} size={96} />
+                    <div className="w-24 h-3.5 -mt-3 mx-auto rounded-sm bg-gradient-to-b from-primary/40 to-primary/20 border border-primary/40" />
+                    <div className="flex justify-between w-20 mx-auto">
+                      <div className="w-0.5 h-3.5 bg-primary/40" />
+                      <div className="w-0.5 h-3.5 bg-primary/40" />
                     </div>
                   </div>
-                  <div className="mt-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
+                  <div className="mt-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
                     {formatHMS(computeElapsedSeconds(p, now))}
                   </div>
                 </div>
