@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       active_sessions: {
         Row: {
+          elapsed_seconds: number
+          is_running: boolean
           last_seen_at: string
           mission: string
           started_at: string
@@ -23,6 +25,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          elapsed_seconds?: number
+          is_running?: boolean
           last_seen_at?: string
           mission?: string
           started_at?: string
@@ -30,6 +34,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          elapsed_seconds?: number
+          is_running?: boolean
           last_seen_at?: string
           mission?: string
           started_at?: string

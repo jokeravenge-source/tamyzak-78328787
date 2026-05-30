@@ -11,6 +11,9 @@ type Occupant = {
   gender: Gender | null;
   character: Partial<CharacterTraits> | null;
   started_at: string;
+  last_seen_at: string;
+  elapsed_seconds: number;
+  is_running: boolean;
 };
 
 const SUBJECT_LABEL: Record<string, { en: string; ar: string }> = {
@@ -26,13 +29,21 @@ const SUBJECT_LABEL: Record<string, { en: string; ar: string }> = {
 
 const ROOM_CAPACITY = 20;
 
-function fmtElapsed(startIso: string, now: number) {
-  const diff = Math.max(0, Math.floor((now - new Date(startIso).getTime()) / 1000));
+function formatHMS(totalSeconds: number) {
+  const diff = Math.max(0, Math.floor(totalSeconds));
   const h = Math.floor(diff / 3600);
   const m = Math.floor((diff % 3600) / 60);
   const s = diff % 60;
   const pad = (n: number) => n.toString().padStart(2, "0");
   return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+}
+
+// Mirror Sessions exactly: while running, add wall-clock elapsed since last
+// server heartbeat to elapsed_seconds. While paused, freeze on elapsed_seconds.
+function computeElapsedSeconds(p: Occupant, nowMs: number) {
+  if (!p.is_running) return p.elapsed_seconds;
+  const sinceHeartbeat = Math.max(0, (nowMs - new Date(p.last_seen_at).getTime()) / 1000);
+  return p.elapsed_seconds + sinceHeartbeat;
 }
 
 export default function StudyRoom({
@@ -60,7 +71,7 @@ export default function StudyRoom({
       const since = new Date(Date.now() - 90 * 1000).toISOString();
       const { data: active } = await supabase
         .from("active_sessions")
-        .select("user_id,subject,mission,last_seen_at,started_at")
+        .select("user_id,subject,mission,last_seen_at,started_at,elapsed_seconds,is_running")
         .eq("subject", subject)
         .gte("last_seen_at", since);
       if (!mounted) return;
@@ -83,6 +94,9 @@ export default function StudyRoom({
           gender: (p.gender ?? "male") as Gender,
           character: p.character ?? null,
           started_at: r.started_at,
+          last_seen_at: r.last_seen_at,
+          elapsed_seconds: r.elapsed_seconds ?? 0,
+          is_running: !!r.is_running,
         };
       });
       // Put current user first
@@ -180,7 +194,7 @@ export default function StudyRoom({
                     </div>
                   </div>
                   <div className="mt-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
-                    {fmtElapsed(p.started_at, now)}
+                    {formatHMS(computeElapsedSeconds(p, now))}
                   </div>
                 </div>
               );
