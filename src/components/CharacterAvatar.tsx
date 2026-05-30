@@ -3,16 +3,22 @@ import boy1 from "@/assets/character-boy-1.png";
 import boy2 from "@/assets/character-boy-2.png";
 import boy3 from "@/assets/character-boy-3.png";
 import boy4 from "@/assets/character-boy-4.png";
+import boy5 from "@/assets/character-boy-5.jpg";
+import boy6 from "@/assets/character-boy-6.jpg";
+import boy7 from "@/assets/character-boy-7.jpg";
 import girl1 from "@/assets/character-girl-1.png";
 import girl2 from "@/assets/character-girl-2.png";
 import girl3 from "@/assets/character-girl-3.png";
 import girl4 from "@/assets/character-girl-4.png";
+import girl5 from "@/assets/character-girl-5.jpg";
+import girl6 from "@/assets/character-girl-6.jpg";
+import girl7 from "@/assets/character-girl-7.jpg";
 
 export type Gender = "male" | "female";
 
-export const MALE_VARIANTS = [boy1, boy2, boy3, boy4] as const;
-export const FEMALE_VARIANTS = [girl1, girl2, girl3, girl4] as const;
-export type CharacterVariant = 1 | 2 | 3 | 4;
+export const MALE_VARIANTS = [boy1, boy2, boy3, boy4, boy5, boy6, boy7] as const;
+export const FEMALE_VARIANTS = [girl1, girl2, girl3, girl4, girl5, girl6, girl7] as const;
+export type CharacterVariant = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 // Kept for API compatibility with AccountCenter / Leaderboard.
 export const SKIN_COLORS = ["#fff6f1", "#feede6", "#ffe6d5", "#f1cfc5", "#d2b0a2", "#a17c6a"] as const;
@@ -71,7 +77,7 @@ export function CharacterAvatar({
 }) {
   const g: Gender = gender ?? "male";
   const variant = (traits?.variant ?? 1) as CharacterVariant;
-  const idx = Math.max(0, Math.min(3, variant - 1));
+  const idx = Math.max(0, Math.min(MALE_VARIANTS.length - 1, variant - 1));
   const src = g === "female" ? FEMALE_VARIANTS[idx] : MALE_VARIANTS[idx];
   const hasCrown = traits?.accessory === "crown";
   const skin = traits?.skin ?? SKIN_COLORS[0];
