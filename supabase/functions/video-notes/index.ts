@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SUPADATA_API_KEY = "sd_42f99c2a37f96d372f0dc3e052df52d3";
+const SUPADATA_API_KEY = "sd_dae1dd54e036d269cd3e42b7d14ef292";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -14,15 +14,24 @@ Deno.serve(async (req) => {
     const { url, language } = await req.json();
     const lang0 = language === "en" ? "en" : "ar";
     if (!url || typeof url !== "string") {
-      return new Response(JSON.stringify({ error: "Missing url" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Missing url" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     const ent = await claimFeature(req, "video");
     if (!ent.ok) {
-      return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), { status: ent.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), {
+        status: ent.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // 1) Get transcript from Supadata
@@ -31,7 +40,10 @@ Deno.serve(async (req) => {
     });
     if (!tRes.ok) {
       const errText = await tRes.text();
-      return new Response(JSON.stringify({ error: `Transcript failed: ${errText}` }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: `Transcript failed: ${errText}` }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     const tData = await tRes.json();
     let transcript: string = "";
@@ -39,7 +51,10 @@ Deno.serve(async (req) => {
     else if (Array.isArray(tData.content)) transcript = tData.content.map((c: any) => c.text ?? "").join(" ");
     else if (typeof tData.text === "string") transcript = tData.text;
     if (!transcript || transcript.trim().length < 20) {
-      return new Response(JSON.stringify({ error: "Empty transcript" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Empty transcript" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     transcript = transcript.slice(0, 60000);
 
@@ -60,12 +75,20 @@ Deno.serve(async (req) => {
     if (!aiRes.ok) {
       const errText = await aiRes.text();
       const status = aiRes.status === 429 || aiRes.status === 402 ? aiRes.status : 500;
-      return new Response(JSON.stringify({ error: errText }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: errText }), {
+        status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     const aiData = await aiRes.json();
     const notes = aiData.choices?.[0]?.message?.content ?? "";
-    return new Response(JSON.stringify({ notes, transcript }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ notes, transcript }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
