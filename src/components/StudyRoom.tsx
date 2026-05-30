@@ -28,6 +28,7 @@ const SUBJECT_LABEL: Record<string, { en: string; ar: string }> = {
 };
 
 const ROOM_CAPACITY = 20;
+const PRESENCE_WINDOW_MS = 8 * 60 * 1000;
 
 function formatHMS(totalSeconds: number) {
   const diff = Math.max(0, Math.floor(totalSeconds));
@@ -67,8 +68,9 @@ export default function StudyRoom({
     let mounted = true;
 
     const load = async () => {
-      // Window must be larger than the heartbeat interval (20s) + tab-throttle slack.
-      const since = new Date(Date.now() - 90 * 1000).toISOString();
+      // Keep users visible through short network hiccups, background tab throttling,
+      // and delayed reconnects instead of dropping them after one missed heartbeat.
+      const since = new Date(Date.now() - PRESENCE_WINDOW_MS).toISOString();
       const { data: active } = await supabase
         .from("active_sessions")
         .select("user_id,subject,mission,last_seen_at,started_at,elapsed_seconds,is_running")
@@ -186,9 +188,7 @@ export default function StudyRoom({
                     {isMe ? (language === "ar" ? "أنت" : "You") : p.display_name}
                   </div>
                   <div className="relative">
-                    <div className={`${isMe ? "rounded-full ring-2 ring-primary/70 ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.35)]" : ""}`}>
-                      <CharacterAvatar gender={p.gender} traits={p.character ?? undefined} size={96} />
-                    </div>
+                    <CharacterAvatar gender={p.gender} traits={p.character ?? undefined} size={96} />
                     <div className="w-24 h-3.5 -mt-3 mx-auto rounded-sm bg-gradient-to-b from-primary/40 to-primary/20 border border-primary/40" />
                     <div className="flex justify-between w-20 mx-auto">
                       <div className="w-0.5 h-3.5 bg-primary/40" />
