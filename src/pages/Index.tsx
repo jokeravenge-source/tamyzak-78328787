@@ -21,6 +21,7 @@ import { flashcardsBioCh5Ar } from "@/data/flashcardsBioCh5Ar";
 import { flashcardsBioCh1En } from "@/data/flashcardsBioCh1En";
 import { flashcardsBioCh2En } from "@/data/flashcardsBioCh2En";
 import { flashcardsBioCh3En } from "@/data/flashcardsBioCh3En";
+import { flashcardsBioCh3Ar } from "@/data/flashcardsBioCh3Ar";
 import { flashcardsBioCh5En } from "@/data/flashcardsBioCh5En";
 import { flashcardsChemCh1En } from "@/data/flashcardsChemCh1En";
 import { flashcardsChemCh2En } from "@/data/flashcardsChemCh2En";
