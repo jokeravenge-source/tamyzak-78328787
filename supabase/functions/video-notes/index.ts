@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
             ? "تعذّر جلب نص الفيديو. تأكد من الرابط وحاول مجدداً."
             : "Could not fetch the video transcript. Check the link and try again.");
       return new Response(JSON.stringify({ error: friendly, detail: errText }), {
-        status: isQuota ? 429 : 502,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
