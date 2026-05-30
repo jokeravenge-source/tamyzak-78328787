@@ -112,8 +112,19 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
       const { data, error } = await supabase.functions.invoke("excellence-companion", {
         body: { mode, language, messages: next },
       });
-      if (error) throw error;
-      const reply = (data as { reply?: string })?.reply ?? t.error;
+      const replyFromData = (data as { reply?: string; error?: string } | null)?.reply;
+      if (error && !replyFromData) {
+        const ctx = (error as { context?: { error?: string; upgrade?: boolean } }).context;
+        const upgrade = ctx?.upgrade || /Premium|free uses/i.test(String(ctx?.error || error.message || ""));
+        const msg = upgrade
+          ? (language === "ar"
+              ? "استهلكت 5 استخدامات اليومية. رقّ إلى البريميوم للاستخدام غير المحدود."
+              : "You've used your 5 free uses today. Upgrade to Premium for unlimited access.")
+          : (ctx?.error || error.message || t.error);
+        setMessages([...next, { role: "assistant", content: msg }]);
+        return;
+      }
+      const reply = replyFromData ?? t.error;
       setMessages([...next, { role: "assistant", content: reply }]);
     } catch {
       setMessages([...next, { role: "assistant", content: t.error }]);
