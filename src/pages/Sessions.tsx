@@ -87,13 +87,13 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   // (paused-aware), making the room timer match the user's own timer exactly.
   const secondsRef = useRef(0);
   useEffect(() => { secondsRef.current = seconds; }, [seconds]);
+  const runningRef = useRef(false);
+  useEffect(() => { runningRef.current = running; }, [running]);
 
   // --- Live presence helpers ---
   const upsertPresence = async (subj: string, miss: string) => {
     if (!userId) return;
     const nowMs = Date.now();
-    // started_at = now - elapsedSeconds so room renders the same elapsed time
-    // as the in-page studying timer (and freezes naturally while paused).
     const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
     const nowIso = new Date(nowMs).toISOString();
     await supabase.from("active_sessions").upsert(
@@ -103,6 +103,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
         mission: miss.slice(0, 200),
         last_seen_at: nowIso,
         started_at: startedIso,
+        elapsed_seconds: secondsRef.current,
+        is_running: runningRef.current,
       },
       { onConflict: "user_id" }
     );
@@ -112,6 +114,22 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     await supabase.from("active_sessions").delete().eq("user_id", userId);
   };
 
+  // Push a single presence update (used by heartbeat, focus, and pause/resume).
+  const pushPresence = async () => {
+    if (!userId) return;
+    const nowMs = Date.now();
+    const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
+    await supabase
+      .from("active_sessions")
+      .update({
+        last_seen_at: new Date(nowMs).toISOString(),
+        started_at: startedIso,
+        elapsed_seconds: secondsRef.current,
+        is_running: runningRef.current,
+      })
+      .eq("user_id", userId);
+  };
+
   // Heartbeat while a subject is selected so the room keeps showing the user
   // (even while paused). Only fully clear presence when leaving the page.
   useEffect(() => {
@@ -119,23 +137,11 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     if (userId && subject) {
       upsertPresence(subject, mission);
       heartbeatRef.current = window.setInterval(() => {
-        const nowMs = Date.now();
-        const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
-        supabase
-          .from("active_sessions")
-          .update({ last_seen_at: new Date(nowMs).toISOString(), started_at: startedIso })
-          .eq("user_id", userId);
+        pushPresence();
       }, 20000);
       // Also refresh on tab focus (setInterval is throttled in background tabs).
       const onVis = () => {
-        if (document.visibilityState === "visible" && userId) {
-          const nowMs = Date.now();
-          const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
-          supabase
-            .from("active_sessions")
-            .update({ last_seen_at: new Date(nowMs).toISOString(), started_at: startedIso })
-            .eq("user_id", userId);
-        }
+        if (document.visibilityState === "visible" && userId) pushPresence();
       };
       document.addEventListener("visibilitychange", onVis);
       return () => {
@@ -148,6 +154,12 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, subject]);
+
+  // Immediate sync whenever play/pause toggles so the room reflects it instantly.
+  useEffect(() => {
+    if (userId && subject) pushPresence();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running]);
 
   // Remove presence when leaving the page/tab or unmounting Sessions
   useEffect(() => {
