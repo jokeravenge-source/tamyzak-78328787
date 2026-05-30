@@ -138,14 +138,16 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       upsertPresence(subject, mission);
       heartbeatRef.current = window.setInterval(() => {
         pushPresence();
-      }, 20000);
+      }, 10000);
       // Also refresh on tab focus (setInterval is throttled in background tabs).
       const onVis = () => {
         if (document.visibilityState === "visible" && userId) pushPresence();
       };
       document.addEventListener("visibilitychange", onVis);
+      window.addEventListener("focus", onVis);
       return () => {
         document.removeEventListener("visibilitychange", onVis);
+        window.removeEventListener("focus", onVis);
         if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
       };
     }
