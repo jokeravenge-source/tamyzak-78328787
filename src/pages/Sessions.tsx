@@ -87,41 +87,65 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   // --- Live presence helpers ---
   const upsertPresence = async (subj: string, miss: string) => {
     if (!userId) return;
-    await supabase.from("active_sessions").upsert({
-      user_id: userId,
-      subject: subj,
-      mission: miss.slice(0, 200),
-      last_seen_at: new Date().toISOString(),
-      started_at: new Date().toISOString(),
-    });
+    // Check if a row already exists so we don't reset started_at on every heartbeat.
+    const { data: existing } = await supabase
+      .from("active_sessions")
+      .select("user_id,subject,started_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const nowIso = new Date().toISOString();
+    const sameSubject = existing && existing.subject === subj;
+    await supabase.from("active_sessions").upsert(
+      {
+        user_id: userId,
+        subject: subj,
+        mission: miss.slice(0, 200),
+        last_seen_at: nowIso,
+        started_at: sameSubject ? (existing!.started_at as string) : nowIso,
+      },
+      { onConflict: "user_id" }
+    );
   };
   const clearPresence = async () => {
     if (!userId) return;
     await supabase.from("active_sessions").delete().eq("user_id", userId);
   };
 
-  // Heartbeat while running so the room shows the user as active
+  // Heartbeat while a subject is selected so the room keeps showing the user
+  // (even while paused). Only fully clear presence when leaving the page.
   useEffect(() => {
     if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
-    if (running && userId && subject) {
+    if (userId && subject) {
       upsertPresence(subject, mission);
       heartbeatRef.current = window.setInterval(() => {
         supabase.from("active_sessions").update({ last_seen_at: new Date().toISOString() }).eq("user_id", userId);
-      }, 30000);
-    } else if (!running && userId) {
-      clearPresence();
+      }, 20000);
+      // Also refresh on tab focus (setInterval is throttled in background tabs).
+      const onVis = () => {
+        if (document.visibilityState === "visible" && userId) {
+          supabase.from("active_sessions").update({ last_seen_at: new Date().toISOString() }).eq("user_id", userId);
+        }
+      };
+      document.addEventListener("visibilitychange", onVis);
+      return () => {
+        document.removeEventListener("visibilitychange", onVis);
+        if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
+      };
     }
     return () => {
       if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running, userId, subject]);
+  }, [userId, subject]);
 
-  // Remove presence when leaving the page/tab
+  // Remove presence when leaving the page/tab or unmounting Sessions
   useEffect(() => {
     const onUnload = () => { if (userId) { clearPresence(); } };
     window.addEventListener("beforeunload", onUnload);
-    return () => window.removeEventListener("beforeunload", onUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onUnload);
+      if (userId) { clearPresence(); }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
