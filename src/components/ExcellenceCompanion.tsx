@@ -115,12 +115,19 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
       const replyFromData = (data as { reply?: string; error?: string } | null)?.reply;
       if (error && !replyFromData) {
         const ctx = (error as { context?: { error?: string; upgrade?: boolean } }).context;
-        const upgrade = ctx?.upgrade || /Premium|free uses/i.test(String(ctx?.error || error.message || ""));
+        const upgrade = ctx?.upgrade || /Premium|free uses/i.test(String(ctx?.error || ""));
+        // Never surface the raw "Edge Function returned a non-2xx status code" string.
+        const rawMsg = String(ctx?.error || error.message || "");
+        const isNon2xx = /non-2xx/i.test(rawMsg);
         const msg = upgrade
           ? (language === "ar"
               ? "استهلكت 5 استخدامات اليومية. رقّ إلى البريميوم للاستخدام غير المحدود."
               : "You've used your 5 free uses today. Upgrade to Premium for unlimited access.")
-          : (ctx?.error || error.message || t.error);
+          : (isNon2xx || !ctx?.error
+              ? (language === "ar"
+                  ? "تعذّر الرد الآن. حاول مرة أخرى بعد لحظات."
+                  : "Could not respond just now. Please try again in a moment.")
+              : ctx.error);
         setMessages([...next, { role: "assistant", content: msg }]);
         return;
       }
