@@ -8,6 +8,7 @@ const corsHeaders = {
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = "google/gemini-2.5-flash";
 const MAX_CHAT_MESSAGES = 20;
+const MAX_CONTINUATIONS = 4;
 
 const SYSTEM_SCHEDULE_AR = `أنت "رفيق التميز" - مساعد ذكي لطالب ثانوي يساعده على تنظيم جدوله الدراسي الأسبوعي.
 
@@ -104,48 +105,67 @@ Deno.serve(async (req) => {
       )
       .slice(-MAX_CHAT_MESSAGES);
 
-    const resp = await fetch(AI_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages: [{ role: "system", content: systemFor(mode, language) }, ...safeMessages],
-        max_tokens: 4096,
-      }),
-    });
-
     const ar = language === "ar";
-    if (!resp.ok) {
-      if (resp.status === 429) {
-        return new Response(JSON.stringify({ reply: ar ? "الطلبات كثيرة الآن. حاول بعد قليل." : "Too many requests, try again shortly.", temporary: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (resp.status === 402) {
-        return new Response(JSON.stringify({ reply: ar ? "ميزة الذكاء غير متاحة حالياً." : "AI temporarily unavailable.", temporary: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await resp.text();
-      return new Response(JSON.stringify({ error: t }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const convo: Array<{ role: string; content: string }> = [
+      { role: "system", content: systemFor(mode, language) },
+      ...safeMessages,
+    ];
+    let fullReply = "";
+    let finishReason = "stop";
+
+    for (let i = 0; i <= MAX_CONTINUATIONS; i++) {
+      const resp = await fetch(AI_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: AI_MODEL,
+          messages: convo,
+          max_tokens: 8192,
+        }),
       });
+
+      if (!resp.ok) {
+        if (resp.status === 429) {
+          return new Response(JSON.stringify({ reply: (fullReply || "") + (ar ? "\n\nالطلبات كثيرة الآن. حاول بعد قليل." : "\n\nToo many requests, try again shortly."), temporary: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (resp.status === 402) {
+          return new Response(JSON.stringify({ reply: (fullReply || "") + (ar ? "\n\nميزة الذكاء غير متاحة حالياً." : "\n\nAI temporarily unavailable."), temporary: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // If we already have partial content, return what we have instead of erroring
+        if (fullReply) {
+          return new Response(JSON.stringify({ reply: fullReply }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const t = await resp.text();
+        return new Response(JSON.stringify({ reply: ar ? "تعذر الرد الآن. حاول مرة أخرى." : "Couldn't respond right now. Please try again.", error: t }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await resp.json();
+      const chunk = data.choices?.[0]?.message?.content ?? "";
+      finishReason = data.choices?.[0]?.finish_reason ?? "stop";
+      fullReply += chunk;
+
+      if (finishReason !== "length") break;
+
+      // Continue the response seamlessly
+      convo.push({ role: "assistant", content: chunk });
+      convo.push({ role: "user", content: ar ? "تابع من حيث توقفت بدون تكرار." : "Continue from where you stopped without repeating." });
     }
 
-    const data = await resp.json();
-    const reply = data.choices?.[0]?.message?.content ?? (ar ? "تعذر الرد الآن." : "Couldn't respond right now.");
-    const finishReason = data.choices?.[0]?.finish_reason;
-    const truncated = finishReason === "length";
-    const finalReply = truncated
-      ? reply + (ar ? "\n\n…(تم اختصار الرد. اطلب المتابعة أو خطة أقصر)" : "\n\n…(response was truncated — ask me to continue or request a shorter plan)")
-      : reply;
-    return new Response(JSON.stringify({ reply: finalReply }), {
+    if (!fullReply) fullReply = ar ? "تعذر الرد الآن." : "Couldn't respond right now.";
+
+    return new Response(JSON.stringify({ reply: fullReply }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
-      status: 500,
+    return new Response(JSON.stringify({ reply: "Couldn't respond right now. Please try again.", error: String(e) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
