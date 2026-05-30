@@ -110,6 +110,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: AI_MODEL,
         messages: [{ role: "system", content: systemFor(mode, language) }, ...safeMessages],
+        max_tokens: 4096,
       }),
     });
 
@@ -134,7 +135,12 @@ Deno.serve(async (req) => {
 
     const data = await resp.json();
     const reply = data.choices?.[0]?.message?.content ?? (ar ? "تعذر الرد الآن." : "Couldn't respond right now.");
-    return new Response(JSON.stringify({ reply }), {
+    const finishReason = data.choices?.[0]?.finish_reason;
+    const truncated = finishReason === "length";
+    const finalReply = truncated
+      ? reply + (ar ? "\n\n…(تم اختصار الرد. اطلب المتابعة أو خطة أقصر)" : "\n\n…(response was truncated — ask me to continue or request a shorter plan)")
+      : reply;
+    return new Response(JSON.stringify({ reply: finalReply }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
