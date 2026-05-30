@@ -51,16 +51,43 @@ export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?
 
   const handleOAuth = async (provider: "google" | "apple") => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error(result.error.message ?? "Sign-in failed");
+    const startedAt = new Date().toISOString();
+    const ctx = {
+      provider,
+      origin: window.location.origin,
+      href: window.location.href,
+      ua: navigator.userAgent,
+      startedAt,
+    };
+    console.log("[OAuth] initiate", ctx);
+    try {
+      const result = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: window.location.origin,
+      });
+      console.log("[OAuth] signInWithOAuth result", {
+        provider,
+        redirected: (result as any)?.redirected,
+        hasError: !!result?.error,
+        error: result?.error
+          ? { message: (result.error as any)?.message, name: (result.error as any)?.name, status: (result.error as any)?.status, code: (result.error as any)?.code }
+          : null,
+      });
+      if (result.error) {
+        toast.error(`${provider}: ${result.error.message ?? "Sign-in failed"}`);
+        setLoading(false);
+        return;
+      }
+      if (result.redirected) {
+        console.log("[OAuth] redirecting away to provider…", { provider });
+        return;
+      }
+      console.log("[OAuth] no redirect, session set inline", { provider });
+      onAuthed();
+    } catch (err: any) {
+      console.error("[OAuth] signInWithOAuth threw", { provider, message: err?.message, err });
+      toast.error(`${provider}: ${err?.message ?? "Sign-in failed"}`);
       setLoading(false);
-      return;
     }
-    if (result.redirected) return;
-    onAuthed();
   };
 
   return (
