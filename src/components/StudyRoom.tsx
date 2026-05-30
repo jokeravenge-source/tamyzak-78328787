@@ -186,7 +186,9 @@ export default function StudyRoom({
                     {isMe ? (language === "ar" ? "أنت" : "You") : p.display_name}
                   </div>
                   <div className="relative">
-                    <CharacterAvatar gender={p.gender} traits={p.character ?? undefined} size={96} />
+                    <div className={`${isMe ? "rounded-full ring-2 ring-primary/70 ring-offset-2 ring-offset-background shadow-[0_0_18px_hsl(var(--primary)/0.35)]" : ""}`}>
+                      <CharacterAvatar gender={p.gender} traits={p.character ?? undefined} size={96} />
+                    </div>
                     <div className="w-24 h-3.5 -mt-3 mx-auto rounded-sm bg-gradient-to-b from-primary/40 to-primary/20 border border-primary/40" />
                     <div className="flex justify-between w-20 mx-auto">
                       <div className="w-0.5 h-3.5 bg-primary/40" />
