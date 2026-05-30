@@ -80,20 +80,18 @@ function systemFor(mode: string, language: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const json200 = (obj: Record<string, unknown>) =>
+    new Response(JSON.stringify(obj), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const { mode, messages, language } = await req.json();
+    const ar = language === "ar";
     if (!mode || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: "mode and messages required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json200({ reply: ar ? "حدث خطأ في الطلب. حاول مرة أخرى." : "Bad request. Please try again." });
     }
     const ent = await claimFeature(req, "agent");
     if (!ent.ok) {
-      return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), {
-        status: ent.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Always 200 so the client never sees "non-2xx" – pass upgrade flag in the body.
+      return json200({ error: ent.error, upgrade: ent.status === 429, reply: ent.error });
     }
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -105,7 +103,6 @@ Deno.serve(async (req) => {
       )
       .slice(-MAX_CHAT_MESSAGES);
 
-    const ar = language === "ar";
     const convo: Array<{ role: string; content: string }> = [
       { role: "system", content: systemFor(mode, language) },
       ...safeMessages,
@@ -113,41 +110,80 @@ Deno.serve(async (req) => {
     let fullReply = "";
     let finishReason = "stop";
 
-    for (let i = 0; i <= MAX_CONTINUATIONS; i++) {
-      const resp = await fetch(AI_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: AI_MODEL,
-          messages: convo,
-          max_tokens: 8192,
-        }),
-      });
+    // Fetch the AI gateway with a per-attempt timeout and one retry on transient failures.
+    const callAi = async (): Promise<Response> => {
+      const attempt = async () => {
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 55_000);
+        try {
+          return await fetch(AI_URL, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ model: AI_MODEL, messages: convo, max_tokens: 8192 }),
+            signal: ctrl.signal,
+          });
+        } finally {
+          clearTimeout(to);
+        }
+      };
+      try {
+        const r = await attempt();
+        if (r.status >= 500 || r.status === 408) {
+          // transient – retry once after a short backoff
+          await new Promise((res) => setTimeout(res, 800));
+          return await attempt();
+        }
+        return r;
+      } catch {
+        await new Promise((res) => setTimeout(res, 800));
+        return await attempt();
+      }
+    };
 
-      if (!resp.ok) {
-        if (resp.status === 429) {
-          return new Response(JSON.stringify({ reply: (fullReply || "") + (ar ? "\n\nالطلبات كثيرة الآن. حاول بعد قليل." : "\n\nToo many requests, try again shortly."), temporary: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        if (resp.status === 402) {
-          return new Response(JSON.stringify({ reply: (fullReply || "") + (ar ? "\n\nميزة الذكاء غير متاحة حالياً." : "\n\nAI temporarily unavailable."), temporary: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        // If we already have partial content, return what we have instead of erroring
-        if (fullReply) {
-          return new Response(JSON.stringify({ reply: fullReply }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        const t = await resp.text();
-        return new Response(JSON.stringify({ reply: ar ? "تعذر الرد الآن. حاول مرة أخرى." : "Couldn't respond right now. Please try again.", error: t }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+    for (let i = 0; i <= MAX_CONTINUATIONS; i++) {
+      let resp: Response;
+      try {
+        resp = await callAi();
+      } catch (err) {
+        console.error("[companion] ai fetch failed", err);
+        return json200({
+          reply: fullReply || (ar ? "تعذّر الاتصال بالخدمة. حاول مرة أخرى." : "Could not reach the service. Please try again."),
+          temporary: true,
         });
       }
 
-      const data = await resp.json();
+      if (!resp.ok) {
+        if (resp.status === 429) {
+          return json200({
+            reply: (fullReply || "") + (ar ? "\n\nالطلبات كثيرة الآن. حاول بعد قليل." : "\n\nToo many requests, try again shortly."),
+            temporary: true,
+          });
+        }
+        if (resp.status === 402) {
+          return json200({
+            reply: (fullReply || "") + (ar ? "\n\nميزة الذكاء غير متاحة حالياً." : "\n\nAI temporarily unavailable."),
+            temporary: true,
+          });
+        }
+        if (fullReply) return json200({ reply: fullReply });
+        const t = await resp.text().catch(() => "");
+        console.error("[companion] ai non-ok", resp.status, t.slice(0, 500));
+        return json200({
+          reply: ar ? "تعذر الرد الآن. حاول مرة أخرى." : "Couldn't respond right now. Please try again.",
+          temporary: true,
+        });
+      }
+
+      let data: any;
+      try {
+        data = await resp.json();
+      } catch {
+        if (fullReply) return json200({ reply: fullReply });
+        return json200({
+          reply: ar ? "تعذر قراءة الرد. حاول مرة أخرى." : "Could not parse the response. Please try again.",
+          temporary: true,
+        });
+      }
       const chunk = data.choices?.[0]?.message?.content ?? "";
       finishReason = data.choices?.[0]?.finish_reason ?? "stop";
       fullReply += chunk;
@@ -161,12 +197,12 @@ Deno.serve(async (req) => {
 
     if (!fullReply) fullReply = ar ? "تعذر الرد الآن." : "Couldn't respond right now.";
 
-    return new Response(JSON.stringify({ reply: fullReply }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json200({ reply: fullReply });
   } catch (e) {
-    return new Response(JSON.stringify({ reply: "Couldn't respond right now. Please try again.", error: String(e) }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("[companion] fatal", e);
+    return new Response(
+      JSON.stringify({ reply: "Couldn't respond right now. Please try again.", error: String(e) }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+    );
   }
 });
