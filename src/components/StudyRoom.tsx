@@ -56,7 +56,8 @@ export default function StudyRoom({
     let mounted = true;
 
     const load = async () => {
-      const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      // Window must be larger than the heartbeat interval (20s) + tab-throttle slack.
+      const since = new Date(Date.now() - 90 * 1000).toISOString();
       const { data: active } = await supabase
         .from("active_sessions")
         .select("user_id,subject,mission,last_seen_at,started_at")
