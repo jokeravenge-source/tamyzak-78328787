@@ -57,7 +57,56 @@ const App = () => {
     () => (typeof window !== "undefined" ? (localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null) : null)
   );
   useEffect(() => {
+    // ---- OAuth callback diagnostics (runs once on mount) ----
+    try {
+      const url = new URL(window.location.href);
+      const hash = window.location.hash || "";
+      const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+      const searchKeys = Array.from(url.searchParams.keys());
+      const hashKeys = Array.from(hashParams.keys());
+      const oauthMarkers = {
+        hasCode: url.searchParams.has("code"),
+        hasState: url.searchParams.has("state") || hashParams.has("state"),
+        hasAccessToken: hashParams.has("access_token"),
+        hasRefreshToken: hashParams.has("refresh_token"),
+        hasError: url.searchParams.has("error") || hashParams.has("error"),
+        error: url.searchParams.get("error") ?? hashParams.get("error"),
+        errorCode: url.searchParams.get("error_code") ?? hashParams.get("error_code"),
+        errorDescription:
+          url.searchParams.get("error_description") ?? hashParams.get("error_description"),
+        provider: hashParams.get("provider_token") ? "present" : null,
+      };
+      const isOAuthLanding =
+        oauthMarkers.hasCode ||
+        oauthMarkers.hasAccessToken ||
+        oauthMarkers.hasError ||
+        url.pathname.includes("/~oauth");
+      if (isOAuthLanding) {
+        console.log("[OAuth] callback landing", {
+          href: window.location.href,
+          origin: window.location.origin,
+          pathname: url.pathname,
+          searchKeys,
+          hashKeys,
+          markers: oauthMarkers,
+        });
+        if (oauthMarkers.hasError) {
+          console.error("[OAuth] provider returned error on callback", oauthMarkers);
+        }
+      }
+    } catch (e) {
+      console.error("[OAuth] failed to parse callback URL", e);
+    }
+
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      console.log("[OAuth] onAuthStateChange", {
+        event: _e,
+        hasSession: !!session,
+        userId: session?.user?.id,
+        provider: (session?.user as any)?.app_metadata?.provider,
+        providers: (session?.user as any)?.app_metadata?.providers,
+        expiresAt: session?.expires_at,
+      });
       setAuthed(!!session);
       if (session?.user) {
         supabase
@@ -71,7 +120,13 @@ const App = () => {
         setIsAdmin(false);
       }
     });
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data, error }) => {
+      console.log("[OAuth] initial getSession", {
+        hasSession: !!data.session,
+        userId: data.session?.user?.id,
+        provider: (data.session?.user as any)?.app_metadata?.provider,
+        error: error ? { message: error.message, name: error.name } : null,
+      });
       setAuthed(!!data.session);
       if (data.session?.user) {
         supabase
