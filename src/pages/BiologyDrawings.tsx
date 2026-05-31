@@ -63,7 +63,7 @@ const BiologyDrawings = ({ language, onBack }: { language: AppLanguage; onBack: 
             transition={{ duration: 0.3 }}
             className="max-w-3xl mx-auto mt-14 grid grid-cols-2 sm:grid-cols-5 gap-4 z-10 relative"
           >
-            {[1].map((n, i) => (
+            {[1, 3].map((n, i) => (
               <motion.button
                 key={n}
                 initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}

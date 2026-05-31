@@ -437,6 +437,89 @@ const plasmaMembrane: DiagramDef = {
   })(),
 };
 
+/* ============================================================
+ * CHAPTER 3 — Fruit layers
+ * ============================================================ */
+const fruit: DiagramDef = {
+  id: "ch3-fruit",
+  title: { en: "Layers of a Fruit", ar: "طبقات الثمرة" },
+  aspect: "16/9",
+  parts: [
+    { id: "exocarp",  label: { en: "Outer layer (Exocarp)",  ar: "الطبقة الخارجية" }, ax: 90, ay: 37, lx: 78, ly: 8,  lw: 20 },
+    { id: "mesocarp", label: { en: "Middle layer (Mesocarp)", ar: "الطبقة الوسطى" },   ax: 50, ay: 64, lx: 56, ly: 82, lw: 22 },
+    { id: "endocarp", label: { en: "Inner layer (Endocarp)",  ar: "الطبقة الداخلية" }, ax: 50, ay: 14, lx: 38, ly: 4,  lw: 22 },
+    { id: "seed",     label: { en: "Seed",                    ar: "البذرة" },          ax: 38, ay: 38, lx: 2,  ly: 46, lw: 18 },
+  ],
+  art: (() => {
+    const SKIN = "hsl(135 45% 32%)";
+    const SKIN_DARK = "hsl(135 55% 22%)";
+    const FLESH = "hsl(40 55% 82%)";
+    const FLESH_SH = "hsl(35 45% 65%)";
+    const ENDO = "hsl(265 45% 65%)";
+    const ENDO_DARK = "hsl(265 50% 45%)";
+    const SEED = "hsl(115 50% 45%)";
+    const SEED_DK = "hsl(115 60% 30%)";
+    const VEIN = "hsl(265 40% 50%)";
+
+    // Lens/eye shape centered at (50, 37.5)
+    const outer = "M 8 37.5 Q 50 -4 92 37.5 Q 50 79 8 37.5 Z";
+    const flesh = "M 12 37.5 Q 50 0 88 37.5 Q 50 75 12 37.5 Z";
+    const endo  = "M 22 37.5 Q 50 10 78 37.5 Q 50 65 22 37.5 Z";
+
+    // spikes (inward thorns) along the inner edge of the skin (top + bottom)
+    const spikes: React.ReactNode[] = [];
+    for (let i = 0; i < 14; i++) {
+      const t = (i + 0.5) / 14;
+      const x = 14 + t * 72;
+      // top arc y (approx): parabola through (12,37.5),(50,3),(88,37.5)
+      const u = (x - 50) / 38;
+      const yTop = 3 + (37.5 - 3) * u * u;
+      const yBot = 72 - (37.5 - 3) * u * u;
+      spikes.push(
+        h("line", { key: `st${i}`, x1: x, y1: yTop, x2: x, y2: yTop + 5,
+          stroke: ENDO_DARK, strokeWidth: 0.35, strokeLinecap: "round" }),
+        h("line", { key: `sb${i}`, x1: x, y1: yBot, x2: x, y2: yBot - 5,
+          stroke: ENDO_DARK, strokeWidth: 0.35, strokeLinecap: "round" }),
+      );
+    }
+
+    // little veins in flesh
+    const veins = [
+      "M 18 40 q 6 -4 12 -1 t 10 2",
+      "M 20 32 q 5 3 11 1 t 9 -2",
+      "M 64 30 q 6 4 12 2 t 8 -1",
+      "M 62 46 q 7 -3 13 0 t 9 -2",
+      "M 30 50 q 6 -2 12 1",
+      "M 58 24 q 5 -2 10 0",
+    ];
+
+    return h(Fragment, null,
+      // outer skin (exocarp)
+      h("path", { d: outer, fill: SKIN, stroke: SKIN_DARK, strokeWidth: 0.6 }),
+      // mesocarp (flesh)
+      h("path", { d: flesh, fill: FLESH, stroke: FLESH_SH, strokeWidth: 0.4 }),
+      // veins
+      ...veins.map((d, i) => h("path", { key: `v${i}`, d, fill: "none", stroke: VEIN, strokeWidth: 0.25, opacity: 0.55 })),
+      // endocarp ring (purple)
+      h("path", { d: endo, fill: "none", stroke: ENDO, strokeWidth: 1.6 }),
+      h("path", { d: endo, fill: "none", stroke: ENDO_DARK, strokeWidth: 0.4 }),
+      // spikes
+      ...spikes,
+      // seed (oval, slightly left)
+      h("ellipse", { cx: 48, cy: 38, rx: 18, ry: 7.5, fill: SEED, stroke: SEED_DK, strokeWidth: 0.5 }),
+      // seed highlight
+      h("ellipse", { cx: 44, cy: 35.5, rx: 10, ry: 2.2, fill: "hsl(115 60% 70% / 0.7)" }),
+      // seed surface lines
+      h("path", { d: "M 40 39 q 6 -2 12 0 t 10 -1", fill: "none", stroke: SEED_DK, strokeWidth: 0.35, opacity: 0.7 }),
+      h("path", { d: "M 42 41 q 5 1 10 -1 t 9 0", fill: "none", stroke: SEED_DK, strokeWidth: 0.3, opacity: 0.6 }),
+      // seed stalk (funicle) to the left wall
+      h("path", { d: "M 30 38 q 2 -2 4 -1 q 3 1 5 1", fill: "none", stroke: SEED_DK, strokeWidth: 0.5 }),
+      h("path", { d: "M 22 37 q 3 4 8 1", fill: "none", stroke: SEED_DK, strokeWidth: 0.4 }),
+    );
+  })(),
+};
+
 export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
   1: [bacteria, animalCell, plantCell, plasmaMembrane, mitochondrion, chloroplast, chromosome],
+  3: [fruit],
 };
