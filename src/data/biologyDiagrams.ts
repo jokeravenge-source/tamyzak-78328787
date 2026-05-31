@@ -611,6 +611,106 @@ const binaryFission: DiagramDef = {
   })(),
 };
 
+/* Monocot vs Dicot seed structure */
+const seedTypes: DiagramDef = {
+  id: "ch3-seed-types",
+  title: { en: "Monocot vs Dicot Seed", ar: "البذرة ذات الفلقة الواحدة + ذوات الفلقتين" },
+  aspect: "16/9",
+  parts: [
+    // ===== LEFT (A) — Monocot wedge, body ~ x:10-42, y:6-50 =====
+    { id: "a-coat",    label: { en: "Seed coat",         ar: "غطاء البذرة" },    ax: 35,   ay: 7,    lx: 32, ly: 2,  lw: 22 },
+    { id: "a-endo",    label: { en: "Endosperm",         ar: "سويداء" },         ax: 22,   ay: 18,   lx: 32, ly: 14, lw: 22 },
+    { id: "a-cot",     label: { en: "Cotyledon",         ar: "ورقة جنينية" },    ax: 32,   ay: 28,   lx: 56, ly: 28, lw: 22 },
+    { id: "a-plum",    label: { en: "Plumule",           ar: "ريشة" },           ax: 33,   ay: 35,   lx: 56, ly: 40, lw: 22 },
+    { id: "a-rad",     label: { en: "Radicle",           ar: "جذير" },           ax: 30,   ay: 44,   lx: 56, ly: 52, lw: 22 },
+    { id: "a-peri",    label: { en: "Surrounding layer", ar: "طبقة محيطة" },     ax: 13,   ay: 42,   lx: 2,  ly: 70, lw: 26 },
+    // ===== RIGHT (B) — Dicot oval, body ~ x:58-92, y:10-46 =====
+    { id: "b-coat",    label: { en: "Seed coat",         ar: "غطاء البذرة" },    ax: 60,   ay: 12,   lx: 56, ly: 2,  lw: 22 },
+    { id: "b-plum",    label: { en: "Plumule",           ar: "رويشة" },          ax: 80,   ay: 26,   lx: 80, ly: 14, lw: 18 },
+    { id: "b-rad",     label: { en: "Radicle",           ar: "جذير" },           ax: 76,   ay: 32,   lx: 80, ly: 28, lw: 18 },
+    { id: "b-cots",    label: { en: "Two cotyledons",    ar: "ورقتين جنينيتين" }, ax: 86,   ay: 36,   lx: 80, ly: 42, lw: 18 },
+  ],
+  art: (() => {
+    const COAT       = "hsl(22 70% 55%)";
+    const COAT_DK    = "hsl(18 65% 35%)";
+    const PERI       = "hsl(35 55% 78%)";
+    const ENDO_FILL  = "hsl(45 60% 88%)";
+    const ENDO_TINT  = "hsl(280 45% 78%)";
+    const LEAF       = "hsl(115 50% 38%)";
+    const LEAF_DK    = "hsl(120 60% 22%)";
+    const LEAF_VEIN  = "hsl(120 65% 18%)";
+
+    // ===== A — MONOCOT WEDGE (cross-section) =====
+    // Outer seed coat (orange ring) — wedge / rounded triangle
+    const aOuter = "M 16 6 L 40 6 Q 44 6 44 10 L 42 46 Q 42 50 38 50 L 10 50 Q 6 48 8 44 L 14 10 Q 14 6 16 6 Z";
+    // Inner surrounding layer (lighter cream just inside the coat)
+    const aPeri  = "M 18 9 L 38 9 Q 41 9 41 12 L 39.5 45 Q 39.5 47.5 36.5 47.5 L 13 47.5 Q 10 46 11.5 43 L 16.5 12 Q 16.5 9 18 9 Z";
+    // Endosperm interior
+    const aEndo  = "M 20 11 L 37 11 Q 39 11 39 13 L 37.8 44 Q 37.8 45.8 35.5 45.8 L 14.5 45.8 Q 12.5 44.8 13.8 42 L 18.5 13 Q 18.5 11 20 11 Z";
+    // Purple tint (endosperm food zone)
+    const aTint  = "M 27 30 m -10 0 a 10 12 0 1 0 20 0 a 10 12 0 1 0 -20 0";
+    // Embryo (cotyledon) — green leaf along the right side, plumule at top, radicle at bottom
+    const aEmbryo = "M 33 11 Q 38 24 35 36 Q 32 46 28 45.5 Q 25 36 28 24 Q 30 14 33 11 Z";
+    // Leaf midrib
+    const aMidrib = "M 32 13 Q 30 25 30 44";
+    // Leaf side veins
+    const aVeins = [
+      "M 31 18 Q 33 19 34.5 19.5",
+      "M 30.5 23 Q 32.5 24 34.5 24.5",
+      "M 30 28 Q 32 29 34 29.5",
+      "M 29.7 33 Q 31.7 34 33.5 34.5",
+      "M 29.5 38 Q 31 39 32.7 39.3",
+      "M 31 18 Q 29 19 27.5 19.5",
+      "M 30.5 23 Q 28.5 24 26.5 24.5",
+      "M 30 28 Q 28 29 26 29.5",
+      "M 29.7 33 Q 27.7 34 26 34.5",
+    ];
+
+    // ===== B — DICOT OVAL (cross-section, split into two cotyledons) =====
+    const bCx = 75, bCy = 28, bRx = 17, bRy = 18;
+    // Outer seed coat
+    const bCoat = h("ellipse", { cx: bCx, cy: bCy, rx: bRx, ry: bRy,
+      fill: COAT, stroke: COAT_DK, strokeWidth: 0.55 });
+    // Inner cotyledon body (lighter)
+    const bInner = h("ellipse", { cx: bCx, cy: bCy, rx: bRx - 2.2, ry: bRy - 2.2,
+      fill: ENDO_FILL, stroke: COAT_DK, strokeWidth: 0.25 });
+    // Purple tint behind the embryo
+    const bTint = h("ellipse", { cx: bCx, cy: bCy + 1, rx: 8, ry: 7,
+      fill: ENDO_TINT, opacity: 0.55 });
+    // Median split line between the two cotyledons
+    const bSplit = h("line", { x1: bCx, y1: bCy - (bRy - 2.2), x2: bCx, y2: bCy + (bRy - 2.2),
+      stroke: COAT_DK, strokeWidth: 0.35, opacity: 0.55 });
+    // Embryo at the centre: tiny plumule (two leaflets) + radicle (downward tip)
+    const bRadicle = h("path", { d: `M ${bCx - 1.4} ${bCy + 1} Q ${bCx} ${bCy + 6} ${bCx + 1.4} ${bCy + 1} Z`,
+      fill: LEAF, stroke: LEAF_DK, strokeWidth: 0.35 });
+    const bLeafL = h("path", { d: `M ${bCx} ${bCy - 1} Q ${bCx - 5} ${bCy - 5} ${bCx - 2.2} ${bCy - 7.2} Q ${bCx - 0.6} ${bCy - 4} ${bCx} ${bCy - 1} Z`,
+      fill: LEAF, stroke: LEAF_DK, strokeWidth: 0.35 });
+    const bLeafR = h("path", { d: `M ${bCx} ${bCy - 1} Q ${bCx + 5} ${bCy - 5} ${bCx + 2.2} ${bCy - 7.2} Q ${bCx + 0.6} ${bCy - 4} ${bCx} ${bCy - 1} Z`,
+      fill: LEAF, stroke: LEAF_DK, strokeWidth: 0.35 });
+    const bMid = h("line", { x1: bCx, y1: bCy - 7, x2: bCx, y2: bCy + 5,
+      stroke: LEAF_VEIN, strokeWidth: 0.3 });
+
+    return h(Fragment, null,
+      /* ===== A — Monocot ===== */
+      h("path", { d: aOuter, fill: COAT,      stroke: COAT_DK, strokeWidth: 0.6 }),
+      h("path", { d: aPeri,  fill: PERI,      stroke: COAT_DK, strokeWidth: 0.3 }),
+      h("path", { d: aEndo,  fill: ENDO_FILL, stroke: COAT_DK, strokeWidth: 0.25 }),
+      h("path", { d: aTint,  fill: ENDO_TINT, opacity: 0.55 }),
+      h("path", { d: aEmbryo, fill: LEAF, stroke: LEAF_DK, strokeWidth: 0.45 }),
+      h("path", { d: aMidrib, fill: "none", stroke: LEAF_VEIN, strokeWidth: 0.35 }),
+      ...aVeins.map((d, i) => h("path", { key: `av${i}`, d, fill: "none", stroke: LEAF_VEIN, strokeWidth: 0.25, opacity: 0.85 })),
+      // (A) caption
+      h("text", { x: 27, y: 54.5, textAnchor: "middle", fontSize: 3.2, fill: "hsl(0 0% 15%)", fontStyle: "italic" }, "(أ)"),
+
+      /* ===== B — Dicot ===== */
+      bCoat, bInner, bTint, bSplit,
+      bLeafL, bLeafR, bRadicle, bMid,
+      // (B) caption
+      h("text", { x: 75, y: 54.5, textAnchor: "middle", fontSize: 3.2, fill: "hsl(0 0% 15%)", fontStyle: "italic" }, "(ب)"),
+    );
+  })(),
+};
+
 export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
 
   1: [bacteria, animalCell, plantCell, plasmaMembrane, mitochondrion, chloroplast, chromosome],
