@@ -331,7 +331,7 @@ const chromosome: DiagramDef = {
   title: { en: "Chromosome", ar: "الكروموسوم" },
   aspect: "16/9",
   parts: [
-    { id: "chromatids", label: { en: "Sister chromatids", ar: "كروماتيدان شقيقان" }, ax: 50, ay: 14, lx: 30, ly: 2,  lw: 36 },
+    { id: "chromatids", label: { en: "Sister chromatids", ar: "كروماتيدان شقيقان" }, ax: 22, ay: 22, lx: 30, ly: 2,  lw: 36 },
     { id: "centromere", label: { en: "Centromere",        ar: "القطعة المركزية" },   ax: 52, ay: 38, lx: 70, ly: 44, lw: 26 },
   ],
   art: (() => {
