@@ -49,6 +49,7 @@ const App = () => {
     applyTheme(getInitialTheme());
   }, []);
   const [authed, setAuthed] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [tgVerified, setTgVerified] = useState<boolean>(
     () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1",
@@ -137,6 +138,7 @@ const App = () => {
           .maybeSingle()
           .then(({ data: r }) => setIsAdmin(!!r));
       }
+      setAuthLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -214,6 +216,10 @@ const App = () => {
       {language && <PremiumWelcomeOverlay language={language} />}
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
+      ) : authLoading ? (
+        <main className="min-h-screen flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+        </main>
       ) : authRole === "admin" && !authed ? (
         <AdminLogin onAuthed={() => setAuthed(true)} onBack={resetRole} />
       ) : authRole === "admin" && authed && isAdmin ? (
