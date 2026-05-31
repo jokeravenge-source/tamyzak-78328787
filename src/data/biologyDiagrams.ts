@@ -519,7 +519,99 @@ const fruit: DiagramDef = {
   })(),
 };
 
+/* Binary fission in bacteria */
+const binaryFission: DiagramDef = {
+  id: "ch3-binary-fission",
+  title: { en: "Binary Fission in Bacteria", ar: "التكاثر اللاجنسي في البكتيريا" },
+  aspect: "3/5",
+  parts: [
+    // Labels point at the TOP cell (stage 1). Top cell ≈ x:35-65, y:3-13.
+    { id: "chromo",  label: { en: "Chromosome",      ar: "كروموسوم" },        ax: 50, ay: 8,  lx: 72, ly: 2,  lw: 26 },
+    { id: "plasma",  label: { en: "Plasma membrane", ar: "الغشاء البلازمي" }, ax: 63, ay: 8,  lx: 72, ly: 12, lw: 26 },
+    { id: "cyto",    label: { en: "Cytoplasm",       ar: "السايتوبلازم" },    ax: 43, ay: 9,  lx: 2,  ly: 2,  lw: 26 },
+    { id: "wall",    label: { en: "Cell wall",       ar: "جدار الخلية" },     ax: 65, ay: 4,  lx: 2,  ly: 12, lw: 26 },
+  ],
+  art: (() => {
+    const WALL = "hsl(0 70% 58%)";
+    const WALL_DK = "hsl(0 65% 35%)";
+    const CYTO = "hsl(200 75% 90%)";
+    const MEM = "hsl(210 60% 55%)";
+    const DNA = "hsl(215 75% 38%)";
+
+    // Rounded rectangle "rod" cell
+    const rod = (cx: number, cy: number, w: number, hgt: number, key: string) => {
+      const x = cx - w / 2;
+      const y = cy - hgt / 2;
+      const r = hgt / 2;
+      return h("g", { key },
+        // cell wall (red rim)
+        h("rect", { x, y, width: w, height: hgt, rx: r, ry: r,
+          fill: WALL, stroke: WALL_DK, strokeWidth: 0.5 }),
+        // plasma membrane + cytoplasm (blue interior)
+        h("rect", { x: x + 0.9, y: y + 0.9, width: w - 1.8, height: hgt - 1.8,
+          rx: Math.max(r - 0.9, 0.5), ry: Math.max(r - 0.9, 0.5),
+          fill: CYTO, stroke: MEM, strokeWidth: 0.3 }),
+      );
+    };
+
+    // Single DNA squiggle (compact loop) centered at (cx, cy)
+    const dna1 = (cx: number, cy: number, key: string) =>
+      h("path", { key,
+        d: `M ${cx-5} ${cy} q 2 -3 4 -1 q 2 2 4 -1 q 2 -3 4 0 q 1 3 -2 3 q -3 0 -3 2 q 0 2 -3 1 q -3 -1 -4 -4 z`,
+        fill: "none", stroke: DNA, strokeWidth: 0.55, strokeLinejoin: "round", strokeLinecap: "round" });
+
+    // Replicating DNA (longer tangled loop)
+    const dna2 = (cx: number, cy: number, key: string) =>
+      h("path", { key,
+        d: `M ${cx-9} ${cy} q 2 -3 4 -1 q 2 2 4 -1 q 2 -2 4 0 q 2 2 4 -1 q 2 -2 3 1 q 1 3 -2 3 q -3 0 -4 2 q -2 2 -4 0 q -2 -1 -4 1 q -3 1 -5 -4 z`,
+        fill: "none", stroke: DNA, strokeWidth: 0.55, strokeLinejoin: "round", strokeLinecap: "round" });
+
+    // Stretched DNA (across the cell, two copies linked)
+    const dna3 = (cx: number, cy: number, key: string) =>
+      h("path", { key,
+        d: `M ${cx-12} ${cy} q 2 -3 4 0 q 2 3 4 0 q 2 -3 4 0 q 2 3 4 0 q 2 -3 4 0 q 2 3 4 0 q 2 -3 4 0`,
+        fill: "none", stroke: DNA, strokeWidth: 0.55, strokeLinejoin: "round", strokeLinecap: "round" });
+
+    // Arrow between stages
+    const arrow = (y: number, key: string) =>
+      h("g", { key },
+        h("line", { x1: 50, y1: y, x2: 50, y2: y + 2.6, stroke: WALL_DK, strokeWidth: 0.6 }),
+        h("path", { d: `M ${48} ${y + 2.4} L 50 ${y + 3.6} L 52 ${y + 2.4} Z`, fill: WALL_DK }),
+      );
+
+    return h(Fragment, null,
+      /* Stage 1 — one cell with single chromosome */
+      rod(50, 8, 30, 10, "c1"),
+      dna1(50, 8, "d1"),
+      arrow(13.5, "a1"),
+
+      /* Stage 2 — chromosome replicating */
+      rod(50, 22, 30, 10, "c2"),
+      dna2(50, 22, "d2"),
+      arrow(27.5, "a2"),
+
+      /* Stage 3 — chromosomes separating, cell elongating */
+      rod(50, 36, 36, 10, "c3"),
+      dna3(50, 36, "d3"),
+      arrow(41.5, "a3"),
+
+      /* Stage 4 — cell pinching in the middle (two attached rods) */
+      rod(36, 51, 22, 10, "c4a"),
+      rod(64, 51, 22, 10, "c4b"),
+      dna1(36, 51, "d4a"),
+      dna1(64, 51, "d4b"),
+      arrow(56.5, "a4"),
+
+      /* Stage 5 — two separated daughter cells */
+      rod(28, 67, 22, 10, "c5a"),
+      rod(72, 67, 22, 10, "c5b"),
+      dna1(28, 67, "d5a"),
+      dna1(72, 67, "d5b"),
+    );
+  })(),
+};
+
 export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
   1: [bacteria, animalCell, plantCell, plasmaMembrane, mitochondrion, chloroplast, chromosome],
-  3: [fruit],
+  3: [fruit, binaryFission],
 };
