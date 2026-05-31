@@ -446,8 +446,8 @@ const fruit: DiagramDef = {
   aspect: "16/9",
   parts: [
     { id: "exocarp",  label: { en: "Outer layer (Exocarp)",  ar: "الطبقة الخارجية" }, ax: 90, ay: 37, lx: 78, ly: 8,  lw: 20 },
-    { id: "mesocarp", label: { en: "Middle layer (Mesocarp)", ar: "الطبقة الوسطى" },   ax: 50, ay: 64, lx: 56, ly: 82, lw: 22 },
-    { id: "endocarp", label: { en: "Inner layer (Endocarp)",  ar: "الطبقة الداخلية" }, ax: 50, ay: 14, lx: 38, ly: 4,  lw: 22 },
+    { id: "mesocarp", label: { en: "Middle layer (Mesocarp)", ar: "الطبقة الوسطى" },   ax: 73, ay: 50, lx: 56, ly: 82, lw: 22 },
+    { id: "endocarp", label: { en: "Inner layer (Endocarp)",  ar: "الطبقة الداخلية" }, ax: 70, ay: 26, lx: 38, ly: 4,  lw: 22 },
     { id: "seed",     label: { en: "Seed",                    ar: "البذرة" },          ax: 38, ay: 38, lx: 2,  ly: 46, lw: 18 },
   ],
   art: (() => {
