@@ -615,98 +615,121 @@ const binaryFission: DiagramDef = {
 const seedTypes: DiagramDef = {
   id: "ch3-seed-types",
   title: { en: "Monocot vs Dicot Seed", ar: "البذرة ذات الفلقة الواحدة + ذوات الفلقتين" },
-  aspect: "16/9",
+  aspect: "4/3",
   parts: [
-    // ===== LEFT (A) — Monocot wedge, body ~ x:10-42, y:6-50 =====
-    { id: "a-coat",    label: { en: "Seed coat",         ar: "غطاء البذرة" },    ax: 35,   ay: 7,    lx: 32, ly: 2,  lw: 22 },
-    { id: "a-endo",    label: { en: "Endosperm",         ar: "سويداء" },         ax: 22,   ay: 18,   lx: 32, ly: 14, lw: 22 },
-    { id: "a-cot",     label: { en: "Cotyledon",         ar: "ورقة جنينية" },    ax: 32,   ay: 28,   lx: 56, ly: 28, lw: 22 },
-    { id: "a-plum",    label: { en: "Plumule",           ar: "ريشة" },           ax: 33,   ay: 35,   lx: 56, ly: 40, lw: 22 },
-    { id: "a-rad",     label: { en: "Radicle",           ar: "جذير" },           ax: 30,   ay: 44,   lx: 56, ly: 52, lw: 22 },
-    { id: "a-peri",    label: { en: "Surrounding layer", ar: "طبقة محيطة" },     ax: 13,   ay: 42,   lx: 2,  ly: 70, lw: 26 },
-    // ===== RIGHT (B) — Dicot oval, body ~ x:58-92, y:10-46 =====
-    { id: "b-coat",    label: { en: "Seed coat",         ar: "غطاء البذرة" },    ax: 60,   ay: 12,   lx: 56, ly: 2,  lw: 22 },
-    { id: "b-plum",    label: { en: "Plumule",           ar: "رويشة" },          ax: 80,   ay: 26,   lx: 80, ly: 14, lw: 18 },
-    { id: "b-rad",     label: { en: "Radicle",           ar: "جذير" },           ax: 76,   ay: 32,   lx: 80, ly: 28, lw: 18 },
-    { id: "b-cots",    label: { en: "Two cotyledons",    ar: "ورقتين جنينيتين" }, ax: 86,   ay: 36,   lx: 80, ly: 42, lw: 18 },
+    // ===== LEFT (A) — Monocot wedge, body ~ x:8-42, y:8-58 =====
+    { id: "a-coat",    label: { en: "Seed coat",         ar: "غطاء البذرة" },    ax: 36,   ay: 11,  lx: 30, ly: 2,  lw: 24 },
+    { id: "a-endo",    label: { en: "Endosperm",         ar: "سويداء" },         ax: 20,   ay: 22,  lx: 30, ly: 14, lw: 24 },
+    { id: "a-cot",     label: { en: "Cotyledon",         ar: "ورقة جنينية" },    ax: 32,   ay: 34,  lx: 56, ly: 36, lw: 22 },
+    { id: "a-plum",    label: { en: "Plumule",           ar: "ريشة" },           ax: 33,   ay: 44,  lx: 56, ly: 50, lw: 22 },
+    { id: "a-rad",     label: { en: "Radicle",           ar: "جذير" },           ax: 28,   ay: 56,  lx: 56, ly: 64, lw: 22 },
+    { id: "a-peri",    label: { en: "Surrounding layer", ar: "طبقة محيطة" },     ax: 10,   ay: 52,  lx: 2,  ly: 78, lw: 28 },
+    // ===== RIGHT (B) — Dicot oval, body ~ x:55-95, y:12-60 =====
+    { id: "b-coat",    label: { en: "Seed coat",         ar: "غطاء البذرة" },    ax: 60,   ay: 14,  lx: 56, ly: 2,  lw: 24 },
+    { id: "b-plum",    label: { en: "Plumule",           ar: "رويشة" },          ax: 80,   ay: 30,  lx: 80, ly: 14, lw: 18 },
+    { id: "b-rad",     label: { en: "Radicle",           ar: "جذير" },           ax: 76,   ay: 38,  lx: 80, ly: 32, lw: 18 },
+    { id: "b-cots",    label: { en: "Two cotyledons",    ar: "ورقتين جنينيتين" }, ax: 88,   ay: 44,  lx: 80, ly: 50, lw: 18 },
   ],
   art: (() => {
-    const COAT       = "hsl(22 70% 55%)";
-    const COAT_DK    = "hsl(18 65% 35%)";
-    const PERI       = "hsl(35 55% 78%)";
-    const ENDO_FILL  = "hsl(45 60% 88%)";
-    const ENDO_TINT  = "hsl(280 45% 78%)";
-    const LEAF       = "hsl(115 50% 38%)";
-    const LEAF_DK    = "hsl(120 60% 22%)";
-    const LEAF_VEIN  = "hsl(120 65% 18%)";
+    const COAT       = "hsl(22 78% 58%)";
+    const COAT_DK    = "hsl(18 65% 32%)";
+    const PERI       = "hsl(35 70% 82%)";
+    const ENDO_FILL  = "hsl(45 75% 90%)";
+    const ENDO_TINT  = "hsl(280 50% 75%)";
+    const HALO       = "hsl(22 80% 65%)";
+    const LEAF       = "hsl(115 48% 38%)";
+    const LEAF_DK    = "hsl(120 60% 20%)";
+    const LEAF_VEIN  = "hsl(120 65% 16%)";
 
-    // ===== A — MONOCOT WEDGE (cross-section) =====
-    // Outer seed coat (orange ring) — wedge / rounded triangle
-    const aOuter = "M 16 6 L 40 6 Q 44 6 44 10 L 42 46 Q 42 50 38 50 L 10 50 Q 6 48 8 44 L 14 10 Q 14 6 16 6 Z";
-    // Inner surrounding layer (lighter cream just inside the coat)
-    const aPeri  = "M 18 9 L 38 9 Q 41 9 41 12 L 39.5 45 Q 39.5 47.5 36.5 47.5 L 13 47.5 Q 10 46 11.5 43 L 16.5 12 Q 16.5 9 18 9 Z";
-    // Endosperm interior
-    const aEndo  = "M 20 11 L 37 11 Q 39 11 39 13 L 37.8 44 Q 37.8 45.8 35.5 45.8 L 14.5 45.8 Q 12.5 44.8 13.8 42 L 18.5 13 Q 18.5 11 20 11 Z";
-    // Purple tint (endosperm food zone)
-    const aTint  = "M 27 30 m -10 0 a 10 12 0 1 0 20 0 a 10 12 0 1 0 -20 0";
-    // Embryo (cotyledon) — green leaf along the right side, plumule at top, radicle at bottom
-    const aEmbryo = "M 33 11 Q 38 24 35 36 Q 32 46 28 45.5 Q 25 36 28 24 Q 30 14 33 11 Z";
-    // Leaf midrib
-    const aMidrib = "M 32 13 Q 30 25 30 44";
-    // Leaf side veins
+    // Soft orange halo around each seed (mimics the textbook glow)
+    const halo = (cx: number, cy: number, rx: number, ry: number, key: string) =>
+      h("ellipse", { key, cx, cy, rx, ry, fill: HALO, opacity: 0.18,
+        filter: "blur(0.6px)" as unknown as string });
+
+    /* =========================================================
+     * A — MONOCOT (single cotyledon) WEDGE CROSS-SECTION
+     * Centred near (25, 32). Roughly triangular with rounded base.
+     * ========================================================= */
+    // Outer seed coat outline (rounded wedge: narrow top → wide rounded bottom)
+    const aOuter = "M 20 8 Q 36 8 38 12 Q 41 30 42 50 Q 36 58 24 58 Q 12 58 8 50 Q 9 30 12 12 Q 14 8 20 8 Z";
+    // Inner surrounding layer (thin cream band)
+    const aPeri  = "M 21 11 Q 35 11 36.4 14 Q 39 30 39.6 49 Q 35 55.4 24 55.4 Q 13 55.4 10.4 49 Q 11 30 13.6 14 Q 15 11 21 11 Z";
+    // Endosperm fill (sits inside the surrounding layer)
+    const aEndo  = "M 22 13 Q 34 13 35.2 15.4 Q 37.6 30 38.2 48 Q 34 53.6 24 53.6 Q 14 53.6 11.8 48 Q 12.4 30 14.8 15.4 Q 16 13 22 13 Z";
+    // Purple endosperm tint (food storage cloud, centre-left)
+    const aTint = h("ellipse", { cx: 22, cy: 33, rx: 11, ry: 13,
+      fill: ENDO_TINT, opacity: 0.55, filter: "blur(0.4px)" as unknown as string });
+    // Embryo (single cotyledon) — curved green leaf along the right inner wall
+    const aEmbryo = "M 33 13 Q 38 26 36 42 Q 34 54 30 53 Q 26 42 28 28 Q 30 16 33 13 Z";
+    // Leaf midrib (central vein)
+    const aMidrib = "M 32.5 15 Q 31 30 30.5 51";
+    // Pinnate side veins (alternating left/right of midrib)
     const aVeins = [
-      "M 31 18 Q 33 19 34.5 19.5",
-      "M 30.5 23 Q 32.5 24 34.5 24.5",
-      "M 30 28 Q 32 29 34 29.5",
-      "M 29.7 33 Q 31.7 34 33.5 34.5",
-      "M 29.5 38 Q 31 39 32.7 39.3",
-      "M 31 18 Q 29 19 27.5 19.5",
-      "M 30.5 23 Q 28.5 24 26.5 24.5",
-      "M 30 28 Q 28 29 26 29.5",
-      "M 29.7 33 Q 27.7 34 26 34.5",
+      "M 32 19 Q 34 20 35.2 20.6",
+      "M 31.6 24 Q 34 25 35.5 25.6",
+      "M 31.2 29 Q 33.7 30 35.4 30.6",
+      "M 30.9 34 Q 33.4 35 34.9 35.6",
+      "M 30.7 39 Q 33 40 34.2 40.6",
+      "M 30.6 44 Q 32.5 45 33.4 45.6",
+      "M 32 19 Q 30 20 28.6 20.6",
+      "M 31.6 24 Q 29.4 25 27.6 25.6",
+      "M 31.2 29 Q 28.7 30 27 30.6",
+      "M 30.9 34 Q 28.4 35 26.9 35.6",
+      "M 30.7 39 Q 28.5 40 27.2 40.6",
     ];
+    // Radicle tip — small dark green tail at the bottom of the embryo
+    const aRadicle = "M 29 52 Q 27 56 26 57 Q 25.5 54 26.5 51 Z";
 
-    // ===== B — DICOT OVAL (cross-section, split into two cotyledons) =====
-    const bCx = 75, bCy = 28, bRx = 17, bRy = 18;
-    // Outer seed coat
-    const bCoat = h("ellipse", { cx: bCx, cy: bCy, rx: bRx, ry: bRy,
+    /* =========================================================
+     * B — DICOT (two cotyledons) OVAL CROSS-SECTION
+     * Centred at (75, 36). Outer coat + two halves + embryo in the middle.
+     * ========================================================= */
+    const bCx = 75, bCy = 36, bRx = 18, bRy = 20;
+    const bCoat  = h("ellipse", { cx: bCx, cy: bCy, rx: bRx, ry: bRy,
       fill: COAT, stroke: COAT_DK, strokeWidth: 0.55 });
-    // Inner cotyledon body (lighter)
-    const bInner = h("ellipse", { cx: bCx, cy: bCy, rx: bRx - 2.2, ry: bRy - 2.2,
+    const bRing  = h("ellipse", { cx: bCx, cy: bCy, rx: bRx - 1.4, ry: bRy - 1.4,
+      fill: "none", stroke: "hsl(20 60% 78%)", strokeWidth: 0.45 });
+    const bInner = h("ellipse", { cx: bCx, cy: bCy, rx: bRx - 2.6, ry: bRy - 2.6,
       fill: ENDO_FILL, stroke: COAT_DK, strokeWidth: 0.25 });
-    // Purple tint behind the embryo
-    const bTint = h("ellipse", { cx: bCx, cy: bCy + 1, rx: 8, ry: 7,
-      fill: ENDO_TINT, opacity: 0.55 });
-    // Median split line between the two cotyledons
-    const bSplit = h("line", { x1: bCx, y1: bCy - (bRy - 2.2), x2: bCx, y2: bCy + (bRy - 2.2),
+    const bTint  = h("ellipse", { cx: bCx, cy: bCy + 1, rx: 9, ry: 8,
+      fill: ENDO_TINT, opacity: 0.55, filter: "blur(0.4px)" as unknown as string });
+    // Subtle median split between the two cotyledons (vertical line)
+    const bSplit = h("line", { x1: bCx, y1: bCy - (bRy - 2.6), x2: bCx, y2: bCy + (bRy - 2.6),
       stroke: COAT_DK, strokeWidth: 0.35, opacity: 0.55 });
-    // Embryo at the centre: tiny plumule (two leaflets) + radicle (downward tip)
-    const bRadicle = h("path", { d: `M ${bCx - 1.4} ${bCy + 1} Q ${bCx} ${bCy + 6} ${bCx + 1.4} ${bCy + 1} Z`,
+    // Embryo at centre: two tiny leaflets (plumule) + downward radicle tip
+    const bLeafL = h("path", {
+      d: `M ${bCx} ${bCy - 1} Q ${bCx - 5.4} ${bCy - 5} ${bCx - 2.4} ${bCy - 8} Q ${bCx - 0.6} ${bCy - 4.5} ${bCx} ${bCy - 1} Z`,
       fill: LEAF, stroke: LEAF_DK, strokeWidth: 0.35 });
-    const bLeafL = h("path", { d: `M ${bCx} ${bCy - 1} Q ${bCx - 5} ${bCy - 5} ${bCx - 2.2} ${bCy - 7.2} Q ${bCx - 0.6} ${bCy - 4} ${bCx} ${bCy - 1} Z`,
+    const bLeafR = h("path", {
+      d: `M ${bCx} ${bCy - 1} Q ${bCx + 5.4} ${bCy - 5} ${bCx + 2.4} ${bCy - 8} Q ${bCx + 0.6} ${bCy - 4.5} ${bCx} ${bCy - 1} Z`,
       fill: LEAF, stroke: LEAF_DK, strokeWidth: 0.35 });
-    const bLeafR = h("path", { d: `M ${bCx} ${bCy - 1} Q ${bCx + 5} ${bCy - 5} ${bCx + 2.2} ${bCy - 7.2} Q ${bCx + 0.6} ${bCy - 4} ${bCx} ${bCy - 1} Z`,
+    const bRadicle = h("path", {
+      d: `M ${bCx - 1.6} ${bCy + 0.5} Q ${bCx} ${bCy + 7} ${bCx + 1.6} ${bCy + 0.5} Z`,
       fill: LEAF, stroke: LEAF_DK, strokeWidth: 0.35 });
-    const bMid = h("line", { x1: bCx, y1: bCy - 7, x2: bCx, y2: bCy + 5,
+    const bMid = h("line", { x1: bCx, y1: bCy - 7.5, x2: bCx, y2: bCy + 6,
       stroke: LEAF_VEIN, strokeWidth: 0.3 });
 
     return h(Fragment, null,
       /* ===== A — Monocot ===== */
-      h("path", { d: aOuter, fill: COAT,      stroke: COAT_DK, strokeWidth: 0.6 }),
+      halo(25, 33, 24, 30, "haloA"),
+      h("path", { d: aOuter, fill: COAT,      stroke: COAT_DK, strokeWidth: 0.7 }),
       h("path", { d: aPeri,  fill: PERI,      stroke: COAT_DK, strokeWidth: 0.3 }),
       h("path", { d: aEndo,  fill: ENDO_FILL, stroke: COAT_DK, strokeWidth: 0.25 }),
-      h("path", { d: aTint,  fill: ENDO_TINT, opacity: 0.55 }),
+      aTint,
       h("path", { d: aEmbryo, fill: LEAF, stroke: LEAF_DK, strokeWidth: 0.45 }),
+      h("path", { d: aRadicle, fill: LEAF_DK, stroke: LEAF_DK, strokeWidth: 0.3 }),
       h("path", { d: aMidrib, fill: "none", stroke: LEAF_VEIN, strokeWidth: 0.35 }),
-      ...aVeins.map((d, i) => h("path", { key: `av${i}`, d, fill: "none", stroke: LEAF_VEIN, strokeWidth: 0.25, opacity: 0.85 })),
-      // (A) caption
-      h("text", { x: 27, y: 54.5, textAnchor: "middle", fontSize: 3.2, fill: "hsl(0 0% 15%)", fontStyle: "italic" }, "(أ)"),
+      ...aVeins.map((d, i) => h("path", { key: `av${i}`, d, fill: "none",
+        stroke: LEAF_VEIN, strokeWidth: 0.25, opacity: 0.85 })),
+      h("text", { x: 25, y: 68, textAnchor: "middle", fontSize: 3.6,
+        fill: "hsl(var(--foreground))", fontStyle: "italic" }, "(أ)"),
 
       /* ===== B — Dicot ===== */
-      bCoat, bInner, bTint, bSplit,
+      halo(75, 36, 22, 24, "haloB"),
+      bCoat, bRing, bInner, bTint, bSplit,
       bLeafL, bLeafR, bRadicle, bMid,
-      // (B) caption
-      h("text", { x: 75, y: 54.5, textAnchor: "middle", fontSize: 3.2, fill: "hsl(0 0% 15%)", fontStyle: "italic" }, "(ب)"),
+      h("text", { x: 75, y: 68, textAnchor: "middle", fontSize: 3.6,
+        fill: "hsl(var(--foreground))", fontStyle: "italic" }, "(ب)"),
     );
   })(),
 };
