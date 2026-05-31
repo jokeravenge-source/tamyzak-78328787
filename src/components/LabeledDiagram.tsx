@@ -192,13 +192,13 @@ const LabeledDiagram = ({ diagram, language }: { diagram: DiagramDef; language: 
             // label box is positioned at lx%, ly% of the container.
             // SVG viewBox is 100 x 75, so container-y% -> viewBox y = ly * 0.75
             const w = p.lw ?? 17;
-            const x2 = p.lx > 50 ? p.lx - 1.5 : p.lx + w + 1.5;
-            const y2 = (p.ly + 3) * 0.75;
+            const labelX = p.lx > 50 ? p.lx - 1.5 : p.lx + w + 1.5;
+            const labelY = (p.ly + 3) * 0.75;
             return (
               <motion.line
                 key={p.id}
                 x1={p.ax} y1={p.ay} x2={p.ax} y2={p.ay}
-                animate={{ x2, y2 }}
+                animate={{ x1: labelX, y1: labelY }}
                 transition={{ delay: 0.15 + i * 0.07, duration: 0.5, ease: "easeOut" }}
                 stroke="hsl(var(--primary))" strokeWidth="0.35"
                 markerEnd={`url(#ah-${diagram.id})`}
