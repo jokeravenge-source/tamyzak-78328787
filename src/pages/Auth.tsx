@@ -29,16 +29,22 @@ export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?
     e.preventDefault();
     setLoading(true);
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!normalizedEmail.endsWith("@gmail.com")) {
+        toast.error("Email must end with @gmail.com");
+        setLoading(false);
+        return;
+      }
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: normalizedEmail,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
         toast.success("Account created");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
         if (error) throw error;
       }
       onAuthed();
