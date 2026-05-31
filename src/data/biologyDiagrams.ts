@@ -270,36 +270,84 @@ const mitochondrion: DiagramDef = {
   })(),
 };
 
-/* Chloroplast (A for memorizing) */
+/* Chloroplast (reference for memorizing) */
 const chloroplast: DiagramDef = {
   id: "ch1-chloroplast",
   title: { en: "Chloroplast", ar: "البلاستيدة الخضراء" },
+  aspect: "16/9",
   parts: [
-    { id: "outer",        label: { en: "Outer membrane",      ar: "الغشاء الخارجي" },        ax: 16, ay: 20, lx: 2,  ly: 4 },
-    { id: "intermembrane",label: { en: "Intermembrane space", ar: "الحيز بين الغشائين" },    ax: 26, ay: 18, lx: 24, ly: 4 },
-    { id: "inner",        label: { en: "Inner membrane",      ar: "الغشاء الداخلي" },        ax: 36, ay: 22, lx: 48, ly: 4 },
-    { id: "stroma",       label: { en: "Stroma",              ar: "السدى" },                 ax: 70, ay: 24, lx: 78, ly: 4 },
-    { id: "granum",       label: { en: "Granum",              ar: "الكرانة" },               ax: 36, ay: 50, lx: 2,  ly: 60 },
-    { id: "thylakoid",    label: { en: "Thylakoid",           ar: "ثايلكويد" },              ax: 50, ay: 40, lx: 28, ly: 86 },
-    { id: "lamella",      label: { en: "Lamella",             ar: "الصفائح" },               ax: 60, ay: 50, lx: 52, ly: 86 },
-    { id: "lumen",        label: { en: "Lumen",               ar: "اللومن" },                ax: 70, ay: 48, lx: 78, ly: 86 },
+    { id: "grana",   label: { en: "Grana lamellae", ar: "صفائح الكرانا" }, ax: 34, ay: 22, lx: 2,  ly: 18, lw: 22 },
+    { id: "outer",   label: { en: "Outer membrane", ar: "الغشاء الخارجي" }, ax: 10, ay: 42, lx: 2,  ly: 52, lw: 22 },
+    { id: "inner",   label: { en: "Inner membrane", ar: "الغشاء الداخلي" }, ax: 14, ay: 48, lx: 2,  ly: 70, lw: 22 },
+    { id: "starch",  label: { en: "Starch granule", ar: "حبيبة نشاء" },     ax: 64, ay: 26, lx: 78, ly: 18, lw: 20 },
+    { id: "stroma",  label: { en: "Stroma",         ar: "السدى" },          ax: 70, ay: 42, lx: 78, ly: 42, lw: 20 },
+    { id: "granum",  label: { en: "Granum",         ar: "الكرانوم" },       ax: 80, ay: 55, lx: 78, ly: 70, lw: 20 },
   ],
-  art: h(Fragment, null,
-    // outer membrane (large ellipse)
-    h("ellipse", { cx: 50, cy: 38, rx: 42, ry: 26, fill: "hsl(140 55% 45% / 0.3)", stroke: P, strokeWidth: 0.6 }),
-    // inner membrane
-    h("ellipse", { cx: 50, cy: 38, rx: 38, ry: 22, fill: "hsl(140 50% 50% / 0.25)", stroke: A, strokeWidth: 0.4 }),
-    // stroma (yellow inner area)
-    h("ellipse", { cx: 50, cy: 38, rx: 32, ry: 16, fill: "hsl(48 90% 70% / 0.5)" }),
-    // grana (stacks of thylakoids)
-    ...[28, 42, 56, 70].map((x, i) => h("g", { key: `g${i}` },
-      ...Array.from({ length: 5 }, (_, k) => h("ellipse", {
-        key: k, cx: x, cy: 32 + k * 2.5, rx: 5, ry: 1, fill: "hsl(140 65% 35%)", opacity: 0.85,
-      })),
-      // lamella connecting next stack
-      i < 3 && h("line", { x1: x + 5, y1: 38, x2: x + 9, y2: 38, stroke: "hsl(140 65% 35%)", strokeWidth: 0.4 }),
-    )),
-  ),
+  art: (() => {
+    const OUTER = "hsl(95 35% 45%)";
+    const INNER = "hsl(95 45% 55%)";
+    const STROMA_BG = "hsl(50 75% 92%)";
+    const GRANUM = "hsl(135 55% 38%)";
+    const GRANUM_EDGE = "hsl(135 60% 22%)";
+    const STARCH = "hsl(50 80% 80%)";
+    const STARCH_EDGE = "hsl(40 55% 55%)";
+    const THYLA = "hsl(205 65% 55%)";
+    const grana: [number, number][] = [
+      [26, 22], [46, 20], [68, 22],
+      [22, 52], [42, 54], [62, 54], [80, 50],
+      [36, 36], [78, 36],
+    ];
+    return h(Fragment, null,
+      h("ellipse", { cx: 50, cy: 37.5, rx: 46, ry: 28, fill: STROMA_BG, stroke: OUTER, strokeWidth: 0.9 }),
+      h("ellipse", { cx: 50, cy: 37.5, rx: 43.5, ry: 25.5, fill: "none", stroke: INNER, strokeWidth: 0.5 }),
+      ...Array.from({ length: 70 }, (_, i) => {
+        const a = (i * 137.5) * Math.PI / 180;
+        const r = Math.sqrt((i + 1) / 70) * 24;
+        const x = 50 + Math.cos(a) * r;
+        const y = 37.5 + Math.sin(a) * r * 0.58;
+        return h("circle", { key: `sd${i}`, cx: x, cy: y, r: 0.3, fill: "hsl(95 30% 45%)", opacity: 0.55 });
+      }),
+      h("path", { d: "M28 22 Q36 18 46 20 T68 22 Q76 24 80 26", fill: "none", stroke: THYLA, strokeWidth: 0.5 }),
+      h("path", { d: "M22 52 Q32 48 42 54 T62 54 Q72 54 80 50", fill: "none", stroke: THYLA, strokeWidth: 0.5 }),
+      h("path", { d: "M26 28 Q34 34 42 30 Q52 26 62 32 Q72 36 80 32", fill: "none", stroke: THYLA, strokeWidth: 0.5 }),
+      h("path", { d: "M22 44 Q32 40 42 46 Q52 50 62 44 Q72 40 80 44", fill: "none", stroke: THYLA, strokeWidth: 0.5 }),
+      h("path", { d: "M36 36 Q50 38 64 36 Q72 36 78 38", fill: "none", stroke: THYLA, strokeWidth: 0.4 }),
+      h("ellipse", { cx: 40, cy: 32, rx: 3, ry: 2.4, fill: STARCH, stroke: STARCH_EDGE, strokeWidth: 0.3 }),
+      h("ellipse", { cx: 56, cy: 42, rx: 5,  ry: 4,   fill: STARCH, stroke: STARCH_EDGE, strokeWidth: 0.3 }),
+      h("circle",  { cx: 64, cy: 26, r: 1.4, fill: STARCH, stroke: STARCH_EDGE, strokeWidth: 0.3 }),
+      ...grana.map(([cx, cy], i) => h("g", { key: `gr${i}` },
+        ...Array.from({ length: 4 }, (_, k) => h("ellipse", {
+          key: k, cx, cy: cy - 3 + k * 2, rx: 3.2, ry: 0.95,
+          fill: GRANUM, stroke: GRANUM_EDGE, strokeWidth: 0.25,
+        })),
+      )),
+    );
+  })(),
+};
+
+/* Chromosome (sister chromatids + centromere) */
+const chromosome: DiagramDef = {
+  id: "ch1-chromosome",
+  title: { en: "Chromosome", ar: "الكروموسوم" },
+  aspect: "16/9",
+  parts: [
+    { id: "chromatids", label: { en: "Sister chromatids", ar: "كروماتيدان شقيقان" }, ax: 50, ay: 14, lx: 30, ly: 2,  lw: 36 },
+    { id: "centromere", label: { en: "Centromere",        ar: "القطعة المركزية" },   ax: 52, ay: 38, lx: 70, ly: 44, lw: 26 },
+  ],
+  art: (() => {
+    const BLUE = "hsl(205 75% 55%)";
+    const BLUE_DK = "hsl(210 70% 35%)";
+    const PURPLE = "hsl(285 55% 55%)";
+    const PURPLE_DK = "hsl(285 55% 35%)";
+    return h(Fragment, null,
+      h("path", { d: "M50 38 Q30 18 14 18 Q8 18 8 24 Q8 28 14 30 Q30 34 50 40 Z", fill: BLUE, stroke: BLUE_DK, strokeWidth: 0.5 }),
+      h("path", { d: "M50 38 Q30 58 14 58 Q8 58 8 52 Q8 48 14 46 Q30 42 50 36 Z", fill: BLUE, stroke: BLUE_DK, strokeWidth: 0.5 }),
+      h("path", { d: "M50 38 Q70 18 86 18 Q92 18 92 24 Q92 28 86 30 Q70 34 50 40 Z", fill: PURPLE, stroke: PURPLE_DK, strokeWidth: 0.5 }),
+      h("path", { d: "M50 38 Q70 58 86 58 Q92 58 92 52 Q92 48 86 46 Q70 42 50 36 Z", fill: PURPLE, stroke: PURPLE_DK, strokeWidth: 0.5 }),
+      h("circle", { cx: 50, cy: 38, r: 4.5, fill: "hsl(50 95% 88%)", opacity: 0.95 }),
+      h("circle", { cx: 50, cy: 38, r: 2.2, fill: "hsl(50 100% 96%)" }),
+    );
+  })(),
 };
 
 /* Plasma membrane (Fig 1.7) */
@@ -390,5 +438,5 @@ const plasmaMembrane: DiagramDef = {
 };
 
 export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
-  1: [bacteria, animalCell, plantCell, plasmaMembrane, mitochondrion],
+  1: [bacteria, animalCell, plantCell, plasmaMembrane, mitochondrion, chloroplast, chromosome],
 };
