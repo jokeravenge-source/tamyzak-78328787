@@ -526,10 +526,10 @@ const binaryFission: DiagramDef = {
   aspect: "3/5",
   parts: [
     // Labels point at the TOP cell (stage 1). Top cell ≈ x:35-65, y:3-13.
-    { id: "chromo",  label: { en: "Chromosome",      ar: "كروموسوم" },        ax: 50, ay: 8,  lx: 72, ly: 2,  lw: 26 },
-    { id: "plasma",  label: { en: "Plasma membrane", ar: "الغشاء البلازمي" }, ax: 63, ay: 8,  lx: 72, ly: 12, lw: 26 },
-    { id: "cyto",    label: { en: "Cytoplasm",       ar: "السايتوبلازم" },    ax: 43, ay: 9,  lx: 2,  ly: 2,  lw: 26 },
-    { id: "wall",    label: { en: "Cell wall",       ar: "جدار الخلية" },     ax: 65, ay: 4,  lx: 2,  ly: 12, lw: 26 },
+    { id: "chromo",  label: { en: "Chromosome",      ar: "كروموسوم" },        ax: 50,   ay: 8,   lx: 72, ly: 2,  lw: 26 },
+    { id: "plasma",  label: { en: "Plasma membrane", ar: "الغشاء البلازمي" }, ax: 64.1, ay: 8,   lx: 72, ly: 12, lw: 26 },
+    { id: "cyto",    label: { en: "Cytoplasm",       ar: "السايتوبلازم" },    ax: 43,   ay: 8.5, lx: 2,  ly: 2,  lw: 26 },
+    { id: "wall",    label: { en: "Cell wall",       ar: "جدار الخلية" },     ax: 35,   ay: 8,   lx: 2,  ly: 12, lw: 26 },
   ],
   art: (() => {
     const WALL = "hsl(0 70% 58%)";
