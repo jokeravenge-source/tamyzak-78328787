@@ -7,6 +7,7 @@ const corsHeaders = {
 // Server-side ONLY. Never expose this map to the client.
 const ADMIN_CREDENTIALS: Record<string, string> = {
   "majs11@gmail.com": "majs11",
+  "hareer-herself@gmail.com": "Adminhareer123",
   "mustafa@gmail.com": "adminmustafa123",
   "abdallah6dhs@gmail.com": "adminabdallah123",
   "haneenherself@gmail.com": "adminhaneen123",
