@@ -294,6 +294,17 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     } catch {}
   }, []);
 
+  // Restore pomodoro settings on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(POMODORO_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (typeof s.workMin === "number") setPomodoroWorkMin(Math.max(1, Math.min(180, s.workMin)));
+      if (typeof s.restMin === "number") setPomodoroRestMin(Math.max(1, Math.min(180, s.restMin)));
+    } catch {}
+  }, []);
+
   // Persist on relevant state changes
   useEffect(() => {
     if (!started || !subject) return;
