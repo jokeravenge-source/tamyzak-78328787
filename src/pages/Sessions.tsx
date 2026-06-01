@@ -317,8 +317,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     savingRef.current = true;
     setRunning(false);
     clearPresence();
-    const hours = seconds / 3600;
-    const points = Math.floor(hours);
+    // 1 point per full studied minute, so partial-hour sessions still count.
+    const points = Math.floor(seconds / 60);
     const { data: inserted, error } = await supabase.from("study_sessions").insert({
       user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
       mission_completed: completed, points,
