@@ -143,12 +143,12 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const runningRef = useRef(false);
   useEffect(() => { runningRef.current = running; }, [running]);
 
-  // Pomodoro phase switching: every 45 min of studying triggers 15 min rest, then back to work.
+  // Pomodoro phase switching: work min of studying triggers rest min rest, then back to work.
   useEffect(() => {
     if (!pomodoro || !started) return;
     if (phase === "work") {
       const workElapsed = seconds - phaseStartRef.current;
-      if (workElapsed >= POMODORO_WORK && lastPhaseSwitchRef.current !== seconds) {
+      if (workElapsed >= pomodoroWorkMin * 60 && lastPhaseSwitchRef.current !== seconds) {
         lastPhaseSwitchRef.current = seconds;
         setPhase("rest");
         phaseStartRef.current = Date.now();
@@ -157,7 +157,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
         playAlarm();
       }
     }
-  }, [seconds, pomodoro, started, phase, L.workDone]);
+  }, [seconds, pomodoro, started, phase, pomodoroWorkMin, L.workDone]);
 
   // Rest timer (separate, real-time)
   const [restRemaining, setRestRemaining] = useState(0);
