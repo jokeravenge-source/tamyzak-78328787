@@ -484,7 +484,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i < 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{i + 1}</span>
                     <span>{r.name}</span>
                   </div>
-                  <span className="font-semibold text-primary">{r.points} {L.hours}</span>
+                  <span className="font-semibold text-primary">{r.points} {L.minutes}</span>
                 </li>
               ))}
             </ol>
