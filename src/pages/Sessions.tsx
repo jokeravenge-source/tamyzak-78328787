@@ -235,16 +235,15 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   useEffect(() => {
     if (running) {
-      intervalRef.current = window.setInterval(() => {
-        setSeconds((s) => {
-          const next = s + 1;
-          if (next >= MAX_SECONDS) {
-            setRunning(false);
-            return MAX_SECONDS;
-          }
-          return next;
-        });
-      }, 1000);
+      resumeAtRef.current = Date.now();
+      accumulatedRef.current = secondsRef.current;
+      const tick = () => {
+        const elapsed = accumulatedRef.current + Math.floor((Date.now() - resumeAtRef.current) / 1000);
+        if (elapsed >= MAX_SECONDS) { setSeconds(MAX_SECONDS); setRunning(false); }
+        else setSeconds(elapsed);
+      };
+      tick();
+      intervalRef.current = window.setInterval(tick, 1000);
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -256,23 +255,19 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState !== "visible") return;
-      try {
-        const raw = localStorage.getItem(PERSIST_KEY);
-        if (!raw) return;
-        const s = JSON.parse(raw);
-        if (!s?.running || !s?.startedAt) return;
-        const base = s.accumulated ?? 0;
-        const extra = Math.floor((Date.now() - s.startedAt) / 1000);
-        let total = base + extra;
-        if (total >= MAX_SECONDS) { total = MAX_SECONDS; setRunning(false); }
-        setSeconds(total);
-      } catch {}
+      if (runningRef.current) {
+        const elapsed = accumulatedRef.current + Math.floor((Date.now() - resumeAtRef.current) / 1000);
+        if (elapsed >= MAX_SECONDS) { setSeconds(MAX_SECONDS); setRunning(false); }
+        else setSeconds(elapsed);
+      }
     };
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("focus", onVis);
+    window.addEventListener("pageshow", onVis);
     return () => {
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("focus", onVis);
+      window.removeEventListener("pageshow", onVis);
     };
   }, []);
 
