@@ -5,8 +5,7 @@ const corsHeaders = {
 
 const ADMINS = [
   { email: "majs11@gmail.com", password: "majs11" },
-  { email: "Hareer-herself@gmail.com", password: "Adminhareer123" },
-
+  { email: "hareer-herself@gmail.com", password: "Adminhareer123" },
   { email: "mustafa@gmail.com", password: "adminmustafa123" },
   { email: "abdallah6dhs@gmail.com", password: "adminabdallah123" },
   { email: "haneenherself@gmail.com", password: "adminhaneen123" },
