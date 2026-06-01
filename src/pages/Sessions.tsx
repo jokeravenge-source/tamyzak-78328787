@@ -77,6 +77,9 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const intervalRef = useRef<number | null>(null);
+  // Wall-clock timer refs: drift-proof across device sleep / background tabs.
+  const resumeAtRef = useRef<number>(0);
+  const accumulatedRef = useRef<number>(0);
   const [trackIdx, setTrackIdx] = useState(0);
   const [playlist, setPlaylist] = useState<"music" | "quran">("music");
   const [musicPlaying, setMusicPlaying] = useState(false);
