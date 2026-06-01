@@ -398,7 +398,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   return (
     <main className="relative min-h-screen px-4 py-10 md:py-16" dir={dir}>
-      <button onClick={() => setSubject(null)} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
+      <button onClick={async () => { if (started) { await stopAndSave(); } setSubject(null); }} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
         <ArrowLeft className="w-5 h-5" />
       </button>
       <div className="max-w-3xl mx-auto">
@@ -444,7 +444,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           {started && (
             <div className="flex justify-center">
               <button
-                onClick={() => setSubject(null)}
+                onClick={async () => { await stopAndSave(); setSubject(null); }}
                 className="text-xs text-primary underline underline-offset-4 hover:text-primary/80"
               >
                 {L.switchRoom}
