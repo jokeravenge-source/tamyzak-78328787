@@ -196,6 +196,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       setStarted(true);
       setSeconds(total);
       setRunning(!!s.running && total < MAX_SECONDS);
+      accumulatedRef.current = total;
+      resumeAtRef.current = Date.now();
     } catch {}
   }, []);
 
