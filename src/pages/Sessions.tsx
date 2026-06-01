@@ -163,10 +163,11 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [restRemaining, setRestRemaining] = useState(0);
   useEffect(() => {
     if (!pomodoro || phase !== "rest" || !started) return;
-    setRestRemaining(POMODORO_REST);
+    const restSeconds = pomodoroRestMin * 60;
+    setRestRemaining(restSeconds);
     const start = Date.now();
     const id = window.setInterval(() => {
-      const left = POMODORO_REST - Math.floor((Date.now() - start) / 1000);
+      const left = restSeconds - Math.floor((Date.now() - start) / 1000);
       if (left <= 0) {
         window.clearInterval(id);
         setRestRemaining(0);
@@ -181,7 +182,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       }
     }, 500);
     return () => window.clearInterval(id);
-  }, [phase, pomodoro, started, L.restDone]);
+  }, [phase, pomodoro, started, pomodoroRestMin, L.restDone]);
 
   // --- Live presence helpers ---
   const upsertPresence = async (subj: string, miss: string) => {
