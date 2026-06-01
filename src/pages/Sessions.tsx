@@ -18,8 +18,9 @@ const MUSIC_TRACKS = [track1, track2, track3, track4, track5, track6];
 const QURAN_TRACKS = [quranTrack];
 const MAX_SECONDS = 48 * 3600;
 const PERSIST_KEY = "study_session_state_v1";
-const POMODORO_WORK = 45 * 60;
-const POMODORO_REST = 15 * 60;
+const POMODORO_KEY = "pomodoro_settings_v1";
+const DEFAULT_WORK_MIN = 45;
+const DEFAULT_REST_MIN = 15;
 
 // Play a multi-beep alarm via WebAudio (no asset needed).
 const playAlarm = () => {
