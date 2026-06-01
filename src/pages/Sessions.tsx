@@ -151,7 +151,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
         phaseStartRef.current = Date.now();
         setRunning(false);
         toast.success(L.workDone);
-        try { new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=").play().catch(() => {}); } catch {}
+        playAlarm();
       }
     }
   }, [seconds, pomodoro, started, phase, L.workDone]);
@@ -172,6 +172,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
         lastPhaseSwitchRef.current = -1;
         setRunning(true);
         toast.success(L.restDone);
+        playAlarm();
       } else {
         setRestRemaining(left);
       }
