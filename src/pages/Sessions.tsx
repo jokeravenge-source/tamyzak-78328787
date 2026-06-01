@@ -21,6 +21,31 @@ const PERSIST_KEY = "study_session_state_v1";
 const POMODORO_WORK = 45 * 60;
 const POMODORO_REST = 15 * 60;
 
+// Play a multi-beep alarm via WebAudio (no asset needed).
+const playAlarm = () => {
+  try {
+    const AC = (window.AudioContext || (window as any).webkitAudioContext);
+    if (!AC) return;
+    const ctx = new AC();
+    const now = ctx.currentTime;
+    const beeps = 6;
+    for (let i = 0; i < beeps; i++) {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = 880;
+      const t0 = now + i * 0.35;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.5, t0 + 0.02);
+      g.gain.linearRampToValueAtTime(0, t0 + 0.25);
+      o.connect(g).connect(ctx.destination);
+      o.start(t0);
+      o.stop(t0 + 0.27);
+    }
+    setTimeout(() => ctx.close().catch(() => {}), beeps * 400 + 500);
+  } catch {}
+};
+
 const SUBJECTS = [
   { code: "islamic", en: "Islamic", ar: "التربية الإسلامية", Icon: Moon },
   { code: "arabic", en: "Arabic", ar: "العربية", Icon: BookOpen },
