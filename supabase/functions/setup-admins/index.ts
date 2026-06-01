@@ -5,6 +5,8 @@ const corsHeaders = {
 
 const ADMINS = [
   { email: "majs11@gmail.com", password: "majs11" },
+  { email: "Hareer-herself@gmail.com", password: "Adminhareer123" },
+
   { email: "mustafa@gmail.com", password: "adminmustafa123" },
   { email: "abdallah6dhs@gmail.com", password: "adminabdallah123" },
   { email: "haneenherself@gmail.com", password: "adminhaneen123" },
@@ -44,15 +46,17 @@ Deno.serve(async (req) => {
         const target = a.email.toLowerCase();
         let page = 1;
         while (!userId && page <= 50) {
-          const listRes = await fetch(
-            `${SUPABASE_URL}/auth/v1/admin/users?page=${page}&per_page=1000`,
-            { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
-          );
+          const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=${page}&per_page=1000`, {
+            headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
+          });
           const listData = await listRes.json();
           const users: any[] = listData?.users ?? [];
           if (users.length === 0) break;
           const found = users.find((u: any) => u.email?.toLowerCase() === target);
-          if (found) { userId = found.id; break; }
+          if (found) {
+            userId = found.id;
+            break;
+          }
           page += 1;
         }
 
