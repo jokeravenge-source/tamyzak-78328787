@@ -543,6 +543,40 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             </button>
           </div>
 
+          {!started && pomodoro && (
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <label className="flex items-center gap-2 text-sm">
+                <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">{L.workMin}</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={180}
+                  value={pomodoroWorkMin}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) setPomodoroWorkMin(Math.max(1, Math.min(180, v)));
+                  }}
+                  className="w-20 text-center"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">{L.restMin}</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={180}
+                  value={pomodoroRestMin}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) setPomodoroRestMin(Math.max(1, Math.min(180, v)));
+                  }}
+                  className="w-20 text-center"
+                />
+              </label>
+            </div>
+          )}
+
           {started && pomodoro && (
             <div className={`text-center text-sm font-semibold ${phase === "rest" ? "text-primary" : "text-muted-foreground"}`}>
               {phase === "rest"
