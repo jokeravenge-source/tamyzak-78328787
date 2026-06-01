@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee } from "lucide-react";
+import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,9 @@ const MUSIC_TRACKS = [track1, track2, track3, track4, track5, track6];
 const QURAN_TRACKS = [quranTrack];
 const MAX_SECONDS = 48 * 3600;
 const PERSIST_KEY = "study_session_state_v1";
-const POMODORO_WORK = 45 * 60;
-const POMODORO_REST = 15 * 60;
+const POMODORO_KEY = "pomodoro_settings_v1";
+const DEFAULT_WORK_MIN = 45;
+const DEFAULT_REST_MIN = 15;
 
 // Play a multi-beep alarm via WebAudio (no asset needed).
 const playAlarm = () => {
@@ -69,13 +70,15 @@ const T = {
     pointsLine1: "You earn 1 point for every full hour you study.",
     pointsLine2: "Finish your mission and get +1 bonus point.",
     pointsLine3: "Points add up per subject on the leaderboard.",
-    pomodoro: "Pomodoro (45 / 15)",
-    pomodoroOn: "Pomodoro on",
-    pomodoroOff: "Pomodoro off",
+    pomodoro: "Pomodoro",
+    pomodoroOn: "On",
+    pomodoroOff: "Off",
     workPhase: "Focus time",
     restPhase: "Break time",
-    workDone: "Time for a 15-minute break!",
+    workDone: "Time for a break!",
     restDone: "Break over — back to focus!",
+    workMin: "Study minutes",
+    restMin: "Rest minutes",
   },
   ar: {
     title: "جلسات الدراسة", desc: "اختر مادة وحدد مهمتك واكسب النقاط.",
@@ -88,13 +91,15 @@ const T = {
     pointsLine1: "تحصل على نقطة واحدة لكل ساعة دراسة كاملة.",
     pointsLine2: "إذا أنجزت مهمتك تحصل على نقطة إضافية (+1).",
     pointsLine3: "تتجمع النقاط لكل مادة على لوحة المتصدرين.",
-    pomodoro: "بومودورو (45 / 15)",
-    pomodoroOn: "بومودورو مفعّل",
-    pomodoroOff: "بومودورو متوقف",
+    pomodoro: "بومودورو",
+    pomodoroOn: "مفعّل",
+    pomodoroOff: "متوقف",
     workPhase: "وقت التركيز",
     restPhase: "وقت الراحة",
-    workDone: "حان وقت الاستراحة 15 دقيقة!",
+    workDone: "حان وقت الاستراحة!",
     restDone: "انتهت الاستراحة — عُد للتركيز!",
+    workMin: "دقائق الدراسة",
+    restMin: "دقائق الراحة",
   },
 } as const;
 
@@ -118,6 +123,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [pomodoro, setPomodoro] = useState(false);
+  const [pomodoroWorkMin, setPomodoroWorkMin] = useState(DEFAULT_WORK_MIN);
+  const [pomodoroRestMin, setPomodoroRestMin] = useState(DEFAULT_REST_MIN);
   const [phase, setPhase] = useState<"work" | "rest">("work");
   const phaseStartRef = useRef(0);
   const lastPhaseSwitchRef = useRef(0);
@@ -140,12 +147,12 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const runningRef = useRef(false);
   useEffect(() => { runningRef.current = running; }, [running]);
 
-  // Pomodoro phase switching: every 45 min of studying triggers 15 min rest, then back to work.
+  // Pomodoro phase switching: work min of studying triggers rest min rest, then back to work.
   useEffect(() => {
     if (!pomodoro || !started) return;
     if (phase === "work") {
       const workElapsed = seconds - phaseStartRef.current;
-      if (workElapsed >= POMODORO_WORK && lastPhaseSwitchRef.current !== seconds) {
+      if (workElapsed >= pomodoroWorkMin * 60 && lastPhaseSwitchRef.current !== seconds) {
         lastPhaseSwitchRef.current = seconds;
         setPhase("rest");
         phaseStartRef.current = Date.now();
@@ -154,16 +161,17 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
         playAlarm();
       }
     }
-  }, [seconds, pomodoro, started, phase, L.workDone]);
+  }, [seconds, pomodoro, started, phase, pomodoroWorkMin, L.workDone]);
 
   // Rest timer (separate, real-time)
   const [restRemaining, setRestRemaining] = useState(0);
   useEffect(() => {
     if (!pomodoro || phase !== "rest" || !started) return;
-    setRestRemaining(POMODORO_REST);
+    const restSeconds = pomodoroRestMin * 60;
+    setRestRemaining(restSeconds);
     const start = Date.now();
     const id = window.setInterval(() => {
-      const left = POMODORO_REST - Math.floor((Date.now() - start) / 1000);
+      const left = restSeconds - Math.floor((Date.now() - start) / 1000);
       if (left <= 0) {
         window.clearInterval(id);
         setRestRemaining(0);
@@ -178,7 +186,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       }
     }, 500);
     return () => window.clearInterval(id);
-  }, [phase, pomodoro, started, L.restDone]);
+  }, [phase, pomodoro, started, pomodoroRestMin, L.restDone]);
 
   // --- Live presence helpers ---
   const upsertPresence = async (subj: string, miss: string) => {
@@ -286,6 +294,17 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     } catch {}
   }, []);
 
+  // Restore pomodoro settings on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(POMODORO_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (typeof s.workMin === "number") setPomodoroWorkMin(Math.max(1, Math.min(180, s.workMin)));
+      if (typeof s.restMin === "number") setPomodoroRestMin(Math.max(1, Math.min(180, s.restMin)));
+    } catch {}
+  }, []);
+
   // Persist on relevant state changes
   useEffect(() => {
     if (!started || !subject) return;
@@ -297,6 +316,11 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     };
     localStorage.setItem(PERSIST_KEY, JSON.stringify(payload));
   }, [started, subject, mission, completed, running, seconds]);
+
+  // Persist pomodoro settings
+  useEffect(() => {
+    localStorage.setItem(POMODORO_KEY, JSON.stringify({ workMin: pomodoroWorkMin, restMin: pomodoroRestMin }));
+  }, [pomodoroWorkMin, pomodoroRestMin]);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -518,6 +542,40 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
               <span className="text-xs opacity-80">· {pomodoro ? L.pomodoroOn : L.pomodoroOff}</span>
             </button>
           </div>
+
+          {!started && pomodoro && (
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              <label className="flex items-center gap-2 text-sm">
+                <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">{L.workMin}</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={180}
+                  value={pomodoroWorkMin}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) setPomodoroWorkMin(Math.max(1, Math.min(180, v)));
+                  }}
+                  className="w-20 text-center"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">{L.restMin}</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={180}
+                  value={pomodoroRestMin}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) setPomodoroRestMin(Math.max(1, Math.min(180, v)));
+                  }}
+                  className="w-20 text-center"
+                />
+              </label>
+            </div>
+          )}
 
           {started && pomodoro && (
             <div className={`text-center text-sm font-semibold ${phase === "rest" ? "text-primary" : "text-muted-foreground"}`}>
