@@ -39,7 +39,7 @@ const T = {
     switchRoom: "Switch room",
     saved: "Session saved",
     pointsTitle: "How points work",
-    pointsLine1: "You earn 1 point for every full minute you study.",
+    pointsLine1: "You earn 1 point for every full hour you study.",
     pointsLine2: "Finish your mission and get +1 bonus point.",
     pointsLine3: "Points add up per subject on the leaderboard.",
   },
@@ -51,7 +51,7 @@ const T = {
     switchRoom: "تغيير الغرفة",
     saved: "تم حفظ الجلسة",
     pointsTitle: "كيف تُحسب النقاط",
-    pointsLine1: "تحصل على نقطة واحدة لكل دقيقة دراسة كاملة.",
+    pointsLine1: "تحصل على نقطة واحدة لكل ساعة دراسة كاملة.",
     pointsLine2: "إذا أنجزت مهمتك تحصل على نقطة إضافية (+1).",
     pointsLine3: "تتجمع النقاط لكل مادة على لوحة المتصدرين.",
   },
@@ -317,8 +317,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     savingRef.current = true;
     setRunning(false);
     clearPresence();
-    // 1 point per full studied minute, so partial-hour sessions still count.
-    const points = Math.floor(seconds / 60);
+    // 1 point per full studied hour.
+    const points = Math.floor(seconds / 3600);
     const { data: inserted, error } = await supabase.from("study_sessions").insert({
       user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
       mission_completed: completed, points,
@@ -484,7 +484,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i < 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{i + 1}</span>
                     <span>{r.name}</span>
                   </div>
-                  <span className="font-semibold text-primary">{r.points} {L.minutes}</span>
+                  <span className="font-semibold text-primary">{r.points} {L.points}</span>
                 </li>
               ))}
             </ol>
