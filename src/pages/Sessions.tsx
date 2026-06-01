@@ -440,6 +440,17 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
               </>
             )}
           </div>
+
+          {started && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => setSubject(null)}
+                className="text-xs text-primary underline underline-offset-4 hover:text-primary/80"
+              >
+                {L.switchRoom}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mt-6 rounded-2xl border border-white/10 bg-secondary/30 backdrop-blur p-4 flex items-center gap-3 flex-wrap">
