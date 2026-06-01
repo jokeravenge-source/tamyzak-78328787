@@ -317,6 +317,11 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     localStorage.setItem(PERSIST_KEY, JSON.stringify(payload));
   }, [started, subject, mission, completed, running, seconds]);
 
+  // Persist pomodoro settings
+  useEffect(() => {
+    localStorage.setItem(POMODORO_KEY, JSON.stringify({ workMin: pomodoroWorkMin, restMin: pomodoroRestMin }));
+  }, [pomodoroWorkMin, pomodoroRestMin]);
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       const u = data.user;
