@@ -35,10 +35,11 @@ const T = {
     title: "Study Sessions", desc: "Pick a subject, set a mission, and earn points.",
     leaderboard: "Leaderboard", mission: "Mission for this session", missionPh: "e.g. Finish chapter 3 exercises",
     start: "Start", pause: "Pause", resume: "Resume", stop: "Stop & save",
-    completed: "Mark mission completed", points: "pts", hours: "hours", noOne: "No scores yet.",
+    completed: "Mark mission completed", points: "pts", hours: "hours", minutes: "min", noOne: "No scores yet.",
+    switchRoom: "Switch room (keep timer)",
     saved: "Session saved",
     pointsTitle: "How points work",
-    pointsLine1: "You earn 1 point for every full hour you study.",
+    pointsLine1: "You earn 1 point for every full minute you study.",
     pointsLine2: "Finish your mission and get +1 bonus point.",
     pointsLine3: "Points add up per subject on the leaderboard.",
   },
@@ -46,10 +47,11 @@ const T = {
     title: "جلسات الدراسة", desc: "اختر مادة وحدد مهمتك واكسب النقاط.",
     leaderboard: "لوحة المتصدرين", mission: "مهمة هذه الجلسة", missionPh: "مثلاً: إنهاء تمارين الفصل 3",
     start: "ابدأ", pause: "إيقاف مؤقت", resume: "متابعة", stop: "إيقاف وحفظ",
-    completed: "تم إنجاز المهمة", points: "نقطة", hours: "ساعة", noOne: "لا توجد نتائج بعد.",
+    completed: "تم إنجاز المهمة", points: "نقطة", hours: "ساعة", minutes: "دقيقة", noOne: "لا توجد نتائج بعد.",
+    switchRoom: "تغيير الغرفة (مع الإبقاء على المؤقت)",
     saved: "تم حفظ الجلسة",
     pointsTitle: "كيف تُحسب النقاط",
-    pointsLine1: "تحصل على نقطة واحدة لكل ساعة دراسة كاملة.",
+    pointsLine1: "تحصل على نقطة واحدة لكل دقيقة دراسة كاملة.",
     pointsLine2: "إذا أنجزت مهمتك تحصل على نقطة إضافية (+1).",
     pointsLine3: "تتجمع النقاط لكل مادة على لوحة المتصدرين.",
   },
@@ -75,6 +77,9 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const intervalRef = useRef<number | null>(null);
+  // Wall-clock timer refs: drift-proof across device sleep / background tabs.
+  const resumeAtRef = useRef<number>(0);
+  const accumulatedRef = useRef<number>(0);
   const [trackIdx, setTrackIdx] = useState(0);
   const [playlist, setPlaylist] = useState<"music" | "quran">("music");
   const [musicPlaying, setMusicPlaying] = useState(false);
@@ -191,6 +196,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       setStarted(true);
       setSeconds(total);
       setRunning(!!s.running && total < MAX_SECONDS);
+      accumulatedRef.current = total;
+      resumeAtRef.current = Date.now();
     } catch {}
   }, []);
 
@@ -228,16 +235,15 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   useEffect(() => {
     if (running) {
-      intervalRef.current = window.setInterval(() => {
-        setSeconds((s) => {
-          const next = s + 1;
-          if (next >= MAX_SECONDS) {
-            setRunning(false);
-            return MAX_SECONDS;
-          }
-          return next;
-        });
-      }, 1000);
+      resumeAtRef.current = Date.now();
+      accumulatedRef.current = secondsRef.current;
+      const tick = () => {
+        const elapsed = accumulatedRef.current + Math.floor((Date.now() - resumeAtRef.current) / 1000);
+        if (elapsed >= MAX_SECONDS) { setSeconds(MAX_SECONDS); setRunning(false); }
+        else setSeconds(elapsed);
+      };
+      tick();
+      intervalRef.current = window.setInterval(tick, 1000);
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -249,23 +255,19 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState !== "visible") return;
-      try {
-        const raw = localStorage.getItem(PERSIST_KEY);
-        if (!raw) return;
-        const s = JSON.parse(raw);
-        if (!s?.running || !s?.startedAt) return;
-        const base = s.accumulated ?? 0;
-        const extra = Math.floor((Date.now() - s.startedAt) / 1000);
-        let total = base + extra;
-        if (total >= MAX_SECONDS) { total = MAX_SECONDS; setRunning(false); }
-        setSeconds(total);
-      } catch {}
+      if (runningRef.current) {
+        const elapsed = accumulatedRef.current + Math.floor((Date.now() - resumeAtRef.current) / 1000);
+        if (elapsed >= MAX_SECONDS) { setSeconds(MAX_SECONDS); setRunning(false); }
+        else setSeconds(elapsed);
+      }
     };
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("focus", onVis);
+    window.addEventListener("pageshow", onVis);
     return () => {
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("focus", onVis);
+      window.removeEventListener("pageshow", onVis);
     };
   }, []);
 
@@ -315,8 +317,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     savingRef.current = true;
     setRunning(false);
     clearPresence();
-    const hours = seconds / 3600;
-    const points = Math.floor(hours);
+    // 1 point per full studied minute, so partial-hour sessions still count.
+    const points = Math.floor(seconds / 60);
     const { data: inserted, error } = await supabase.from("study_sessions").insert({
       user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
       mission_completed: completed, points,
@@ -438,6 +440,17 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
               </>
             )}
           </div>
+
+          {started && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => setSubject(null)}
+                className="text-xs text-primary underline underline-offset-4 hover:text-primary/80"
+              >
+                {L.switchRoom}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mt-6 rounded-2xl border border-white/10 bg-secondary/30 backdrop-blur p-4 flex items-center gap-3 flex-wrap">
@@ -471,7 +484,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i < 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{i + 1}</span>
                     <span>{r.name}</span>
                   </div>
-                  <span className="font-semibold text-primary">{r.points} {L.hours}</span>
+                  <span className="font-semibold text-primary">{r.points} {L.minutes}</span>
                 </li>
               ))}
             </ol>
