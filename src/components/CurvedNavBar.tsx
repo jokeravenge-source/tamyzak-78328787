@@ -67,6 +67,18 @@ const CurvedNavBar = ({
             );
           })}
           <a
+            href="https://t.me/DHSLibrary"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={language === "ar" ? "مكتبة التميز" : "Excellence Library"}
+            className="relative flex-1 h-12 md:h-14 inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold select-none text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span className="relative inline-flex items-center gap-2">
+              <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="text-xs md:text-sm tracking-wide">{L.library}</span>
+            </span>
+          </a>
+          <a
             href="https://t.me/ias404"
             target="_blank"
             rel="noopener noreferrer"
