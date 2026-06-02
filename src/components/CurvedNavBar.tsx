@@ -1,4 +1,4 @@
-import { Sparkles, MoreHorizontal, UserCog, Trophy, Heart } from "lucide-react";
+import { Sparkles, MoreHorizontal, UserCog, Trophy, Heart, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
