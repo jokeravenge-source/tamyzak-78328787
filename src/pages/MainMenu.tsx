@@ -1,4 +1,4 @@
-import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, Compass } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, Compass, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
@@ -128,14 +128,26 @@ const MainMenu = ({
         <ArrowLeft className="w-5 h-5" />
       </button>
 
-      <button
-        onClick={signOut}
-        aria-label={language === "ar" ? "تسجيل الخروج" : "Sign out"}
-        className="absolute top-6 right-6 z-20 inline-flex items-center gap-2 h-11 px-4 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
-      >
-        <LogOut className="w-4 h-4" />
-        <span className="hidden sm:inline">{language === "ar" ? "خروج" : "Sign out"}</span>
-      </button>
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-2">
+        <a
+          href="https://t.me/DHSLibrary"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="مكتبة التميز"
+          className="inline-flex items-center gap-2 h-11 px-4 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
+        >
+          <ExternalLink className="w-4 h-4" />
+          <span className="hidden sm:inline">مكتبة التميز</span>
+        </a>
+        <button
+          onClick={signOut}
+          aria-label={language === "ar" ? "تسجيل الخروج" : "Sign out"}
+          className="inline-flex items-center gap-2 h-11 px-4 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
+        >
+          <LogOut className="w-4 h-4" />
+          <span className="hidden sm:inline">{language === "ar" ? "خروج" : "Sign out"}</span>
+        </button>
+      </div>
 
       {unread.length > 0 && (
         <div className="max-w-3xl mx-auto mb-6 space-y-2 relative z-10">
