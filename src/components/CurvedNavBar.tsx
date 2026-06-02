@@ -6,8 +6,8 @@ import type { MainMenuChoice } from "@/pages/MainMenu";
 type TabKey = "basics" | "more" | "leaderboard" | "account";
 
 const labels = {
-  en: { basics: "Basics", more: "More", leaderboard: "Leaders", account: "Account", donate: "Donate" },
-  ar: { basics: "الأساسيات", more: "المزيد", leaderboard: "المتصدرون", account: "الحساب", donate: "تبرع" },
+  en: { basics: "Basics", more: "More", leaderboard: "Leaders", account: "Account", donate: "Donate", library: "Library" },
+  ar: { basics: "الأساسيات", more: "المزيد", leaderboard: "المتصدرون", account: "الحساب", donate: "تبرع", library: "مكتبة التميز" },
 } as const;
 
 const CurvedNavBar = ({
