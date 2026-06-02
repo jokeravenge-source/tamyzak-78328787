@@ -1,4 +1,4 @@
-import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, Compass, ExternalLink } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, Compass } from "lucide-react";
 import { motion } from "framer-motion";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
