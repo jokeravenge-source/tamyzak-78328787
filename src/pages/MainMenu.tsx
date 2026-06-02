@@ -129,16 +129,6 @@ const MainMenu = ({
       </button>
 
       <div className="absolute top-6 right-6 z-20 flex items-center gap-2">
-        <a
-          href="https://t.me/DHSLibrary"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="مكتبة التميز"
-          className="inline-flex items-center gap-2 h-11 px-4 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
-        >
-          <ExternalLink className="w-4 h-4" />
-          <span className="hidden sm:inline">مكتبة التميز</span>
-        </a>
         <button
           onClick={signOut}
           aria-label={language === "ar" ? "تسجيل الخروج" : "Sign out"}
