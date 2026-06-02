@@ -37,6 +37,7 @@ import PointsAwardOverlay from "./components/PointsAwardOverlay";
 import TodoList from "./pages/TodoList";
 import News from "./pages/News";
 import Premium from "./pages/Premium";
+import MinisterialBank from "./pages/MinisterialBank";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 
@@ -151,7 +152,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -185,6 +186,8 @@ const App = () => {
       chooseMenu("todo");
     } else if (c === "news") {
       chooseMenu("news");
+    } else if (c === "ministerialBank") {
+      chooseMenu("ministerialBank");
     } else {
       chooseMenu(c as MenuChoice);
     }
@@ -259,6 +262,8 @@ const App = () => {
         <TodoList language={language} onBack={backToBasics} />
       ) : menuChoice === "news" ? (
         <News language={language} onBack={backToBasics} />
+      ) : menuChoice === "ministerialBank" ? (
+        <MinisterialBank language={language} onBack={backToBasics} />
       ) : menuChoice === "premium" ? (
         <Premium language={language} onBack={resetMenu} />
       ) : menuChoice === "more" ? (

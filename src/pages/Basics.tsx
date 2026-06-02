@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Sparkles, Layers, BookMarked, FileText, GraduationCap, Microscope, LogOut, Bell, X, ListChecks, Newspaper, Timer } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Layers, BookMarked, FileText, GraduationCap, Microscope, LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText } from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +17,8 @@ export type BasicsChoice =
   | "sessions"
   | "biologyDrawings"
   | "todo"
-  | "news";
+  | "news"
+  | "ministerialBank";
 
 const MOTIVATIONAL_PHRASES = {
   en: [
@@ -79,6 +80,7 @@ const copy = {
       biologyDrawings: { title: "Biology Drawings", subtitle: "Label diagrams chapter by chapter." },
       todo: { title: "To-Do List", subtitle: "Plan tasks and celebrate when you finish." },
       news: { title: "News", subtitle: "Latest announcements and updates." },
+      ministerialBank: { title: "Ministerial Questions Bank", subtitle: "Past ministerial questions by chapter." },
     },
   },
   ar: {
@@ -93,6 +95,7 @@ const copy = {
       biologyDrawings: { title: "رسومات الأحياء", subtitle: "ميّز أجزاء الرسومات فصلاً بفصل." },
       todo: { title: "قائمة المهام", subtitle: "نظّم مهامك واحتفل بإنجازها." },
       news: { title: "الأخبار", subtitle: "آخر الإعلانات والتحديثات." },
+      ministerialBank: { title: "بنك الوزاريات", subtitle: "أسئلة وزارية سابقة مرتبة حسب الفصل." },
     },
   },
 } as const;
@@ -117,6 +120,7 @@ const Basics = ({
   const items: { key: BasicsChoice; Icon: React.ComponentType<{ className?: string }> }[] = [
     { key: "flashcards", Icon: Layers },
     { key: "malazam", Icon: BookMarked },
+    { key: "ministerialBank", Icon: ScrollText },
     { key: "summaries", Icon: FileText },
     { key: "sessions", Icon: GraduationCap },
     { key: "biologyDrawings", Icon: Microscope },
