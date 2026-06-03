@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOp
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
 import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
+import { ministerialChemCh2 } from "@/data/ministerialChemCh2";
 import { Textarea } from "@/components/ui/textarea";
 
 const subjectIcons: Record<BankSubject, React.ComponentType<{ className?: string }>> = {
@@ -79,8 +80,13 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
 
   const chapters = subject ? getChaptersForSubject(subject) : [];
   const subjectMeta = SUBJECTS_ORDER.find((s) => s.code === subject);
-  const hasQuestionBank = subject === "chemistry" && chapterN === 1;
-  const questions = hasQuestionBank ? ministerialChemCh1 : [];
+  const questions =
+    subject === "chemistry" && chapterN === 1
+      ? ministerialChemCh1
+      : subject === "chemistry" && chapterN === 2
+        ? ministerialChemCh2
+        : [];
+  const hasQuestionBank = questions.length > 0;
   const current = questions[qIndex];
 
   return (
