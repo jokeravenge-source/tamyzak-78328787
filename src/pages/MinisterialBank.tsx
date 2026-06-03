@@ -9,6 +9,11 @@ import { ministerialChemCh4 } from "@/data/ministerialChemCh4";
 import { ministerialChemCh5 } from "@/data/ministerialChemCh5";
 import { ministerialChemCh6 } from "@/data/ministerialChemCh6";
 import { ministerialChemCh6Ar } from "@/data/ministerialChemCh6Ar";
+import { ministerialChemCh1Ar } from "@/data/ministerialChemCh1Ar";
+import { ministerialChemCh2Ar } from "@/data/ministerialChemCh2Ar";
+import { ministerialChemCh3Ar } from "@/data/ministerialChemCh3Ar";
+import { ministerialChemCh4Ar } from "@/data/ministerialChemCh4Ar";
+import { ministerialChemCh5Ar } from "@/data/ministerialChemCh5Ar";
 import { Textarea } from "@/components/ui/textarea";
 
 const subjectIcons: Record<BankSubject, React.ComponentType<{ className?: string }>> = {
@@ -87,15 +92,15 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
   const subjectMeta = SUBJECTS_ORDER.find((s) => s.code === subject);
   const questions =
     subject === "chemistry" && chapterN === 1
-      ? ministerialChemCh1
+      ? (language === "ar" ? ministerialChemCh1Ar : ministerialChemCh1)
       : subject === "chemistry" && chapterN === 2
-        ? ministerialChemCh2
+        ? (language === "ar" ? ministerialChemCh2Ar : ministerialChemCh2)
         : subject === "chemistry" && chapterN === 3
-          ? ministerialChemCh3
+          ? (language === "ar" ? ministerialChemCh3Ar : ministerialChemCh3)
           : subject === "chemistry" && chapterN === 4
-            ? ministerialChemCh4
+            ? (language === "ar" ? ministerialChemCh4Ar : ministerialChemCh4)
             : subject === "chemistry" && chapterN === 5
-              ? ministerialChemCh5
+              ? (language === "ar" ? ministerialChemCh5Ar : ministerialChemCh5)
               : subject === "chemistry" && chapterN === 6
                 ? (language === "ar" ? ministerialChemCh6Ar : ministerialChemCh6)
                 : [];
