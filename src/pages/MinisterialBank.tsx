@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
+import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
+import { Textarea } from "@/components/ui/textarea";
 
 const subjectIcons: Record<BankSubject, React.ComponentType<{ className?: string }>> = {
   physics: Atom,
@@ -20,6 +22,17 @@ const copy = {
     chooseChapter: "Choose a Chapter",
     soon: "Questions coming soon",
     soonBody: "Ministerial questions for this chapter will appear here.",
+    question: "Question",
+    of: "of",
+    yourAnswer: "Your answer",
+    typeAnswer: "Type your answer here...",
+    review: "Review answer",
+    prev: "Previous",
+    next: "Next",
+    correct: "Correct answer",
+    yours: "Your answer",
+    noAnswer: "(no answer written)",
+    backToQuestion: "Back to question",
   },
   ar: {
     badge: "بنك الوزاريات",
@@ -28,6 +41,17 @@ const copy = {
     chooseChapter: "اختر الفصل",
     soon: "الأسئلة قريباً",
     soonBody: "ستظهر الأسئلة الوزارية لهذا الفصل هنا.",
+    question: "سؤال",
+    of: "من",
+    yourAnswer: "إجابتك",
+    typeAnswer: "اكتب إجابتك هنا...",
+    review: "مراجعة الإجابة",
+    prev: "السابق",
+    next: "التالي",
+    correct: "الإجابة الصحيحة",
+    yours: "إجابتك",
+    noAnswer: "(لم تكتب إجابة)",
+    backToQuestion: "العودة إلى السؤال",
   },
 } as const;
 
@@ -35,15 +59,29 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
   const t = copy[language];
   const [subject, setSubject] = useState<BankSubject | null>(null);
   const [chapterN, setChapterN] = useState<number | null>(null);
+  const [qIndex, setQIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [reviewing, setReviewing] = useState(false);
 
   const back = () => {
-    if (chapterN !== null) setChapterN(null);
-    else if (subject) setSubject(null);
-    else onBack();
+    if (reviewing) {
+      setReviewing(false);
+    } else if (chapterN !== null) {
+      setChapterN(null);
+      setQIndex(0);
+      setAnswers({});
+    } else if (subject) {
+      setSubject(null);
+    } else {
+      onBack();
+    }
   };
 
   const chapters = subject ? getChaptersForSubject(subject) : [];
   const subjectMeta = SUBJECTS_ORDER.find((s) => s.code === subject);
+  const hasQuestionBank = subject === "chemistry" && chapterN === 1;
+  const questions = hasQuestionBank ? ministerialChemCh1 : [];
+  const current = questions[qIndex];
 
   return (
     <main className="min-h-screen px-4 py-12 md:py-20 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -135,6 +173,75 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
           })}
         </section>
       ) : (
+        hasQuestionBank && current ? (
+          reviewing ? (
+            <section className="max-w-3xl mx-auto mt-12 z-10 relative animate-fade-up space-y-5">
+              <div className="text-center text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                {t.question} {qIndex + 1} {t.of} {questions.length}
+              </div>
+              <div className="rounded-3xl p-6 md:p-8 border border-primary/40 bg-secondary/40 backdrop-blur">
+                <p className="text-lg md:text-xl text-foreground leading-relaxed">{current.q}</p>
+              </div>
+              <div className="rounded-3xl p-6 md:p-8 border border-emerald-400/30 bg-emerald-500/10 backdrop-blur">
+                <div className="text-xs uppercase tracking-[0.25em] text-emerald-300 mb-2">{t.correct}</div>
+                <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap">{current.a}</p>
+              </div>
+              <div className="rounded-3xl p-6 md:p-8 border border-white/10 bg-secondary/40 backdrop-blur">
+                <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-2">{t.yours}</div>
+                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                  {answers[qIndex]?.trim() ? answers[qIndex] : <span className="text-muted-foreground italic">{t.noAnswer}</span>}
+                </p>
+              </div>
+              <button
+                onClick={() => setReviewing(false)}
+                className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+              >
+                {t.backToQuestion}
+              </button>
+            </section>
+          ) : (
+            <section className="max-w-3xl mx-auto mt-12 z-10 relative animate-fade-up space-y-5">
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                <span>{t.question} {qIndex + 1} {t.of} {questions.length}</span>
+              </div>
+              <div className="rounded-3xl p-6 md:p-8 border border-primary/40 bg-secondary/40 backdrop-blur">
+                <p className="text-lg md:text-xl text-foreground leading-relaxed">{current.q}</p>
+              </div>
+              <div>
+                <label className="block text-sm text-muted-foreground mb-2">{t.yourAnswer}</label>
+                <Textarea
+                  value={answers[qIndex] ?? ""}
+                  onChange={(e) => setAnswers((a) => ({ ...a, [qIndex]: e.target.value }))}
+                  placeholder={t.typeAnswer}
+                  className="min-h-[180px] rounded-2xl bg-secondary/40 backdrop-blur border-white/10 text-base"
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                />
+              </div>
+              <button
+                onClick={() => setReviewing(true)}
+                className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
+              >
+                <Eye className="w-4 h-4" /> {t.review}
+              </button>
+              <div className="flex items-center justify-between gap-3 pt-2">
+                <button
+                  onClick={() => setQIndex((i) => Math.max(0, i - 1))}
+                  disabled={qIndex === 0}
+                  className="flex-1 h-11 rounded-xl border border-white/10 bg-secondary/40 backdrop-blur text-foreground hover:border-primary/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" /> {t.prev}
+                </button>
+                <button
+                  onClick={() => setQIndex((i) => Math.min(questions.length - 1, i + 1))}
+                  disabled={qIndex >= questions.length - 1}
+                  className="flex-1 h-11 rounded-xl border border-white/10 bg-secondary/40 backdrop-blur text-foreground hover:border-primary/40 transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                >
+                  {t.next} <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </section>
+          )
+        ) : (
         <section className="max-w-3xl mx-auto mt-14 md:mt-20 z-10 relative animate-fade-up">
           <div className="rounded-3xl p-10 border border-primary/40 bg-secondary/40 backdrop-blur text-center">
             <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center bg-primary/15">
@@ -144,6 +251,7 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
             <p className="text-muted-foreground">{t.soonBody}</p>
           </div>
         </section>
+        )
       )}
     </main>
   );
