@@ -6,6 +6,7 @@ import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
 import { ministerialChemCh2 } from "@/data/ministerialChemCh2";
 import { ministerialChemCh3 } from "@/data/ministerialChemCh3";
 import { ministerialChemCh4 } from "@/data/ministerialChemCh4";
+import { ministerialChemCh5 } from "@/data/ministerialChemCh5";
 import { Textarea } from "@/components/ui/textarea";
 
 const subjectIcons: Record<BankSubject, React.ComponentType<{ className?: string }>> = {
@@ -91,7 +92,9 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
           ? ministerialChemCh3
           : subject === "chemistry" && chapterN === 4
             ? ministerialChemCh4
-            : [];
+            : subject === "chemistry" && chapterN === 5
+              ? ministerialChemCh5
+              : [];
   const hasQuestionBank = questions.length > 0;
   const current = questions[qIndex];
 
