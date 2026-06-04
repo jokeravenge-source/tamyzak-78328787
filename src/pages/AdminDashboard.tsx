@@ -311,6 +311,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               <h3 className="font-semibold flex items-center gap-2"><Newspaper className="w-4 h-4 text-primary" /> Post news</h3>
               <input value={newsForm.title} onChange={(e) => setNewsForm({ ...newsForm, title: e.target.value })} placeholder="Title" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
               <textarea value={newsForm.description} onChange={(e) => setNewsForm({ ...newsForm, description: e.target.value })} placeholder="Description" rows={4} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
+              <input value={newsForm.link} onChange={(e) => setNewsForm({ ...newsForm, link: e.target.value })} placeholder="Link (optional, https://...)" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
               <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 bg-background text-sm cursor-pointer hover:border-primary/40">
                 <Upload className="w-4 h-4" />
                 <span>{newsForm.file ? newsForm.file.name : "Choose image (optional)"}</span>
