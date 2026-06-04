@@ -83,6 +83,25 @@ const Leaderboard = ({
       </header>
 
       <section className="max-w-2xl mx-auto mt-10 relative z-10">
+        <div className="mb-6 rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/20 via-secondary/80 to-accent/20 backdrop-blur p-5 shadow-[0_20px_60px_hsl(var(--primary)/0.35)] relative overflow-hidden" dir="rtl">
+          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-primary/30 blur-3xl" />
+          <div className="flex items-center gap-4 relative">
+            <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shrink-0">
+              <Trophy className="w-7 h-7" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs uppercase tracking-[0.25em] text-primary font-semibold mb-1">
+                {t("Congratulations!", "تهانينا!")} 🎉
+              </p>
+              <p className="text-lg font-bold text-foreground">
+                {t("Congrats to ", "تهانينا لـ ")}<span className="gradient-text">عائشة ارقم</span>
+              </p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {t("for solving the puzzle!", "على حل اللغز!")}
+              </p>
+            </div>
+          </div>
+        </div>
         <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur p-3 md:p-4">
           {loading ? (
             <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
