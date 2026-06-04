@@ -283,6 +283,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               <h3 className="font-semibold flex items-center gap-2"><Send className="w-4 h-4 text-primary" /> Send notification to everyone</h3>
               <input value={notifForm.title} onChange={(e) => setNotifForm({ ...notifForm, title: e.target.value })} placeholder="Title" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
               <textarea value={notifForm.body} onChange={(e) => setNotifForm({ ...notifForm, body: e.target.value })} placeholder="Message (optional)" rows={3} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
+              <input value={notifForm.link} onChange={(e) => setNotifForm({ ...notifForm, link: e.target.value })} placeholder="Link (optional, https://...)" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
               <button onClick={sendNotif} className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm">
                 <Send className="w-4 h-4" /> Send
               </button>
