@@ -101,9 +101,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
 
   // News state
-  type NewsRow = { id: string; title: string; description: string; image_path: string | null; created_at: string };
+  type NewsRow = { id: string; title: string; description: string; image_path: string | null; link: string | null; created_at: string };
   const [news, setNews] = useState<NewsRow[]>([]);
-  const [newsForm, setNewsForm] = useState<{ title: string; description: string; file: File | null }>({ title: "", description: "", file: null });
+  const [newsForm, setNewsForm] = useState<{ title: string; description: string; link: string; file: File | null }>({ title: "", description: "", link: "", file: null });
   const [newsBusy, setNewsBusy] = useState(false);
   const loadNews = async () => {
     const { data } = await supabase.from("news").select("*").order("created_at", { ascending: false });
@@ -113,6 +113,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const newsImageUrl = (p: string | null) => p ? supabase.storage.from("news").getPublicUrl(p).data.publicUrl : null;
   const postNews = async () => {
     if (!newsForm.title.trim()) return toast.error("Title required");
+    const linkTrim = newsForm.link.trim();
+    if (linkTrim) {
+      try { new URL(linkTrim); } catch { return toast.error("Invalid link URL"); }
+    }
     setNewsBusy(true);
     try {
       const { data: u } = await supabase.auth.getUser();
@@ -124,10 +128,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
         if (upErr) throw upErr;
         image_path = path;
       }
-      const { error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, created_by: u.user?.id });
+      const { error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, link: linkTrim || null, created_by: u.user?.id });
       if (error) throw error;
       toast.success("News posted — all users notified");
-      setNewsForm({ title: "", description: "", file: null });
+      setNewsForm({ title: "", description: "", link: "", file: null });
       loadNews();
     } catch (e: any) {
       toast.error(e.message ?? "Failed");
