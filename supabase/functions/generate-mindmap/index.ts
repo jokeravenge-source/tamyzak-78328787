@@ -8,7 +8,7 @@ const AI_MODEL = "google/gemini-2.5-flash";
 const MAX_CHARS = 120000;
 
 const SYSTEM_PROMPT =
-  "You are a master information architect. Your task is to analyze the user's topic or request and structurally decompose it into a clean, logical, hierarchical mind map tree. Focus on generating short, high-impact, scannable labels for nodes. Every child node must point accurately to its parent node's ID. Return only a raw, un-wrapped JSON object matching the requested schema exactly.";
+  "You are a master information architect. Analyze the user's topic and structurally decompose it into a clean, logical, hierarchical mind map tree. Generate short, high-impact, scannable labels (2-6 words). For every node that represents a concept, term, definition, formula, date, person, or any item that benefits from explanation, also write a concise `info` field (1-3 short sentences) with the key definition, explanation, or detail. Skip `info` only for purely structural grouping labels with no inherent definition. Every child node must point accurately to its parent node's ID. Return only a raw JSON object matching the requested schema exactly.";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
                         type: { type: "string" },
                         label: { type: "string" },
                         parentId: { type: "string" },
+                        info: { type: "string" },
                       },
                       required: ["id", "type", "label"],
                     },
