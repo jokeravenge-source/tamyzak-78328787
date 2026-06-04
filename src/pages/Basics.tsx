@@ -100,7 +100,7 @@ const copy = {
   },
 } as const;
 
-type Notif = { id: string; title: string; body: string; created_at: string };
+type Notif = { id: string; title: string; body: string; link: string | null; created_at: string };
 
 const Basics = ({
   language,
@@ -220,18 +220,29 @@ const Basics = ({
 
       {unread.length > 0 && (
         <div className="max-w-3xl mx-auto mb-6 space-y-2 relative z-10">
-          {unread.map((n) => (
-            <div key={n.id} className="flex items-start gap-3 rounded-2xl p-4 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up">
-              <Bell className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-foreground">{n.title}</h4>
-                {n.body && <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.body}</p>}
+          {unread.map((n) => {
+            const handleOpen = () => { if (n.link) window.open(n.link, "_blank", "noopener,noreferrer"); };
+            return (
+              <div
+                key={n.id}
+                onClick={handleOpen}
+                role={n.link ? "button" : undefined}
+                tabIndex={n.link ? 0 : undefined}
+                onKeyDown={(e) => { if (n.link && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); handleOpen(); } }}
+                className={`flex items-start gap-3 rounded-2xl p-4 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up transition-colors ${n.link ? "cursor-pointer hover:bg-primary/15" : ""}`}
+              >
+                <Bell className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-foreground">{n.title}</h4>
+                  {n.body && <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.body}</p>}
+                  {n.link && <p className="text-xs text-primary mt-1 underline truncate">{n.link}</p>}
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); dismiss(n.id); }} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button onClick={() => dismiss(n.id)} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
