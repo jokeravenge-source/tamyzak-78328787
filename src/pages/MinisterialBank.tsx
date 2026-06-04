@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
 import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
@@ -44,6 +44,8 @@ const copy = {
     yours: "Your answer",
     noAnswer: "(no answer written)",
     backToQuestion: "Back to question",
+    gotIt: "I got it right",
+    gotItWrong: "I got it wrong",
   },
   ar: {
     badge: "بنك الوزاريات",
@@ -63,6 +65,8 @@ const copy = {
     yours: "إجابتك",
     noAnswer: "(لم تكتب إجابة)",
     backToQuestion: "العودة إلى السؤال",
+    gotIt: "إجابتي صحيحة",
+    gotItWrong: "إجابتي خاطئة",
   },
 } as const;
 
@@ -216,12 +220,29 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
                   {answers[qIndex]?.trim() ? answers[qIndex] : <span className="text-muted-foreground italic">{t.noAnswer}</span>}
                 </p>
               </div>
-              <button
-                onClick={() => setReviewing(false)}
-                className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
-              >
-                {t.backToQuestion}
-              </button>
+              <div className="flex items-center justify-center gap-6 pt-2">
+                <button
+                  onClick={() => setReviewing(false)}
+                  aria-label={t.gotItWrong}
+                  title={t.gotItWrong}
+                  className="w-16 h-16 rounded-full border border-red-400/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-400 transition-all flex items-center justify-center"
+                >
+                  <X className="w-7 h-7" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (qIndex < questions.length - 1) {
+                      setQIndex((i) => i + 1);
+                    }
+                    setReviewing(false);
+                  }}
+                  aria-label={t.gotIt}
+                  title={t.gotIt}
+                  className="w-16 h-16 rounded-full border border-emerald-400/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-400 transition-all flex items-center justify-center"
+                >
+                  <Check className="w-7 h-7" />
+                </button>
+              </div>
             </section>
           ) : (
             <section className="max-w-3xl mx-auto mt-12 z-10 relative animate-fade-up space-y-5">
