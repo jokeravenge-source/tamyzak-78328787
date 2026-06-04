@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Sparkles, Layers, BookMarked, FileText, GraduationCap, Microscope, LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Layers, BookMarked, FileText, GraduationCap, Microscope, LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network } from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,8 @@ export type BasicsChoice =
   | "biologyDrawings"
   | "todo"
   | "news"
-  | "ministerialBank";
+  | "ministerialBank"
+  | "mindmap";
 
 const MOTIVATIONAL_PHRASES = {
   en: [
@@ -81,6 +82,7 @@ const copy = {
       todo: { title: "To-Do List", subtitle: "Plan tasks and celebrate when you finish." },
       news: { title: "News", subtitle: "Latest announcements and updates." },
       ministerialBank: { title: "Ministerial Questions Bank", subtitle: "Past ministerial questions by chapter." },
+      mindmap: { title: "Mind Map", subtitle: "AI builds a clean mind map from any topic or file." },
     },
   },
   ar: {
@@ -96,6 +98,7 @@ const copy = {
       todo: { title: "قائمة المهام", subtitle: "نظّم مهامك واحتفل بإنجازها." },
       news: { title: "الأخبار", subtitle: "آخر الإعلانات والتحديثات." },
       ministerialBank: { title: "بنك الوزاريات", subtitle: "أسئلة وزارية سابقة مرتبة حسب الفصل." },
+      mindmap: { title: "الخريطة الذهنية", subtitle: "ينشئ الذكاء خريطة ذهنية من أي موضوع أو ملف." },
     },
   },
 } as const;
@@ -126,6 +129,7 @@ const Basics = ({
     { key: "biologyDrawings", Icon: Microscope },
     { key: "todo", Icon: ListChecks },
     { key: "news", Icon: Newspaper },
+    { key: "mindmap", Icon: Network },
   ];
 
   const READ_KEY = "notif_read_ids_v1";
