@@ -28,14 +28,26 @@ const Leaderboard = ({
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       setMe(u.user?.id ?? null);
-      const [pointsRes, profilesRes] = await Promise.all([
-        supabase.from("user_points").select("user_id, points"),
-        supabase.from("profiles").select("user_id, display_name, gender, character"),
-      ]);
+      // Paginate user_points to bypass the default 1000-row cap so totals match AccountCenter.
+      const pageSize = 1000;
       const totals = new Map<string, number>();
-      (pointsRes.data ?? []).forEach((r: any) => {
-        totals.set(r.user_id, (totals.get(r.user_id) ?? 0) + (r.points ?? 0));
-      });
+      let from = 0;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data: page, error } = await supabase
+          .from("user_points")
+          .select("user_id, points")
+          .range(from, from + pageSize - 1);
+        if (error) break;
+        (page ?? []).forEach((r: any) => {
+          totals.set(r.user_id, (totals.get(r.user_id) ?? 0) + (r.points ?? 0));
+        });
+        if (!page || page.length < pageSize) break;
+        from += pageSize;
+      }
+      const profilesRes = await supabase
+        .from("profiles")
+        .select("user_id, display_name, gender, character");
       const names = new Map<string, string>();
       const genders = new Map<string, Gender | null>();
       const characters = new Map<string, Partial<CharacterTraits> | null>();
