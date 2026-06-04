@@ -53,12 +53,13 @@ const nodeTypes = { mindmapNode: MindmapNode };
 
 function layoutTree(raw: MindNode[]): { nodes: Node[]; edges: Edge[] } {
   if (!raw.length) return { nodes: [], edges: [] };
-  const byId = new Map<string, MindNode & { children: MindNode[] }>();
+  type TreeNode = MindNode & { children: TreeNode[] };
+  const byId = new Map<string, TreeNode>();
   raw.forEach((n) => byId.set(n.id, { ...n, children: [] }));
-  let root: (MindNode & { children: MindNode[] }) | undefined;
+  let root: TreeNode | undefined;
   byId.forEach((n) => {
     if (n.parentId && byId.has(n.parentId)) {
-      byId.get(n.parentId)!.children.push(n);
+      byId.get(n.parentId)!.children.push(n as TreeNode);
     } else if (!root) {
       root = n;
     }
