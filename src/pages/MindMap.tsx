@@ -9,13 +9,16 @@ import {
   useReactFlow,
   Handle,
   Position,
+  getNodesBounds,
+  getViewportForBounds,
   type Node,
   type Edge,
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { flextree } from "d3-flextree";
-import { ArrowLeft, Loader2, Sparkles, Upload, ZoomIn, ZoomOut, Maximize2, Wand2, X, Info } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Upload, ZoomIn, ZoomOut, Maximize2, Wand2, X, Info, Download } from "lucide-react";
+import { toPng } from "html-to-image";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromFile } from "@/lib/fileText";
@@ -120,6 +123,8 @@ const copy = {
     empty: "Your mind map will appear here",
     back: "Back",
     remove: "Remove",
+    download: "Download",
+    downloading: "Exporting…",
   },
   ar: {
     title: "خريطة ذهنية بالذكاء",
@@ -133,6 +138,8 @@ const copy = {
     empty: "ستظهر خريطتك هنا",
     back: "رجوع",
     remove: "إزالة",
+    download: "تنزيل",
+    downloading: "جارٍ التصدير…",
   },
 } as const;
 
@@ -143,6 +150,9 @@ function Canvas({
   onEdgesChange,
   flash,
   onNodeClick,
+  onDownload,
+  downloading,
+  downloadLabel,
 }: {
   nodes: Node[];
   edges: Edge[];
@@ -150,6 +160,9 @@ function Canvas({
   onEdgesChange: any;
   flash: number;
   onNodeClick: (n: Node) => void;
+  onDownload: () => void;
+  downloading: boolean;
+  downloadLabel: string;
 }) {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   useEffect(() => {
@@ -186,6 +199,16 @@ function Canvas({
         <button onClick={() => fitView({ padding: 0.2, duration: 500 })} className="w-10 h-10 rounded-xl border border-border bg-background/90 backdrop-blur shadow-sm flex items-center justify-center hover:bg-accent transition" aria-label="Fit view">
           <Maximize2 className="w-4 h-4" />
         </button>
+        {nodes.length > 0 && (
+          <button
+            onClick={onDownload}
+            disabled={downloading}
+            aria-label={downloadLabel}
+            className="w-10 h-10 rounded-xl border border-primary/40 bg-primary text-primary-foreground shadow-sm flex items-center justify-center hover:bg-primary/90 transition disabled:opacity-60"
+          >
+            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -200,6 +223,7 @@ const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [flash, setFlash] = useState(0);
   const [selected, setSelected] = useState<{ label: string; info?: string } | null>(null);
+  const [downloading, setDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const generate = useCallback(async () => {
@@ -234,6 +258,44 @@ const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
       setLoading(false);
     }
   }, [topic, file, language, setNodes, setEdges]);
+
+  const handleDownload = useCallback(async () => {
+    if (!nodes.length) return;
+    setDownloading(true);
+    try {
+      const viewport = document.querySelector(".react-flow__viewport") as HTMLElement | null;
+      const container = document.querySelector(".react-flow") as HTMLElement | null;
+      if (!viewport || !container) throw new Error("Canvas not ready");
+
+      const bounds = getNodesBounds(nodes);
+      const padding = 40;
+      const imgW = Math.ceil(bounds.width + padding * 2);
+      const imgH = Math.ceil(bounds.height + padding * 2);
+      const transform = getViewportForBounds(bounds, imgW, imgH, 0.5, 2, padding / Math.min(imgW, imgH));
+
+      const bg = getComputedStyle(document.body).backgroundColor || "#ffffff";
+      const dataUrl = await toPng(viewport, {
+        backgroundColor: bg,
+        width: imgW,
+        height: imgH,
+        pixelRatio: 2,
+        style: {
+          width: `${imgW}px`,
+          height: `${imgH}px`,
+          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom})`,
+        },
+      });
+      const link = document.createElement("a");
+      const safe = topic.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) || "mindmap";
+      link.download = `${safe}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (e: any) {
+      toast.error(e?.message || "Export failed");
+    } finally {
+      setDownloading(false);
+    }
+  }, [nodes, topic]);
 
   return (
     <main className="min-h-screen flex flex-col" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -304,6 +366,9 @@ const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
             onEdgesChange={onEdgesChange}
             flash={flash}
             onNodeClick={(n) => setSelected({ label: (n.data as any).label, info: (n.data as any).info })}
+            onDownload={handleDownload}
+            downloading={downloading}
+            downloadLabel={t.download}
           />
         </ReactFlowProvider>
         {selected && (
