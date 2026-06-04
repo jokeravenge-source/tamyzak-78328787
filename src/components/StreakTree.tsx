@@ -8,12 +8,25 @@ const FULL_DAYS = 20;
 
 type StreakState = { days: number; lastDate: string; celebrated?: boolean };
 
-const today = () => new Date().toISOString().slice(0, 10);
-const yesterday = () => {
-  const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10);
+// Use LOCAL date (not UTC) so the streak doesn't appear to reset at UTC midnight
+// for users in other timezones.
+const fmt = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 };
-
-const FORCE_RESET_KEY = "streak_force_reset_2days_v1";
+const today = () => fmt(new Date());
+const yesterday = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return fmt(d);
+};
+const daysBetween = (a: string, b: string) => {
+  const da = new Date(a + "T00:00:00");
+  const db = new Date(b + "T00:00:00");
+  return Math.round((db.getTime() - da.getTime()) / 86400000);
+};
 
 function useStreak() {
   const [state, setState] = useState<StreakState>(() => {
@@ -26,17 +39,23 @@ function useStreak() {
 
   useEffect(() => {
     setState((prev) => {
-      // One-time override: reset streak to 2 days
-      if (localStorage.getItem(FORCE_RESET_KEY) !== "1") {
-        const next = { days: 2, lastDate: today(), celebrated: false };
-        localStorage.setItem(KEY, JSON.stringify(next));
-        localStorage.setItem(FORCE_RESET_KEY, "1");
-        return next;
-      }
       const t = today();
       if (prev.lastDate === t) return prev;
-      let days = 1;
-      if (prev.lastDate === yesterday()) days = prev.days + 1;
+      let days: number;
+      if (!prev.lastDate) {
+        days = 1;
+      } else {
+        const diff = daysBetween(prev.lastDate, t);
+        if (diff <= 0) {
+          // Clock skew / timezone change — keep existing streak, just refresh date.
+          days = Math.max(prev.days, 1);
+        } else if (diff === 1) {
+          days = prev.days + 1;
+        } else {
+          // Missed one or more days — streak broken.
+          days = 1;
+        }
+      }
       const next = { days, lastDate: t, celebrated: prev.celebrated && days >= FULL_DAYS };
       localStorage.setItem(KEY, JSON.stringify(next));
       return next;
