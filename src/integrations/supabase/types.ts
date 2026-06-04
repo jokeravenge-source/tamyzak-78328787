@@ -235,6 +235,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          link: string | null
           title: string
         }
         Insert: {
@@ -242,6 +243,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          link?: string | null
           title: string
         }
         Update: {
@@ -249,6 +251,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          link?: string | null
           title?: string
         }
         Relationships: []
