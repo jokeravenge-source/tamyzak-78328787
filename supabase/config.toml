@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.paddle-portal]
 verify_jwt = false
+
+[functions.generate-mindmap]
+verify_jwt = false
