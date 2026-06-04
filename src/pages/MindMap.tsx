@@ -271,7 +271,7 @@ const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
         </div>
       </header>
 
-      <div className="flex-1 relative bg-secondary/20" style={{ minHeight: "calc(100vh - 160px)" }}>
+      <div className="relative bg-secondary/20 w-full h-[calc(100vh-180px)]">
         {nodes.length === 0 && !loading && (
           <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm pointer-events-none">
             {t.empty}
