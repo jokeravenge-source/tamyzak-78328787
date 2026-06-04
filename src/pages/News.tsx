@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Newspaper } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 
-type NewsItem = { id: string; title: string; description: string; image_path: string | null; created_at: string };
+type NewsItem = { id: string; title: string; description: string; image_path: string | null; link: string | null; created_at: string };
 
 const copy = {
-  en: { title: "News", empty: "No news yet. Check back soon!", prev: "Previous", next: "Next" },
-  ar: { title: "الأخبار", empty: "لا توجد أخبار بعد. عد قريباً!", prev: "السابق", next: "التالي" },
+  en: { title: "News", empty: "No news yet. Check back soon!", prev: "Previous", next: "Next", openLink: "Open link" },
+  ar: { title: "الأخبار", empty: "لا توجد أخبار بعد. عد قريباً!", prev: "السابق", next: "التالي", openLink: "فتح الرابط" },
 } as const;
 
 const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
@@ -71,6 +71,16 @@ const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void 
                   <p className="text-xs text-muted-foreground mb-2">{new Date(cur.created_at).toLocaleDateString()}</p>
                   <h2 className="text-2xl font-bold mb-3 text-foreground">{cur.title}</h2>
                   <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{cur.description}</p>
+                  {cur.link && (
+                    <a
+                      href={cur.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex items-center gap-2 px-4 h-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
+                    >
+                      <ExternalLink className="w-4 h-4" /> {t.openLink}
+                    </a>
+                  )}
                 </div>
               </motion.article>
             </AnimatePresence>

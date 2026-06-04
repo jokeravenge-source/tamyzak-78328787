@@ -203,6 +203,7 @@ export type Database = {
           description: string
           id: string
           image_path: string | null
+          link: string | null
           title: string
           updated_at: string
         }
@@ -212,6 +213,7 @@ export type Database = {
           description?: string
           id?: string
           image_path?: string | null
+          link?: string | null
           title: string
           updated_at?: string
         }
@@ -221,6 +223,7 @@ export type Database = {
           description?: string
           id?: string
           image_path?: string | null
+          link?: string | null
           title?: string
           updated_at?: string
         }

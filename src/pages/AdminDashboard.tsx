@@ -101,9 +101,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
 
   // News state
-  type NewsRow = { id: string; title: string; description: string; image_path: string | null; created_at: string };
+  type NewsRow = { id: string; title: string; description: string; image_path: string | null; link: string | null; created_at: string };
   const [news, setNews] = useState<NewsRow[]>([]);
-  const [newsForm, setNewsForm] = useState<{ title: string; description: string; file: File | null }>({ title: "", description: "", file: null });
+  const [newsForm, setNewsForm] = useState<{ title: string; description: string; link: string; file: File | null }>({ title: "", description: "", link: "", file: null });
   const [newsBusy, setNewsBusy] = useState(false);
   const loadNews = async () => {
     const { data } = await supabase.from("news").select("*").order("created_at", { ascending: false });
@@ -113,6 +113,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const newsImageUrl = (p: string | null) => p ? supabase.storage.from("news").getPublicUrl(p).data.publicUrl : null;
   const postNews = async () => {
     if (!newsForm.title.trim()) return toast.error("Title required");
+    const linkTrim = newsForm.link.trim();
+    if (linkTrim) {
+      try { new URL(linkTrim); } catch { return toast.error("Invalid link URL"); }
+    }
     setNewsBusy(true);
     try {
       const { data: u } = await supabase.auth.getUser();
@@ -124,10 +128,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
         if (upErr) throw upErr;
         image_path = path;
       }
-      const { error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, created_by: u.user?.id });
+      const { error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, link: linkTrim || null, created_by: u.user?.id });
       if (error) throw error;
       toast.success("News posted — all users notified");
-      setNewsForm({ title: "", description: "", file: null });
+      setNewsForm({ title: "", description: "", link: "", file: null });
       loadNews();
     } catch (e: any) {
       toast.error(e.message ?? "Failed");
@@ -307,6 +311,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               <h3 className="font-semibold flex items-center gap-2"><Newspaper className="w-4 h-4 text-primary" /> Post news</h3>
               <input value={newsForm.title} onChange={(e) => setNewsForm({ ...newsForm, title: e.target.value })} placeholder="Title" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
               <textarea value={newsForm.description} onChange={(e) => setNewsForm({ ...newsForm, description: e.target.value })} placeholder="Description" rows={4} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
+              <input value={newsForm.link} onChange={(e) => setNewsForm({ ...newsForm, link: e.target.value })} placeholder="Link (optional, https://...)" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
               <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 bg-background text-sm cursor-pointer hover:border-primary/40">
                 <Upload className="w-4 h-4" />
                 <span>{newsForm.file ? newsForm.file.name : "Choose image (optional)"}</span>
@@ -332,6 +337,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold">{n.title}</h4>
                       {n.description && <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap line-clamp-3">{n.description}</p>}
+                      {n.link && <a href={n.link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline break-all mt-1 inline-block">{n.link}</a>}
                       <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
                     </div>
                     <button onClick={() => delNews(n)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm">
