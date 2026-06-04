@@ -337,6 +337,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold">{n.title}</h4>
                       {n.description && <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap line-clamp-3">{n.description}</p>}
+                      {n.link && <a href={n.link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline break-all mt-1 inline-block">{n.link}</a>}
                       <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString()}</p>
                     </div>
                     <button onClick={() => delNews(n)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm">
