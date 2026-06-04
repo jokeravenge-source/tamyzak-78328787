@@ -15,7 +15,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { flextree } from "d3-flextree";
-import { ArrowLeft, Loader2, Sparkles, Upload, ZoomIn, ZoomOut, Maximize2, Wand2, X } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Upload, ZoomIn, ZoomOut, Maximize2, Wand2, X, Info } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromFile } from "@/lib/fileText";
@@ -26,6 +26,7 @@ type MindNode = {
   type: string;
   label: string;
   parentId?: string | null;
+  info?: string;
 };
 
 const NODE_W = 200;
@@ -34,16 +35,22 @@ const NODE_H = 64;
 function MindmapNode({ data }: NodeProps) {
   const isRoot = (data as { isRoot?: boolean }).isRoot;
   const label = (data as { label: string }).label;
+  const hasInfo = !!(data as { info?: string }).info;
   return (
     <div
       className={
         isRoot
-          ? "px-5 py-3 rounded-xl border-2 border-primary bg-primary/10 backdrop-blur shadow-md text-foreground text-sm font-bold tracking-tight text-center max-w-[200px]"
-          : "px-4 py-2.5 rounded-xl border border-border bg-background shadow-sm text-foreground text-xs font-medium text-center max-w-[200px]"
+          ? "relative px-5 py-3 rounded-xl border-2 border-primary bg-primary/10 backdrop-blur shadow-md text-foreground text-sm font-bold tracking-tight text-center max-w-[200px] cursor-pointer hover:shadow-lg transition-shadow"
+          : "relative px-4 py-2.5 rounded-xl border border-border bg-background shadow-sm text-foreground text-xs font-medium text-center max-w-[200px] cursor-pointer hover:border-primary/60 hover:shadow-md transition-all"
       }
     >
       <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
       <span className="leading-snug break-words">{label}</span>
+      {hasInfo && (
+        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow">
+          <Info className="w-2.5 h-2.5" />
+        </span>
+      )}
       <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
     </div>
   );
@@ -84,7 +91,7 @@ function layoutTree(raw: MindNode[]): { nodes: Node[]; edges: Edge[] } {
       id: d.data.id,
       type: "mindmapNode",
       position: { x: d.y, y: d.x },
-      data: { label: d.data.label, isRoot },
+      data: { label: d.data.label, isRoot, info: d.data.info },
     });
     if (d.parent) {
       edges.push({
@@ -135,12 +142,14 @@ function Canvas({
   onNodesChange,
   onEdgesChange,
   flash,
+  onNodeClick,
 }: {
   nodes: Node[];
   edges: Edge[];
   onNodesChange: any;
   onEdgesChange: any;
   flash: number;
+  onNodeClick: (n: Node) => void;
 }) {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   useEffect(() => {
@@ -157,6 +166,7 @@ function Canvas({
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeClick={(_, n) => onNodeClick(n)}
         nodeTypes={nodeTypes}
         fitView
         minZoom={0.2}
@@ -189,6 +199,7 @@ const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [flash, setFlash] = useState(0);
+  const [selected, setSelected] = useState<{ label: string; info?: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const generate = useCallback(async () => {
@@ -286,8 +297,31 @@ const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
           </div>
         )}
         <ReactFlowProvider>
-          <Canvas nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} flash={flash} />
+          <Canvas
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            flash={flash}
+            onNodeClick={(n) => setSelected({ label: (n.data as any).label, info: (n.data as any).info })}
+          />
         </ReactFlowProvider>
+        {selected && (
+          <div className="absolute top-4 right-4 z-20 w-[320px] max-w-[calc(100%-2rem)] rounded-2xl border border-border bg-background/95 backdrop-blur shadow-xl p-4 animate-fade-up">
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">{language === "ar" ? "تفصيل" : "Detail"}</p>
+                <h3 className="text-base font-semibold text-foreground leading-snug break-words">{selected.label}</h3>
+              </div>
+              <button onClick={() => setSelected(null)} className="text-muted-foreground hover:text-foreground p-1" aria-label="Close">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="mt-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+              {selected.info?.trim() || (language === "ar" ? "لا توجد معلومات إضافية لهذا العنصر." : "No additional information for this node.")}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
