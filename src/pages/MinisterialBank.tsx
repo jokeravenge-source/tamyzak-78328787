@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
 import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
@@ -44,6 +44,8 @@ const copy = {
     yours: "Your answer",
     noAnswer: "(no answer written)",
     backToQuestion: "Back to question",
+    gotIt: "I got it right",
+    gotItWrong: "I got it wrong",
   },
   ar: {
     badge: "بنك الوزاريات",
@@ -63,6 +65,8 @@ const copy = {
     yours: "إجابتك",
     noAnswer: "(لم تكتب إجابة)",
     backToQuestion: "العودة إلى السؤال",
+    gotIt: "إجابتي صحيحة",
+    gotItWrong: "إجابتي خاطئة",
   },
 } as const;
 
