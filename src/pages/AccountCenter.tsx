@@ -29,8 +29,8 @@ import {
 } from "@/components/CharacterAvatar";
 
 const t = {
-  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", crown: "Crown", on: "On", off: "Off", randomize: "Randomize", premiumOnly: "Premium only", upgrade: "Upgrade to unlock", manageSub: "Manage subscription", openingPortal: "Opening…", makeupRoom: "Makeup Room", lipstick: "Lipstick", eyeshadow: "Eyeshadow", musclePack: "Muscle Pack", muscleDesc: "Show off those gains", headband: "Headband", accessories: "Accessories", necklaceGold: "Gold chain", necklacePearl: "Pearl necklace", none: "None" },
-  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", crown: "تاج", on: "نعم", off: "لا", randomize: "عشوائي", premiumOnly: "للبريميوم فقط", upgrade: "رقّ لفتح هذه الميزة", manageSub: "إدارة الاشتراك", openingPortal: "جاري الفتح…", makeupRoom: "غرفة المكياج", lipstick: "أحمر الشفاه", eyeshadow: "ظلال العيون", musclePack: "حزمة العضلات", muscleDesc: "أظهر عضلاتك", headband: "عصابة الرأس", accessories: "إكسسوارات", necklaceGold: "سلسلة ذهبية", necklacePearl: "عقد لؤلؤ", none: "بدون" },
+  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", crown: "Crown", on: "On", off: "Off", randomize: "Randomize", premiumOnly: "Premium only", upgrade: "Upgrade to unlock", manageSub: "Manage subscription", openingPortal: "Opening…", makeupRoom: "Makeup Room", lipstick: "Lipstick", eyeshadow: "Eyeshadow", musclePack: "Muscle Pack", muscleDesc: "Show off those gains", headband: "Headband", accessories: "Accessories", necklaceGold: "Gold chain", necklacePearl: "Pearl necklace", none: "None", requestSent: "Name change request submitted — waiting for admin approval", pendingReview: "Pending admin approval", pendingHint: "Your requested name is awaiting admin review.", requestName: "Request name change", noChange: "No change to save" },
+  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", crown: "تاج", on: "نعم", off: "لا", randomize: "عشوائي", premiumOnly: "للبريميوم فقط", upgrade: "رقّ لفتح هذه الميزة", manageSub: "إدارة الاشتراك", openingPortal: "جاري الفتح…", makeupRoom: "غرفة المكياج", lipstick: "أحمر الشفاه", eyeshadow: "ظلال العيون", musclePack: "حزمة العضلات", muscleDesc: "أظهر عضلاتك", headband: "عصابة الرأس", accessories: "إكسسوارات", necklaceGold: "سلسلة ذهبية", necklacePearl: "عقد لؤلؤ", none: "بدون", requestSent: "تم إرسال طلب تغيير الاسم — بانتظار موافقة الإدارة", pendingReview: "بانتظار موافقة الإدارة", pendingHint: "اسمك المطلوب قيد المراجعة من قبل الإدارة.", requestName: "طلب تغيير الاسم", noChange: "لا يوجد تغيير للحفظ" },
 } as const;
 
 const HAIR_LABELS: Record<string, { en: string; ar: string }> = {
@@ -68,6 +68,8 @@ const AccountCenter = ({
   const [traits, setTraits] = useState<CharacterTraits | null>(null);
   const { isPremium, subscription } = useSubscription();
   const [portalLoading, setPortalLoading] = useState(false);
+  const [savedName, setSavedName] = useState("");
+  const [pendingRequest, setPendingRequest] = useState<{ id: string; requested_name: string } | null>(null);
 
   const tryPremium = (apply: () => void) => {
     if (!isPremium) {
@@ -103,10 +105,20 @@ const AccountCenter = ({
       setUserId(u.user.id);
       const { data: p } = await supabase.from("profiles").select("display_name, gender, character").eq("user_id", u.user.id).maybeSingle();
       setName(p?.display_name ?? "");
+      setSavedName(p?.display_name ?? "");
       setGender((p?.gender as Gender) ?? null);
       setTraits(((p as any)?.character as CharacterTraits) ?? null);
       const { data: pts } = await supabase.from("user_points").select("points").eq("user_id", u.user.id);
       setPoints((pts ?? []).reduce((s: number, r: any) => s + (r.points ?? 0), 0));
+      const { data: pend } = await supabase
+        .from("username_requests")
+        .select("id, requested_name")
+        .eq("user_id", u.user.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (pend) setPendingRequest(pend as any);
       setLoading(false);
     })();
   }, []);
@@ -118,17 +130,33 @@ const AccountCenter = ({
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Not signed in");
-      const { data: existing } = await supabase.from("profiles").select("id").eq("user_id", u.user.id).maybeSingle();
-      if (existing) {
-        const { error } = await supabase.from("profiles").update({ display_name: name.trim(), gender }).eq("user_id", u.user.id);
+      const trimmed = name.trim();
+      const { data: existing } = await supabase.from("profiles").select("id, display_name").eq("user_id", u.user.id).maybeSingle();
+      const currentName = (existing as any)?.display_name ?? "";
+      const nameChanged = trimmed !== currentName;
+
+      if (!existing) {
+        // First-time profile: create directly (no approval needed for initial name)
+        const { error } = await supabase.from("profiles").insert({ user_id: u.user.id, display_name: trimmed, gender });
         if (error) throw error;
+        setSavedName(trimmed);
+        localStorage.setItem("app_display_name_v1", trimmed);
+        window.dispatchEvent(new Event("app:username-changed"));
+        toast.success(text.saved);
+      } else if (nameChanged) {
+        // Submit a request; do NOT change the profile name yet
+        const { data: req, error } = await supabase
+          .from("username_requests")
+          .insert({ user_id: u.user.id, current_name: currentName, requested_name: trimmed, status: "pending" })
+          .select("id, requested_name")
+          .single();
+        if (error) throw error;
+        setPendingRequest(req as any);
+        setName(currentName);
+        toast.success(text.requestSent);
       } else {
-        const { error } = await supabase.from("profiles").insert({ user_id: u.user.id, display_name: name.trim(), gender });
-        if (error) throw error;
+        toast.message(text.noChange);
       }
-      localStorage.setItem("app_display_name_v1", name.trim());
-      window.dispatchEvent(new Event("app:username-changed"));
-      toast.success(text.saved);
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");
     } finally { setSaving(false); }
