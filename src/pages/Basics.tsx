@@ -225,15 +225,15 @@ const Basics = ({
       {unread.length > 0 && (
         <div className="max-w-3xl mx-auto mb-6 space-y-2 relative z-10">
           {unread.map((n) => {
-            const handleOpen = () => { if (n.link) window.open(n.link, "_blank", "noopener,noreferrer"); };
+            const handleOpen = () => { onNav("news"); };
             return (
               <div
                 key={n.id}
                 onClick={handleOpen}
-                role={n.link ? "button" : undefined}
-                tabIndex={n.link ? 0 : undefined}
-                onKeyDown={(e) => { if (n.link && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); handleOpen(); } }}
-                className={`flex items-start gap-3 rounded-2xl p-4 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up transition-colors ${n.link ? "cursor-pointer hover:bg-primary/15" : ""}`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpen(); } }}
+                className="flex items-start gap-3 rounded-2xl p-4 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up transition-colors cursor-pointer hover:bg-primary/15"
               >
                 <Bell className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
