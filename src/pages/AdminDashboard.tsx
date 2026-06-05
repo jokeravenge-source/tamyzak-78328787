@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -16,7 +16,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames";
   const [tab, setTab] = useState<Tab>("pending");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -174,6 +174,36 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setUserResults((r) => r.map((x) => x.user_id === u.user_id ? { ...x, banned: !u.banned } : x));
   };
 
+  // Username change requests state
+  type UReq = { id: string; user_id: string; current_name: string | null; requested_name: string; status: string; created_at: string };
+  const [ureqs, setUreqs] = useState<UReq[]>([]);
+  const [ureqLoading, setUreqLoading] = useState(false);
+  const [ureqBusyId, setUreqBusyId] = useState<string | null>(null);
+  const loadUreqs = async () => {
+    setUreqLoading(true);
+    const { data, error } = await supabase
+      .from("username_requests")
+      .select("id, user_id, current_name, requested_name, status, created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    if (error) toast.error(error.message);
+    setUreqs((data ?? []) as UReq[]);
+    setUreqLoading(false);
+  };
+  useEffect(() => { if (tab === "usernames") loadUreqs(); }, [tab]);
+  const decideUreq = async (r: UReq, decision: "approved" | "rejected") => {
+    const { data: u } = await supabase.auth.getUser();
+    setUreqBusyId(r.id);
+    const { error } = await supabase
+      .from("username_requests")
+      .update({ status: decision, reviewed_by: u.user?.id, reviewed_at: new Date().toISOString() })
+      .eq("id", r.id);
+    setUreqBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success(decision === "approved" ? "Name change approved" : "Request rejected");
+    setUreqs((rs) => rs.filter((x) => x.id !== r.id));
+  };
+
   const approve = async (id: string) => {
     const { error } = await supabase.from("summaries").update({ approved: true }).eq("id", id);
     if (error) return toast.error(error.message);
@@ -243,6 +273,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           </button>
           <button onClick={() => setTab("users")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "users" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <UsersIcon className="w-4 h-4 inline mr-1.5" />Users
+          </button>
+          <button onClick={() => setTab("usernames")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "usernames" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            <UserCog className="w-4 h-4 inline mr-1.5" />Username Requests
           </button>
         </div>
 
@@ -421,6 +454,51 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                       {userActionId === u.user_id ? <Loader2 className="w-4 h-4 animate-spin" /> : (u.banned ? <RotateCcw className="w-4 h-4" /> : <Ban className="w-4 h-4" />)}
                       {u.banned ? "Unban" : "Ban"}
                     </button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : tab === "usernames" ? (
+          <div className="space-y-6">
+            <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur">
+              <h3 className="font-semibold flex items-center gap-2"><UserCog className="w-4 h-4 text-primary" /> Pending username change requests</h3>
+              <p className="text-xs text-muted-foreground mt-1">Approve to update the user's display name. Reject to deny the change.</p>
+            </div>
+            {ureqLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+            ) : ureqs.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10">No pending username requests.</p>
+            ) : (
+              <div className="grid gap-3">
+                {ureqs.map((r) => (
+                  <article key={r.id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-center gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                      <UserCog className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-[220px]">
+                      <div className="text-xs text-muted-foreground">From</div>
+                      <div className="font-medium">{r.current_name || <span className="italic text-muted-foreground">(no name)</span>}</div>
+                      <div className="text-xs text-muted-foreground mt-1">To</div>
+                      <div className="font-semibold text-primary">{r.requested_name}</div>
+                      <p className="text-[11px] text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        disabled={ureqBusyId === r.id}
+                        onClick={() => decideUreq(r, "approved")}
+                        className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60"
+                      >
+                        {ureqBusyId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Approve
+                      </button>
+                      <button
+                        disabled={ureqBusyId === r.id}
+                        onClick={() => decideUreq(r, "rejected")}
+                        className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm disabled:opacity-60"
+                      >
+                        <X className="w-4 h-4" /> Reject
+                      </button>
+                    </div>
                   </article>
                 ))}
               </div>
