@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -16,7 +16,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users";
   const [tab, setTab] = useState<Tab>("pending");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,6 +149,31 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setNews((r) => r.filter((x) => x.id !== n.id));
   };
 
+  // Users / Bans state
+  type UserRow = { user_id: string; display_name: string; email: string | null; banned: boolean; banned_until: string | null };
+  const [userQuery, setUserQuery] = useState("");
+  const [userResults, setUserResults] = useState<UserRow[]>([]);
+  const [userBusy, setUserBusy] = useState(false);
+  const [userActionId, setUserActionId] = useState<string | null>(null);
+  const searchUsers = async () => {
+    if (!userQuery.trim()) { setUserResults([]); return; }
+    setUserBusy(true);
+    const { data, error } = await supabase.functions.invoke("admin-manage-users", { body: { action: "search", q: userQuery.trim() } });
+    setUserBusy(false);
+    if (error) return toast.error(error.message);
+    setUserResults(((data as any)?.users ?? []) as UserRow[]);
+  };
+  const toggleBan = async (u: UserRow) => {
+    const action = u.banned ? "unban" : "ban";
+    if (action === "ban" && !confirm(`Ban ${u.display_name}? They won't be able to sign in.`)) return;
+    setUserActionId(u.user_id);
+    const { data, error } = await supabase.functions.invoke("admin-manage-users", { body: { action, user_id: u.user_id } });
+    setUserActionId(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error ?? "Failed");
+    toast.success(action === "ban" ? "User banned" : "User unbanned");
+    setUserResults((r) => r.map((x) => x.user_id === u.user_id ? { ...x, banned: !u.banned } : x));
+  };
+
   const approve = async (id: string) => {
     const { error } = await supabase.from("summaries").update({ approved: true }).eq("id", id);
     if (error) return toast.error(error.message);
@@ -215,6 +240,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           </button>
           <button onClick={() => setTab("news")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "news" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Newspaper className="w-4 h-4 inline mr-1.5" />News
+          </button>
+          <button onClick={() => setTab("users")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "users" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            <UsersIcon className="w-4 h-4 inline mr-1.5" />Users
           </button>
         </div>
 
@@ -345,6 +373,53 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                     </div>
                     <button onClick={() => delNews(n)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm">
                       <Trash2 className="w-4 h-4" /> Delete
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : tab === "users" ? (
+          <div className="space-y-6">
+            <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur space-y-3">
+              <h3 className="font-semibold flex items-center gap-2"><UsersIcon className="w-4 h-4 text-primary" /> Search users by name</h3>
+              <div className="flex gap-2">
+                <input
+                  value={userQuery}
+                  onChange={(e) => setUserQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") searchUsers(); }}
+                  placeholder="Type a display name..."
+                  className="flex-1 h-10 px-3 rounded-lg bg-background border border-white/10 text-sm"
+                />
+                <button onClick={searchUsers} disabled={userBusy} className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
+                  {userBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Search
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">Banning a user blocks them from signing in. Admin accounts cannot be banned.</p>
+            </div>
+            {userResults.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10">{userBusy ? "Searching..." : "No results yet — enter a name above."}</p>
+            ) : (
+              <div className="grid gap-3">
+                {userResults.map((u) => (
+                  <article key={u.user_id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-center gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                      <UsersIcon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold">{u.display_name}</h3>
+                        {u.banned && <span className="text-xs px-2 py-0.5 rounded-full border border-red-500/40 text-red-400">Banned</span>}
+                      </div>
+                      {u.email && <p className="text-xs text-muted-foreground mt-0.5 break-all">{u.email}</p>}
+                    </div>
+                    <button
+                      onClick={() => toggleBan(u)}
+                      disabled={userActionId === u.user_id}
+                      className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm disabled:opacity-60 ${u.banned ? "border border-primary/40 text-primary hover:bg-primary/10" : "border border-red-500/40 text-red-400 hover:bg-red-500/10"}`}
+                    >
+                      {userActionId === u.user_id ? <Loader2 className="w-4 h-4 animate-spin" /> : (u.banned ? <RotateCcw className="w-4 h-4" /> : <Ban className="w-4 h-4" />)}
+                      {u.banned ? "Unban" : "Ban"}
                     </button>
                   </article>
                 ))}
