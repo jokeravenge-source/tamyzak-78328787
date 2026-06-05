@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -16,7 +16,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames";
   const [tab, setTab] = useState<Tab>("pending");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -174,6 +174,36 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setUserResults((r) => r.map((x) => x.user_id === u.user_id ? { ...x, banned: !u.banned } : x));
   };
 
+  // Username change requests state
+  type UReq = { id: string; user_id: string; current_name: string | null; requested_name: string; status: string; created_at: string };
+  const [ureqs, setUreqs] = useState<UReq[]>([]);
+  const [ureqLoading, setUreqLoading] = useState(false);
+  const [ureqBusyId, setUreqBusyId] = useState<string | null>(null);
+  const loadUreqs = async () => {
+    setUreqLoading(true);
+    const { data, error } = await supabase
+      .from("username_requests")
+      .select("id, user_id, current_name, requested_name, status, created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    if (error) toast.error(error.message);
+    setUreqs((data ?? []) as UReq[]);
+    setUreqLoading(false);
+  };
+  useEffect(() => { if (tab === "usernames") loadUreqs(); }, [tab]);
+  const decideUreq = async (r: UReq, decision: "approved" | "rejected") => {
+    const { data: u } = await supabase.auth.getUser();
+    setUreqBusyId(r.id);
+    const { error } = await supabase
+      .from("username_requests")
+      .update({ status: decision, reviewed_by: u.user?.id, reviewed_at: new Date().toISOString() })
+      .eq("id", r.id);
+    setUreqBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success(decision === "approved" ? "Name change approved" : "Request rejected");
+    setUreqs((rs) => rs.filter((x) => x.id !== r.id));
+  };
+
   const approve = async (id: string) => {
     const { error } = await supabase.from("summaries").update({ approved: true }).eq("id", id);
     if (error) return toast.error(error.message);
@@ -243,6 +273,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           </button>
           <button onClick={() => setTab("users")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "users" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <UsersIcon className="w-4 h-4 inline mr-1.5" />Users
+          </button>
+          <button onClick={() => setTab("usernames")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "usernames" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            <UserCog className="w-4 h-4 inline mr-1.5" />Username Requests
           </button>
         </div>
 
