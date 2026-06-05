@@ -340,10 +340,23 @@ const AccountCenter = ({
             </div>
             <div>
               <label className="text-xs text-muted-foreground">{text.username}</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} required className="mt-1 w-full h-11 px-3 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm" />
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={40}
+                required
+                disabled={!!pendingRequest}
+                className="mt-1 w-full h-11 px-3 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm disabled:opacity-60"
+              />
+              {pendingRequest && (
+                <p className="mt-2 text-xs text-amber-300 inline-flex items-center gap-1.5">
+                  <Lock className="w-3 h-3" />
+                  {text.pendingReview}: <span className="font-semibold">{pendingRequest.requested_name}</span>
+                </p>
+              )}
             </div>
-            <button type="submit" disabled={saving || !name.trim()} className="w-full h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2">
-              {saving ? <><Loader2 className="w-4 h-4 animate-spin" />{text.saving}</> : <><Save className="w-4 h-4" />{text.save}</>}
+            <button type="submit" disabled={saving || !name.trim() || !!pendingRequest} className="w-full h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2">
+              {saving ? <><Loader2 className="w-4 h-4 animate-spin" />{text.saving}</> : <><Save className="w-4 h-4" />{name.trim() && name.trim() !== savedName ? text.requestName : text.save}</>}
             </button>
             {isPremium && (
               <div className="flex items-center justify-between gap-3 pt-2">
