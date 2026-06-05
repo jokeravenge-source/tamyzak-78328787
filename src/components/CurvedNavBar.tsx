@@ -29,7 +29,10 @@ const CurvedNavBar = ({
   const ease = [0.22, 1, 0.36, 1] as const;
 
   return (
-    <div className="fixed bottom-5 md:bottom-8 left-0 right-0 z-50 flex justify-center pointer-events-none">
+    <div
+      className="fixed bottom-5 md:bottom-8 left-0 right-0 z-[100] flex justify-center pointer-events-none"
+      style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + 1.25rem)` }}
+    >
       <motion.nav
         aria-label="Primary"
         initial={{ y: 80, opacity: 0 }}
