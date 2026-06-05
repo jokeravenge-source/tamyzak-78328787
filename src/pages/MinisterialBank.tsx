@@ -16,6 +16,8 @@ import { ministerialChemCh4Ar } from "@/data/ministerialChemCh4Ar";
 import { ministerialChemCh5Ar } from "@/data/ministerialChemCh5Ar";
 import { ministerialPhysicsCh1 } from "@/data/ministerialPhysicsCh1";
 import { ministerialPhysicsCh1Ar } from "@/data/ministerialPhysicsCh1Ar";
+import { ministerialPhysicsCh2 } from "@/data/ministerialPhysicsCh2";
+import { ministerialPhysicsCh2Ar } from "@/data/ministerialPhysicsCh2Ar";
 import { Textarea } from "@/components/ui/textarea";
 
 const subjectIcons: Record<BankSubject, React.ComponentType<{ className?: string }>> = {
@@ -99,6 +101,8 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
   const questions =
     subject === "physics" && chapterN === 1
       ? (language === "ar" ? ministerialPhysicsCh1Ar : ministerialPhysicsCh1)
+      : subject === "physics" && chapterN === 2
+      ? (language === "ar" ? ministerialPhysicsCh2Ar : ministerialPhysicsCh2)
       : subject === "chemistry" && chapterN === 1
       ? (language === "ar" ? ministerialChemCh1Ar : ministerialChemCh1)
       : subject === "chemistry" && chapterN === 2
