@@ -459,6 +459,51 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               </div>
             )}
           </div>
+        ) : tab === "usernames" ? (
+          <div className="space-y-6">
+            <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur">
+              <h3 className="font-semibold flex items-center gap-2"><UserCog className="w-4 h-4 text-primary" /> Pending username change requests</h3>
+              <p className="text-xs text-muted-foreground mt-1">Approve to update the user's display name. Reject to deny the change.</p>
+            </div>
+            {ureqLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+            ) : ureqs.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10">No pending username requests.</p>
+            ) : (
+              <div className="grid gap-3">
+                {ureqs.map((r) => (
+                  <article key={r.id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-center gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                      <UserCog className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-[220px]">
+                      <div className="text-xs text-muted-foreground">From</div>
+                      <div className="font-medium">{r.current_name || <span className="italic text-muted-foreground">(no name)</span>}</div>
+                      <div className="text-xs text-muted-foreground mt-1">To</div>
+                      <div className="font-semibold text-primary">{r.requested_name}</div>
+                      <p className="text-[11px] text-muted-foreground mt-1">{new Date(r.created_at).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        disabled={ureqBusyId === r.id}
+                        onClick={() => decideUreq(r, "approved")}
+                        className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60"
+                      >
+                        {ureqBusyId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Approve
+                      </button>
+                      <button
+                        disabled={ureqBusyId === r.id}
+                        onClick={() => decideUreq(r, "rejected")}
+                        className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm disabled:opacity-60"
+                      >
+                        <X className="w-4 h-4" /> Reject
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
         ) : loading ? (
           <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : rows.length === 0 ? (
