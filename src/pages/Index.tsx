@@ -416,14 +416,14 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         </div>
       </section>
 
-      <footer className="flex items-center gap-3 z-10 animate-fade-up">
-        <Button variant="ghost" size="sm" onClick={shuffle} className="gap-2">
+      <footer className="w-full max-w-2xl overflow-x-auto overflow-y-hidden flex items-center gap-3 z-10 animate-fade-up whitespace-nowrap px-1 pb-1 [scrollbar-width:thin]">
+        <Button variant="ghost" size="sm" onClick={shuffle} className="gap-2 shrink-0">
           <Shuffle className="w-4 h-4" /> {text.shuffle}
         </Button>
-        <Button variant="ghost" size="sm" onClick={reset} className="gap-2">
+        <Button variant="ghost" size="sm" onClick={reset} className="gap-2 shrink-0">
           <RotateCcw className="w-4 h-4" /> {text.reset}
         </Button>
-        <Button variant="ghost" size="sm" onClick={toggleSave} className="gap-2" disabled={!card}>
+        <Button variant="ghost" size="sm" onClick={toggleSave} className="gap-2 shrink-0" disabled={!card}>
           {isSaved ? <BookmarkCheck className="w-4 h-4 text-primary" /> : <Bookmark className="w-4 h-4" />}
           {language === "ar" ? (isSaved ? "محفوظة" : "حفظ") : (isSaved ? "Saved" : "Save")}
         </Button>
@@ -431,14 +431,14 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           variant={savedView ? "default" : "ghost"}
           size="sm"
           onClick={() => setSavedView((v) => !v)}
-          className="gap-2"
+          className="gap-2 shrink-0"
         >
           <Star className="w-4 h-4" />
           {language === "ar"
             ? (savedView ? "كل البطاقات" : `المحفوظة (${saved.length})`)
             : (savedView ? "All cards" : `Saved (${saved.length})`)}
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => setShowSubmit(true)} className="gap-2">
+        <Button variant="ghost" size="sm" onClick={() => setShowSubmit(true)} className="gap-2 shrink-0">
           <Plus className="w-4 h-4" />
           {language === "ar" ? "أضف بطاقة" : "Submit card"}
         </Button>
