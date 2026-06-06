@@ -253,6 +253,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     setDirection("left");
   };
 
+  // Rebuild deck only when the underlying source changes — reset index here.
   useEffect(() => {
     if (savedView) {
       setCards(saved.map((s) => ({ q: s.q, a: s.a })));
@@ -260,7 +261,21 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       setCards([...deck.cards, ...extraCards]);
     }
     setIndex(0);
-  }, [deck, extraCards, savedView, saved]);
+    // intentionally exclude `saved` so bookmarking a card doesn't reset position
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deck, extraCards, savedView]);
+
+  // When in saved view and the saved list changes (e.g. unbookmark),
+  // update cards in place without snapping back to the first card.
+  useEffect(() => {
+    if (!savedView) return;
+    setCards((prev) => {
+      const next = saved.map((s) => ({ q: s.q, a: s.a }));
+      setIndex((i) => Math.min(i, Math.max(0, next.length - 1)));
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saved]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
