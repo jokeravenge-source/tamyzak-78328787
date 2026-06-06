@@ -62,7 +62,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         if (error) { lastErr = error; }
         else if ((data as any)?.error) {
           lastErr = new Error((data as any).message || (data as any).error);
-          if ((data as any).retryable === false || (data as any).quota) break;
+          if ((data as any).retryable === false) break;
         } else if ((data as any)?.notes) {
           setNotes((data as any).notes);
           lastErr = null;
