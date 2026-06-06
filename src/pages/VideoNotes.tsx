@@ -19,6 +19,7 @@ const copy = {
     copied: "Copied to clipboard",
     invalid: "Please paste a valid YouTube link.",
     failed: "Could not generate notes.",
+    retrying: "The AI is busy. Retrying shortly…",
   },
   ar: {
     title: "من الفيديو إلى ملاحظات",
@@ -32,6 +33,7 @@ const copy = {
     copied: "تم النسخ",
     invalid: "الرجاء لصق رابط يوتيوب صالح.",
     failed: "تعذّر إنشاء الملاحظات.",
+    retrying: "الذكاء الاصطناعي مشغول حالياً. سنعيد المحاولة بعد قليل…",
   },
 } as const;
 
@@ -60,6 +62,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         if (error) { lastErr = error; }
         else if ((data as any)?.error) {
           lastErr = new Error((data as any).message || (data as any).error);
+          if ((data as any).retryable === false || (data as any).quota) break;
         } else if ((data as any)?.notes) {
           setNotes((data as any).notes);
           lastErr = null;
@@ -68,7 +71,9 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           lastErr = new Error(t.failed);
         }
         if (attempt < maxAttempts) {
-          const delay = Math.min(8000, 600 * 2 ** (attempt - 1)) + Math.random() * 250;
+          toast.info(t.retrying);
+          const retryAfterMs = Number((data as any)?.retryAfter || 0) * 1000;
+          const delay = Math.max(retryAfterMs, Math.min(8000, 600 * 2 ** (attempt - 1)) + Math.random() * 250);
           await new Promise((r) => setTimeout(r, delay));
         }
       }
