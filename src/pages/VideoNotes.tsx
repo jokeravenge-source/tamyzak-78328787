@@ -51,12 +51,28 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     setLoading(true);
     setNotes("");
     try {
-      const { data, error } = await supabase.functions.invoke("video-notes", {
-        body: { url: url.trim(), language },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
-      setNotes((data as any).notes || "");
+      const maxAttempts = 4;
+      let lastErr: any = null;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const { data, error } = await supabase.functions.invoke("video-notes", {
+          body: { url: url.trim(), language },
+        });
+        if (error) { lastErr = error; }
+        else if ((data as any)?.error) {
+          lastErr = new Error((data as any).message || (data as any).error);
+        } else if ((data as any)?.notes) {
+          setNotes((data as any).notes);
+          lastErr = null;
+          break;
+        } else {
+          lastErr = new Error(t.failed);
+        }
+        if (attempt < maxAttempts) {
+          const delay = Math.min(8000, 600 * 2 ** (attempt - 1)) + Math.random() * 250;
+          await new Promise((r) => setTimeout(r, delay));
+        }
+      }
+      if (lastErr) throw lastErr;
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message || t.failed);
