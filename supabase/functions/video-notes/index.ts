@@ -1,12 +1,9 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SUPADATA_API_KEY = Deno.env.get("SUPADATA_API_KEY") ?? "sd_dae1dd54e036d269cd3e42b7d14ef292";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -26,73 +23,58 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      return new Response(JSON.stringify({ error: "GEMINI_API_KEY not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 1) Get transcript from Supadata
-    const tRes = await fetch(`https://api.supadata.ai/v1/youtube/transcript?url=${encodeURIComponent(url)}&text=true`, {
-      headers: { "x-api-key": SUPADATA_API_KEY },
-    });
-    if (!tRes.ok) {
-      const errText = await tRes.text();
-      let parsed: any = null;
-      try { parsed = JSON.parse(errText); } catch { /* ignore */ }
-      const isQuota = tRes.status === 429 || parsed?.error === "limit-exceeded";
-      const friendly = isQuota
-        ? (lang0 === "ar"
-            ? "خدمة تفريغ الفيديو وصلت إلى حدّها. يرجى المحاولة لاحقاً أو تحديث مفتاح SUPADATA_API_KEY."
-            : "Video transcript service quota reached. Please try again later or update the SUPADATA_API_KEY.")
-        : (lang0 === "ar"
-            ? "تعذّر جلب نص الفيديو. تأكد من الرابط وحاول مجدداً."
-            : "Could not fetch the video transcript. Check the link and try again.");
-      return new Response(JSON.stringify({ error: friendly, detail: errText }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const tData = await tRes.json();
-    let transcript: string = "";
-    if (typeof tData.content === "string") transcript = tData.content;
-    else if (Array.isArray(tData.content)) transcript = tData.content.map((c: any) => c.text ?? "").join(" ");
-    else if (typeof tData.text === "string") transcript = tData.text;
-    if (!transcript || transcript.trim().length < 20) {
-      return new Response(JSON.stringify({ error: "Empty transcript" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    transcript = transcript.slice(0, 60000);
+    // Use Gemini directly — it natively accepts YouTube URLs as fileData
+    const systemPrompt = `You are an expert study-notes writer. Watch the provided YouTube video and produce clean, well-structured study notes ALWAYS in Arabic (العربية), regardless of the video language. Translate if needed. Use Markdown with: a short summary (ملخص), key concepts as bullet points (المفاهيم الأساسية), important definitions (تعريفات مهمة), and a final "خلاصة" (Takeaways) section. Be faithful to the video content only.`;
 
-    // 2) Generate notes via Lovable AI
-    const systemPrompt = `You are an expert study-notes writer. From a YouTube video transcript, produce clean, well-structured study notes ALWAYS in Arabic (العربية), regardless of the transcript language. Translate if needed. Use Markdown with: a short summary (ملخص), key concepts as bullet points (المفاهيم الأساسية), important definitions (تعريفات مهمة), and a final "خلاصة" (Takeaways) section. Be faithful to the transcript only.`;
-    const userPrompt = `Transcript:\n\n${transcript}\n\nWrite the notes now.`;
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-    if (!aiRes.ok) {
-      const errText = await aiRes.text();
-      const status = aiRes.status === 429 || aiRes.status === 402 ? aiRes.status : 500;
-      return new Response(JSON.stringify({ error: errText }), {
-        status,
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { fileData: { fileUri: url.trim(), mimeType: "video/mp4" } },
+                { text: "Write the study notes now." },
+              ],
+            },
+          ],
+        }),
+      },
+    );
+
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error("Gemini error", geminiRes.status, errText);
+      const friendly = lang0 === "ar"
+        ? "تعذّر إنشاء الملاحظات من هذا الفيديو. تأكد من الرابط أو جرّب فيديو آخر."
+        : "Could not generate notes from this video. Check the link or try another video.";
+      return new Response(JSON.stringify({ error: friendly, detail: errText }), {
+        status: geminiRes.status === 429 ? 429 : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const aiData = await aiRes.json();
-    const notes = aiData.choices?.[0]?.message?.content ?? "";
-    return new Response(JSON.stringify({ notes, transcript }), {
+
+    const gData = await geminiRes.json();
+    const notes = gData?.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? "").join("") ?? "";
+    if (!notes.trim()) {
+      return new Response(JSON.stringify({ error: "Empty response from model" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    return new Response(JSON.stringify({ notes }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
