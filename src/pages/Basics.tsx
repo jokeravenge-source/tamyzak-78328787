@@ -206,6 +206,7 @@ const Basics = ({
   const [activeKey, setActiveKey] = useState<MainMenuChoice>("flashcards");
   const [activeGroup, setActiveGroup] = useState<string>(NAV_GROUPS[0].titleEn);
   const [missionsDone, setMissionsDone] = useState<number>(0);
+  const [showAllTools, setShowAllTools] = useState<boolean>(false);
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
@@ -588,6 +589,15 @@ const Basics = ({
           <section>
             <div className="flex items-center justify-between mb-5">
               <h4 className="text-lg font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>{toolsHeader}</h4>
+              <button
+                onClick={() => setShowAllTools((v) => !v)}
+                className="text-sm font-semibold text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {showAllTools
+                  ? (language === "ar" ? "إخفاء" : "Hide")
+                  : (language === "ar" ? "عرض كل الأدوات" : "See all study tools")}
+                <ArrowRight className={`w-3.5 h-3.5 transition-transform ${showAllTools ? "rotate-90" : isRTL ? "rotate-180" : ""}`} />
+              </button>
             </div>
 
             <motion.div
@@ -622,6 +632,53 @@ const Basics = ({
                 );
               })}
             </motion.div>
+
+            {/* Expanded: all Study tools */}
+            <AnimatePresence initial={false}>
+              {showAllTools && (
+                <motion.div
+                  key="all-tools"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                      {language === "ar" ? "كل أدوات الدراسة" : "All study tools"}
+                    </p>
+                    <motion.div
+                      initial="hidden"
+                      animate="show"
+                      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.03 } } }}
+                      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+                    >
+                      {NAV_GROUPS[0].items.map((it) => {
+                        const Icon = it.Icon;
+                        return (
+                          <motion.button
+                            key={it.key}
+                            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => navigate(it.key)}
+                            className="group flex flex-col items-start gap-2 p-3 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all text-left"
+                          >
+                            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                              <Icon className="w-4 h-4 text-primary group-hover:text-primary-foreground" />
+                            </div>
+                            <span className="text-xs font-semibold leading-tight">
+                              {language === "ar" ? it.labelAr : it.labelEn}
+                            </span>
+                          </motion.button>
+                        );
+                      })}
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
 
         </motion.div>

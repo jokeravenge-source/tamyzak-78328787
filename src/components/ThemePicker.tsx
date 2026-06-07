@@ -10,13 +10,15 @@ export const THEME_STORAGE_KEY = "app_theme_v1";
 
 export type ThemeId =
   | "notion-light"
-  | "notion-dark"
   | "sepia"
-  | "slate"
   | "forest"
   | "rose"
+  | "midnight"
+  | "charcoal-ember"
+  | "ocean-deep"
+  | "noir-gold"
   | "nord"
-  | "zombie";
+  | "obsidian";
 
 type ThemeDef = {
   id: ThemeId;
@@ -98,21 +100,6 @@ export const THEMES: ThemeDef[] = [
     ),
   },
   {
-    id: "notion-dark", name: "Notion Dark", arName: "نوشن داكن", mode: "dark",
-    swatch: ["#1f1f1f", "#2a2a2a", "#5b9dff"],
-    vars: base(
-      "0 0% 12%", "0 0% 92%", "0 0% 15%", "0 0% 92%", "0 0% 95%", "0 0% 98%",
-      "217 91% 62%", "0 0% 100%", "199 95% 65%",
-      "0 0% 18%", "0 0% 92%", "0 0% 18%", "0 0% 60%",
-      "0 0% 22%", "217 91% 62%",
-      "linear-gradient(180deg, hsl(0 0% 12%), hsl(0 0% 10%))",
-      "linear-gradient(135deg, hsl(0 0% 18%), hsl(0 0% 13%))",
-      "linear-gradient(135deg, hsl(217 91% 28%), hsl(199 95% 22%))",
-      "0 1px 3px hsl(0 0% 0% / 0.3), 0 20px 50px -10px hsl(0 0% 0% / 0.5)",
-      "0 0 0 1px hsl(217 91% 62% / 0.4), 0 8px 32px -4px hsl(217 91% 62% / 0.45)",
-    ),
-  },
-  {
     id: "sepia", name: "Sepia", arName: "سيبيا", mode: "light",
     swatch: ["#efe6d3", "#faf3e0", "#b35a1c"],
     vars: base(
@@ -125,21 +112,6 @@ export const THEMES: ThemeDef[] = [
       "linear-gradient(135deg, hsl(22 75% 42%), hsl(30 80% 55%))",
       "0 1px 3px hsl(25 30% 18% / 0.08), 0 12px 32px -8px hsl(25 30% 18% / 0.15)",
       "0 0 0 1px hsl(22 75% 42% / 0.3), 0 8px 24px -4px hsl(22 75% 42% / 0.3)",
-    ),
-  },
-  {
-    id: "slate", name: "Slate", arName: "إردوازي", mode: "dark",
-    swatch: ["#1c2330", "#252e3f", "#3fb6ec"],
-    vars: base(
-      "215 28% 14%", "210 20% 92%", "215 25% 18%", "210 20% 92%", "210 20% 95%", "0 0% 100%",
-      "199 89% 58%", "215 28% 10%", "188 95% 65%",
-      "215 22% 22%", "210 20% 92%", "215 22% 22%", "215 15% 65%",
-      "215 20% 26%", "199 89% 58%",
-      "linear-gradient(180deg, hsl(215 28% 14%), hsl(215 32% 10%))",
-      "linear-gradient(135deg, hsl(215 25% 20%), hsl(215 30% 14%))",
-      "linear-gradient(135deg, hsl(199 70% 28%), hsl(188 75% 22%))",
-      "0 1px 3px hsl(0 0% 0% / 0.4), 0 24px 60px -12px hsl(199 89% 30% / 0.4)",
-      "0 0 0 1px hsl(199 89% 58% / 0.4), 0 8px 32px -4px hsl(199 89% 58% / 0.4)",
     ),
   },
   {
@@ -172,6 +144,67 @@ export const THEMES: ThemeDef[] = [
       "0 0 0 1px hsl(340 75% 52% / 0.3), 0 8px 24px -4px hsl(340 75% 52% / 0.3)",
     ),
   },
+  // ───────────── Dark themes ─────────────
+  {
+    id: "midnight", name: "Midnight Indigo", arName: "إنديغو الليل", mode: "dark",
+    swatch: ["#0a0a1a", "#1e1e5a", "#818cf8"],
+    vars: base(
+      "234 35% 8%", "230 25% 92%", "232 32% 12%", "230 25% 92%", "230 25% 95%", "234 35% 10%",
+      "238 84% 67%", "234 35% 8%", "245 90% 75%",
+      "232 28% 16%", "230 25% 92%", "232 28% 16%", "230 15% 62%",
+      "232 24% 22%", "238 84% 67%",
+      "linear-gradient(180deg, hsl(234 35% 8%), hsl(232 38% 6%))",
+      "linear-gradient(135deg, hsl(232 32% 14%), hsl(232 35% 9%))",
+      "linear-gradient(135deg, hsl(238 84% 50%), hsl(245 90% 60%))",
+      "0 1px 3px hsl(232 35% 0% / 0.4), 0 24px 60px -12px hsl(238 84% 30% / 0.45)",
+      "0 0 0 1px hsl(238 84% 67% / 0.4), 0 8px 32px -4px hsl(238 84% 67% / 0.45)",
+    ),
+  },
+  {
+    id: "charcoal-ember", name: "Charcoal Ember", arName: "فحم وجمر", mode: "dark",
+    swatch: ["#1a1a1a", "#2d2d2d", "#e85d3a"],
+    vars: base(
+      "0 0% 10%", "20 15% 92%", "0 0% 14%", "20 15% 92%", "20 15% 95%", "0 0% 100%",
+      "14 80% 56%", "0 0% 8%", "20 90% 62%",
+      "0 0% 17%", "20 15% 92%", "0 0% 17%", "20 8% 62%",
+      "0 0% 22%", "14 80% 56%",
+      "linear-gradient(180deg, hsl(0 0% 10%), hsl(0 0% 7%))",
+      "linear-gradient(135deg, hsl(0 0% 16%), hsl(0 0% 11%))",
+      "linear-gradient(135deg, hsl(14 80% 42%), hsl(20 90% 48%))",
+      "0 1px 3px hsl(0 0% 0% / 0.5), 0 24px 60px -12px hsl(14 80% 25% / 0.4)",
+      "0 0 0 1px hsl(14 80% 56% / 0.4), 0 8px 32px -4px hsl(14 80% 56% / 0.45)",
+    ),
+  },
+  {
+    id: "ocean-deep", name: "Ocean Deep", arName: "أعماق المحيط", mode: "dark",
+    swatch: ["#0c2340", "#1a4a6e", "#5cbdb9"],
+    vars: base(
+      "212 67% 8%", "195 30% 92%", "210 55% 12%", "195 30% 92%", "195 30% 95%", "210 67% 10%",
+      "178 42% 55%", "212 67% 8%", "192 70% 62%",
+      "210 45% 18%", "195 30% 92%", "210 45% 18%", "200 18% 65%",
+      "210 38% 24%", "178 42% 55%",
+      "linear-gradient(180deg, hsl(212 67% 8%), hsl(215 70% 6%))",
+      "linear-gradient(135deg, hsl(210 55% 14%), hsl(212 60% 9%))",
+      "linear-gradient(135deg, hsl(192 70% 32%), hsl(178 42% 38%))",
+      "0 1px 3px hsl(212 67% 0% / 0.5), 0 24px 60px -12px hsl(192 70% 20% / 0.5)",
+      "0 0 0 1px hsl(178 42% 55% / 0.4), 0 8px 32px -4px hsl(178 42% 55% / 0.45)",
+    ),
+  },
+  {
+    id: "noir-gold", name: "Noir & Gold", arName: "أسود وذهبي", mode: "dark",
+    swatch: ["#0d0d0d", "#1a1a1a", "#c9a84c"],
+    vars: base(
+      "0 0% 6%", "45 25% 92%", "0 0% 10%", "45 25% 92%", "45 30% 95%", "0 0% 100%",
+      "43 58% 54%", "0 0% 6%", "45 78% 65%",
+      "0 0% 14%", "45 25% 92%", "0 0% 14%", "40 12% 62%",
+      "0 0% 20%", "43 58% 54%",
+      "linear-gradient(180deg, hsl(0 0% 6%), hsl(0 0% 4%))",
+      "linear-gradient(135deg, hsl(0 0% 12%), hsl(0 0% 8%))",
+      "linear-gradient(135deg, hsl(43 58% 42%), hsl(45 78% 52%))",
+      "0 1px 3px hsl(0 0% 0% / 0.6), 0 24px 60px -12px hsl(43 58% 20% / 0.4)",
+      "0 0 0 1px hsl(43 58% 54% / 0.4), 0 8px 32px -4px hsl(45 78% 50% / 0.4)",
+    ),
+  },
   {
     id: "nord", name: "Nord", arName: "نورد", mode: "dark",
     swatch: ["#2e3440", "#3b4252", "#88c0d0"],
@@ -188,18 +221,18 @@ export const THEMES: ThemeDef[] = [
     ),
   },
   {
-    id: "zombie", name: "Zombie", arName: "زومبي", mode: "dark",
-    swatch: ["#1a1f10", "#3b4a1a", "#8bd11e"],
+    id: "obsidian", name: "Obsidian", arName: "أوبسيديان", mode: "dark",
+    swatch: ["#0f172a", "#1e293b", "#60a5fa"],
     vars: base(
-      "80 30% 8%", "85 60% 70%", "75 25% 12%", "85 60% 70%", "85 80% 65%", "85 80% 65%",
-      "82 80% 42%", "80 50% 5%", "60 90% 50%",
-      "75 30% 16%", "85 60% 75%", "75 30% 16%", "70 20% 55%",
-      "30 50% 25%", "0 80% 45%",
-      "linear-gradient(180deg, hsl(80 30% 8%), hsl(30 40% 6%))",
-      "linear-gradient(135deg, hsl(75 25% 14%), hsl(30 40% 10%))",
-      "linear-gradient(135deg, hsl(82 80% 30%), hsl(0 80% 35%))",
-      "0 0 0 1px hsl(0 80% 30% / 0.5), 0 20px 50px -10px hsl(0 80% 20% / 0.7)",
-      "0 0 0 2px hsl(82 80% 42% / 0.6), 0 0 30px hsl(60 90% 40% / 0.6)",
+      "222 47% 8%", "210 30% 94%", "222 40% 12%", "210 30% 94%", "210 30% 96%", "222 47% 10%",
+      "213 94% 68%", "222 47% 8%", "199 95% 72%",
+      "222 32% 17%", "210 30% 94%", "222 32% 17%", "215 16% 65%",
+      "222 28% 23%", "213 94% 68%",
+      "linear-gradient(180deg, hsl(222 47% 8%), hsl(222 50% 6%))",
+      "linear-gradient(135deg, hsl(222 40% 14%), hsl(222 45% 9%))",
+      "linear-gradient(135deg, hsl(213 94% 50%), hsl(199 95% 55%))",
+      "0 1px 3px hsl(222 47% 0% / 0.5), 0 24px 60px -12px hsl(213 94% 25% / 0.4)",
+      "0 0 0 1px hsl(213 94% 68% / 0.4), 0 8px 32px -4px hsl(213 94% 68% / 0.45)",
     ),
   },
 ];
@@ -260,39 +293,55 @@ export const ThemePicker = ({ language = "en", variant = "floating" }: { languag
   const isDark = current.mode === "dark";
 
   const toggleLightDark = () => {
-    setTheme(isDark ? "notion-light" : "notion-dark");
+    setTheme(isDark ? "notion-light" : "obsidian");
+  };
+
+  const lightThemes = THEMES.filter((t) => t.mode === "light");
+  const darkThemes = THEMES.filter((t) => t.mode === "dark");
+
+  const renderThemeButton = (t: ThemeDef) => {
+    const active = t.id === theme;
+    return (
+      <button
+        key={t.id}
+        onClick={() => setTheme(t.id)}
+        className={`group relative flex flex-col gap-2 p-2.5 rounded-xl border text-left transition-all ${
+          active
+            ? "border-primary bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary))]"
+            : "border-border bg-card hover:border-primary/40 hover:bg-secondary/50"
+        }`}
+      >
+        <div
+          className="h-10 rounded-lg overflow-hidden flex"
+          style={{ background: t.swatch[0] }}
+        >
+          <div className="flex-1" style={{ background: t.swatch[1] }} />
+          <div className="w-1/3" style={{ background: t.swatch[2] }} />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold truncate">
+            {language === "ar" ? t.arName : t.name}
+          </span>
+          {active && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+        </div>
+      </button>
+    );
   };
 
   const themeGrid = (
-    <div className="grid gap-1">
-      {THEMES.map((t) => {
-        const active = t.id === theme;
-        return (
-          <button
-            key={t.id}
-            onClick={() => setTheme(t.id)}
-            className={`flex items-center justify-between gap-3 px-2 py-2 rounded-md text-left transition-colors ${
-              active ? "bg-secondary" : "hover:bg-secondary/60"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-1.5">
-                {t.swatch.map((c, i) => (
-                  <span
-                    key={i}
-                    className="w-4 h-4 rounded-full border border-border"
-                    style={{ background: c }}
-                  />
-                ))}
-              </div>
-              <span className="text-sm font-medium">
-                {language === "ar" ? t.arName : t.name}
-              </span>
-            </div>
-            {active && <Check className="w-4 h-4 text-primary" />}
-          </button>
-        );
-      })}
+    <div className="space-y-3">
+      <div>
+        <p className="px-1 mb-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold inline-flex items-center gap-1.5">
+          <Sun className="w-3 h-3" /> {language === "ar" ? "فاتح" : "Light"}
+        </p>
+        <div className="grid grid-cols-2 gap-2">{lightThemes.map(renderThemeButton)}</div>
+      </div>
+      <div>
+        <p className="px-1 mb-2 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold inline-flex items-center gap-1.5">
+          <Moon className="w-3 h-3" /> {language === "ar" ? "داكن" : "Dark"}
+        </p>
+        <div className="grid grid-cols-2 gap-2">{darkThemes.map(renderThemeButton)}</div>
+      </div>
     </div>
   );
 
@@ -342,7 +391,7 @@ export const ThemePicker = ({ language = "en", variant = "floating" }: { languag
         <PopoverContent
           align="end"
           side="top"
-          className="w-72 p-2 bg-popover text-popover-foreground border-border"
+          className="w-80 p-3 bg-popover text-popover-foreground border-border max-h-[70vh] overflow-y-auto"
         >
           <div className="px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground">
             {language === "ar" ? "اختر الثيم" : "Choose theme"}
