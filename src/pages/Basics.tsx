@@ -474,7 +474,7 @@ const Basics = ({
                 {cta.secondary}
               </button>
               <button
-                onClick={() => onSelect("flashcards")}
+                onClick={() => onSelect("sessions")}
                 className="px-5 py-2 text-sm font-bold text-primary-foreground bg-primary rounded-lg shadow-sm hover:opacity-95 transition-all"
               >
                 {cta.primary}
