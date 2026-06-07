@@ -3,13 +3,12 @@ import {
   ArrowRight, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
-  Crown, UserCog, BookOpen, Heart, Menu, BookMarked as Study, Users, Settings,
+  Crown, UserCog, BookOpen, Heart, Users, Settings,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import type { MainMenuChoice } from "@/pages/MainMenu";
-import { PremiumBadge } from "@/components/PremiumBadge";
 import { useSubscription } from "@/hooks/useSubscription";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 import { missionsData, missionsOrder } from "@/data/missions";
