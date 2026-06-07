@@ -12,6 +12,7 @@ import type { MainMenuChoice } from "@/pages/MainMenu";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import { useSubscription } from "@/hooks/useSubscription";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
+import { missionsData, missionsOrder } from "@/data/missions";
 
 export type BasicsChoice =
   | "flashcards"
@@ -206,25 +207,32 @@ const Basics = ({
   const fc = FEATURED_COPY[language];
   const [activeKey, setActiveKey] = useState<MainMenuChoice>("flashcards");
   const [activeGroup, setActiveGroup] = useState<string>(NAV_GROUPS[0].titleEn);
-  const [totalSeconds, setTotalSeconds] = useState<number>(0);
+  const [missionsDone, setMissionsDone] = useState<number>(0);
+
+  // Total missions across all subjects/chapters
+  const missionsTotal = (() => {
+    let total = 0;
+    missionsOrder.forEach((s) => {
+      const data = missionsData[s];
+      data?.chapters.forEach((c) => { total += c.topics.length; });
+    });
+    return total;
+  })();
 
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
       const { data } = await supabase
-        .from("study_sessions")
-        .select("duration_seconds")
-        .eq("user_id", u.user.id);
-      const total = (data ?? []).reduce((sum, r: any) => sum + (r.duration_seconds || 0), 0);
-      setTotalSeconds(total);
+        .from("mission_progress")
+        .select("completed")
+        .eq("user_id", u.user.id)
+        .eq("completed", true);
+      setMissionsDone((data ?? []).length);
     })();
   }, []);
 
-  // Goal: 30 hours of total study sessions
-  const SESSIONS_GOAL_SECONDS = 30 * 3600;
-  const sessionsPct = Math.min(100, Math.round((totalSeconds / SESSIONS_GOAL_SECONDS) * 100));
-  const sessionsHours = (totalSeconds / 3600).toFixed(1);
+  const missionsPct = missionsTotal ? Math.min(100, Math.round((missionsDone / missionsTotal) * 100)) : 0;
 
   const READ_KEY = "notif_read_ids_v1";
   const [notifs, setNotifs] = useState<Notif[]>([]);
@@ -582,18 +590,18 @@ const Basics = ({
                       strokeLinecap="round"
                       strokeDasharray={2 * Math.PI * 52}
                       initial={{ strokeDashoffset: 2 * Math.PI * 52 }}
-                      animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - sessionsPct / 100) }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - missionsPct / 100) }}
                       transition={{ duration: 1.1, ease: "easeOut" }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold tabular-nums">{sessionsPct}%</span>
+                    <span className="text-2xl font-bold tabular-nums">{missionsPct}%</span>
                     <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {sessionsHours}{language === "ar" ? " س" : "h"}
+                      {missionsDone}/{missionsTotal}
                     </span>
                   </div>
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-card border border-border shadow-sm rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                    {language === "ar" ? "تقدم الجلسات" : "Sessions progress"}
+                    {language === "ar" ? "تقدم المهمات" : "Missions progress"}
                   </div>
                 </div>
               </div>
