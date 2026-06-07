@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -172,6 +172,37 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error ?? "Failed");
     toast.success(action === "ban" ? "User banned" : "User unbanned");
     setUserResults((r) => r.map((x) => x.user_id === u.user_id ? { ...x, banned: !u.banned } : x));
+  };
+
+  // Per-user study sessions (admin can view + delete)
+  type SessionRow = { id: string; subject: string; mission: string | null; duration_seconds: number; points: number; mission_completed: boolean; created_at: string };
+  const [openSessionsFor, setOpenSessionsFor] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionBusyId, setSessionBusyId] = useState<string | null>(null);
+  const toggleSessions = async (u: UserRow) => {
+    if (openSessionsFor === u.user_id) { setOpenSessionsFor(null); setSessions([]); return; }
+    setOpenSessionsFor(u.user_id);
+    setSessions([]);
+    setSessionsLoading(true);
+    const { data, error } = await supabase.functions.invoke("admin-manage-users", { body: { action: "list_sessions", user_id: u.user_id } });
+    setSessionsLoading(false);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error ?? "Failed");
+    setSessions(((data as any)?.sessions ?? []) as SessionRow[]);
+  };
+  const deleteSession = async (s: SessionRow) => {
+    if (!confirm(`Delete this ${s.subject} session (${Math.round(s.duration_seconds / 60)} min, ${s.points} pts)? Points awarded will also be removed.`)) return;
+    setSessionBusyId(s.id);
+    const { data, error } = await supabase.functions.invoke("admin-manage-users", { body: { action: "delete_session", session_id: s.id } });
+    setSessionBusyId(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error ?? "Failed");
+    toast.success("Session deleted");
+    setSessions((r) => r.filter((x) => x.id !== s.id));
+  };
+  const fmtDuration = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
   };
 
   // Username change requests state
