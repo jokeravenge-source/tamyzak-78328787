@@ -3,9 +3,9 @@ import {
   ArrowRight, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
-  Crown, UserCog, BookOpen, Heart, Menu,
+  Crown, UserCog, BookOpen, Heart, Menu, BookMarked as Study, Users, Settings,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -205,6 +205,26 @@ const Basics = ({
   const { isPremium } = useSubscription();
   const fc = FEATURED_COPY[language];
   const [activeKey, setActiveKey] = useState<MainMenuChoice>("flashcards");
+  const [activeGroup, setActiveGroup] = useState<string>(NAV_GROUPS[0].titleEn);
+  const [totalSeconds, setTotalSeconds] = useState<number>(0);
+
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data } = await supabase
+        .from("study_sessions")
+        .select("duration_seconds")
+        .eq("user_id", u.user.id);
+      const total = (data ?? []).reduce((sum, r: any) => sum + (r.duration_seconds || 0), 0);
+      setTotalSeconds(total);
+    })();
+  }, []);
+
+  // Goal: 30 hours of total study sessions
+  const SESSIONS_GOAL_SECONDS = 30 * 3600;
+  const sessionsPct = Math.min(100, Math.round((totalSeconds / SESSIONS_GOAL_SECONDS) * 100));
+  const sessionsHours = (totalSeconds / 3600).toFixed(1);
 
   const READ_KEY = "notif_read_ids_v1";
   const [notifs, setNotifs] = useState<Notif[]>([]);
@@ -270,6 +290,9 @@ const Basics = ({
   const isRTL = language === "ar";
   const navigate = (k: MainMenuChoice) => {
     setActiveKey(k);
+    // sync active group
+    const grp = NAV_GROUPS.find((g) => g.items.some((it) => it.key === k));
+    if (grp) setActiveGroup(grp.titleEn);
     // Featured BasicsChoice keys still flow through onSelect to use the basic back-target
     const basicsKeys = new Set<MainMenuChoice>([
       "flashcards", "malazam", "summaries", "sessions", "biologyDrawings",
@@ -278,6 +301,14 @@ const Basics = ({
     if (basicsKeys.has(k)) onSelect(k as BasicsChoice);
     else onNav(k);
   };
+
+  const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+    Study: Layers,
+    Progress: Target,
+    Community: Users,
+    Account: Settings,
+  };
+  const currentGroup = NAV_GROUPS.find((g) => g.titleEn === activeGroup) ?? NAV_GROUPS[0];
 
   const sidebarTitle = { en: "Sections", ar: "الأقسام" }[language];
   const welcome = {
