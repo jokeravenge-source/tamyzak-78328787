@@ -94,10 +94,10 @@ const Leaderboard = ({
                 {t("Congratulations!", "تهانينا!")} 🎉
               </p>
               <p className="text-lg font-bold text-foreground">
-                {t("Congrats to ", "تهانينا لـ ")}<span className="gradient-text">عائشة ارقم</span>
+                {t("Congrats to ", "تهانينا لـ ")}<span className="gradient-text">Harrer</span>
               </p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {t("for solving the puzzle!", "على حل اللغز!")}
+                {t("for completing the challenge!", "على إكمال التحدي!")}
               </p>
             </div>
           </div>
