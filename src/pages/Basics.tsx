@@ -590,18 +590,18 @@ const Basics = ({
                       strokeLinecap="round"
                       strokeDasharray={2 * Math.PI * 52}
                       initial={{ strokeDashoffset: 2 * Math.PI * 52 }}
-                      animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - sessionsPct / 100) }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - missionsPct / 100) }}
                       transition={{ duration: 1.1, ease: "easeOut" }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold tabular-nums">{sessionsPct}%</span>
+                    <span className="text-2xl font-bold tabular-nums">{missionsPct}%</span>
                     <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {sessionsHours}{language === "ar" ? " س" : "h"}
+                      {missionsDone}/{missionsTotal}
                     </span>
                   </div>
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-card border border-border shadow-sm rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                    {language === "ar" ? "تقدم الجلسات" : "Sessions progress"}
+                    {language === "ar" ? "تقدم المهمات" : "Missions progress"}
                   </div>
                 </div>
               </div>
