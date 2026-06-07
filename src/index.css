@@ -53,36 +53,46 @@ html.zombie-mode .gradient-text {
 @layer base {
   :root,
   .theme-notion-light {
-    --background: 40 14% 97%;
-    --foreground: 30 8% 15%;
+    /* Cloud White — clean, calm, classroom-light */
+    --background: 210 20% 98%;          /* #fafbfc */
+    --foreground: 215 28% 17%;          /* #1e293b */
     --card: 0 0% 100%;
-    --card-foreground: 30 8% 15%;
-    --card-front-fg: 30 8% 15%;
+    --card-foreground: 215 28% 17%;
+    --card-front-fg: 215 28% 17%;
     --card-back-fg: 0 0% 100%;
     --popover: 0 0% 100%;
-    --popover-foreground: 30 8% 15%;
-    --primary: 217 91% 55%;
+    --popover-foreground: 215 28% 17%;
+    --primary: 217 91% 60%;             /* #3b82f6 */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 199 95% 60%;
-    --secondary: 40 10% 94%;
-    --secondary-foreground: 30 8% 20%;
-    --muted: 40 10% 94%;
-    --muted-foreground: 30 5% 45%;
-    --accent: 217 91% 55%;
+    --primary-glow: 213 94% 68%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 25% 27%;
+    --muted: 213 22% 93%;               /* #e8ecf1 */
+    --muted-foreground: 215 16% 47%;    /* slate-500 */
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 30 8% 88%;
-    --input: 30 8% 88%;
-    --ring: 217 91% 55%;
-    --radius: 0.625rem;
+    --border: 213 22% 93%;              /* #e8ecf1 */
+    --input: 213 22% 93%;
+    --ring: 217 91% 60%;
+    --radius: 0.875rem;
 
-    --gradient-bg: linear-gradient(180deg, hsl(40 14% 97%), hsl(40 14% 97%));
-    --gradient-card-front: linear-gradient(135deg, hsl(0 0% 100%), hsl(40 14% 97%));
-    --gradient-card-back: linear-gradient(135deg, hsl(217 91% 55%), hsl(199 95% 60%));
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 28% 17%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 215 28% 17%;
+    --sidebar-border: 213 22% 93%;
+    --sidebar-ring: 217 91% 60%;
+
+    --gradient-bg: linear-gradient(180deg, hsl(210 20% 98%), hsl(210 20% 98%));
+    --gradient-card-front: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 20% 98%));
+    --gradient-card-back: linear-gradient(135deg, hsl(217 91% 60%), hsl(213 94% 68%));
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --shadow-card: 0 1px 3px hsl(30 8% 15% / 0.06), 0 12px 32px -8px hsl(30 8% 15% / 0.12);
-    --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.25), 0 8px 24px -4px hsl(var(--primary) / 0.25);
+    --shadow-card: 0 1px 2px hsl(215 28% 17% / 0.04), 0 8px 24px -12px hsl(215 28% 17% / 0.12);
+    --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.2), 0 8px 24px -8px hsl(var(--primary) / 0.25);
     --transition-flip: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
   }
 
@@ -285,9 +295,10 @@ html.zombie-mode .gradient-text {
     @apply bg-background text-foreground;
     background: var(--gradient-bg);
     background-attachment: fixed;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Figtree', 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3 { font-family: 'Space Grotesk', system-ui, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', 'Space Grotesk', system-ui, sans-serif; letter-spacing: -0.01em; }
 }
 
 @layer utilities {
