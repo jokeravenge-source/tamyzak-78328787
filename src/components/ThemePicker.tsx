@@ -236,10 +236,16 @@ export function applyTheme(id: ThemeId) {
 
 export function getInitialTheme(): ThemeId {
   if (typeof window === "undefined") return "notion-light";
+  // One-time migration: the redesigned UI is locked to a light Cloud White palette,
+  // so any previously stored dark theme is reset on load.
+  const MIGRATION_FLAG = "app_theme_migration_v2_cloudwhite";
+  if (!localStorage.getItem(MIGRATION_FLAG)) {
+    localStorage.removeItem(THEME_STORAGE_KEY);
+    localStorage.setItem(MIGRATION_FLAG, "1");
+  }
   const stored = localStorage.getItem(THEME_STORAGE_KEY) as ThemeId | null;
   if (stored && THEMES.some((t) => t.id === stored)) return stored;
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-  return prefersDark ? "notion-dark" : "notion-light";
+  return "notion-light";
 }
 
 export const ThemePicker = ({ language = "en", variant = "floating" }: { language?: "en" | "ar"; variant?: "floating" | "inline" }) => {
