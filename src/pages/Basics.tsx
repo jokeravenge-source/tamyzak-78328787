@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  ArrowRight, Layers, BookMarked, FileText, GraduationCap, Microscope,
+  ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
   Crown, UserCog, BookOpen, Heart, Users, Settings,
@@ -440,7 +440,75 @@ const Basics = ({
 
       {/* Content */}
       <main className="px-5 md:px-10 py-8 md:py-12 pb-36">
+        <AnimatePresence mode="wait">
+        {showAllTools ? (
+          <motion.div
+            key="all-tools-screen"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="max-w-5xl mx-auto"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <button
+                onClick={() => setShowAllTools(false)}
+                className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors"
+              >
+                <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+                {language === "ar" ? "رجوع" : "Back"}
+              </button>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {NAV_GROUPS[0].items.length} {language === "ar" ? "أداة" : "tools"}
+              </p>
+            </div>
+            <header className="mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                {language === "ar" ? "كل أدوات الدراسة" : "All study tools"}
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm md:text-base">
+                {language === "ar" ? "كل ما تحتاجه للدراسة في مكان واحد." : "Everything you need to study, in one place."}
+              </p>
+            </header>
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
+              {NAV_GROUPS[0].items.map((it) => {
+                const Icon = it.Icon;
+                const meta = (fc as any)[it.key];
+                return (
+                  <motion.button
+                    key={it.key}
+                    variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { setShowAllTools(false); navigate(it.key); }}
+                    className="group bg-card p-5 border border-border rounded-2xl text-left hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
+                      <Icon className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors" />
+                    </div>
+                    <h5 className="font-bold text-base mb-1">
+                      {meta?.title ?? (language === "ar" ? it.labelAr : it.labelEn)}
+                    </h5>
+                    {meta?.subtitle && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{meta.subtitle}</p>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                      {language === "ar" ? "افتح" : "Open"}
+                      <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? "rotate-180 group-hover:-translate-x-0.5" : "group-hover:translate-x-0.5"}`} />
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          </motion.div>
+        ) : (
         <motion.div
+          key="dashboard"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
@@ -590,13 +658,11 @@ const Basics = ({
             <div className="flex items-center justify-between mb-5">
               <h4 className="text-lg font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>{toolsHeader}</h4>
               <button
-                onClick={() => setShowAllTools((v) => !v)}
+                onClick={() => setShowAllTools(true)}
                 className="text-sm font-semibold text-primary hover:underline inline-flex items-center gap-1"
               >
-                {showAllTools
-                  ? (language === "ar" ? "إخفاء" : "Hide")
-                  : (language === "ar" ? "عرض كل الأدوات" : "See all study tools")}
-                <ArrowRight className={`w-3.5 h-3.5 transition-transform ${showAllTools ? "rotate-90" : isRTL ? "rotate-180" : ""}`} />
+                {language === "ar" ? "عرض كل الأدوات" : "See all study tools"}
+                <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? "rotate-180" : ""}`} />
               </button>
             </div>
 
@@ -633,55 +699,11 @@ const Basics = ({
               })}
             </motion.div>
 
-            {/* Expanded: all Study tools */}
-            <AnimatePresence initial={false}>
-              {showAllTools && (
-                <motion.div
-                  key="all-tools"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-6 pt-6 border-t border-border">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                      {language === "ar" ? "كل أدوات الدراسة" : "All study tools"}
-                    </p>
-                    <motion.div
-                      initial="hidden"
-                      animate="show"
-                      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.03 } } }}
-                      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
-                    >
-                      {NAV_GROUPS[0].items.map((it) => {
-                        const Icon = it.Icon;
-                        return (
-                          <motion.button
-                            key={it.key}
-                            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => navigate(it.key)}
-                            className="group flex flex-col items-start gap-2 p-3 rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all text-left"
-                          >
-                            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                              <Icon className="w-4 h-4 text-primary group-hover:text-primary-foreground" />
-                            </div>
-                            <span className="text-xs font-semibold leading-tight">
-                              {language === "ar" ? it.labelAr : it.labelEn}
-                            </span>
-                          </motion.button>
-                        );
-                      })}
-                    </motion.div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </section>
 
         </motion.div>
+        )}
+        </AnimatePresence>
       </main>
 
       {/* Fixed animated bottom nav (grouped) */}
