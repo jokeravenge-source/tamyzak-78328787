@@ -432,9 +432,20 @@ const Basics = ({
           {/* Header row */}
           <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                {welcome.hi}{username ? `, ${username}` : ""}
-                {isPremium && <PremiumBadge size="sm" />}
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight inline-flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                <span>{welcome.hi}{username ? `, ${username}` : ""}</span>
+                {isPremium && (
+                  <motion.span
+                    initial={{ scale: 0, rotate: -30 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.2 }}
+                    aria-label="Premium"
+                    title="Premium"
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-[0_4px_14px_hsl(45_90%_55%/0.45)]"
+                  >
+                    <Crown className="w-4 h-4 text-white" />
+                  </motion.span>
+                )}
               </h2>
               <p className="text-muted-foreground mt-1 text-sm md:text-base">{welcome.sub}</p>
             </div>
