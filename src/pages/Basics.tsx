@@ -155,7 +155,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     items: [
       { key: "account", labelEn: "Account Center", labelAr: "مركز الحساب", Icon: UserCog },
       { key: "premium", labelEn: "Premium", labelAr: "بريميوم", Icon: Crown },
-      { key: "more", labelEn: "More", labelAr: "المزيد", Icon: Menu },
     ],
   },
 ];
