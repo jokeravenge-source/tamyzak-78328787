@@ -347,23 +347,46 @@ export const ThemePicker = ({ language = "en", variant = "floating" }: { languag
 
   if (variant === "inline") {
     return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {language === "ar" ? "الوضع" : "Mode"}
-          </span>
-          <button
-            onClick={toggleLightDark}
-            aria-label={isDark ? "Switch to light" : "Switch to dark"}
-            className="w-10 h-10 rounded-full border border-border bg-card text-foreground shadow-sm hover:bg-secondary transition-colors flex items-center justify-center"
+      <div className="flex items-center gap-2" dir={language === "ar" ? "rtl" : "ltr"}>
+        <button
+          onClick={toggleLightDark}
+          aria-label={isDark ? "Switch to light" : "Switch to dark"}
+          className="w-10 h-10 shrink-0 rounded-full border border-border bg-card text-foreground shadow-sm hover:bg-secondary transition-colors flex items-center justify-center"
+        >
+          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              aria-label={language === "ar" ? "اختر الثيم" : "Choose theme"}
+              className="flex-1 inline-flex items-center justify-between gap-3 h-10 px-3 rounded-lg border border-border bg-card text-foreground shadow-sm hover:bg-secondary transition-colors text-sm"
+            >
+              <span className="inline-flex items-center gap-2 min-w-0">
+                <Palette className="w-4 h-4 shrink-0" />
+                <span className="truncate font-medium">
+                  {language === "ar" ? current.arName : current.name}
+                </span>
+              </span>
+              <span
+                className="h-5 w-10 rounded-md overflow-hidden flex shrink-0 border border-border"
+                aria-hidden
+              >
+                <span className="flex-1" style={{ background: current.swatch[0] }} />
+                <span className="flex-1" style={{ background: current.swatch[1] }} />
+                <span className="flex-1" style={{ background: current.swatch[2] }} />
+              </span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="w-80 p-3 bg-popover text-popover-foreground border-border max-h-[70vh] overflow-y-auto"
           >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-        </div>
-        <div className="px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-          {language === "ar" ? "اختر الثيم" : "Choose theme"}
-        </div>
-        {themeGrid}
+            <div className="px-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+              {language === "ar" ? "اختر الثيم" : "Choose theme"}
+            </div>
+            {themeGrid}
+          </PopoverContent>
+        </Popover>
       </div>
     );
   }
