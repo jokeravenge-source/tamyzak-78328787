@@ -466,25 +466,64 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
             ) : (
               <div className="grid gap-3">
                 {userResults.map((u) => (
-                  <article key={u.user_id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                      <UsersIcon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-[200px]">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold">{u.display_name}</h3>
-                        {u.banned && <span className="text-xs px-2 py-0.5 rounded-full border border-red-500/40 text-red-400">Banned</span>}
+                  <article key={u.user_id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                        <UsersIcon className="w-5 h-5 text-primary" />
                       </div>
-                      {u.email && <p className="text-xs text-muted-foreground mt-0.5 break-all">{u.email}</p>}
+                      <div className="flex-1 min-w-[200px]">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold">{u.display_name}</h3>
+                          {u.banned && <span className="text-xs px-2 py-0.5 rounded-full border border-red-500/40 text-red-400">Banned</span>}
+                        </div>
+                        {u.email && <p className="text-xs text-muted-foreground mt-0.5 break-all">{u.email}</p>}
+                      </div>
+                      <button
+                        onClick={() => toggleSessions(u)}
+                        className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-sm"
+                      >
+                        <Timer className="w-4 h-4" />
+                        {openSessionsFor === u.user_id ? "Hide sessions" : "Sessions"}
+                      </button>
+                      <button
+                        onClick={() => toggleBan(u)}
+                        disabled={userActionId === u.user_id}
+                        className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm disabled:opacity-60 ${u.banned ? "border border-primary/40 text-primary hover:bg-primary/10" : "border border-red-500/40 text-red-400 hover:bg-red-500/10"}`}
+                      >
+                        {userActionId === u.user_id ? <Loader2 className="w-4 h-4 animate-spin" /> : (u.banned ? <RotateCcw className="w-4 h-4" /> : <Ban className="w-4 h-4" />)}
+                        {u.banned ? "Unban" : "Ban"}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => toggleBan(u)}
-                      disabled={userActionId === u.user_id}
-                      className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm disabled:opacity-60 ${u.banned ? "border border-primary/40 text-primary hover:bg-primary/10" : "border border-red-500/40 text-red-400 hover:bg-red-500/10"}`}
-                    >
-                      {userActionId === u.user_id ? <Loader2 className="w-4 h-4 animate-spin" /> : (u.banned ? <RotateCcw className="w-4 h-4" /> : <Ban className="w-4 h-4" />)}
-                      {u.banned ? "Unban" : "Ban"}
-                    </button>
+                    {openSessionsFor === u.user_id && (
+                      <div className="mt-4 pt-4 border-t border-white/10">
+                        {sessionsLoading ? (
+                          <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+                        ) : sessions.length === 0 ? (
+                          <p className="text-center text-sm text-muted-foreground py-4">No saved sessions for this user.</p>
+                        ) : (
+                          <ul className="grid gap-2">
+                            {sessions.map((s) => (
+                              <li key={s.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-background/40 px-3 py-2 text-sm">
+                                <span className="px-2 py-0.5 rounded-full border border-primary/30 text-primary text-xs">{s.subject}</span>
+                                <span className="font-medium">{fmtDuration(s.duration_seconds)}</span>
+                                <span className="text-xs text-muted-foreground">+{s.points} pts</span>
+                                {s.mission_completed && <span className="text-xs text-primary">✓ mission</span>}
+                                {s.mission && <span className="text-xs text-muted-foreground truncate max-w-[260px]">— {s.mission}</span>}
+                                <span className="text-[11px] text-muted-foreground ms-auto">{new Date(s.created_at).toLocaleString()}</span>
+                                <button
+                                  onClick={() => deleteSession(s)}
+                                  disabled={sessionBusyId === s.id}
+                                  className="inline-flex items-center gap-1 px-2 h-8 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs disabled:opacity-60"
+                                >
+                                  {sessionBusyId === s.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                  Delete
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                   </article>
                 ))}
               </div>
