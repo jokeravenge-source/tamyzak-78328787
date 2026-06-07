@@ -448,6 +448,78 @@ const Basics = ({
             </div>
           </header>
 
+          {/* Animated grouped top nav */}
+          <nav className="mb-8 rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-2 shadow-sm">
+            <LayoutGroup id="group-tabs">
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                {NAV_GROUPS.map((g) => {
+                  const Icon = GROUP_ICONS[g.titleEn] ?? Layers;
+                  const isActive = activeGroup === g.titleEn;
+                  return (
+                    <button
+                      key={g.titleEn}
+                      onClick={() => setActiveGroup(g.titleEn)}
+                      className={`relative shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-colors ${
+                        isActive ? "text-primary-foreground" : "text-foreground/70 hover:text-foreground"
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.span
+                          layoutId="group-pill"
+                          className="absolute inset-0 bg-primary rounded-xl shadow-[var(--shadow-glow)]"
+                          transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                        />
+                      )}
+                      <span className="relative z-10 inline-flex items-center gap-2">
+                        <Icon className="w-4 h-4" />
+                        {language === "ar" ? g.titleAr : g.titleEn}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </LayoutGroup>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeGroup}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+                className="mt-2 pt-2 border-t border-border/60 flex flex-wrap gap-1.5"
+              >
+                <LayoutGroup id={`items-${activeGroup}`}>
+                  {currentGroup.items.map((it) => {
+                    const Icon = it.Icon;
+                    const isActive = activeKey === it.key;
+                    return (
+                      <button
+                        key={it.key}
+                        onClick={() => navigate(it.key)}
+                        className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                          isActive ? "text-primary" : "text-foreground/60 hover:text-foreground"
+                        }`}
+                      >
+                        {isActive && (
+                          <motion.span
+                            layoutId="item-pill"
+                            className="absolute inset-0 bg-primary/10 rounded-lg"
+                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                          />
+                        )}
+                        <span className="relative z-10 inline-flex items-center gap-1.5">
+                          <Icon className="w-3.5 h-3.5" />
+                          {language === "ar" ? it.labelAr : it.labelEn}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </LayoutGroup>
+              </motion.div>
+            </AnimatePresence>
+          </nav>
+
           {/* Unread notifications */}
           {unread.length > 0 && (
             <div className="mb-8 space-y-2">
@@ -594,30 +666,6 @@ const Basics = ({
             </motion.div>
           </section>
 
-          {/* Mobile nav grid — sidebar collapses to a horizontal scroll on small screens */}
-          <section className="lg:hidden mt-10">
-            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
-              {language === "ar" ? "تنقّل" : "Navigate"}
-            </h4>
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-              {NAV_GROUPS.flatMap((g) => g.items).map((it) => {
-                const Icon = it.Icon;
-                const active = activeKey === it.key;
-                return (
-                  <button
-                    key={it.key}
-                    onClick={() => navigate(it.key)}
-                    className={`shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
-                      active ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground/70 border-border hover:bg-secondary"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    {language === "ar" ? it.labelAr : it.labelEn}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
         </motion.div>
       </main>
 
