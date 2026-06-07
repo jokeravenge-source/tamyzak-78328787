@@ -702,6 +702,8 @@ const Basics = ({
           </section>
 
         </motion.div>
+        )}
+        </AnimatePresence>
       </main>
 
       {/* Fixed animated bottom nav (grouped) */}
