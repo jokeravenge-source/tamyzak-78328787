@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Sparkles, Layers, BookMarked, FileText, GraduationCap, Microscope, LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network } from "lucide-react";
+import {
+  ArrowRight, Layers, BookMarked, FileText, GraduationCap, Microscope,
+  LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
+  Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
+  Crown, UserCog, BookOpen, Heart, Menu,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
-import StreakTree from "@/components/StreakTree";
-import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -105,6 +108,87 @@ const copy = {
 
 type Notif = { id: string; title: string; body: string; link: string | null; created_at: string };
 
+type NavItem = {
+  key: MainMenuChoice;
+  labelEn: string;
+  labelAr: string;
+  Icon: React.ComponentType<{ className?: string }>;
+};
+
+const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
+  {
+    titleEn: "Study",
+    titleAr: "الدراسة",
+    items: [
+      { key: "flashcards", labelEn: "Flashcards", labelAr: "البطاقات", Icon: Layers },
+      { key: "summaries", labelEn: "Summaries", labelAr: "الملخصات", Icon: FileText },
+      { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
+      { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
+      { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
+      { key: "ministerialBank", labelEn: "Ministerial Bank", labelAr: "بنك الوزاريات", Icon: ScrollText },
+      { key: "malazam", labelEn: "Malazam", labelAr: "الملازم", Icon: BookMarked },
+      { key: "biologyDrawings", labelEn: "Biology Drawings", labelAr: "رسومات الأحياء", Icon: Microscope },
+      { key: "essay", labelEn: "Essay Coach", labelAr: "مدرّب المقالات", Icon: BookOpen },
+    ],
+  },
+  {
+    titleEn: "Progress",
+    titleAr: "التقدم",
+    items: [
+      { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
+      { key: "missions", labelEn: "Missions", labelAr: "المهمات", Icon: Target },
+      { key: "todo", labelEn: "To-Do List", labelAr: "قائمة المهام", Icon: ListChecks },
+      { key: "leaderboard", labelEn: "Leaderboard", labelAr: "المتصدرون", Icon: Trophy },
+    ],
+  },
+  {
+    titleEn: "Community",
+    titleAr: "المجتمع",
+    items: [
+      { key: "news", labelEn: "News", labelAr: "الأخبار", Icon: Newspaper },
+      { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
+    ],
+  },
+  {
+    titleEn: "Account",
+    titleAr: "الحساب",
+    items: [
+      { key: "account", labelEn: "Account Center", labelAr: "مركز الحساب", Icon: UserCog },
+      { key: "premium", labelEn: "Premium", labelAr: "بريميوم", Icon: Crown },
+      { key: "more", labelEn: "More", labelAr: "المزيد", Icon: Menu },
+    ],
+  },
+];
+
+// Featured "Study Tools" cards on the dashboard
+const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }>; tintBg: string; tintText: string }[] = [
+  { key: "flashcards",      Icon: Layers,     tintBg: "bg-blue-50",    tintText: "text-blue-600" },
+  { key: "ministerialBank", Icon: ScrollText, tintBg: "bg-amber-50",   tintText: "text-amber-600" },
+  { key: "summaries",       Icon: FileText,   tintBg: "bg-violet-50",  tintText: "text-violet-600" },
+  { key: "mcq",             Icon: HelpCircle, tintBg: "bg-rose-50",    tintText: "text-rose-600" },
+  { key: "mindmap",         Icon: Network,    tintBg: "bg-cyan-50",    tintText: "text-cyan-600" },
+  { key: "leaderboard",     Icon: Trophy,     tintBg: "bg-emerald-50", tintText: "text-emerald-600" },
+];
+
+const FEATURED_COPY = {
+  en: {
+    flashcards: { title: "Flashcards", subtitle: "Smart Q&A cards across every subject." },
+    ministerialBank: { title: "Ministerial Bank", subtitle: "Past ministerial questions by chapter." },
+    summaries: { title: "Notes & Summaries", subtitle: "Upload and browse approved notes." },
+    mcq: { title: "MCQ Generator", subtitle: "Get multiple-choice questions from any file." },
+    mindmap: { title: "Mind Map", subtitle: "AI builds a clean map from any topic." },
+    leaderboard: { title: "Leaderboard", subtitle: "See where you stand this week." },
+  },
+  ar: {
+    flashcards: { title: "البطاقات", subtitle: "بطاقات سؤال وجواب لكل المواد." },
+    ministerialBank: { title: "بنك الوزاريات", subtitle: "أسئلة وزارية سابقة حسب الفصل." },
+    summaries: { title: "ملخصات", subtitle: "ارفع وتصفّح ملاحظات معتمدة." },
+    mcq: { title: "مولّد الأسئلة", subtitle: "احصل على اختيارات من متعدد من أي ملف." },
+    mindmap: { title: "الخريطة الذهنية", subtitle: "خريطة مرتبة بالذكاء الاصطناعي." },
+    leaderboard: { title: "المتصدرون", subtitle: "اعرف ترتيبك هذا الأسبوع." },
+  },
+} as const;
+
 const Basics = ({
   language,
   onChangeLanguage,
@@ -116,21 +200,11 @@ const Basics = ({
   onSelect: (c: BasicsChoice) => void;
   onNav: (c: MainMenuChoice) => void;
 }) => {
-  const t = copy[language];
   const phrases = MOTIVATIONAL_PHRASES[language];
   const [motivationalPhrase] = useState(() => phrases[Math.floor(Math.random() * phrases.length)]);
   const { isPremium } = useSubscription();
-  const items: { key: BasicsChoice; Icon: React.ComponentType<{ className?: string }> }[] = [
-    { key: "flashcards", Icon: Layers },
-    { key: "malazam", Icon: BookMarked },
-    { key: "ministerialBank", Icon: ScrollText },
-    { key: "summaries", Icon: FileText },
-    { key: "sessions", Icon: GraduationCap },
-    { key: "biologyDrawings", Icon: Microscope },
-    { key: "todo", Icon: ListChecks },
-    { key: "news", Icon: Newspaper },
-    { key: "mindmap", Icon: Network },
-  ];
+  const fc = FEATURED_COPY[language];
+  const [activeKey, setActiveKey] = useState<MainMenuChoice>("flashcards");
 
   const READ_KEY = "notif_read_ids_v1";
   const [notifs, setNotifs] = useState<Notif[]>([]);
@@ -193,151 +267,313 @@ const Basics = ({
     return () => window.removeEventListener("app:username-changed", onChange);
   }, []);
 
-  return (
+  const isRTL = language === "ar";
+  const navigate = (k: MainMenuChoice) => {
+    setActiveKey(k);
+    // Featured BasicsChoice keys still flow through onSelect to use the basic back-target
+    const basicsKeys = new Set<MainMenuChoice>([
+      "flashcards", "malazam", "summaries", "sessions", "biologyDrawings",
+      "todo", "news", "ministerialBank", "mindmap",
+    ]);
+    if (basicsKeys.has(k)) onSelect(k as BasicsChoice);
+    else onNav(k);
+  };
+
+  const sidebarTitle = { en: "Sections", ar: "الأقسام" }[language];
+  const welcome = {
+    en: { hi: "Welcome back", sub: "Pick up exactly where you left off." },
+    ar: { hi: "أهلاً بعودتك", sub: "تابع من حيث توقفت." },
+  }[language];
+  const cta = {
+    en: { primary: "Start studying", secondary: "View missions" },
+    ar: { primary: "ابدأ الدراسة", secondary: "اطلع على المهمات" },
+  }[language];
+  const recCopy = {
+    en: { tag: "Recommended next step", title: motivationalPhrase, body: "Open your flashcards deck and review what you scheduled today.", resume: "Resume studying", view: "View summary", progress: "Progress" },
+    ar: { tag: "خطوتك التالية المقترحة", title: motivationalPhrase, body: "افتح بطاقاتك وراجع ما خططت له اليوم.", resume: "استئناف الدراسة", view: "عرض الملخص", progress: "التقدم" },
+  }[language];
+  const toolsHeader = { en: "Study tools", ar: "أدوات الدراسة" }[language];
+  const viewAll = { en: "View all tools", ar: "عرض كل الأدوات" }[language];
+
+  const SidebarBody = () => (
     <>
-    <motion.main
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      className="min-h-screen px-4 py-12 md:py-20 pb-32 relative overflow-hidden"
-      dir={language === "ar" ? "rtl" : "ltr"}
-    >
-      <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
-      <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-
-      <button
-        onClick={onChangeLanguage}
-        aria-label={language === "ar" ? "تغيير اللغة" : "Change language"}
-        className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
-      >
-        <ArrowLeft className="w-5 h-5" />
-      </button>
-
-      <button
-        onClick={signOut}
-        aria-label={language === "ar" ? "تسجيل الخروج" : "Sign out"}
-        className="absolute top-6 right-6 z-20 inline-flex items-center gap-2 h-11 px-4 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
-      >
-        <LogOut className="w-4 h-4" />
-        <span className="hidden sm:inline">{language === "ar" ? "خروج" : "Sign out"}</span>
-      </button>
-
-      {unread.length > 0 && (
-        <div className="max-w-3xl mx-auto mb-6 space-y-2 relative z-10">
-          {unread.map((n) => {
-            const handleOpen = () => { onNav("news"); };
-            return (
-              <div
-                key={n.id}
-                onClick={handleOpen}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpen(); } }}
-                className="flex items-start gap-3 rounded-2xl p-4 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up transition-colors cursor-pointer hover:bg-primary/15"
-              >
-                <Bell className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-foreground">{n.title}</h4>
-                  {n.body && <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.body}</p>}
-                  {n.link && <p className="text-xs text-primary mt-1 underline truncate">{n.link}</p>}
-                </div>
-                <button onClick={(e) => { e.stopPropagation(); dismiss(n.id); }} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            );
-          })}
+      <div className="px-6 py-5 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+            <Sparkles className="w-4.5 h-4.5 text-primary-foreground" />
+          </div>
+          <div>
+            <p className="text-base font-bold text-primary leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>tamayzak</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{sidebarTitle}</p>
+          </div>
         </div>
-      )}
+      </div>
 
-      {showTimer && (
-        <div className="max-w-3xl mx-auto mb-6 relative z-10">
-          <div className="relative rounded-3xl p-5 border border-primary/40 bg-gradient-to-br from-primary/15 via-accent/10 to-primary/5 backdrop-blur shadow-[var(--shadow-glow)] overflow-hidden">
-            <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
-            <div className="relative flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-primary/20">
-                <Timer className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">{language === "ar" ? "موعد مهم" : "Save the date"}</p>
-                <h4 className="font-semibold text-foreground truncate">{timerLabel}</h4>
-              </div>
-              <button onClick={dismissTimer} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
-                <X className="w-4 h-4" />
+      <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+        {NAV_GROUPS.map((g) => (
+          <div key={g.titleEn}>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+              {language === "ar" ? g.titleAr : g.titleEn}
+            </p>
+            <ul className="space-y-0.5">
+              {g.items.map((it) => {
+                const Icon = it.Icon;
+                const active = activeKey === it.key;
+                return (
+                  <li key={it.key}>
+                    <button
+                      onClick={() => navigate(it.key)}
+                      className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        active
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground/70 hover:bg-secondary hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 ${isRTL ? "ml-3" : "mr-3"} shrink-0`} />
+                      <span className="truncate text-left">{language === "ar" ? it.labelAr : it.labelEn}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+
+      <div className="p-4 border-t border-border space-y-3">
+        <button
+          onClick={() => onNav("premium")}
+          className="w-full p-3 rounded-xl text-left bg-gradient-to-br from-primary to-[hsl(213_94%_68%)] text-primary-foreground shadow-[var(--shadow-glow)] hover:opacity-95 transition-opacity"
+        >
+          <p className="text-[10px] font-semibold opacity-80 mb-0.5 uppercase tracking-wider">
+            {language === "ar" ? "حسابك" : "Account status"}
+          </p>
+          <p className="text-sm font-bold flex items-center gap-1">
+            {isPremium ? "✨" : "🎓"}{" "}
+            {isPremium
+              ? language === "ar" ? "مستخدم بريميوم" : "Premium user"
+              : language === "ar" ? "ترقية إلى بريميوم" : "Upgrade to Premium"}
+          </p>
+        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onChangeLanguage}
+            aria-label={language === "ar" ? "تغيير اللغة" : "Change language"}
+            className="flex-1 inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            {language === "ar" ? "EN" : "AR"}
+          </button>
+          <button
+            onClick={signOut}
+            aria-label={language === "ar" ? "تسجيل الخروج" : "Sign out"}
+            className="flex-1 inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            {language === "ar" ? "خروج" : "Sign out"}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex min-h-screen w-full bg-background text-foreground" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Sidebar */}
+      <aside className={`hidden lg:flex w-64 shrink-0 flex-col bg-card ${isRTL ? "border-l" : "border-r"} border-border sticky top-0 h-screen`}>
+        <SidebarBody />
+      </aside>
+
+      {/* Content */}
+      <main className="flex-1 min-w-0 px-5 md:px-10 py-8 md:py-12 overflow-y-auto pb-24">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="max-w-5xl mx-auto"
+        >
+          {/* Header row */}
+          <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                {welcome.hi}{username ? `, ${username}` : ""}
+                {isPremium && <PremiumBadge size="sm" />}
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm md:text-base">{welcome.sub}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onNav("missions")}
+                className="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 rounded-lg hover:bg-primary/15 transition-colors"
+              >
+                {cta.secondary}
+              </button>
+              <button
+                onClick={() => onSelect("flashcards")}
+                className="px-5 py-2 text-sm font-bold text-primary-foreground bg-primary rounded-lg shadow-sm hover:opacity-95 transition-all"
+              >
+                {cta.primary}
               </button>
             </div>
-            <div className="relative grid grid-cols-4 gap-2 sm:gap-3">
-              {([
-                { v: cd.d, l: units.d },
-                { v: cd.h, l: units.h },
-                { v: cd.m, l: units.m },
-                { v: cd.s, l: units.s },
-              ] as const).map((u, i) => (
-                <div key={i} className="rounded-2xl border border-primary/30 bg-secondary/60 backdrop-blur py-3 text-center">
-                  <div className="text-2xl sm:text-3xl font-bold gradient-text tabular-nums">{String(u.v).padStart(2, "0")}</div>
-                  <div className="text-[10px] sm:text-xs uppercase tracking-wider text-muted-foreground mt-1">{u.l}</div>
+          </header>
+
+          {/* Unread notifications */}
+          {unread.length > 0 && (
+            <div className="mb-8 space-y-2">
+              {unread.slice(0, 2).map((n) => (
+                <div
+                  key={n.id}
+                  onClick={() => onNav("news")}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onNav("news"); } }}
+                  className="flex items-start gap-3 rounded-xl p-4 border border-primary/30 bg-primary/5 transition-colors cursor-pointer hover:bg-primary/10"
+                >
+                  <Bell className="w-4 h-4 text-primary shrink-0 mt-1" />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-foreground text-sm">{n.title}</h4>
+                    {n.body && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>}
+                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); dismiss(n.id); }} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      <header className="text-center max-w-3xl mx-auto z-10 relative">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
-          <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{t.badge}</span>
-        </div>
-        <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">{motivationalPhrase}</h1>
-        <p className="text-muted-foreground md:text-lg max-w-xl mx-auto">{t.description}</p>
-        {username && (
-          <p className="mt-3 text-sm text-primary font-medium inline-flex items-center gap-2 justify-center">
-            {t.hi}, {username} 👋
-            {isPremium && <PremiumBadge size="sm" />}
-          </p>
-        )}
-      </header>
-
-      <motion.section
-        initial="hidden"
-        animate="show"
-        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
-        className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 z-10 relative"
-      >
-        {items.map((it) => {
-          const Icon = it.Icon;
-          const meta = t.items[it.key];
-          return (
-            <motion.button
-              key={it.key}
-              variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }}
-              whileHover={{ y: -6 }}
-              whileTap={{ scale: 0.97 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              onClick={() => onSelect(it.key)}
-              className="group relative text-left rounded-3xl p-6 h-44 border border-primary/40 bg-secondary/40 backdrop-blur overflow-hidden cursor-pointer shadow-lg hover:border-primary hover:shadow-[var(--shadow-glow)]"
-            >
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
-              <div className="relative z-10 flex items-start justify-between">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-primary/15">
-                  <Icon className="w-6 h-6 text-primary" />
+          {/* Recommended next step (hero card) */}
+          <section className="mb-10">
+            <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
+              <div className="relative z-10 flex-1">
+                <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full mb-4">
+                  {recCopy.tag}
+                </span>
+                <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                  {recCopy.title}
+                </h3>
+                <p className="text-muted-foreground max-w-md mb-6 text-sm md:text-base">{recCopy.body}</p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => onSelect("flashcards")}
+                    className="px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl transition-transform active:scale-95"
+                  >
+                    {recCopy.resume}
+                  </button>
+                  <button
+                    onClick={() => onSelect("summaries")}
+                    className="px-5 py-2.5 border border-border bg-card text-foreground/80 font-semibold rounded-xl hover:bg-secondary transition-colors"
+                  >
+                    {recCopy.view}
+                  </button>
                 </div>
-                <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
               </div>
-              <div className="relative z-10 mt-6">
-                <h3 className="text-2xl font-semibold mb-1 text-foreground">{meta.title}</h3>
-                <p className="text-sm text-muted-foreground">{meta.subtitle}</p>
+              <div className="hidden md:flex shrink-0">
+                <div className="w-36 h-36 border-[10px] border-secondary border-t-primary rounded-full flex items-center justify-center relative">
+                  <span className="text-2xl font-bold">68%</span>
+                  <div className={`absolute -bottom-2 px-3 py-1 bg-card border border-border shadow-sm rounded-lg text-[10px] font-bold uppercase tracking-wider`}>
+                    {recCopy.progress}
+                  </div>
+                </div>
               </div>
-            </motion.button>
-          );
-        })}
-      </motion.section>
+            </div>
+          </section>
 
-      <StreakTree language={language} />
-    </motion.main>
-      <CurvedNavBar language={language} active="basics" onSelect={onNav} />
+          {/* Countdown — quiet inline strip */}
+          {showTimer && (
+            <div className="mb-10 rounded-2xl border border-border bg-card px-5 py-4 flex items-center gap-4">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary/10 shrink-0">
+                <Timer className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{language === "ar" ? "موعد مهم" : "Save the date"}</p>
+                <p className="font-semibold text-sm truncate">{timerLabel}</p>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5 text-sm font-bold tabular-nums">
+                <span>{String(cd.d).padStart(2, "0")}</span><span className="text-muted-foreground text-xs">{units.d}</span>
+                <span className="text-muted-foreground mx-1">·</span>
+                <span>{String(cd.h).padStart(2, "0")}</span><span className="text-muted-foreground text-xs">{units.h}</span>
+                <span className="text-muted-foreground mx-1">·</span>
+                <span>{String(cd.m).padStart(2, "0")}</span><span className="text-muted-foreground text-xs">{units.m}</span>
+              </div>
+              <button onClick={dismissTimer} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1 shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Study Tools grid */}
+          <section>
+            <div className="flex items-center justify-between mb-5">
+              <h4 className="text-lg font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>{toolsHeader}</h4>
+              <button onClick={() => onNav("more")} className="text-sm font-medium text-primary hover:underline">
+                {viewAll}
+              </button>
+            </div>
+
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
+              {FEATURED.map((it) => {
+                const Icon = it.Icon;
+                const meta = (fc as any)[it.key];
+                if (!meta) return null;
+                return (
+                  <motion.button
+                    key={it.key}
+                    variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    whileHover={{ y: -2 }}
+                    onClick={() => navigate(it.key)}
+                    className="group bg-card p-5 border border-border rounded-2xl text-left hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all"
+                  >
+                    <div className={`w-11 h-11 ${it.tintBg} rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
+                      <Icon className={`w-5 h-5 ${it.tintText}`} />
+                    </div>
+                    <h5 className="font-bold text-base mb-1">{meta.title}</h5>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{meta.subtitle}</p>
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                      {language === "ar" ? "افتح" : "Open"}
+                      <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? "rotate-180 group-hover:-translate-x-0.5" : "group-hover:translate-x-0.5"}`} />
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          </section>
+
+          {/* Mobile nav grid — sidebar collapses to a horizontal scroll on small screens */}
+          <section className="lg:hidden mt-10">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
+              {language === "ar" ? "تنقّل" : "Navigate"}
+            </h4>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+              {NAV_GROUPS.flatMap((g) => g.items).map((it) => {
+                const Icon = it.Icon;
+                const active = activeKey === it.key;
+                return (
+                  <button
+                    key={it.key}
+                    onClick={() => navigate(it.key)}
+                    className={`shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                      active ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground/70 border-border hover:bg-secondary"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {language === "ar" ? it.labelAr : it.labelEn}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </motion.div>
+      </main>
+
       <ExcellenceCompanion language={language} />
-      </>
+    </div>
   );
 };
 
