@@ -127,6 +127,50 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "list_sessions") {
+      const targetId = String(body?.user_id || "");
+      if (!targetId) {
+        return new Response(JSON.stringify({ error: "missing user_id" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const url = `${SUPABASE_URL}/rest/v1/study_sessions?user_id=eq.${targetId}&select=id,subject,mission,duration_seconds,points,mission_completed,created_at&order=created_at.desc&limit=200`;
+      const r = await fetch(url, {
+        headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
+      });
+      const sessions = await r.json().catch(() => []);
+      return new Response(JSON.stringify({ sessions }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "delete_session") {
+      const sessionId = String(body?.session_id || "");
+      if (!sessionId) {
+        return new Response(JSON.stringify({ error: "missing session_id" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Delete awarded points first (source=session, ref_id=session uuid)
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/user_points?source=eq.session&ref_id=eq.${sessionId}`,
+        { method: "DELETE", headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
+      );
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/study_sessions?id=eq.${sessionId}`, {
+        method: "DELETE",
+        headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
+      });
+      if (!r.ok) {
+        const txt = await r.text();
+        return new Response(JSON.stringify({ error: txt }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "unknown_action" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
