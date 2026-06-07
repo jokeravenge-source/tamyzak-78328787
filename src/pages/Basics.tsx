@@ -440,7 +440,75 @@ const Basics = ({
 
       {/* Content */}
       <main className="px-5 md:px-10 py-8 md:py-12 pb-36">
+        <AnimatePresence mode="wait">
+        {showAllTools ? (
+          <motion.div
+            key="all-tools-screen"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="max-w-5xl mx-auto"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <button
+                onClick={() => setShowAllTools(false)}
+                className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors"
+              >
+                <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+                {language === "ar" ? "رجوع" : "Back"}
+              </button>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {NAV_GROUPS[0].items.length} {language === "ar" ? "أداة" : "tools"}
+              </p>
+            </div>
+            <header className="mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                {language === "ar" ? "كل أدوات الدراسة" : "All study tools"}
+              </h2>
+              <p className="text-muted-foreground mt-1 text-sm md:text-base">
+                {language === "ar" ? "كل ما تحتاجه للدراسة في مكان واحد." : "Everything you need to study, in one place."}
+              </p>
+            </header>
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
+              {NAV_GROUPS[0].items.map((it) => {
+                const Icon = it.Icon;
+                const meta = (fc as any)[it.key];
+                return (
+                  <motion.button
+                    key={it.key}
+                    variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { setShowAllTools(false); navigate(it.key); }}
+                    className="group bg-card p-5 border border-border rounded-2xl text-left hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
+                      <Icon className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors" />
+                    </div>
+                    <h5 className="font-bold text-base mb-1">
+                      {meta?.title ?? (language === "ar" ? it.labelAr : it.labelEn)}
+                    </h5>
+                    {meta?.subtitle && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{meta.subtitle}</p>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                      {language === "ar" ? "افتح" : "Open"}
+                      <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? "rotate-180 group-hover:-translate-x-0.5" : "group-hover:translate-x-0.5"}`} />
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          </motion.div>
+        ) : (
         <motion.div
+          key="dashboard"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
