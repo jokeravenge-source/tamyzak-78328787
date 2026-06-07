@@ -1,4 +1,4 @@
-import { Home, UserCog, Trophy, Crown, BookOpen, Heart } from "lucide-react";
+import { Home, UserCog, Trophy, Crown } from "lucide-react";
 import { motion, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
