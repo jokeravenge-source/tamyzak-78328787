@@ -206,6 +206,7 @@ const Basics = ({
   const [activeKey, setActiveKey] = useState<MainMenuChoice>("flashcards");
   const [activeGroup, setActiveGroup] = useState<string>(NAV_GROUPS[0].titleEn);
   const [missionsDone, setMissionsDone] = useState<number>(0);
+  const [showAllTools, setShowAllTools] = useState<boolean>(false);
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
