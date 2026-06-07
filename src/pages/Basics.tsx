@@ -3,13 +3,12 @@ import {
   ArrowRight, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
-  Crown, UserCog, BookOpen, Heart, Menu, BookMarked as Study, Users, Settings,
+  Crown, UserCog, BookOpen, Heart, Users, Settings,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import type { MainMenuChoice } from "@/pages/MainMenu";
-import { PremiumBadge } from "@/components/PremiumBadge";
 import { useSubscription } from "@/hooks/useSubscription";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 import { missionsData, missionsOrder } from "@/data/missions";
@@ -156,7 +155,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     items: [
       { key: "account", labelEn: "Account Center", labelAr: "مركز الحساب", Icon: UserCog },
       { key: "premium", labelEn: "Premium", labelAr: "بريميوم", Icon: Crown },
-      { key: "more", labelEn: "More", labelAr: "المزيد", Icon: Menu },
     ],
   },
 ];
@@ -417,14 +415,30 @@ const Basics = ({
   );
 
   return (
-    <div className="flex min-h-screen w-full bg-background text-foreground" dir={isRTL ? "rtl" : "ltr"}>
-      {/* Sidebar */}
-      <aside className={`hidden lg:flex w-64 shrink-0 flex-col bg-card ${isRTL ? "border-l" : "border-r"} border-border sticky top-0 h-screen`}>
-        <SidebarBody />
-      </aside>
+    <div className="min-h-screen w-full bg-background text-foreground" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Top utility bar */}
+      <div className="sticky top-0 z-40 backdrop-blur-md bg-background/70 border-b border-border">
+        <div className="max-w-5xl mx-auto px-5 md:px-10 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <p className="text-base font-bold text-primary leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>tamayzak</p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button onClick={onChangeLanguage} aria-label="lang" className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 rounded-lg border border-border bg-card text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+              <Globe className="w-3.5 h-3.5" />
+              {language === "ar" ? "EN" : "AR"}
+            </button>
+            <button onClick={signOut} aria-label="sign out" className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Content */}
-      <main className="flex-1 min-w-0 px-5 md:px-10 py-8 md:py-12 overflow-y-auto pb-24">
+      <main className="px-5 md:px-10 py-8 md:py-12 pb-36">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -434,9 +448,20 @@ const Basics = ({
           {/* Header row */}
           <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                {welcome.hi}{username ? `, ${username}` : ""}
-                {isPremium && <PremiumBadge size="sm" />}
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight inline-flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                <span>{welcome.hi}{username ? `, ${username}` : ""}</span>
+                {isPremium && (
+                  <motion.span
+                    initial={{ scale: 0, rotate: -30 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.2 }}
+                    aria-label="Premium"
+                    title="Premium"
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-[0_4px_14px_hsl(45_90%_55%/0.45)]"
+                  >
+                    <Crown className="w-4 h-4 text-white" />
+                  </motion.span>
+                )}
               </h2>
               <p className="text-muted-foreground mt-1 text-sm md:text-base">{welcome.sub}</p>
             </div>
@@ -455,78 +480,6 @@ const Basics = ({
               </button>
             </div>
           </header>
-
-          {/* Animated grouped top nav */}
-          <nav className="mb-8 rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-2 shadow-sm">
-            <LayoutGroup id="group-tabs">
-              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-                {NAV_GROUPS.map((g) => {
-                  const Icon = GROUP_ICONS[g.titleEn] ?? Layers;
-                  const isActive = activeGroup === g.titleEn;
-                  return (
-                    <button
-                      key={g.titleEn}
-                      onClick={() => setActiveGroup(g.titleEn)}
-                      className={`relative shrink-0 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-colors ${
-                        isActive ? "text-primary-foreground" : "text-foreground/70 hover:text-foreground"
-                      }`}
-                    >
-                      {isActive && (
-                        <motion.span
-                          layoutId="group-pill"
-                          className="absolute inset-0 bg-primary rounded-xl shadow-[var(--shadow-glow)]"
-                          transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                        />
-                      )}
-                      <span className="relative z-10 inline-flex items-center gap-2">
-                        <Icon className="w-4 h-4" />
-                        {language === "ar" ? g.titleAr : g.titleEn}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </LayoutGroup>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeGroup}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2 }}
-                className="mt-2 pt-2 border-t border-border/60 flex flex-wrap gap-1.5"
-              >
-                <LayoutGroup id={`items-${activeGroup}`}>
-                  {currentGroup.items.map((it) => {
-                    const Icon = it.Icon;
-                    const isActive = activeKey === it.key;
-                    return (
-                      <button
-                        key={it.key}
-                        onClick={() => navigate(it.key)}
-                        className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                          isActive ? "text-primary" : "text-foreground/60 hover:text-foreground"
-                        }`}
-                      >
-                        {isActive && (
-                          <motion.span
-                            layoutId="item-pill"
-                            className="absolute inset-0 bg-primary/10 rounded-lg"
-                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                          />
-                        )}
-                        <span className="relative z-10 inline-flex items-center gap-1.5">
-                          <Icon className="w-3.5 h-3.5" />
-                          {language === "ar" ? it.labelAr : it.labelEn}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </LayoutGroup>
-              </motion.div>
-            </AnimatePresence>
-          </nav>
 
           {/* Unread notifications */}
           {unread.length > 0 && (
@@ -635,9 +588,6 @@ const Basics = ({
           <section>
             <div className="flex items-center justify-between mb-5">
               <h4 className="text-lg font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>{toolsHeader}</h4>
-              <button onClick={() => onNav("more")} className="text-sm font-medium text-primary hover:underline">
-                {viewAll}
-              </button>
             </div>
 
             <motion.div
@@ -676,6 +626,100 @@ const Basics = ({
 
         </motion.div>
       </main>
+
+      {/* Fixed animated bottom nav (grouped) */}
+      <div
+        className="fixed left-0 right-0 z-50 flex justify-center pointer-events-none px-3"
+        style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + 0.75rem)` }}
+        dir={isRTL ? "rtl" : "ltr"}
+      >
+        <motion.nav
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="pointer-events-auto w-full max-w-3xl rounded-2xl border border-border bg-card/85 backdrop-blur-xl shadow-[0_18px_50px_-12px_hsl(var(--primary)/0.25)] p-1.5"
+          aria-label="Primary"
+        >
+          {/* Sub-items row (active group) */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={activeGroup}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1.5 mb-1.5 border-b border-border/60"
+            >
+              <LayoutGroup id={`subitems-${activeGroup}`}>
+                {currentGroup.items.map((it) => {
+                  const Icon = it.Icon;
+                  const isActive = activeKey === it.key;
+                  return (
+                    <motion.button
+                      key={it.key}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() => navigate(it.key)}
+                      className={`relative shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                        isActive ? "text-primary" : "text-foreground/60 hover:text-foreground"
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.span
+                          layoutId="sub-pill"
+                          className="absolute inset-0 bg-primary/10 rounded-lg"
+                          transition={{ type: "spring", stiffness: 520, damping: 36 }}
+                        />
+                      )}
+                      <span className="relative z-10 inline-flex items-center gap-1.5">
+                        <Icon className="w-3.5 h-3.5" />
+                        {language === "ar" ? it.labelAr : it.labelEn}
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </LayoutGroup>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Group tabs row */}
+          <LayoutGroup id="group-tabs">
+            <div className="flex items-stretch gap-1">
+              {NAV_GROUPS.map((g) => {
+                const Icon = GROUP_ICONS[g.titleEn] ?? Layers;
+                const isActive = activeGroup === g.titleEn;
+                return (
+                  <motion.button
+                    key={g.titleEn}
+                    whileTap={{ scale: 0.92 }}
+                    onClick={() => setActiveGroup(g.titleEn)}
+                    className={`relative flex-1 h-12 inline-flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-semibold transition-colors ${
+                      isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="group-pill"
+                        className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-[hsl(213_94%_68%)] shadow-[0_6px_20px_hsl(var(--primary)/0.4)]"
+                        transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                      />
+                    )}
+                    <motion.span
+                      animate={{ scale: isActive ? 1.1 : 1, y: isActive ? -1 : 0 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 22 }}
+                      className="relative z-10"
+                    >
+                      <Icon className="w-4 h-4" />
+                    </motion.span>
+                    <span className="relative z-10 tracking-wide">
+                      {language === "ar" ? g.titleAr : g.titleEn}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
+        </motion.nav>
+      </div>
 
       <ExcellenceCompanion language={language} />
     </div>
