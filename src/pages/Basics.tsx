@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  ArrowRight, Layers, BookMarked, FileText, GraduationCap, Microscope,
+  ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
   Crown, UserCog, BookOpen, Heart, Users, Settings,
