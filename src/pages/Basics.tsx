@@ -778,7 +778,7 @@ const Basics = ({
                     {isActive && (
                       <motion.span
                         layoutId="group-pill"
-                        className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-[hsl(213_94%_68%)] shadow-[0_6px_20px_hsl(var(--primary)/0.4)]"
+                        className="absolute inset-0 rounded-xl bg-primary shadow-[0_6px_20px_hsl(var(--primary)/0.4)]"
                         transition={{ type: "spring", stiffness: 400, damping: 32 }}
                       />
                     )}
