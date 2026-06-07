@@ -12,6 +12,7 @@ import type { MainMenuChoice } from "@/pages/MainMenu";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import { useSubscription } from "@/hooks/useSubscription";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
+import { missionsData, missionsOrder } from "@/data/missions";
 
 export type BasicsChoice =
   | "flashcards"
