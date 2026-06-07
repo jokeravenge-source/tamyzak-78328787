@@ -500,10 +500,28 @@ const Basics = ({
                 </div>
               </div>
               <div className="hidden md:flex shrink-0">
-                <div className="w-36 h-36 border-[10px] border-secondary border-t-primary rounded-full flex items-center justify-center relative">
-                  <span className="text-2xl font-bold">68%</span>
-                  <div className={`absolute -bottom-2 px-3 py-1 bg-card border border-border shadow-sm rounded-lg text-[10px] font-bold uppercase tracking-wider`}>
-                    {recCopy.progress}
+                <div className="relative w-36 h-36">
+                  <svg viewBox="0 0 120 120" className="w-36 h-36 -rotate-90">
+                    <circle cx="60" cy="60" r="52" className="fill-none stroke-secondary" strokeWidth="10" />
+                    <motion.circle
+                      cx="60" cy="60" r="52"
+                      className="fill-none stroke-primary"
+                      strokeWidth="10"
+                      strokeLinecap="round"
+                      strokeDasharray={2 * Math.PI * 52}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 52 }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - sessionsPct / 100) }}
+                      transition={{ duration: 1.1, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-bold tabular-nums">{sessionsPct}%</span>
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      {sessionsHours}{language === "ar" ? " س" : "h"}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-card border border-border shadow-sm rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                    {language === "ar" ? "تقدم الجلسات" : "Sessions progress"}
                   </div>
                 </div>
               </div>
