@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Upload, Heart, FileText, X, Loader2, Hash, Download, Sparkles, Bell, Clock, Check } from "lucide-react";
+import { ArrowLeft, Upload, Heart, FileText, X, Loader2, Hash, Download, Sparkles, Bell, Clock, Check, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -41,6 +41,8 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pending, setPending] = useState<SummaryRow[]>([]);
+  const [preview, setPreview] = useState<{ url: string; name: string; mime: string } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   // Upload form
   const [file, setFile] = useState<File | null>(null);
@@ -142,21 +144,50 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
 
   const download = async (path: string, name: string) => {
     try {
-      const { data, error } = await supabase.storage.from("summaries").download(path);
-      if (error || !data) throw error ?? new Error("Failed");
-      // Preserve extension from the storage path if the display name doesn't have one.
       const ext = path.split(".").pop();
       const filename = /\.[^./]+$/.test(name) || !ext ? name : `${name}.${ext}`;
-      const url = URL.createObjectURL(data);
+      // Try direct download blob first
+      let blobUrl: string | null = null;
+      try {
+        const { data, error } = await supabase.storage.from("summaries").download(path);
+        if (error || !data) throw error ?? new Error("no-data");
+        blobUrl = URL.createObjectURL(data);
+      } catch {
+        // Fallback to signed URL with download flag
+        const { data: signed, error: sErr } = await supabase
+          .storage.from("summaries")
+          .createSignedUrl(path, 300, { download: filename });
+        if (sErr || !signed?.signedUrl) throw sErr ?? new Error("Failed to get URL");
+        blobUrl = signed.signedUrl;
+      }
       const a = document.createElement("a");
-      a.href = url;
+      a.href = blobUrl;
       a.download = filename;
+      a.rel = "noopener";
+      a.target = "_blank";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (blobUrl.startsWith("blob:")) setTimeout(() => URL.revokeObjectURL(blobUrl!), 2000);
     } catch (e: any) {
       toast.error(e?.message ?? "Download failed");
+    }
+  };
+
+  const openPreview = async (path: string, name: string) => {
+    setPreviewLoading(true);
+    try {
+      const { data, error } = await supabase.storage.from("summaries").createSignedUrl(path, 600);
+      if (error || !data?.signedUrl) throw error ?? new Error("Failed");
+      const ext = (path.split(".").pop() ?? "").toLowerCase();
+      const mime = ext === "pdf" ? "application/pdf"
+        : ["png","jpg","jpeg","gif","webp"].includes(ext) ? `image/${ext === "jpg" ? "jpeg" : ext}`
+        : "";
+      setPreview({ url: data.signedUrl, name, mime });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Preview failed");
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -292,13 +323,51 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
               <button onClick={() => toggleLike(r.id)} className={`inline-flex items-center gap-1.5 text-sm transition-colors ${myLikes.has(r.id) ? "text-red-400" : "text-muted-foreground hover:text-foreground"}`}>
                 <Heart className={`w-4 h-4 ${myLikes.has(r.id) ? "fill-current" : ""}`} /> {likes[r.id] ?? 0}
               </button>
-              <button onClick={() => download(r.file_path, r.name)} className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
-                <Download className="w-4 h-4" /> {t("Download", "تحميل")}
-              </button>
+              <div className="flex items-center gap-3">
+                <button onClick={() => openPreview(r.file_path, r.name)} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+                  <Eye className="w-4 h-4" /> {t("Preview", "معاينة")}
+                </button>
+                <button onClick={() => download(r.file_path, r.name)} className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+                  <Download className="w-4 h-4" /> {t("Download", "تحميل")}
+                </button>
+              </div>
             </div>
           </article>
         ))}
       </section>
+
+      {(preview || previewLoading) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-sm p-4" onClick={() => setPreview(null)}>
+          <div className="w-full max-w-5xl h-[85vh] rounded-2xl border border-white/10 bg-secondary overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+              <p className="font-semibold truncate">{preview?.name ?? t("Loading…", "جارٍ التحميل…")}</p>
+              <div className="flex items-center gap-2">
+                {preview && (
+                  <a href={preview.url} target="_blank" rel="noopener" className="text-xs text-muted-foreground hover:text-foreground">{t("Open in new tab", "فتح في تبويب جديد")}</a>
+                )}
+                <button onClick={() => setPreview(null)} className="w-8 h-8 rounded-lg hover:bg-background/40 flex items-center justify-center"><X className="w-4 h-4" /></button>
+              </div>
+            </div>
+            <div className="flex-1 bg-background/60">
+              {previewLoading || !preview ? (
+                <div className="w-full h-full flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+              ) : preview.mime === "application/pdf" ? (
+                <iframe src={preview.url} title={preview.name} className="w-full h-full" />
+              ) : preview.mime.startsWith("image/") ? (
+                <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
+                  <img src={preview.url} alt={preview.name} className="max-w-full max-h-full object-contain" />
+                </div>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-center px-6">
+                  <FileText className="w-10 h-10 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">{t("Preview not available for this file type.", "المعاينة غير متاحة لهذا النوع من الملفات.")}</p>
+                  <a href={preview.url} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"><Download className="w-4 h-4" /> {t("Open file", "فتح الملف")}</a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showUpload && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4" onClick={() => !uploading && setShowUpload(false)}>
