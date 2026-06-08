@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Upload, Heart, FileText, X, Loader2, Hash, Download, Sparkles, Bell, Clock, Check } from "lucide-react";
+import { ArrowLeft, Upload, Heart, FileText, X, Loader2, Hash, Download, Sparkles, Bell, Clock, Check, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -41,6 +41,8 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pending, setPending] = useState<SummaryRow[]>([]);
+  const [preview, setPreview] = useState<{ url: string; name: string; mime: string } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   // Upload form
   const [file, setFile] = useState<File | null>(null);
@@ -142,21 +144,50 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
 
   const download = async (path: string, name: string) => {
     try {
-      const { data, error } = await supabase.storage.from("summaries").download(path);
-      if (error || !data) throw error ?? new Error("Failed");
-      // Preserve extension from the storage path if the display name doesn't have one.
       const ext = path.split(".").pop();
       const filename = /\.[^./]+$/.test(name) || !ext ? name : `${name}.${ext}`;
-      const url = URL.createObjectURL(data);
+      // Try direct download blob first
+      let blobUrl: string | null = null;
+      try {
+        const { data, error } = await supabase.storage.from("summaries").download(path);
+        if (error || !data) throw error ?? new Error("no-data");
+        blobUrl = URL.createObjectURL(data);
+      } catch {
+        // Fallback to signed URL with download flag
+        const { data: signed, error: sErr } = await supabase
+          .storage.from("summaries")
+          .createSignedUrl(path, 300, { download: filename });
+        if (sErr || !signed?.signedUrl) throw sErr ?? new Error("Failed to get URL");
+        blobUrl = signed.signedUrl;
+      }
       const a = document.createElement("a");
-      a.href = url;
+      a.href = blobUrl;
       a.download = filename;
+      a.rel = "noopener";
+      a.target = "_blank";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (blobUrl.startsWith("blob:")) setTimeout(() => URL.revokeObjectURL(blobUrl!), 2000);
     } catch (e: any) {
       toast.error(e?.message ?? "Download failed");
+    }
+  };
+
+  const openPreview = async (path: string, name: string) => {
+    setPreviewLoading(true);
+    try {
+      const { data, error } = await supabase.storage.from("summaries").createSignedUrl(path, 600);
+      if (error || !data?.signedUrl) throw error ?? new Error("Failed");
+      const ext = (path.split(".").pop() ?? "").toLowerCase();
+      const mime = ext === "pdf" ? "application/pdf"
+        : ["png","jpg","jpeg","gif","webp"].includes(ext) ? `image/${ext === "jpg" ? "jpeg" : ext}`
+        : "";
+      setPreview({ url: data.signedUrl, name, mime });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Preview failed");
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
