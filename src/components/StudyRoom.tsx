@@ -71,30 +71,38 @@ export default function StudyRoom({
       // Keep users visible through short network hiccups, background tab throttling,
       // and delayed reconnects instead of dropping them after one missed heartbeat.
       const since = new Date(Date.now() - PRESENCE_WINDOW_MS).toISOString();
-      const { data: active } = await supabase
+      const { data: active, error: activeErr } = await supabase
         .from("active_sessions")
         .select("user_id,subject,mission,last_seen_at,started_at,elapsed_seconds,is_running")
         .eq("subject", subject)
         .gte("last_seen_at", since);
       if (!mounted) return;
+      // On transient query errors, keep the previous list so characters don't flash out.
+      if (activeErr) return;
       const rows = active ?? [];
       if (rows.length === 0) { setPeople([]); return; }
       const ids = rows.map((r: any) => r.user_id);
-      const { data: profs } = await supabase
+      const { data: profs, error: profErr } = await supabase
         .from("profiles")
         .select("user_id,display_name,gender,character")
         .in("user_id", ids);
+      // If profile lookup fails, keep showing the previous render rather than wiping.
+      if (profErr) return;
       const pmap = new Map<string, any>();
       (profs ?? []).forEach((p: any) => pmap.set(p.user_id, p));
+      // Preserve previously-rendered character traits for users whose profile row
+      // momentarily comes back empty (e.g., partial read), so avatars don't blank out.
+      const prevById = new Map(people.map((p) => [p.user_id, p] as const));
       const mapped: Occupant[] = rows.map((r: any) => {
         const p = pmap.get(r.user_id) ?? {};
+        const prev = prevById.get(r.user_id);
         return {
           user_id: r.user_id,
           subject: r.subject,
           mission: r.mission,
-          display_name: p.display_name ?? "Student",
-          gender: (p.gender ?? "male") as Gender,
-          character: p.character ?? null,
+          display_name: p.display_name ?? prev?.display_name ?? "Student",
+          gender: (p.gender ?? prev?.gender ?? "male") as Gender,
+          character: p.character ?? prev?.character ?? null,
           started_at: r.started_at,
           last_seen_at: r.last_seen_at,
           elapsed_seconds: r.elapsed_seconds ?? 0,
@@ -119,6 +127,8 @@ export default function StudyRoom({
       .subscribe();
     const interval = window.setInterval(load, 30000);
     return () => { mounted = false; supabase.removeChannel(ch); window.clearInterval(interval); };
+    // `people` intentionally excluded — load() reads it via closure for fallback only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subject, currentUserId]);
 
   const subj = SUBJECT_LABEL[subject];
