@@ -34,7 +34,7 @@ const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void 
   const imgUrl = (path: string | null) => path ? supabase.storage.from("news").getPublicUrl(path).data.publicUrl : null;
 
   return (
-    <main className="min-h-screen px-4 py-12 pb-24 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
+    <main className="px-4 py-12 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <button onClick={onBack} aria-label="Back" className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all">
         <ArrowLeft className="w-5 h-5" />
