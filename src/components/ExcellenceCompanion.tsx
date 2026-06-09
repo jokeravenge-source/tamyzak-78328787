@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, X, Send, Loader2, CalendarDays, HeartHandshake, CheckCircle2 } from "lucide-react";
+import { Sparkles, X, Send, CalendarDays, HeartHandshake, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import GeminiStatus from "@/components/GeminiStatus";
 import type { AppLanguage } from "@/components/LanguageGate";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -237,27 +238,22 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {messages.map((m, i) => {
                     const display = m.role === "assistant" ? stripPlanBlock(m.content) : m.content;
-                    return (
-                      <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                        <div
-                          className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap leading-relaxed ${
-                            m.role === "user"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-secondary text-foreground border border-border"
-                          }`}
-                        >
+                    return m.role === "user" ? (
+                      <div key={i} className="flex justify-end">
+                        <div className="max-w-[85%] rounded-3xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed bg-secondary text-foreground border border-border">
+                          {display}
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={i} className="flex gap-3 items-start">
+                        <span className="gemini-dot mt-1 inline-block w-5 h-5 rounded-full shrink-0" aria-hidden />
+                        <div className="flex-1 text-sm whitespace-pre-wrap leading-relaxed text-foreground">
                           {display}
                         </div>
                       </div>
                     );
                   })}
-                  {loading && (
-                    <div className="flex justify-start">
-                      <div className="bg-secondary border border-border rounded-2xl px-4 py-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      </div>
-                    </div>
-                  )}
+                  {loading && <GeminiStatus language={language} />}
                   {pendingPlan && !approved && (
                     <button
                       onClick={approvePlan}

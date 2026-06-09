@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, X, Loader2 } from "lucide-react";
+import { Bot, Send, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import GeminiStatus from "@/components/GeminiStatus";
 import type { AppSubject } from "@/pages/Subjects";
 import type { AppLanguage } from "@/components/LanguageGate";
 
@@ -109,25 +110,22 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
                 <div className="text-sm text-muted-foreground text-center py-8">{t.welcome(sName)}</div>
               )}
               {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap leading-relaxed ${
-                      m.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-foreground border border-border"
-                    }`}
-                  >
-                    {m.content}
+                m.role === "user" ? (
+                  <div key={i} className="flex justify-end">
+                    <div className="max-w-[85%] rounded-3xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed bg-secondary text-foreground border border-border">
+                      {m.content}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div key={i} className="flex gap-3 items-start">
+                    <span className="gemini-dot mt-1 inline-block w-5 h-5 rounded-full shrink-0" aria-hidden />
+                    <div className="flex-1 text-sm whitespace-pre-wrap leading-relaxed text-foreground">
+                      {m.content}
+                    </div>
+                  </div>
+                )
               ))}
-              {loading && (
-                <div className="flex justify-start">
-                  <div className="bg-secondary border border-border rounded-2xl px-4 py-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  </div>
-                </div>
-              )}
+              {loading && <GeminiStatus language={language} />}
               <div ref={endRef} />
             </div>
 
