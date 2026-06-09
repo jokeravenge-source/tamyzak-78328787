@@ -130,9 +130,14 @@ Deno.serve(async (req) => {
 
     if (!notes.trim() && lastGeminiError) {
       const quota = lastGeminiError.status === 429 || lastGeminiError.payload?.error?.status === "RESOURCE_EXHAUSTED";
+      const overloaded = lastGeminiError.status === 503 || lastGeminiError.payload?.error?.status === "UNAVAILABLE";
       const retryAfter = getRetryAfterSeconds(lastGeminiError.payload);
       const disabledOrDaily = isDailyOrDisabledQuota(lastGeminiError.payload);
-      const friendly = quota
+      const friendly = overloaded
+        ? (lang0 === "ar"
+          ? "الذكاء الاصطناعي مزدحم حالياً. حاول مرة أخرى بعد قليل."
+          : "The AI is overloaded right now. Please try again in a moment.")
+        : quota
         ? (lang0 === "ar"
           ? "تم الوصول إلى حد استخدام الذكاء الاصطناعي للفيديو حالياً. جرّب لاحقاً أو فعّل حصة أعلى لمفتاح Gemini."
           : "The video AI quota is currently exhausted. Try again later or increase the Gemini API quota.")
@@ -142,7 +147,7 @@ Deno.serve(async (req) => {
 
       return jsonResponse({
         error: friendly,
-        retryable: quota && !disabledOrDaily && retryAfter > 0,
+        retryable: overloaded || (quota && !disabledOrDaily && retryAfter > 0),
         retryAfter,
         quota,
       });
