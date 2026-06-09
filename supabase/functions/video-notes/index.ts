@@ -91,7 +91,11 @@ Deno.serve(async (req) => {
             { fileData: { fileUri: url.trim(), mimeType: "video/mp4" } },
             { text: "Write the study notes now." },
           ];
-      const geminiRes = await fetch(
+      let geminiRes: Response | null = null;
+      let text = "";
+      let payload: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
@@ -101,14 +105,21 @@ Deno.serve(async (req) => {
             contents: [{ role: "user", parts: userParts }],
           }),
         },
-      );
-
-      const text = await geminiRes.text();
-      const payload = parseJsonMaybe(text);
-      if (!geminiRes.ok) {
+        );
+        text = await geminiRes.text();
+        payload = parseJsonMaybe(text);
+        if (geminiRes.ok) break;
+        if (geminiRes.status === 503 || geminiRes.status === 429 || payload?.error?.status === "UNAVAILABLE" || payload?.error?.status === "RESOURCE_EXHAUSTED") {
+          await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+          continue;
+        }
+        break;
+      }
+      if (!geminiRes || !geminiRes.ok) {
         lastGeminiError = { status: geminiRes.status, payload, text, model };
-        console.error("Gemini error", geminiRes.status, model, text);
-        if (geminiRes.status === 429 || payload?.error?.status === "RESOURCE_EXHAUSTED") continue;
+        console.error("Gemini error", geminiRes?.status, model, text);
+        // Try next model on overload/quota errors; otherwise stop.
+        if (geminiRes && (geminiRes.status === 429 || geminiRes.status === 503 || payload?.error?.status === "RESOURCE_EXHAUSTED" || payload?.error?.status === "UNAVAILABLE")) continue;
         break;
       }
 
@@ -119,9 +130,14 @@ Deno.serve(async (req) => {
 
     if (!notes.trim() && lastGeminiError) {
       const quota = lastGeminiError.status === 429 || lastGeminiError.payload?.error?.status === "RESOURCE_EXHAUSTED";
+      const overloaded = lastGeminiError.status === 503 || lastGeminiError.payload?.error?.status === "UNAVAILABLE";
       const retryAfter = getRetryAfterSeconds(lastGeminiError.payload);
       const disabledOrDaily = isDailyOrDisabledQuota(lastGeminiError.payload);
-      const friendly = quota
+      const friendly = overloaded
+        ? (lang0 === "ar"
+          ? "الذكاء الاصطناعي مزدحم حالياً. حاول مرة أخرى بعد قليل."
+          : "The AI is overloaded right now. Please try again in a moment.")
+        : quota
         ? (lang0 === "ar"
           ? "تم الوصول إلى حد استخدام الذكاء الاصطناعي للفيديو حالياً. جرّب لاحقاً أو فعّل حصة أعلى لمفتاح Gemini."
           : "The video AI quota is currently exhausted. Try again later or increase the Gemini API quota.")
@@ -131,7 +147,7 @@ Deno.serve(async (req) => {
 
       return jsonResponse({
         error: friendly,
-        retryable: quota && !disabledOrDaily && retryAfter > 0,
+        retryable: overloaded || (quota && !disabledOrDaily && retryAfter > 0),
         retryAfter,
         quota,
       });
