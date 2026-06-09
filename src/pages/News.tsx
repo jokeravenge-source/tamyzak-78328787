@@ -48,26 +48,28 @@ const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void 
         <h1 className="text-5xl md:text-6xl font-bold gradient-text">{t.title}</h1>
       </header>
 
-      <section className="max-w-2xl mx-auto relative z-10">
+      <section className="max-w-6xl mx-auto relative z-10">
         {loading ? (
           <div className="h-80 rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur animate-pulse" />
         ) : items.length === 0 ? (
           <p className="text-center text-muted-foreground py-20">{t.empty}</p>
         ) : (
-          <>
-            <AnimatePresence mode="wait">
+          <div
+            className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth"
+            style={{ scrollbarWidth: "thin" }}
+          >
+            {items.map((cur) => (
               <motion.article
                 key={cur.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className="rounded-3xl overflow-hidden border border-primary/30 bg-secondary/40 backdrop-blur shadow-[var(--shadow-glow)]"
+                className="snap-start shrink-0 w-[85vw] sm:w-[28rem] rounded-3xl overflow-hidden border border-primary/30 bg-secondary/40 backdrop-blur shadow-[var(--shadow-glow)] flex flex-col"
               >
                 {cur.image_path && (
-                  <img src={imgUrl(cur.image_path)!} alt={cur.title} className="w-full max-h-96 object-cover" />
+                  <img src={imgUrl(cur.image_path)!} alt={cur.title} className="w-full h-56 object-cover" />
                 )}
-                <div className="p-6">
+                <div className="p-6 flex-1 flex flex-col">
                   <p className="text-xs text-muted-foreground mb-2">{new Date(cur.created_at).toLocaleDateString()}</p>
                   <h2 className="text-2xl font-bold mb-3 text-foreground">{cur.title}</h2>
                   <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{cur.description}</p>
@@ -76,33 +78,15 @@ const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void 
                       href={cur.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-4 inline-flex items-center gap-2 px-4 h-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
+                      className="mt-4 inline-flex items-center gap-2 px-4 h-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium w-fit"
                     >
                       <ExternalLink className="w-4 h-4" /> {t.openLink}
                     </a>
                   )}
                 </div>
               </motion.article>
-            </AnimatePresence>
-
-            <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={() => setIdx((i) => Math.max(0, i - 1))}
-                disabled={idx === 0}
-                className="inline-flex items-center gap-2 px-4 h-11 rounded-full border border-white/10 bg-secondary/60 text-sm disabled:opacity-40 hover:border-primary/40"
-              >
-                <ChevronLeft className="w-4 h-4" /> {t.prev}
-              </button>
-              <span className="text-sm text-muted-foreground">{idx + 1} / {items.length}</span>
-              <button
-                onClick={() => setIdx((i) => Math.min(items.length - 1, i + 1))}
-                disabled={idx >= items.length - 1}
-                className="inline-flex items-center gap-2 px-4 h-11 rounded-full border border-white/10 bg-secondary/60 text-sm disabled:opacity-40 hover:border-primary/40"
-              >
-                {t.next} <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </>
+            ))}
+          </div>
         )}
       </section>
     </main>
