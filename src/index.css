@@ -2,17 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Arabic font fallback to fix broken/garbled glyphs in some browsers */
+/* Arabic font fallback to fix broken/garbled glyphs in some browsers/devices */
 :root {
-  --font-arabic: "Cairo", "Noto Naskh Arabic", "Segoe UI", "Tahoma", sans-serif;
+  --font-arabic: "Cairo", "Noto Naskh Arabic", "Noto Sans Arabic", "Segoe UI", "Tahoma", "Arial", sans-serif;
 }
 [dir="rtl"],
 [lang="ar"],
-html[lang="ar"] body {
-  font-family: var(--font-arabic);
+html[lang="ar"] body,
+html[lang="ar"] body * {
+  font-family: var(--font-arabic) !important;
   font-feature-settings: "kern", "liga", "calt";
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+/* Apply Arabic font to any element containing Arabic characters via lang attr */
+[dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6,
+[dir="rtl"] p, [dir="rtl"] span, [dir="rtl"] button, [dir="rtl"] a, [dir="rtl"] input, [dir="rtl"] textarea {
+  font-family: var(--font-arabic) !important;
 }
 
 /* Zombie mode — bad UI overlay applied via .zombie-mode on <html> */
