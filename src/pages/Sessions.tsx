@@ -261,16 +261,9 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running]);
 
-  // Remove presence when leaving the page/tab or unmounting Sessions
-  useEffect(() => {
-    const onUnload = () => { if (userId) { clearPresence(); } };
-    window.addEventListener("beforeunload", onUnload);
-    return () => {
-      window.removeEventListener("beforeunload", onUnload);
-      if (userId) { clearPresence(); }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  // Keep presence alive even when leaving Sessions — the timer continues counting
+  // in the background and the user stays visible in the room. Presence is only
+  // cleared when the user explicitly stops/saves or switches rooms.
 
   // Restore persisted session on mount
   useEffect(() => {
