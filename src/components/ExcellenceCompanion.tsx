@@ -185,7 +185,7 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
         >
           <div
             dir={language === "ar" ? "rtl" : "ltr"}
-            className="w-full sm:max-w-lg h-[88vh] sm:h-[640px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 bg-card shadow-[var(--shadow-glow)] overflow-hidden"
+            className="w-full sm:max-w-lg h-[88vh] sm:h-[640px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 gemini-chat-bg shadow-[var(--shadow-glow)] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/40">

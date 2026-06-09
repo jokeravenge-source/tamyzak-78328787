@@ -32,6 +32,30 @@
   animation: gemini-dot-spin 2.4s linear infinite;
 }
 
+/* Gemini-style animated chat background */
+@keyframes gemini-bg-drift {
+  0%   { background-position: 0% 50%, 100% 50%, 50% 0%; }
+  50%  { background-position: 100% 50%, 0% 50%, 50% 100%; }
+  100% { background-position: 0% 50%, 100% 50%, 50% 0%; }
+}
+.gemini-chat-bg {
+  position: relative;
+  background-color: hsl(var(--card));
+  background-image:
+    radial-gradient(60% 50% at 20% 20%, hsl(217 89% 61% / 0.22), transparent 70%),
+    radial-gradient(55% 45% at 80% 30%, hsl(280 70% 65% / 0.20), transparent 70%),
+    radial-gradient(70% 60% at 50% 100%, hsl(12 82% 62% / 0.18), transparent 70%);
+  background-size: 220% 220%, 220% 220%, 220% 220%;
+  animation: gemini-bg-drift 18s ease-in-out infinite;
+}
+.gemini-chat-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(80% 60% at 50% 0%, hsl(var(--card) / 0) 0%, hsl(var(--card) / 0.55) 100%);
+}
+
 /* Arabic font fallback to fix broken/garbled glyphs in some browsers/devices */
 :root {
   --font-arabic: "Cairo", "Noto Naskh Arabic", "Noto Sans Arabic", "Segoe UI", "Tahoma", "Arial", sans-serif;
