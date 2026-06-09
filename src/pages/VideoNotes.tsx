@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Loader2, Youtube, Copy } from "lucide-react";
+import { ArrowLeft, Loader2, Youtube, Copy, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -20,6 +20,12 @@ const copy = {
     invalid: "Please paste a valid YouTube link.",
     failed: "Could not generate notes.",
     retrying: "The AI is busy. Retrying shortly…",
+    status: {
+      starting: "Starting…",
+      retrying: (n: number, max: number) => `AI is busy — retrying (attempt ${n} of ${max})`,
+      success: "Notes ready",
+      failed: "Generation failed",
+    },
   },
   ar: {
     title: "من الفيديو إلى ملاحظات",
@@ -34,6 +40,12 @@ const copy = {
     invalid: "الرجاء لصق رابط يوتيوب صالح.",
     failed: "تعذّر إنشاء الملاحظات.",
     retrying: "الذكاء الاصطناعي مشغول حالياً. سنعيد المحاولة بعد قليل…",
+    status: {
+      starting: "جارٍ البدء…",
+      retrying: (n: number, max: number) => `الذكاء الاصطناعي مشغول — إعادة المحاولة (${n} من ${max})`,
+      success: "الملاحظات جاهزة",
+      failed: "فشل الإنشاء",
+    },
   },
 } as const;
 
@@ -44,18 +56,28 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState("");
+  type Status =
+    | { kind: "idle" }
+    | { kind: "working"; message: string }
+    | { kind: "retrying"; attempt: number; max: number }
+    | { kind: "success" }
+    | { kind: "failed"; message: string };
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const run = async () => {
     if (!isYouTubeUrl(url)) {
       toast.error(t.invalid);
+      setStatus({ kind: "failed", message: t.invalid });
       return;
     }
     setLoading(true);
     setNotes("");
+    setStatus({ kind: "working", message: t.status.starting });
     try {
       const maxAttempts = 4;
       let lastErr: any = null;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        if (attempt === 1) setStatus({ kind: "working", message: t.working });
         const { data, error } = await supabase.functions.invoke("video-notes", {
           body: { url: url.trim(), language },
         });
@@ -65,13 +87,14 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           if ((data as any).retryable === false) break;
         } else if ((data as any)?.notes) {
           setNotes((data as any).notes);
+          setStatus({ kind: "success" });
           lastErr = null;
           break;
         } else {
           lastErr = new Error(t.failed);
         }
         if (attempt < maxAttempts) {
-          toast.info(t.retrying);
+          setStatus({ kind: "retrying", attempt: attempt + 1, max: maxAttempts });
           const retryAfterMs = Number((data as any)?.retryAfter || 0) * 1000;
           const delay = Math.max(retryAfterMs, Math.min(8000, 600 * 2 ** (attempt - 1)) + Math.random() * 250);
           await new Promise((r) => setTimeout(r, delay));
@@ -80,7 +103,9 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
       if (lastErr) throw lastErr;
     } catch (e: any) {
       console.error(e);
-      toast.error(e?.message || t.failed);
+      const msg = e?.message || t.failed;
+      toast.error(msg);
+      setStatus({ kind: "failed", message: msg });
     } finally {
       setLoading(false);
     }
@@ -116,6 +141,39 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         <Button onClick={run} disabled={loading || !url.trim()} className="w-full h-12 text-base">
           {loading ? (<><Loader2 className="w-4 h-4 animate-spin mr-2" />{t.working}</>) : t.generate}
         </Button>
+
+        {status.kind !== "idle" && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={
+              "flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm backdrop-blur " +
+              (status.kind === "success"
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                : status.kind === "failed"
+                ? "border-destructive/50 bg-destructive/10 text-destructive-foreground"
+                : status.kind === "retrying"
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
+                : "border-primary/40 bg-secondary/40 text-foreground")
+            }
+          >
+            {status.kind === "working" && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
+            {status.kind === "retrying" && <RefreshCw className="w-4 h-4 animate-spin shrink-0" />}
+            {status.kind === "success" && <CheckCircle2 className="w-4 h-4 shrink-0" />}
+            {status.kind === "failed" && <AlertTriangle className="w-4 h-4 shrink-0" />}
+            <span className="flex-1">
+              {status.kind === "working" && status.message}
+              {status.kind === "retrying" && t.status.retrying(status.attempt, status.max)}
+              {status.kind === "success" && t.status.success}
+              {status.kind === "failed" && `${t.status.failed} — ${status.message}`}
+            </span>
+            {status.kind === "failed" && (
+              <Button size="sm" variant="outline" onClick={run} disabled={loading}>
+                {language === "ar" ? "إعادة المحاولة" : "Retry"}
+              </Button>
+            )}
+          </div>
+        )}
       </section>
 
       {notes && (
