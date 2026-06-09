@@ -152,8 +152,8 @@ const MainMenu = ({
             <span className="text-xs text-primary font-semibold">{unread.length}</span>
           </div>
           <div
-            className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1"
-            style={{ scrollbarWidth: "thin" }}
+            className="flex flex-row flex-nowrap gap-4 overflow-x-auto overflow-y-hidden pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1"
+            style={{ scrollbarWidth: "thin", WebkitOverflowScrolling: "touch" }}
           >
             {unread.map((n) => {
               const handleOpen = () => onSelect("news");
