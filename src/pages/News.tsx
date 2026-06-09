@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Newspaper } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, ExternalLink, Newspaper } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 type NewsItem = { id: string; title: string; description: string; image_path: string | null; link: string | null; created_at: string };
 
 const copy = {
-  en: { title: "News", empty: "No news yet. Check back soon!", prev: "Previous", next: "Next", openLink: "Open link" },
-  ar: { title: "الأخبار", empty: "لا توجد أخبار بعد. عد قريباً!", prev: "السابق", next: "التالي", openLink: "فتح الرابط" },
+  en: { title: "News", empty: "No news yet. Check back soon!", openLink: "Open link", more: "More", less: "Less" },
+  ar: { title: "الأخبار", empty: "لا توجد أخبار بعد. عد قريباً!", openLink: "فتح الرابط", more: "المزيد", less: "أقل" },
 } as const;
 
 const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
@@ -16,6 +16,7 @@ const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void 
   const [items, setItems] = useState<NewsItem[]>([]);
   const [idx, setIdx] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     (async () => {
@@ -55,37 +56,55 @@ const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void 
           <p className="text-center text-muted-foreground py-20">{t.empty}</p>
         ) : (
           <div
-            className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth -mx-4 px-4"
+            className="flex flex-row flex-nowrap gap-5 overflow-x-auto overflow-y-hidden pb-4 snap-x snap-mandatory scroll-smooth -mx-4 px-4"
             style={{ scrollbarWidth: "thin" }}
           >
-            {items.map((cur) => (
-              <motion.article
-                key={cur.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="snap-center shrink-0 w-full max-w-2xl rounded-3xl overflow-hidden border border-primary/30 bg-secondary/40 backdrop-blur shadow-[var(--shadow-glow)] flex flex-col"
-              >
-                {cur.image_path && (
-                  <img src={imgUrl(cur.image_path)!} alt={cur.title} className="w-full max-h-96 object-cover" />
-                )}
-                <div className="p-6">
-                  <p className="text-xs text-muted-foreground mb-2">{new Date(cur.created_at).toLocaleDateString()}</p>
-                  <h2 className="text-2xl font-bold mb-3 text-foreground">{cur.title}</h2>
-                  <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{cur.description}</p>
-                  {cur.link && (
-                    <a
-                      href={cur.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 inline-flex items-center gap-2 px-4 h-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
-                    >
-                      <ExternalLink className="w-4 h-4" /> {t.openLink}
-                    </a>
+            {items.map((cur) => {
+              const isExpanded = !!expanded[cur.id];
+              const longText = (cur.description?.length ?? 0) > 220;
+              return (
+                <motion.article
+                  key={cur.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="snap-center shrink-0 w-full max-w-2xl rounded-3xl overflow-hidden border border-primary/30 bg-secondary/40 backdrop-blur shadow-[var(--shadow-glow)] flex flex-col"
+                  style={{ height: isExpanded ? "auto" : "30rem" }}
+                >
+                  {cur.image_path && (
+                    <img src={imgUrl(cur.image_path)!} alt={cur.title} className="w-full h-48 object-cover shrink-0" />
                   )}
-                </div>
-              </motion.article>
-            ))}
+                  <div className="p-6 flex-1 flex flex-col min-h-0">
+                    <p className="text-xs text-muted-foreground mb-2">{new Date(cur.created_at).toLocaleDateString()}</p>
+                    <h2 className="text-2xl font-bold mb-3 text-foreground line-clamp-2">{cur.title}</h2>
+                    <p
+                      className={`text-muted-foreground whitespace-pre-wrap leading-relaxed ${isExpanded ? "" : "line-clamp-4"}`}
+                    >
+                      {cur.description}
+                    </p>
+                    {longText && (
+                      <button
+                        onClick={() => setExpanded((m) => ({ ...m, [cur.id]: !isExpanded }))}
+                        className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline w-fit"
+                      >
+                        {isExpanded ? (<>{t.less} <ChevronUp className="w-4 h-4" /></>) : (<>{t.more} <ChevronDown className="w-4 h-4" /></>)}
+                      </button>
+                    )}
+                    {cur.link && (
+                      <a
+                        href={cur.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-flex items-center gap-2 px-4 h-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium w-fit"
+                      >
+                        <ExternalLink className="w-4 h-4" /> {t.openLink}
+                      </a>
+                    )}
+                  </div>
+                </motion.article>
+              );
+            })}
           </div>
         )}
       </section>
