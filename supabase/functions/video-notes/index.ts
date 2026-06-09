@@ -53,14 +53,44 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "GEMINI_API_KEY not configured" }, 500);
     }
 
-    // Use Gemini directly — it natively accepts YouTube URLs as fileData.
-    // Prefer Flash models to avoid exhausting the stricter Pro quota, then fail gracefully.
-    const systemPrompt = `You are an expert study-notes writer. Watch the provided YouTube video and produce clean, well-structured study notes ALWAYS in Arabic (العربية), regardless of the video language. Translate if needed. Use Markdown with: a short summary (ملخص), key concepts as bullet points (المفاهيم الأساسية), important definitions (تعريفات مهمة), and a final "خلاصة" (Takeaways) section. Be faithful to the video content only.`;
+    // Step 1: fetch transcript via Supadata (handles long videos without exhausting Gemini token limits).
+    const SUPADATA_API_KEY = Deno.env.get("SUPADATA_API_KEY");
+    let transcriptText = "";
+    if (SUPADATA_API_KEY) {
+      try {
+        const tRes = await fetch(
+          `https://api.supadata.ai/v1/youtube/transcript?url=${encodeURIComponent(url.trim())}&text=true`,
+          { headers: { "x-api-key": SUPADATA_API_KEY } },
+        );
+        const tText = await tRes.text();
+        const tJson = parseJsonMaybe(tText);
+        if (tRes.ok && tJson) {
+          if (typeof tJson.content === "string") transcriptText = tJson.content;
+          else if (Array.isArray(tJson.content)) transcriptText = tJson.content.map((c: any) => c.text || "").join(" ");
+          else if (typeof tJson.transcript === "string") transcriptText = tJson.transcript;
+        } else {
+          console.error("Supadata error", tRes.status, tText);
+        }
+      } catch (e) {
+        console.error("Supadata fetch failed", e);
+      }
+    }
+
+    // Cap transcript size to stay well under model limits.
+    if (transcriptText.length > 120000) transcriptText = transcriptText.slice(0, 120000);
+
+    const systemPrompt = `You are an expert study-notes writer. Produce clean, well-structured study notes ALWAYS in Arabic (العربية), regardless of source language. Translate if needed. Use Markdown with: a short summary (ملخص), key concepts as bullet points (المفاهيم الأساسية), important definitions (تعريفات مهمة), and a final "خلاصة" (Takeaways) section. Be faithful to the source content only.`;
     const models = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastGeminiError: any = null;
     let notes = "";
 
     for (const model of models) {
+      const userParts = transcriptText
+        ? [{ text: `Here is the transcript of a YouTube video. Write the study notes from it.\n\nTRANSCRIPT:\n${transcriptText}` }]
+        : [
+            { fileData: { fileUri: url.trim(), mimeType: "video/mp4" } },
+            { text: "Write the study notes now." },
+          ];
       const geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
         {
@@ -68,15 +98,7 @@ Deno.serve(async (req) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systemPrompt }] },
-            contents: [
-              {
-                role: "user",
-                parts: [
-                  { fileData: { fileUri: url.trim(), mimeType: "video/mp4" } },
-                  { text: "Write the study notes now." },
-                ],
-              },
-            ],
+            contents: [{ role: "user", parts: userParts }],
           }),
         },
       );
