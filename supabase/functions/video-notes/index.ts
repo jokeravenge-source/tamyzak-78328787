@@ -48,9 +48,10 @@ Deno.serve(async (req) => {
     if (!ent.ok) {
       return jsonResponse({ error: ent.error, upgrade: ent.status === 429 }, ent.status);
     }
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      return jsonResponse({ error: "GEMINI_API_KEY not configured" }, 500);
+    if (!LOVABLE_API_KEY && !GEMINI_API_KEY) {
+      return jsonResponse({ error: "No AI API key configured" }, 500);
     }
 
     // Step 1: fetch transcript via Supadata (handles long videos without exhausting Gemini token limits).
@@ -80,13 +81,65 @@ Deno.serve(async (req) => {
     if (transcriptText.length > 120000) transcriptText = transcriptText.slice(0, 120000);
 
     const systemPrompt = `You are an expert study-notes writer. Produce clean, well-structured study notes ALWAYS in Arabic (العربية), regardless of source language. Translate if needed. Use Markdown with: a short summary (ملخص), key concepts as bullet points (المفاهيم الأساسية), important definitions (تعريفات مهمة), and a final "خلاصة" (Takeaways) section. Be faithful to the source content only.`;
-    const models = ["gemini-2.5-flash", "gemini-2.0-flash"];
+    // Try Lovable AI Gateway first (multiple models for fallback on quota/overload),
+    // then fall back to direct Gemini if available.
+    const lovableModels = [
+      "google/gemini-3-flash-preview",
+      "google/gemini-2.5-flash",
+      "google/gemini-2.5-flash-lite",
+      "openai/gpt-5-mini",
+    ];
+    const geminiDirectModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastGeminiError: any = null;
     let notes = "";
 
-    for (const model of models) {
+    const userPrompt = transcriptText
+      ? `Here is the transcript of a YouTube video. Write the study notes from it.\n\nTRANSCRIPT:\n${transcriptText}`
+      : `Generate study notes for this YouTube video: ${url.trim()}`;
+
+    // 1) Lovable AI Gateway attempts
+    if (LOVABLE_API_KEY && transcriptText) {
+      for (const model of lovableModels) {
+        try {
+          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+              ],
+            }),
+          });
+          const text = await res.text();
+          const payload = parseJsonMaybe(text);
+          if (!res.ok) {
+            lastGeminiError = { status: res.status, payload, text, model: `lovable:${model}` };
+            console.error("Lovable AI error", res.status, model, text);
+            if (res.status === 429 || res.status === 402 || res.status === 503) continue;
+            break;
+          }
+          const reply = payload?.choices?.[0]?.message?.content ?? "";
+          if (typeof reply === "string" && reply.trim()) {
+            notes = reply;
+            break;
+          }
+          lastGeminiError = { status: 500, payload, text, model: `lovable:${model}` };
+        } catch (e) {
+          console.error("Lovable AI fetch failed", model, e);
+          lastGeminiError = { status: 500, payload: null, text: String(e), model: `lovable:${model}` };
+        }
+      }
+    }
+
+    // 2) Direct Gemini fallback (supports raw video URL when no transcript)
+    if (!notes.trim() && GEMINI_API_KEY) for (const model of geminiDirectModels) {
       const userParts = transcriptText
-        ? [{ text: `Here is the transcript of a YouTube video. Write the study notes from it.\n\nTRANSCRIPT:\n${transcriptText}` }]
+        ? [{ text: userPrompt }]
         : [
             { fileData: { fileUri: url.trim(), mimeType: "video/mp4" } },
             { text: "Write the study notes now." },
