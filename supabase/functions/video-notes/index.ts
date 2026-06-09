@@ -91,7 +91,11 @@ Deno.serve(async (req) => {
             { fileData: { fileUri: url.trim(), mimeType: "video/mp4" } },
             { text: "Write the study notes now." },
           ];
-      const geminiRes = await fetch(
+      let geminiRes: Response | null = null;
+      let text = "";
+      let payload: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
@@ -101,14 +105,21 @@ Deno.serve(async (req) => {
             contents: [{ role: "user", parts: userParts }],
           }),
         },
-      );
-
-      const text = await geminiRes.text();
-      const payload = parseJsonMaybe(text);
-      if (!geminiRes.ok) {
+        );
+        text = await geminiRes.text();
+        payload = parseJsonMaybe(text);
+        if (geminiRes.ok) break;
+        if (geminiRes.status === 503 || geminiRes.status === 429 || payload?.error?.status === "UNAVAILABLE" || payload?.error?.status === "RESOURCE_EXHAUSTED") {
+          await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+          continue;
+        }
+        break;
+      }
+      if (!geminiRes || !geminiRes.ok) {
         lastGeminiError = { status: geminiRes.status, payload, text, model };
-        console.error("Gemini error", geminiRes.status, model, text);
-        if (geminiRes.status === 429 || payload?.error?.status === "RESOURCE_EXHAUSTED") continue;
+        console.error("Gemini error", geminiRes?.status, model, text);
+        // Try next model on overload/quota errors; otherwise stop.
+        if (geminiRes && (geminiRes.status === 429 || geminiRes.status === 503 || payload?.error?.status === "RESOURCE_EXHAUSTED" || payload?.error?.status === "UNAVAILABLE")) continue;
         break;
       }
 
