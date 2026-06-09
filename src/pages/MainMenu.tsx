@@ -140,38 +140,63 @@ const MainMenu = ({
       </div>
 
       {unread.length > 0 && (
-        <div className="max-w-6xl mx-auto mb-6 relative z-10">
+        <div className="max-w-6xl mx-auto mb-6 relative z-10 px-1">
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              {language === "ar" ? "تنبيهات" : "Notifications"}
+            </span>
+            <span className="text-xs text-primary font-semibold">{unread.length}</span>
+          </div>
           <div
-            className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth"
+            className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1"
             style={{ scrollbarWidth: "thin" }}
           >
-          {unread.map((n) => {
-            const handleOpen = () => {
-              onSelect("news");
-            };
-            return (
-              <div
-                key={n.id}
-                onClick={handleOpen}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpen(); } }}
-                className="snap-start shrink-0 w-72 sm:w-80 flex flex-col gap-2 rounded-2xl p-4 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up transition-all cursor-pointer hover:bg-primary/15 hover:-translate-y-1 hover:shadow-[var(--shadow-glow)]"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-                    <Bell className="w-4 h-4 text-primary" />
-                  </div>
-                  <button onClick={(e) => { e.stopPropagation(); dismiss(n.id); }} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
-                    <X className="w-4 h-4" />
+            {unread.map((n) => {
+              const handleOpen = () => onSelect("news");
+              return (
+                <div
+                  key={n.id}
+                  onClick={handleOpen}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpen(); } }}
+                  className="group relative snap-start shrink-0 w-72 sm:w-80 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-secondary/80 via-secondary/50 to-primary/10 backdrop-blur-xl animate-fade-up transition-all cursor-pointer hover:-translate-y-1 hover:border-primary/60 hover:shadow-[var(--shadow-glow)]"
+                >
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }}
+                  />
+                  <div aria-hidden className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-primary via-primary/60 to-transparent" />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); dismiss(n.id); }}
+                    aria-label="Dismiss"
+                    className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-background/40 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/70 transition"
+                  >
+                    <X className="w-3.5 h-3.5" />
                   </button>
+                  <div className="relative p-4 pl-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-xl bg-primary/20 ring-1 ring-primary/30 flex items-center justify-center shrink-0">
+                        <Bell className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {new Date(n.created_at).toLocaleDateString(language === "ar" ? "ar" : "en", { month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                    <h4 className="font-semibold text-foreground line-clamp-1 pr-6">{n.title}</h4>
+                    {n.body && <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap line-clamp-2">{n.body}</p>}
+                    <div className="mt-3 flex items-center gap-1 text-xs font-medium text-primary opacity-80 group-hover:opacity-100">
+                      <span>{language === "ar" ? "عرض" : "View"}</span>
+                      <ArrowRight className={`w-3.5 h-3.5 transition-transform ${language === "ar" ? "rotate-180 group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
+                    </div>
+                  </div>
                 </div>
-                <h4 className="font-semibold text-foreground line-clamp-1">{n.title}</h4>
-                {n.body && <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">{n.body}</p>}
-                {n.link && <p className="text-xs text-primary underline truncate">{n.link}</p>}
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         </div>
       )}
