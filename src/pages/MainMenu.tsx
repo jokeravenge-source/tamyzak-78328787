@@ -152,7 +152,7 @@ const MainMenu = ({
             <span className="text-xs text-primary font-semibold">{unread.length}</span>
           </div>
           <div
-            className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1"
+            className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1"
             style={{ scrollbarWidth: "thin" }}
           >
             {unread.map((n) => {
@@ -164,40 +164,51 @@ const MainMenu = ({
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpen(); } }}
-                  className="group relative snap-start shrink-0 w-[17rem] sm:w-[19rem] overflow-hidden rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur-xl animate-fade-up transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:border-primary/50 hover:shadow-[var(--shadow-glow)]"
+                  className="group relative snap-start shrink-0 w-[18rem] sm:w-[20rem] h-36 overflow-hidden rounded-2xl border border-primary/30 animate-fade-up transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:border-primary/60 hover:shadow-[var(--shadow-glow)]"
+                  style={{ background: "var(--gradient-primary)" }}
                 >
+                  {/* decorative background image layer */}
                   <div
                     aria-hidden
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                    style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }}
+                    className="absolute inset-0 opacity-40 mix-blend-overlay pointer-events-none"
+                    style={{
+                      backgroundImage:
+                        "radial-gradient(circle at 80% 20%, hsl(var(--primary-foreground) / 0.35) 0%, transparent 45%), radial-gradient(circle at 10% 90%, hsl(var(--accent) / 0.35) 0%, transparent 50%)",
+                    }}
                   />
-                  <div aria-hidden className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 rounded-full bg-primary/20 blur-2xl" />
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 opacity-20 pointer-events-none"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(transparent 95%, hsl(var(--primary-foreground) / 0.4) 95%), linear-gradient(90deg, transparent 95%, hsl(var(--primary-foreground) / 0.4) 95%)",
+                      backgroundSize: "22px 22px",
+                    }}
+                  />
+                  {/* darkening overlay for text legibility */}
+                  <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/20 to-transparent pointer-events-none" />
+
                   <button
                     onClick={(e) => { e.stopPropagation(); dismiss(n.id); }}
                     aria-label="Dismiss"
-                    className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-background/50 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/80 transition"
+                    className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-background/40 backdrop-blur flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:bg-background/70 transition"
                   >
                     <X className="w-3 h-3" />
                   </button>
-                  <div className="relative p-3.5 flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center shrink-0">
-                      <Bell className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1 pr-4">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h4 className="text-sm font-semibold text-foreground line-clamp-1">{n.title}</h4>
-                      </div>
-                      {n.body && <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-2 leading-relaxed">{n.body}</p>}
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                          {new Date(n.created_at).toLocaleDateString(language === "ar" ? "ar" : "en", { month: "short", day: "numeric" })}
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary opacity-80 group-hover:opacity-100">
-                          {language === "ar" ? "عرض" : "View"}
-                          <ArrowRight className={`w-3 h-3 transition-transform ${language === "ar" ? "rotate-180 group-hover:-translate-x-0.5" : "group-hover:translate-x-0.5"}`} />
-                        </span>
-                      </div>
-                    </div>
+
+                  {/* icon top-left */}
+                  <div className="absolute top-3 left-3 z-10 w-10 h-10 rounded-xl bg-background/30 backdrop-blur-md ring-1 ring-primary-foreground/30 flex items-center justify-center">
+                    <Bell className="w-5 h-5 text-primary-foreground" />
+                  </div>
+
+                  {/* title + subtitle below, bottom-aligned */}
+                  <div className="absolute inset-x-0 bottom-0 p-3.5 z-10">
+                    <h4 className="text-base font-bold text-primary-foreground line-clamp-1 drop-shadow">{n.title}</h4>
+                    {n.body && (
+                      <p className="text-xs text-primary-foreground/85 mt-0.5 whitespace-pre-wrap line-clamp-2 leading-relaxed drop-shadow">
+                        {n.body}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
