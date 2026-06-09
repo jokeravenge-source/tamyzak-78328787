@@ -164,31 +164,40 @@ const MainMenu = ({
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpen(); } }}
-                  className="group relative snap-start shrink-0 w-56 overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-br from-secondary/80 via-secondary/50 to-primary/10 backdrop-blur-xl animate-fade-up transition-all cursor-pointer hover:-translate-y-1 hover:border-primary/60 hover:shadow-[var(--shadow-glow)]"
+                  className="group relative snap-start shrink-0 w-[17rem] sm:w-[19rem] overflow-hidden rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur-xl animate-fade-up transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:border-primary/50 hover:shadow-[var(--shadow-glow)]"
                 >
                   <div
+                    aria-hidden
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                     style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }}
                   />
-                  <div aria-hidden className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-primary via-primary/60 to-transparent" />
+                  <div aria-hidden className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 rounded-full bg-primary/20 blur-2xl" />
                   <button
                     onClick={(e) => { e.stopPropagation(); dismiss(n.id); }}
                     aria-label="Dismiss"
-                    className="absolute top-1.5 right-1.5 z-10 w-5 h-5 rounded-full bg-background/40 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/70 transition"
+                    className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-background/50 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/80 transition"
                   >
                     <X className="w-3 h-3" />
                   </button>
-                  <div className="relative p-2.5 pl-3">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <div className="w-5 h-5 rounded-md bg-primary/20 ring-1 ring-primary/30 flex items-center justify-center shrink-0">
-                        <Bell className="w-3 h-3 text-primary" />
-                      </div>
-                      <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
-                        {new Date(n.created_at).toLocaleDateString(language === "ar" ? "ar" : "en", { month: "short", day: "numeric" })}
-                      </span>
+                  <div className="relative p-3.5 flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center shrink-0">
+                      <Bell className="w-4 h-4 text-primary" />
                     </div>
-                    <h4 className="text-xs font-semibold text-foreground line-clamp-1 pr-5">{n.title}</h4>
-                    {n.body && <p className="text-[11px] text-muted-foreground mt-0.5 whitespace-pre-wrap line-clamp-1">{n.body}</p>}
+                    <div className="min-w-0 flex-1 pr-4">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h4 className="text-sm font-semibold text-foreground line-clamp-1">{n.title}</h4>
+                      </div>
+                      {n.body && <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-2 leading-relaxed">{n.body}</p>}
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          {new Date(n.created_at).toLocaleDateString(language === "ar" ? "ar" : "en", { month: "short", day: "numeric" })}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary opacity-80 group-hover:opacity-100">
+                          {language === "ar" ? "عرض" : "View"}
+                          <ArrowRight className={`w-3 h-3 transition-transform ${language === "ar" ? "rotate-180 group-hover:-translate-x-0.5" : "group-hover:translate-x-0.5"}`} />
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
