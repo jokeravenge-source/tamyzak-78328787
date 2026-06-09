@@ -89,7 +89,7 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
         >
           <div
             dir={language === "ar" ? "rtl" : "ltr"}
-            className="w-full sm:max-w-lg h-[85vh] sm:h-[600px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 bg-card shadow-[var(--shadow-glow)] overflow-hidden"
+            className="w-full sm:max-w-lg h-[85vh] sm:h-[600px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 gemini-chat-bg shadow-[var(--shadow-glow)] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/40">
