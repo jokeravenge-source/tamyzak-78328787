@@ -140,7 +140,11 @@ const MainMenu = ({
       </div>
 
       {unread.length > 0 && (
-        <div className="max-w-3xl mx-auto mb-6 space-y-2 relative z-10">
+        <div className="max-w-6xl mx-auto mb-6 relative z-10">
+          <div
+            className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth"
+            style={{ scrollbarWidth: "thin" }}
+          >
           {unread.map((n) => {
             const handleOpen = () => {
               onSelect("news");
@@ -152,20 +156,23 @@ const MainMenu = ({
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpen(); } }}
-                className="flex items-start gap-3 rounded-2xl p-4 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up transition-colors cursor-pointer hover:bg-primary/15"
+                className="snap-start shrink-0 w-72 sm:w-80 flex flex-col gap-2 rounded-2xl p-4 border border-primary/40 bg-primary/10 backdrop-blur animate-fade-up transition-all cursor-pointer hover:bg-primary/15 hover:-translate-y-1 hover:shadow-[var(--shadow-glow)]"
               >
-                <Bell className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-foreground">{n.title}</h4>
-                  {n.body && <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">{n.body}</p>}
-                  {n.link && <p className="text-xs text-primary mt-1 underline truncate">{n.link}</p>}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                    <Bell className="w-4 h-4 text-primary" />
+                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); dismiss(n.id); }} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); dismiss(n.id); }} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground p-1">
-                  <X className="w-4 h-4" />
-                </button>
+                <h4 className="font-semibold text-foreground line-clamp-1">{n.title}</h4>
+                {n.body && <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">{n.body}</p>}
+                {n.link && <p className="text-xs text-primary underline truncate">{n.link}</p>}
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
