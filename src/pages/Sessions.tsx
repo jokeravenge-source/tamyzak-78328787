@@ -261,16 +261,9 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running]);
 
-  // Remove presence when leaving the page/tab or unmounting Sessions
-  useEffect(() => {
-    const onUnload = () => { if (userId) { clearPresence(); } };
-    window.addEventListener("beforeunload", onUnload);
-    return () => {
-      window.removeEventListener("beforeunload", onUnload);
-      if (userId) { clearPresence(); }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  // Keep presence alive even when leaving Sessions — the timer continues counting
+  // in the background and the user stays visible in the room. Presence is only
+  // cleared when the user explicitly stops/saves or switches rooms.
 
   // Restore persisted session on mount
   useEffect(() => {
@@ -513,7 +506,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   return (
     <main className="relative min-h-screen px-4 py-10 md:py-16" dir={dir}>
-      <button onClick={async () => { if (started) { await stopAndSave(); } setSubject(null); }} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
+      {/* Back to main menu — keep the timer running and persisted; only "Switch room" resets. */}
+      <button onClick={onBack} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer">
         <ArrowLeft className="w-5 h-5" />
       </button>
       <div className="max-w-3xl mx-auto">
