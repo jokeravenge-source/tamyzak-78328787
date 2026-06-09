@@ -54,15 +54,17 @@ const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void 
         ) : items.length === 0 ? (
           <p className="text-center text-muted-foreground py-20">{t.empty}</p>
         ) : (
-          <>
-            <AnimatePresence mode="wait">
+          <div
+            className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth -mx-4 px-4"
+            style={{ scrollbarWidth: "thin" }}
+          >
+            {items.map((cur) => (
               <motion.article
                 key={cur.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className="rounded-3xl overflow-hidden border border-primary/30 bg-secondary/40 backdrop-blur shadow-[var(--shadow-glow)]"
+                className="snap-center shrink-0 w-full max-w-2xl rounded-3xl overflow-hidden border border-primary/30 bg-secondary/40 backdrop-blur shadow-[var(--shadow-glow)] flex flex-col"
               >
                 {cur.image_path && (
                   <img src={imgUrl(cur.image_path)!} alt={cur.title} className="w-full max-h-96 object-cover" />
@@ -83,26 +85,8 @@ const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void 
                   )}
                 </div>
               </motion.article>
-            </AnimatePresence>
-
-            <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={() => setIdx((i) => Math.max(0, i - 1))}
-                disabled={idx === 0}
-                className="inline-flex items-center gap-2 px-4 h-11 rounded-full border border-white/10 bg-secondary/60 text-sm disabled:opacity-40 hover:border-primary/40"
-              >
-                <ChevronLeft className="w-4 h-4" /> {t.prev}
-              </button>
-              <span className="text-sm text-muted-foreground">{idx + 1} / {items.length}</span>
-              <button
-                onClick={() => setIdx((i) => Math.min(items.length - 1, i + 1))}
-                disabled={idx >= items.length - 1}
-                className="inline-flex items-center gap-2 px-4 h-11 rounded-full border border-white/10 bg-secondary/60 text-sm disabled:opacity-40 hover:border-primary/40"
-              >
-                {t.next} <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </>
+            ))}
+          </div>
         )}
       </section>
     </main>
