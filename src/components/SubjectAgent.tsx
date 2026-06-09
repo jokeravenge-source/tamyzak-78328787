@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Bot, Send, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import GeminiStatus from "@/components/GeminiStatus";
+import ChatBlobBackground from "@/components/ChatBlobBackground";
 import type { AppSubject } from "@/pages/Subjects";
 import type { AppLanguage } from "@/components/LanguageGate";
 
@@ -89,10 +90,11 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
         >
           <div
             dir={language === "ar" ? "rtl" : "ltr"}
-            className="w-full sm:max-w-lg h-[85vh] sm:h-[600px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 gemini-chat-bg shadow-[var(--shadow-glow)] overflow-hidden"
+            className="relative w-full sm:max-w-lg h-[85vh] sm:h-[600px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 gemini-chat-bg shadow-[var(--shadow-glow)] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/40">
+            <ChatBlobBackground />
+            <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/40">
               <div className="flex items-center gap-2">
                 <Bot className="w-5 h-5 text-primary" />
                 <div>
@@ -105,7 +107,7 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && (
                 <div className="text-sm text-muted-foreground text-center py-8">{t.welcome(sName)}</div>
               )}
@@ -129,7 +131,7 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
               <div ref={endRef} />
             </div>
 
-            <div className="border-t border-border p-3 flex items-end gap-2 bg-secondary/30">
+            <div className="relative z-10 border-t border-border p-3 flex items-end gap-2 bg-secondary/30">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
