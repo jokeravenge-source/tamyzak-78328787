@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Sparkles, X, Send, CalendarDays, HeartHandshake, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import GeminiStatus from "@/components/GeminiStatus";
+import ChatBlobBackground from "@/components/ChatBlobBackground";
 import type { AppLanguage } from "@/components/LanguageGate";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -185,10 +186,11 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
         >
           <div
             dir={language === "ar" ? "rtl" : "ltr"}
-            className="w-full sm:max-w-lg h-[88vh] sm:h-[640px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 gemini-chat-bg shadow-[var(--shadow-glow)] overflow-hidden"
+            className="relative w-full sm:max-w-lg h-[88vh] sm:h-[640px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 gemini-chat-bg shadow-[var(--shadow-glow)] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/40">
+            <ChatBlobBackground />
+            <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-border bg-secondary/40">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
                 <div>
@@ -206,7 +208,7 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
             </div>
 
             {!mode ? (
-              <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 justify-center">
+              <div className="relative z-10 flex-1 overflow-y-auto p-6 flex flex-col gap-4 justify-center">
                 <p className="text-center text-sm text-muted-foreground mb-2">{t.subtitle}</p>
                 <button
                   onClick={() => pickMode("schedule")}
@@ -235,7 +237,7 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
               </div>
             ) : (
               <>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-3">
                   {messages.map((m, i) => {
                     const display = m.role === "assistant" ? stripPlanBlock(m.content) : m.content;
                     return m.role === "user" ? (
@@ -270,7 +272,7 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
                   <div ref={endRef} />
                 </div>
 
-                <div className="border-t border-border p-3 flex items-end gap-2 bg-secondary/30">
+                <div className="relative z-10 border-t border-border p-3 flex items-end gap-2 bg-secondary/30">
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
