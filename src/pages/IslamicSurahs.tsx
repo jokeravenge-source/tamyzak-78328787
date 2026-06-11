@@ -60,6 +60,19 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [activeIdx]);
 
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    const wasPlaying = !a.paused;
+    a.pause();
+    a.load();
+    a.currentTime = 0;
+    setTime(0);
+    if (wasPlaying) {
+      a.play().catch(() => {});
+    }
+  }, [reciterIdx]);
+
   const toggle = () => {
     const a = audioRef.current;
     if (!a) return;
