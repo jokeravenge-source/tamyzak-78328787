@@ -49,7 +49,7 @@ const copy = {
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "leaderboard" | "news" | "premium" | "more" | "todo" | "ministerialBank" | "mindmap";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "leaderboard" | "news" | "premium" | "more" | "todo" | "ministerialBank" | "mindmap" | "islamicSurahs";
 
 const MainMenu = ({
   language,
