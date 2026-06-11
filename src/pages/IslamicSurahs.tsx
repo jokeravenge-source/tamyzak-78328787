@@ -193,15 +193,7 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
               {RECITERS.map((r, i) => (
                 <button
                   key={r.id}
-                  onClick={() => {
-                    setReciterIdx(i);
-                    setTime(0);
-                    setPlaying(false);
-                    if (audioRef.current) {
-                      audioRef.current.pause();
-                      audioRef.current.currentTime = 0;
-                    }
-                  }}
+                  onClick={() => setReciterIdx(i)}
                   className={`px-3 py-1.5 rounded-full text-xs border transition ${
                     i === reciterIdx
                       ? "bg-primary text-primary-foreground border-primary"
