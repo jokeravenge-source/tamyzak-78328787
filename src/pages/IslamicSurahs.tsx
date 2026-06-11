@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Play, Pause, SkipBack, Volume2 } from "lucide-re
 import type { AppLanguage } from "@/components/LanguageGate";
 import audioAsset from "@/assets/surah-al-imran-90-94.mp3.asset.json";
 import audioBaqarah from "@/assets/surah-al-baqarah-153-157.mp3.asset.json";
+import audioAnbiya from "@/assets/surah-al-anbiya-1-7.mp3.asset.json";
 
 type Line = { t: number; ar: string };
 
@@ -32,6 +33,16 @@ const BAQARAH_LINES: Line[] = [
   { t: 72,   ar: "أُولَٰئِكَ عَلَيْهِمْ صَلَوَاتٌ مِّن رَّبِّهِمْ وَرَحْمَةٌ ۚ وَأُولَٰئِكَ هُمُ الْمُهْتَدُونَ" },
 ];
 
+const ANBIYA_LINES: Line[] = [
+  { t: 0,    ar: "اقْتَرَبَ لِلنَّاسِ حِسَابُهُمْ وَهُمْ فِي غَفْلَةٍ مُّعْرِضُونَ" },
+  { t: 12,   ar: "مَا يَأْتِيهِم مِّن ذِكْرٍ مِّن رَّبِّهِم مُّحْدَثٍ إِلَّا اسْتَمَعُوهُ وَهُمْ يَلْعَبُونَ" },
+  { t: 26,   ar: "لَاهِيَةً قُلُوبُهُمْ ۗ وَأَسَرُّوا النَّجْوَى الَّذِينَ ظَلَمُوا هَلْ هَٰذَا إِلَّا بَشَرٌ مِّثْلُكُمْ ۖ أَفَتَأْتُونَ السِّحْرَ وَأَنتُمْ تُبْصِرُونَ" },
+  { t: 52,   ar: "قَالَ رَبِّي يَعْلَمُ الْقَوْلَ فِي السَّمَاءِ وَالْأَرْضِ ۖ وَهُوَ السَّمِيعُ الْعَلِيمُ" },
+  { t: 66,   ar: "بَلْ قَالُوا أَضْغَاثُ أَحْلَامٍ بَلِ افْتَرَاهُ بَلْ هُوَ شَاعِرٌ فَلْيَأْتِنَا بِآيَةٍ كَمَا أُرْسِلَ الْأَوَّلُونَ" },
+  { t: 90,   ar: "مَا آمَنَتْ قَبْلَهُم مِّن قَرْيَةٍ أَهْلَكْنَاهَا ۖ أَفَهُمْ يُؤْمِنُونَ" },
+  { t: 102,  ar: "وَمَا أَرْسَلْنَا قَبْلَكَ إِلَّا رِجَالًا نُّوحِي إِلَيْهِمْ ۖ فَاسْأَلُوا أَهْلَ الذِّكْرِ إِن كُنتُمْ لَا تَعْلَمُونَ" },
+];
+
 const SURAHS = [
   {
     id: "imran",
@@ -50,6 +61,15 @@ const SURAHS = [
     subtitleEn: "Surah Al-Baqarah · Verses 153 – 157",
     url: audioBaqarah.url,
     lines: BAQARAH_LINES,
+  },
+  {
+    id: "anbiya",
+    labelAr: "الأنبياء 1-7",
+    labelEn: "Al-Anbiya 1-7",
+    subtitleAr: "سورة الأنبياء · الآيات 1 - 7",
+    subtitleEn: "Surah Al-Anbiya · Verses 1 – 7",
+    url: audioAnbiya.url,
+    lines: ANBIYA_LINES,
   },
 ];
 
