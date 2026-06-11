@@ -150,6 +150,14 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     ],
   },
   {
+    titleEn: "Ministerial",
+    titleAr: "الوزاري",
+    items: [
+      { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
+      { key: "ministerialBank", labelEn: "Questions", labelAr: "الأسئلة", Icon: ScrollText },
+    ],
+  },
+  {
     titleEn: "Account",
     titleAr: "الحساب",
     items: [
@@ -313,6 +321,7 @@ const Basics = ({
     Study: Layers,
     Progress: Target,
     Community: Users,
+    Ministerial: ScrollText,
     Account: Settings,
   };
   const currentGroup = NAV_GROUPS.find((g) => g.titleEn === activeGroup) ?? NAV_GROUPS[0];
