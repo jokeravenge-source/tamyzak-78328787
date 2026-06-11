@@ -3,7 +3,7 @@ import {
   ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
-  Crown, UserCog, BookOpen, Heart, Users, Settings,
+  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -155,6 +155,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     items: [
       { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
       { key: "ministerialBank", labelEn: "Questions", labelAr: "الأسئلة", Icon: ScrollText },
+      { key: "islamicSurahs", labelEn: "Islamic Surahs", labelAr: "سور إسلامية", Icon: Moon },
     ],
   },
   {

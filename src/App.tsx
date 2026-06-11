@@ -39,6 +39,7 @@ import News from "./pages/News";
 import Premium from "./pages/Premium";
 import MinisterialBank from "./pages/MinisterialBank";
 import MindMap from "./pages/MindMap";
+import IslamicSurahs from "./pages/IslamicSurahs";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 
@@ -153,7 +154,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -269,6 +270,8 @@ const App = () => {
         <MinisterialBank language={language} onBack={backToBasics} />
       ) : menuChoice === "mindmap" ? (
         <MindMap language={language} onBack={backToBasics} />
+      ) : menuChoice === "islamicSurahs" ? (
+        <IslamicSurahs language={language} onBack={backToBasics} />
       ) : menuChoice === "premium" ? (
         <Premium language={language} onBack={resetMenu} />
       ) : menuChoice === "more" ? (
