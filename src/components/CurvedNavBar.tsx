@@ -1,13 +1,13 @@
-import { Home, UserCog, Trophy, Crown } from "lucide-react";
+import { Home, UserCog, Trophy, Crown, ScrollText } from "lucide-react";
 import { motion, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 
-type TabKey = "basics" | "leaderboard" | "account" | "premium" | "more";
+type TabKey = "basics" | "leaderboard" | "ministerialBank" | "account" | "premium" | "more";
 
 const labels = {
-  en: { basics: "Home", leaderboard: "Leaders", account: "Account", premium: "Premium", library: "Library", donate: "Donate" },
-  ar: { basics: "الرئيسية", leaderboard: "المتصدرون", account: "الحساب", premium: "بريميوم", library: "مكتبة", donate: "تبرع" },
+  en: { basics: "Home", leaderboard: "Leaders", ministerialBank: "Exam", account: "Account", premium: "Premium", library: "Library", donate: "Donate" },
+  ar: { basics: "الرئيسية", leaderboard: "المتصدرون", ministerialBank: "الوزاري", account: "الحساب", premium: "بريميوم", library: "مكتبة", donate: "تبرع" },
 } as const;
 
 const CurvedNavBar = ({
@@ -23,6 +23,7 @@ const CurvedNavBar = ({
   const tabs: { key: Exclude<TabKey, "more">; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
     { key: "basics", label: L.basics, Icon: Home },
     { key: "leaderboard", label: L.leaderboard, Icon: Trophy },
+    { key: "ministerialBank", label: L.ministerialBank, Icon: ScrollText },
     { key: "premium", label: L.premium, Icon: Crown },
     { key: "account", label: L.account, Icon: UserCog },
   ];
