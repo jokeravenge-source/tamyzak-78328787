@@ -4,6 +4,7 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import audioAsset from "@/assets/surah-al-imran-90-94.mp3.asset.json";
 import audioBaqarah from "@/assets/surah-al-baqarah-153-157.mp3.asset.json";
 import audioAnbiya from "@/assets/surah-al-anbiya-1-7.mp3.asset.json";
+import audioNisa from "@/assets/surah-an-nisa-unit3.mp3.asset.json";
 
 type Line = { t: number; ar: string };
 
@@ -43,6 +44,10 @@ const ANBIYA_LINES: Line[] = [
   { t: 102,  ar: "وَمَا أَرْسَلْنَا قَبْلَكَ إِلَّا رِجَالًا نُّوحِي إِلَيْهِمْ ۖ فَاسْأَلُوا أَهْلَ الذِّكْرِ إِن كُنتُمْ لَا تَعْلَمُونَ" },
 ];
 
+const NISA_LINES: Line[] = [
+  { t: 0, ar: "آيات الحفظ من سورة النساء — الوحدة الثالثة" },
+];
+
 const SURAHS = [
   {
     id: "imran",
@@ -70,6 +75,15 @@ const SURAHS = [
     subtitleEn: "Surah Al-Anbiya · Verses 1 – 7",
     url: audioAnbiya.url,
     lines: ANBIYA_LINES,
+  },
+  {
+    id: "nisa",
+    labelAr: "النساء · الوحدة الثالثة",
+    labelEn: "An-Nisa · Unit 3",
+    subtitleAr: "سورة النساء · آيات الحفظ - الوحدة الثالثة",
+    subtitleEn: "Surah An-Nisa · Memorization Verses · Unit 3",
+    url: audioNisa.url,
+    lines: NISA_LINES,
   },
 ];
 
