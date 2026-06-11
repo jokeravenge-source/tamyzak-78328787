@@ -49,7 +49,23 @@ export const englishChapters: ChapterMeta[] = Array.from({ length: 8 }, (_, i) =
   locked: false,
 }));
 
-export type BankSubject = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic";
+export const islamicChapters: ChapterMeta[] = Array.from({ length: 6 }, (_, i) => ({
+  n: i + 1,
+  title: `Chapter ${i + 1}`,
+  arTitle: `الفصل ${i + 1}`,
+  subtitle: "",
+  locked: false,
+}));
+
+export const mathChapters: ChapterMeta[] = Array.from({ length: 8 }, (_, i) => ({
+  n: i + 1,
+  title: `Chapter ${i + 1}`,
+  arTitle: `الفصل ${i + 1}`,
+  subtitle: "",
+  locked: false,
+}));
+
+export type BankSubject = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic" | "islamic" | "math";
 
 export const SUBJECTS_ORDER: { code: BankSubject; en: string; ar: string }[] = [
   { code: "physics", en: "Physics", ar: "الفيزياء" },
@@ -58,6 +74,8 @@ export const SUBJECTS_ORDER: { code: BankSubject; en: string; ar: string }[] = [
   { code: "english", en: "English", ar: "الإنجليزية" },
   { code: "french", en: "French", ar: "الفرنسية" },
   { code: "arabic", en: "Arabic", ar: "العربية" },
+  { code: "islamic", en: "Islamic", ar: "الإسلامية" },
+  { code: "math", en: "Mathematics", ar: "الرياضيات" },
 ];
 
 export const getChaptersForSubject = (subject: BankSubject): ChapterMeta[] => {
@@ -68,5 +86,7 @@ export const getChaptersForSubject = (subject: BankSubject): ChapterMeta[] => {
     case "english": return englishChapters;
     case "french": return frenchChapters;
     case "arabic": return arabicChapters;
+    case "islamic": return islamicChapters;
+    case "math": return mathChapters;
   }
 };

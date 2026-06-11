@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
 import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
@@ -27,6 +27,8 @@ const subjectIcons: Record<BankSubject, React.ComponentType<{ className?: string
   english: BookOpen,
   french: LangIcon,
   arabic: BookOpen,
+  islamic: Moon,
+  math: Sigma,
 };
 
 const copy = {
