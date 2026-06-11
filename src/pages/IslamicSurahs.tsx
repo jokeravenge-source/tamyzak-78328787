@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Play, Pause, SkipBack, Volume2 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import audioAsset from "@/assets/surah-al-imran-90-94.mp3.asset.json";
+import audioAssetTammar from "@/assets/surah-al-imran-90-94-altammar.mp3.asset.json";
 
 type Line = { t: number; ar: string };
 
@@ -23,7 +24,10 @@ const LINES: Line[] = [
   { t: 154,  ar: "وَمَا كَانَ مِنَ الْمُشْرِكِينَ" },
 ];
 
-const AUDIO_URL = audioAsset.url;
+const RECITERS = [
+  { id: "default", labelAr: "القارئ الأول", labelEn: "Reciter 1", url: audioAsset.url },
+  { id: "tammar", labelAr: "الشيخ ميثم التمار", labelEn: "Sheikh Maytham Al-Tammar", url: audioAssetTammar.url },
+];
 
 const fmt = (s: number) => {
   if (!isFinite(s)) return "0:00";
@@ -39,6 +43,7 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [reciterIdx, setReciterIdx] = useState(0);
 
   const activeIdx = (() => {
     let i = -1;
@@ -110,7 +115,7 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
           <div className="p-6 md:p-8 border-b border-border" dir="ltr">
             <audio
               ref={audioRef}
-              src={AUDIO_URL}
+              src={RECITERS[reciterIdx].url}
               preload="metadata"
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
@@ -169,6 +174,30 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
                   className="flex-1 h-1 accent-primary cursor-pointer"
                 />
               </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-2" dir={language === "ar" ? "rtl" : "ltr"}>
+              {RECITERS.map((r, i) => (
+                <button
+                  key={r.id}
+                  onClick={() => {
+                    setReciterIdx(i);
+                    setTime(0);
+                    setPlaying(false);
+                    if (audioRef.current) {
+                      audioRef.current.pause();
+                      audioRef.current.currentTime = 0;
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-xs border transition ${
+                    i === reciterIdx
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-secondary/50 text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
+                  }`}
+                >
+                  {language === "ar" ? r.labelAr : r.labelEn}
+                </button>
+              ))}
             </div>
           </div>
 
