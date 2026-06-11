@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Play, Pause, SkipBack, Volume2 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import audioAsset from "@/assets/surah-al-imran-90-94.mp3.asset.json";
-import audioAssetTammar from "@/assets/surah-al-imran-90-94-altammar.mp3.asset.json";
+import audioBaqarah from "@/assets/surah-al-baqarah-153-157.mp3.asset.json";
 
 type Line = { t: number; ar: string };
 
 // Replace these timestamps and text to re-sync with a different recitation.
-const LINES: Line[] = [
+const IMRAN_LINES: Line[] = [
   { t: 0,    ar: "إِنَّ الَّذِينَ كَفَرُوا بَعْدَ إِيمَانِهِمْ ثُمَّ ازْدَادُوا كُفْرًا" },
   { t: 8,    ar: "لَّن تُقْبَلَ تَوْبَتُهُمْ وَأُولَٰئِكَ هُمُ الضَّالُّونَ" },
   { t: 16,   ar: "إِنَّ الَّذِينَ كَفَرُوا وَمَاتُوا وَهُمْ كُفَّارٌ" },
@@ -24,9 +24,33 @@ const LINES: Line[] = [
   { t: 114,  ar: "وَمَا كَانَ مِنَ الْمُشْرِكِينَ" },
 ];
 
-const RECITERS = [
-  { id: "default", labelAr: "القارئ الأول", labelEn: "Reciter 1", url: audioAsset.url },
-  { id: "tammar", labelAr: "الشيخ ميثم التمار", labelEn: "Sheikh Maytham Al-Tammar", url: audioAssetTammar.url },
+const BAQARAH_LINES: Line[] = [
+  { t: 0,    ar: "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ ۚ إِنَّ اللَّهَ مَعَ الصَّابِرِينَ" },
+  { t: 22,   ar: "وَلَا تَقُولُوا لِمَن يُقْتَلُ فِي سَبِيلِ اللَّهِ أَمْوَاتٌ ۚ بَلْ أَحْيَاءٌ وَلَٰكِن لَّا تَشْعُرُونَ" },
+  { t: 40,   ar: "وَلَنَبْلُوَنَّكُم بِشَيْءٍ مِّنَ الْخَوْفِ وَالْجُوعِ وَنَقْصٍ مِّنَ الْأَمْوَالِ وَالْأَنفُسِ وَالثَّمَرَاتِ ۗ وَبَشِّرِ الصَّابِرِينَ" },
+  { t: 62,   ar: "الَّذِينَ إِذَا أَصَابَتْهُم مُّصِيبَةٌ قَالُوا إِنَّا لِلَّهِ وَإِنَّا إِلَيْهِ رَاجِعُونَ" },
+  { t: 72,   ar: "أُولَٰئِكَ عَلَيْهِمْ صَلَوَاتٌ مِّن رَّبِّهِمْ وَرَحْمَةٌ ۚ وَأُولَٰئِكَ هُمُ الْمُهْتَدُونَ" },
+];
+
+const SURAHS = [
+  {
+    id: "imran",
+    labelAr: "آل عمران 90-94",
+    labelEn: "Al-Imran 90-94",
+    subtitleAr: "سورة آل عمران · الآيات 90 - 94",
+    subtitleEn: "Surah Al-Imran · Verses 90 – 94",
+    url: audioAsset.url,
+    lines: IMRAN_LINES,
+  },
+  {
+    id: "baqarah",
+    labelAr: "البقرة 153-157",
+    labelEn: "Al-Baqarah 153-157",
+    subtitleAr: "سورة البقرة · الآيات 153 - 157",
+    subtitleEn: "Surah Al-Baqarah · Verses 153 – 157",
+    url: audioBaqarah.url,
+    lines: BAQARAH_LINES,
+  },
 ];
 
 const fmt = (s: number) => {
@@ -43,7 +67,9 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
-  const [reciterIdx, setReciterIdx] = useState(0);
+  const [surahIdx, setSurahIdx] = useState(0);
+  const surah = SURAHS[surahIdx];
+  const LINES = surah.lines;
 
   const activeIdx = (() => {
     let i = -1;
@@ -71,7 +97,7 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
     if (wasPlaying) {
       a.play().catch(() => {});
     }
-  }, [reciterIdx]);
+  }, [surahIdx]);
 
   const toggle = () => {
     const a = audioRef.current;
@@ -96,11 +122,8 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
 
   const jumpToLine = (t: number) => seek(t);
 
-  const dir = "rtl";
   const title = language === "ar" ? "سور إسلامية" : "Islamic Surahs";
-  const subtitle = language === "ar"
-    ? "سورة آل عمران · الآيات 90 - 94"
-    : "Surah Al-Imran · Verses 90 – 94";
+  const subtitle = language === "ar" ? surah.subtitleAr : surah.subtitleEn;
 
   return (
     <main className="min-h-screen px-4 py-10 md:py-16 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -128,7 +151,7 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
           <div className="p-6 md:p-8 border-b border-border" dir="ltr">
             <audio
               ref={audioRef}
-              src={RECITERS[reciterIdx].url}
+              src={surah.url}
               preload="metadata"
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
@@ -190,17 +213,17 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-2" dir={language === "ar" ? "rtl" : "ltr"}>
-              {RECITERS.map((r, i) => (
+              {SURAHS.map((s, i) => (
                 <button
-                  key={r.id}
-                  onClick={() => setReciterIdx(i)}
+                  key={s.id}
+                  onClick={() => setSurahIdx(i)}
                   className={`px-3 py-1.5 rounded-full text-xs border transition ${
-                    i === reciterIdx
+                    i === surahIdx
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-secondary/50 text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
                   }`}
                 >
-                  {language === "ar" ? r.labelAr : r.labelEn}
+                  {language === "ar" ? s.labelAr : s.labelEn}
                 </button>
               ))}
             </div>
