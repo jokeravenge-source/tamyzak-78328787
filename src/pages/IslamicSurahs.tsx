@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Play, Pause, SkipBack, Volume2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Play, Pause, SkipBack, Volume2, X } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import audioAsset from "@/assets/surah-al-imran-90-94.mp3.asset.json";
 import audioBaqarah from "@/assets/surah-al-baqarah-153-157.mp3.asset.json";
@@ -197,6 +197,14 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
       >
         {language === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
         <span className="hidden sm:inline">{language === "ar" ? "رجوع" : "Back"}</span>
+      </button>
+
+      <button
+        onClick={onBack}
+        aria-label={language === "ar" ? "خروج" : "Exit"}
+        className="absolute top-6 right-6 z-20 w-10 h-10 inline-flex items-center justify-center rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-muted-foreground hover:text-foreground hover:border-destructive/60 hover:bg-destructive/10 transition-all"
+      >
+        <X className="w-4 h-4" />
       </button>
 
       <div className="max-w-3xl mx-auto relative z-10">
