@@ -49,13 +49,12 @@ export const englishChapters: ChapterMeta[] = Array.from({ length: 8 }, (_, i) =
   locked: false,
 }));
 
-export const islamicChapters: ChapterMeta[] = Array.from({ length: 6 }, (_, i) => ({
-  n: i + 1,
-  title: `Chapter ${i + 1}`,
-  arTitle: `الفصل ${i + 1}`,
-  subtitle: "",
-  locked: false,
-}));
+export const islamicChapters: ChapterMeta[] = [
+  { n: 1, title: "الوحدة الأولى", arTitle: "الوحدة الأولى", subtitle: "", locked: false },
+  { n: 2, title: "الوحدة الثانية", arTitle: "الوحدة الثانية", subtitle: "", locked: false },
+  { n: 3, title: "الوحدة الثالثة", arTitle: "الوحدة الثالثة", subtitle: "", locked: false },
+  { n: 4, title: "الوحدة الرابعة", arTitle: "الوحدة الرابعة", subtitle: "", locked: false },
+];
 
 export const mathChapters: ChapterMeta[] = Array.from({ length: 8 }, (_, i) => ({
   n: i + 1,
