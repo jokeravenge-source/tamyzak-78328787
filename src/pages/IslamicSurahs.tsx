@@ -60,6 +60,19 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [activeIdx]);
 
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    const wasPlaying = !a.paused;
+    a.pause();
+    a.load();
+    a.currentTime = 0;
+    setTime(0);
+    if (wasPlaying) {
+      a.play().catch(() => {});
+    }
+  }, [reciterIdx]);
+
   const toggle = () => {
     const a = audioRef.current;
     if (!a) return;
@@ -180,15 +193,7 @@ const IslamicSurahs = ({ language, onBack }: { language: AppLanguage; onBack: ()
               {RECITERS.map((r, i) => (
                 <button
                   key={r.id}
-                  onClick={() => {
-                    setReciterIdx(i);
-                    setTime(0);
-                    setPlaying(false);
-                    if (audioRef.current) {
-                      audioRef.current.pause();
-                      audioRef.current.currentTime = 0;
-                    }
-                  }}
+                  onClick={() => setReciterIdx(i)}
                   className={`px-3 py-1.5 rounded-full text-xs border transition ${
                     i === reciterIdx
                       ? "bg-primary text-primary-foreground border-primary"
