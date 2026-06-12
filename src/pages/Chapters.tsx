@@ -36,6 +36,7 @@ const chemistryChapters = [
 
 const arabicChapters = [
   { n: 1, title: "Literature 1", arTitle: "الأدب الجزء الأول", subtitle: "", locked: false },
+  { n: 2, title: "Exclamation", arTitle: "التعجب", subtitle: "أسئلة وأجوبة موضوع التعجب", locked: false },
 ];
 
 const islamicChapters = [
