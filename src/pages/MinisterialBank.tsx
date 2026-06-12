@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma, Loader2, AlertTriangle } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
 import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
@@ -19,6 +19,8 @@ import { ministerialPhysicsCh1Ar } from "@/data/ministerialPhysicsCh1Ar";
 import { ministerialPhysicsCh2 } from "@/data/ministerialPhysicsCh2";
 import { ministerialPhysicsCh2Ar } from "@/data/ministerialPhysicsCh2Ar";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const subjectIcons: Record<BankSubject, React.ComponentType<{ className?: string }>> = {
   physics: Atom,
@@ -52,6 +54,19 @@ const copy = {
     backToQuestion: "Back to question",
     gotIt: "I got it right",
     gotItWrong: "I got it wrong",
+    hadithTitle: "Hadith Checker",
+    hadithDesc: "Type a Prophetic Hadith and the AI will check it against the official curriculum book.",
+    hadithPlaceholder: "Type the hadith here...",
+    verify: "Check Hadith",
+    verifying: "Checking...",
+    verdictCorrect: "Correct",
+    verdictMinor: "Almost correct",
+    verdictIncorrect: "Incorrect wording",
+    verdictNotFound: "Not found in the reference book",
+    correctText: "Correct text from the book",
+    mistakes: "Differences",
+    source: "Source hint",
+    errorGeneric: "Couldn't check right now. Please try again.",
   },
   ar: {
     badge: "بنك الوزاريات",
@@ -73,8 +88,30 @@ const copy = {
     backToQuestion: "العودة إلى السؤال",
     gotIt: "إجابتي صحيحة",
     gotItWrong: "إجابتي خاطئة",
+    hadithTitle: "فاحص الأحاديث",
+    hadithDesc: "اكتب حديثاً نبوياً وسيتحقق الذكاء الاصطناعي من صحته بالاعتماد على كتاب المنهج الرسمي.",
+    hadithPlaceholder: "اكتب الحديث هنا...",
+    verify: "تحقّق من الحديث",
+    verifying: "جاري التحقق...",
+    verdictCorrect: "صحيح",
+    verdictMinor: "قريب من الصحيح",
+    verdictIncorrect: "صياغة غير صحيحة",
+    verdictNotFound: "غير موجود في كتاب المنهج",
+    correctText: "النص الصحيح من الكتاب",
+    mistakes: "الفروقات",
+    source: "المصدر",
+    errorGeneric: "تعذّر التحقق الآن. حاول مرة أخرى.",
   },
 } as const;
+
+type HadithResult = {
+  verdict: "correct" | "minor_errors" | "incorrect" | "not_in_reference";
+  score?: number;
+  summary?: string;
+  correct_text?: string;
+  differences?: string[];
+  source_hint?: string;
+};
 
 const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const t = copy[language];
@@ -83,6 +120,9 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [reviewing, setReviewing] = useState(false);
+  const [hadithInput, setHadithInput] = useState("");
+  const [hadithLoading, setHadithLoading] = useState(false);
+  const [hadithResult, setHadithResult] = useState<HadithResult | null>(null);
 
   const back = () => {
     if (reviewing) {
@@ -93,8 +133,42 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
       setAnswers({});
     } else if (subject) {
       setSubject(null);
+      setHadithInput("");
+      setHadithResult(null);
     } else {
       onBack();
+    }
+  };
+
+  const verifyHadith = async () => {
+    const text = hadithInput.trim();
+    if (!text || hadithLoading) return;
+    setHadithLoading(true);
+    setHadithResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-hadith", {
+        body: { hadith: text, language },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
+      setHadithResult(data?.result as HadithResult);
+    } catch (e) {
+      toast({ title: t.errorGeneric, variant: "destructive" });
+    } finally {
+      setHadithLoading(false);
+    }
+  };
+
+  const verdictMeta = (v: HadithResult["verdict"]) => {
+    switch (v) {
+      case "correct":
+        return { label: t.verdictCorrect, color: "emerald", Icon: Check };
+      case "minor_errors":
+        return { label: t.verdictMinor, color: "amber", Icon: AlertTriangle };
+      case "incorrect":
+        return { label: t.verdictIncorrect, color: "red", Icon: X };
+      default:
+        return { label: t.verdictNotFound, color: "muted", Icon: X };
     }
   };
 
@@ -171,6 +245,86 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
               </button>
             );
           })}
+        </section>
+      ) : subject === "islamic" ? (
+        <section className="max-w-3xl mx-auto mt-12 z-10 relative animate-fade-up space-y-5">
+          <div className="rounded-3xl p-6 md:p-8 border border-primary/40 bg-secondary/40 backdrop-blur">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <ScrollText className="w-5 h-5 text-primary" />
+              </div>
+              <h2 className="text-xl md:text-2xl font-semibold text-foreground">{t.hadithTitle}</h2>
+            </div>
+            <p className="text-muted-foreground text-sm md:text-base">{t.hadithDesc}</p>
+          </div>
+
+          <Textarea
+            value={hadithInput}
+            onChange={(e) => setHadithInput(e.target.value)}
+            placeholder={t.hadithPlaceholder}
+            className="min-h-[180px] rounded-2xl bg-secondary/40 backdrop-blur border-white/10 text-base"
+            dir="rtl"
+          />
+
+          <button
+            onClick={verifyHadith}
+            disabled={hadithLoading || !hadithInput.trim()}
+            className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {hadithLoading ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> {t.verifying}</>
+            ) : (
+              <><Eye className="w-4 h-4" /> {t.verify}</>
+            )}
+          </button>
+
+          {hadithResult && (() => {
+            const m = verdictMeta(hadithResult.verdict);
+            const colorMap: Record<string, string> = {
+              emerald: "border-emerald-400/40 bg-emerald-500/10 text-emerald-300",
+              amber: "border-amber-400/40 bg-amber-500/10 text-amber-300",
+              red: "border-red-400/40 bg-red-500/10 text-red-300",
+              muted: "border-white/10 bg-secondary/40 text-muted-foreground",
+            };
+            return (
+              <div className="space-y-4">
+                <div className={`rounded-3xl p-6 border backdrop-blur ${colorMap[m.color]}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <m.Icon className="w-5 h-5" />
+                    <span className="font-semibold">{m.label}</span>
+                    {typeof hadithResult.score === "number" && (
+                      <span className="ms-auto text-xs opacity-80">{hadithResult.score}%</span>
+                    )}
+                  </div>
+                  {hadithResult.summary && (
+                    <p className="text-foreground/90 leading-relaxed">{hadithResult.summary}</p>
+                  )}
+                </div>
+
+                {hadithResult.correct_text && (
+                  <div className="rounded-3xl p-6 border border-emerald-400/30 bg-emerald-500/5 backdrop-blur">
+                    <div className="text-xs uppercase tracking-[0.25em] text-emerald-300 mb-2">{t.correctText}</div>
+                    <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap" dir="rtl">{hadithResult.correct_text}</p>
+                  </div>
+                )}
+
+                {hadithResult.differences && hadithResult.differences.length > 0 && (
+                  <div className="rounded-3xl p-6 border border-white/10 bg-secondary/40 backdrop-blur">
+                    <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-2">{t.mistakes}</div>
+                    <ul className="list-disc ps-5 space-y-1 text-foreground/80">
+                      {hadithResult.differences.map((d, i) => <li key={i}>{d}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                {hadithResult.source_hint && (
+                  <div className="rounded-2xl p-4 border border-white/10 bg-secondary/30 backdrop-blur text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground/80">{t.source}:</span> {hadithResult.source_hint}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </section>
       ) : chapterN === null ? (
         <section className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 z-10 relative">
