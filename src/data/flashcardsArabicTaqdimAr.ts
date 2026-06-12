@@ -1,4 +1,4 @@
-export const flashcardsArabicTaqdimAr = [
+export const flashcardsArabicTaqdimAr: { q: string; a: string }[] = [
   {
     "q": "النص (آية أو بيت شعري)",
     "a": "المتقدم"

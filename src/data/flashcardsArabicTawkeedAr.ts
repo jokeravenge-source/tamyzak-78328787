@@ -1,4 +1,4 @@
-export const flashcardsArabicTawkeedAr = [
+export const flashcardsArabicTawkeedAr: { q: string; a: string }[] = [
   {
     "q": "س: قال تعالى: ﴿وَمَا رَبُّكَ بِظَلَّامٍ لِلْعَبِيدِ﴾، ما نوع التوكيد؟",
     "a": "ج: التوكيد في \"بظلام\"، ونوعه توكيد بالحرف الزائد (الباء)."
