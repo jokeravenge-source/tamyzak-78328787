@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Sparkles, Eye, Loader2, Check, X, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Sparkles, Eye, Loader2, Check, X, AlertTriangle, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,21 @@ type HadithResult = {
   differences?: string[];
   source_hint?: string;
 };
+
+const HADITHS: { name: string }[] = [
+  { name: "حديث النية" },
+  { name: "حديث الإحسان" },
+  { name: "حديث الرفق" },
+  { name: "حديث طلب العلم" },
+  { name: "حديث بر الوالدين" },
+  { name: "حديث الصدق" },
+  { name: "حديث الحياء" },
+  { name: "حديث المسلم من سلم المسلمون من لسانه ويده" },
+  { name: "حديث الجار" },
+  { name: "حديث الكلمة الطيبة صدقة" },
+  { name: "حديث إماطة الأذى عن الطريق" },
+  { name: "حديث من غشّنا فليس منا" },
+];
 
 const copy = {
   en: {
@@ -30,6 +45,10 @@ const copy = {
     mistakes: "Differences",
     source: "Source hint",
     errorGeneric: "Couldn't check right now. Please try again.",
+    selectHadith: "Pick a hadith",
+    prev: "Previous",
+    next: "Next",
+    hadithLabel: "Hadith",
   },
   ar: {
     badge: "فاحص الأحاديث",
@@ -46,14 +65,28 @@ const copy = {
     mistakes: "الفروقات",
     source: "المصدر",
     errorGeneric: "تعذّر التحقق الآن. حاول مرة أخرى.",
+    selectHadith: "اختر حديثاً",
+    prev: "السابق",
+    next: "التالي",
+    hadithLabel: "الحديث",
   },
 } as const;
 
 const HadithChecker = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const t = copy[language];
+  const [index, setIndex] = useState(0);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HadithResult | null>(null);
+  const current = HADITHS[index];
+
+  const goTo = (i: number) => {
+    setIndex(i);
+    setInput("");
+    setResult(null);
+  };
+  const goPrev = () => goTo((index - 1 + HADITHS.length) % HADITHS.length);
+  const goNext = () => goTo((index + 1) % HADITHS.length);
 
   const verify = async () => {
     const text = input.trim();
@@ -62,7 +95,7 @@ const HadithChecker = ({ language, onBack }: { language: AppLanguage; onBack: ()
     setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("verify-hadith", {
-        body: { hadith: text, language },
+        body: { hadith: text, language, hadithName: current.name },
       });
       if (error) throw error;
       if (data?.error) throw new Error(String(data.error));
@@ -110,6 +143,46 @@ const HadithChecker = ({ language, onBack }: { language: AppLanguage; onBack: ()
       </header>
 
       <section className="max-w-3xl mx-auto mt-12 z-10 relative animate-fade-up space-y-5">
+        <div className="rounded-3xl p-5 border border-white/10 bg-secondary/40 backdrop-blur space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={goPrev}
+              aria-label={t.prev}
+              className="w-10 h-10 rounded-full border border-white/10 bg-background/40 flex items-center justify-center hover:border-primary/40 transition-colors"
+            >
+              {language === "ar" ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+            </button>
+            <div className="flex-1 text-center">
+              <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-1">
+                {t.hadithLabel} {index + 1} / {HADITHS.length}
+              </div>
+              <div className="text-lg md:text-xl font-semibold text-foreground" dir="rtl">{current.name}</div>
+            </div>
+            <button
+              onClick={goNext}
+              aria-label={t.next}
+              className="w-10 h-10 rounded-full border border-white/10 bg-background/40 flex items-center justify-center hover:border-primary/40 transition-colors"
+            >
+              {language === "ar" ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+            </button>
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-muted-foreground mb-2">
+              <BookOpen className="w-3.5 h-3.5" /> {t.selectHadith}
+            </label>
+            <select
+              value={index}
+              onChange={(e) => goTo(Number(e.target.value))}
+              className="w-full h-11 rounded-2xl bg-background/40 border border-white/10 px-3 text-base text-foreground"
+              dir="rtl"
+            >
+              {HADITHS.map((h, i) => (
+                <option key={i} value={i}>{i + 1}. {h.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}

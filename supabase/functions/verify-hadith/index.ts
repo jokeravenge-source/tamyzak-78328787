@@ -33,7 +33,7 @@ async function loadReference(): Promise<string> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { hadith, language } = await req.json();
+    const { hadith, language, hadithName } = await req.json();
     if (!hadith || typeof hadith !== "string" || !hadith.trim()) {
       return new Response(JSON.stringify({ error: "hadith text required" }), {
         status: 400,
@@ -52,7 +52,11 @@ Deno.serve(async (req) => {
     const reference = await loadReference();
     const lang = language === "en" ? "English" : "Arabic";
 
-    const system = `You are a careful checker of Prophetic Hadiths for an Iraqi 6th-grade Islamic Education student. You are given the OFFICIAL REFERENCE (the curriculum book "الدرر النقية في الأحاديث النبوية") and the student's typed hadith. Your job is to verify whether the student's text matches a hadith from the reference.\n\nReturn ONLY valid JSON (no markdown fences) with this exact shape:\n{\n  "verdict": "correct" | "minor_errors" | "incorrect" | "not_in_reference",\n  "score": 0-100,\n  "summary": "one short sentence in ${lang}",\n  "correct_text": "the exact correct hadith text from the reference, or empty string if not found",\n  "differences": ["short bullet of each mistake in ${lang}", ...],\n  "source_hint": "short reference / chapter / page hint from the book if visible, else empty"\n}\n\nRules:\n- "correct" = matches the reference essentially word-for-word (allow tiny diacritic / spacing differences).\n- "minor_errors" = same hadith, but with small word/letter mistakes.\n- "incorrect" = the hadith exists in the reference but the student's wording is significantly wrong.\n- "not_in_reference" = no matching hadith found in the reference book.\n- Always write user-facing fields (summary, differences) in ${lang}.\n- Compare Arabic text carefully; ignore differences in tashkeel (diacritics) and minor spacing.\n\n---REFERENCE BOOK TEXT (may be partial)---\n${reference}\n---END REFERENCE---`;
+    const targetLine = hadithName && typeof hadithName === "string" && hadithName.trim()
+      ? `\nThe student is specifically trying to recall this hadith: "${hadithName.trim()}". Compare their wording against THIS specific hadith from the reference. If their text actually matches a different hadith, mark it as "incorrect" and put the correct text of the requested hadith in correct_text.`
+      : "";
+
+    const system = `You are a careful checker of Prophetic Hadiths for an Iraqi 6th-grade Islamic Education student. You are given the OFFICIAL REFERENCE (the curriculum book "الدرر النقية في الأحاديث النبوية") and the student's typed hadith. Your job is to verify whether the student's text matches a hadith from the reference.${targetLine}\n\nReturn ONLY valid JSON (no markdown fences) with this exact shape:\n{\n  "verdict": "correct" | "minor_errors" | "incorrect" | "not_in_reference",\n  "score": 0-100,\n  "summary": "one short sentence in ${lang}",\n  "correct_text": "the exact correct hadith text from the reference, or empty string if not found",\n  "differences": ["short bullet of each mistake in ${lang}", ...],\n  "source_hint": "short reference / chapter / page hint from the book if visible, else empty"\n}\n\nRules:\n- "correct" = matches the reference essentially word-for-word (allow tiny diacritic / spacing differences).\n- "minor_errors" = same hadith, but with small word/letter mistakes.\n- "incorrect" = the hadith exists in the reference but the student's wording is significantly wrong.\n- "not_in_reference" = no matching hadith found in the reference book.\n- Always write user-facing fields (summary, differences) in ${lang}.\n- Compare Arabic text carefully; ignore differences in tashkeel (diacritics) and minor spacing.\n\n---REFERENCE BOOK TEXT (may be partial)---\n${reference}\n---END REFERENCE---`;
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
