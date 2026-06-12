@@ -364,8 +364,6 @@ const AccountCenter = ({
           </div>
         )}
 
-        <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-8">
-        </div>
         {!loading && (
           <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6">
             <div className="flex items-center gap-3 mb-4">
