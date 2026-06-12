@@ -40,6 +40,7 @@ import { flashcardsArabicTaajjubAr } from "@/data/flashcardsArabicTaajjubAr";
 import { flashcardsArabicTawkeedAr } from "@/data/flashcardsArabicTawkeedAr";
 import { flashcardsArabicTaqdimAr } from "@/data/flashcardsArabicTaqdimAr";
 import { flashcardsArabicNidaAr } from "@/data/flashcardsArabicNidaAr";
+import { flashcardsArabicIstifhamAr } from "@/data/flashcardsArabicIstifhamAr";
 import { flashcardsIslamicMeaningsAr } from "@/data/flashcardsIslamicMeaningsAr";
 import { flashcardsEngGrammar1 } from "@/data/flashcardsEngGrammar1";
 import { flashcardsFrenchNegationAr } from "@/data/flashcardsFrenchNegationAr";
@@ -196,6 +197,14 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "العربية · النداء" : "Arabic · Nida",
           cards: flashcardsArabicNidaAr,
+        };
+      }
+
+      if (subject === "arabic" && chapter === "6") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "العربية · الاستفهام" : "Arabic · Istifham",
+          cards: flashcardsArabicIstifhamAr,
         };
       }
 
