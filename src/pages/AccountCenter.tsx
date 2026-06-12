@@ -90,6 +90,7 @@ const AccountCenter = ({
   const [savedName, setSavedName] = useState("");
   const [pendingRequest, setPendingRequest] = useState<{ id: string; requested_name: string } | null>(null);
   const [subjectSeconds, setSubjectSeconds] = useState<Record<string, number>>({});
+  const [todaySubjectSeconds, setTodaySubjectSeconds] = useState<Record<string, number>>({});
 
   const tryPremium = (apply: () => void) => {
     if (!isPremium) {
@@ -133,23 +134,32 @@ const AccountCenter = ({
       // Aggregate study time per subject across all sessions
       {
         const totals: Record<string, number> = {};
+        const todayTotals: Record<string, number> = {};
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const startMs = startOfDay.getTime();
         const pageSize = 1000;
         let from = 0;
         // eslint-disable-next-line no-constant-condition
         while (true) {
           const { data: page, error } = await supabase
             .from("study_sessions")
-            .select("subject,duration_seconds")
+            .select("subject,duration_seconds,created_at")
             .eq("user_id", u.user.id)
             .range(from, from + pageSize - 1);
           if (error) break;
           (page ?? []).forEach((r: any) => {
-            totals[r.subject] = (totals[r.subject] ?? 0) + (r.duration_seconds ?? 0);
+            const secs = r.duration_seconds ?? 0;
+            totals[r.subject] = (totals[r.subject] ?? 0) + secs;
+            if (r.created_at && new Date(r.created_at).getTime() >= startMs) {
+              todayTotals[r.subject] = (todayTotals[r.subject] ?? 0) + secs;
+            }
           });
           if (!page || page.length < pageSize) break;
           from += pageSize;
         }
         setSubjectSeconds(totals);
+        setTodaySubjectSeconds(todayTotals);
       }
       const { data: pend } = await supabase
         .from("username_requests")
