@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle, Crown, Settings, Lock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import CurvedNavBar from "@/components/CurvedNavBar";
@@ -48,6 +49,24 @@ const HAIR_LABELS: Record<string, { en: string; ar: string }> = {
   braids: { en: "Braids", ar: "ضفائر" },
 };
 
+const SUBJECT_LABELS: Record<string, { en: string; ar: string }> = {
+  islamic: { en: "Islamic", ar: "التربية الإسلامية" },
+  arabic: { en: "Arabic", ar: "العربية" },
+  english: { en: "English", ar: "الإنجليزية" },
+  french: { en: "French", ar: "الفرنسية" },
+  math: { en: "Math", ar: "الرياضيات" },
+  physics: { en: "Physics", ar: "الفيزياء" },
+  chemistry: { en: "Chemistry", ar: "الكيمياء" },
+  biology: { en: "Biology", ar: "الأحياء" },
+};
+
+function formatHours(totalSeconds: number, isAr: boolean) {
+  const hours = totalSeconds / 3600;
+  if (hours >= 1) return `${hours.toFixed(1)} ${isAr ? "س" : "h"}`;
+  const mins = Math.max(0, Math.round(totalSeconds / 60));
+  return `${mins} ${isAr ? "د" : "m"}`;
+}
+
 const AccountCenter = ({
   language,
   onBack,
@@ -70,6 +89,7 @@ const AccountCenter = ({
   const [portalLoading, setPortalLoading] = useState(false);
   const [savedName, setSavedName] = useState("");
   const [pendingRequest, setPendingRequest] = useState<{ id: string; requested_name: string } | null>(null);
+  const [subjectSeconds, setSubjectSeconds] = useState<Record<string, number>>({});
 
   const tryPremium = (apply: () => void) => {
     if (!isPremium) {
@@ -110,6 +130,27 @@ const AccountCenter = ({
       setTraits(((p as any)?.character as CharacterTraits) ?? null);
       const { data: pts } = await supabase.from("user_points").select("points").eq("user_id", u.user.id);
       setPoints((pts ?? []).reduce((s: number, r: any) => s + (r.points ?? 0), 0));
+      // Aggregate study time per subject across all sessions
+      {
+        const totals: Record<string, number> = {};
+        const pageSize = 1000;
+        let from = 0;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { data: page, error } = await supabase
+            .from("study_sessions")
+            .select("subject,duration_seconds")
+            .eq("user_id", u.user.id)
+            .range(from, from + pageSize - 1);
+          if (error) break;
+          (page ?? []).forEach((r: any) => {
+            totals[r.subject] = (totals[r.subject] ?? 0) + (r.duration_seconds ?? 0);
+          });
+          if (!page || page.length < pageSize) break;
+          from += pageSize;
+        }
+        setSubjectSeconds(totals);
+      }
       const { data: pend } = await supabase
         .from("username_requests")
         .select("id, requested_name")
@@ -323,6 +364,43 @@ const AccountCenter = ({
           </div>
         )}
 
+        {!loading && (
+          <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">{language === "ar" ? "ساعات الدراسة" : "Study Hours"}</h2>
+                <p className="text-xs text-muted-foreground">
+                  {language === "ar" ? "إجمالي وقتك لكل مادة" : "Your total time per subject"}
+                </p>
+              </div>
+            </div>
+            {Object.keys(subjectSeconds).length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {language === "ar" ? "لا توجد جلسات بعد. ابدأ جلسة دراسة!" : "No sessions yet. Start a study session!"}
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {Object.entries(subjectSeconds)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([subj, secs]) => {
+                    const meta = SUBJECT_LABELS[subj];
+                    const label = meta ? (language === "ar" ? meta.ar : meta.en) : subj;
+                    return (
+                      <li key={subj} className="flex items-center justify-between rounded-xl border border-white/5 bg-background/30 px-3 py-2.5">
+                        <span className="text-sm font-medium">{label}</span>
+                        <span className="text-sm font-mono px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
+                          {formatHours(secs, language === "ar")}
+                        </span>
+                      </li>
+                    );
+                  })}
+              </ul>
+            )}
+          </div>
+        )}
         <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-8">
         <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
           <User className="w-7 h-7 text-primary" />
