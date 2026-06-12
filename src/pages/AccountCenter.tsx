@@ -91,6 +91,7 @@ const AccountCenter = ({
   const [pendingRequest, setPendingRequest] = useState<{ id: string; requested_name: string } | null>(null);
   const [subjectSeconds, setSubjectSeconds] = useState<Record<string, number>>({});
   const [todaySubjectSeconds, setTodaySubjectSeconds] = useState<Record<string, number>>({});
+  const [weeklyTotals, setWeeklyTotals] = useState<{ key: string; date: Date; seconds: number }[]>([]);
 
   const tryPremium = (apply: () => void) => {
     if (!isPremium) {
@@ -138,6 +139,17 @@ const AccountCenter = ({
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
         const startMs = startOfDay.getTime();
+        // Build last-7-day buckets (oldest -> today)
+        const dayBuckets: { key: string; date: Date; seconds: number }[] = [];
+        const dayIndex: Record<string, number> = {};
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(startOfDay);
+          d.setDate(d.getDate() - i);
+          const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+          dayIndex[key] = dayBuckets.length;
+          dayBuckets.push({ key, date: d, seconds: 0 });
+        }
+        const weekStartMs = dayBuckets[0].date.getTime();
         const pageSize = 1000;
         let from = 0;
         // eslint-disable-next-line no-constant-condition
@@ -151,8 +163,17 @@ const AccountCenter = ({
           (page ?? []).forEach((r: any) => {
             const secs = r.duration_seconds ?? 0;
             totals[r.subject] = (totals[r.subject] ?? 0) + secs;
-            if (r.created_at && new Date(r.created_at).getTime() >= startMs) {
-              todayTotals[r.subject] = (todayTotals[r.subject] ?? 0) + secs;
+            if (r.created_at) {
+              const t = new Date(r.created_at);
+              const tMs = t.getTime();
+              if (tMs >= startMs) {
+                todayTotals[r.subject] = (todayTotals[r.subject] ?? 0) + secs;
+              }
+              if (tMs >= weekStartMs) {
+                const k = `${t.getFullYear()}-${t.getMonth() + 1}-${t.getDate()}`;
+                const idx = dayIndex[k];
+                if (idx !== undefined) dayBuckets[idx].seconds += secs;
+              }
             }
           });
           if (!page || page.length < pageSize) break;
@@ -160,6 +181,7 @@ const AccountCenter = ({
         }
         setSubjectSeconds(totals);
         setTodaySubjectSeconds(todayTotals);
+        setWeeklyTotals(dayBuckets);
       }
       const { data: pend } = await supabase
         .from("username_requests")
