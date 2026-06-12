@@ -33,7 +33,7 @@ async function loadReference(): Promise<string> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { hadith, language, hadithName } = await req.json();
+    const { hadith, language, hadithName, referenceText } = await req.json();
     if (!hadith || typeof hadith !== "string" || !hadith.trim()) {
       return new Response(JSON.stringify({ error: "hadith text required" }), {
         status: 400,
@@ -49,7 +49,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const reference = await loadReference();
+    const reference = referenceText && typeof referenceText === "string" && referenceText.trim()
+      ? referenceText.trim()
+      : await loadReference();
     const lang = language === "en" ? "English" : "Arabic";
 
     const targetLine = hadithName && typeof hadithName === "string" && hadithName.trim()
