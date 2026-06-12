@@ -219,50 +219,15 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
           <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{t.badge}</span>
         </div>
         <h1 className="text-5xl md:text-7xl font-bold gradient-text leading-[1.1] mb-4">
-          {subject ? (language === "ar" ? subjectMeta?.ar : subjectMeta?.en) : t.title}
+          {hadithMode ? t.hadithTitle : subject ? (language === "ar" ? subjectMeta?.ar : subjectMeta?.en) : t.title}
         </h1>
         <p className="text-muted-foreground md:text-lg max-w-xl mx-auto">
-          {subject ? t.chooseChapter : t.description}
+          {hadithMode ? t.hadithDesc : subject ? t.chooseChapter : t.description}
         </p>
       </header>
 
-      {!subject ? (
-        <section className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 z-10 relative">
-          {SUBJECTS_ORDER.map((s, i) => {
-            const Icon = subjectIcons[s.code];
-            return (
-              <button
-                key={s.code}
-                onClick={() => setSubject(s.code)}
-                style={{ animationDelay: `${i * 70}ms` }}
-                className="group relative text-left rounded-3xl p-6 h-44 border border-primary/40 bg-secondary/40 backdrop-blur overflow-hidden cursor-pointer shadow-lg hover:-translate-y-2 hover:border-primary hover:shadow-[var(--shadow-glow)] transition-all duration-500 animate-fade-up"
-              >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
-                <div className="relative z-10 flex items-start justify-between">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-primary/15">
-                    <Icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
-                </div>
-                <div className="relative z-10 mt-6">
-                  <h3 className="text-2xl font-semibold text-foreground">{language === "ar" ? s.ar : s.en}</h3>
-                </div>
-              </button>
-            );
-          })}
-        </section>
-      ) : subject === "islamic" ? (
+      {hadithMode ? (
         <section className="max-w-3xl mx-auto mt-12 z-10 relative animate-fade-up space-y-5">
-          <div className="rounded-3xl p-6 md:p-8 border border-primary/40 bg-secondary/40 backdrop-blur">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                <ScrollText className="w-5 h-5 text-primary" />
-              </div>
-              <h2 className="text-xl md:text-2xl font-semibold text-foreground">{t.hadithTitle}</h2>
-            </div>
-            <p className="text-muted-foreground text-sm md:text-base">{t.hadithDesc}</p>
-          </div>
-
           <Textarea
             value={hadithInput}
             onChange={(e) => setHadithInput(e.target.value)}
@@ -270,7 +235,6 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
             className="min-h-[180px] rounded-2xl bg-secondary/40 backdrop-blur border-white/10 text-base"
             dir="rtl"
           />
-
           <button
             onClick={verifyHadith}
             disabled={hadithLoading || !hadithInput.trim()}
@@ -282,7 +246,6 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
               <><Eye className="w-4 h-4" /> {t.verify}</>
             )}
           </button>
-
           {hadithResult && (() => {
             const m = verdictMeta(hadithResult.verdict);
             const colorMap: Record<string, string> = {
@@ -305,14 +268,12 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
                     <p className="text-foreground/90 leading-relaxed">{hadithResult.summary}</p>
                   )}
                 </div>
-
                 {hadithResult.correct_text && (
                   <div className="rounded-3xl p-6 border border-emerald-400/30 bg-emerald-500/5 backdrop-blur">
                     <div className="text-xs uppercase tracking-[0.25em] text-emerald-300 mb-2">{t.correctText}</div>
                     <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap" dir="rtl">{hadithResult.correct_text}</p>
                   </div>
                 )}
-
                 {hadithResult.differences && hadithResult.differences.length > 0 && (
                   <div className="rounded-3xl p-6 border border-white/10 bg-secondary/40 backdrop-blur">
                     <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-2">{t.mistakes}</div>
@@ -321,7 +282,6 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
                     </ul>
                   </div>
                 )}
-
                 {hadithResult.source_hint && (
                   <div className="rounded-2xl p-4 border border-white/10 bg-secondary/30 backdrop-blur text-sm text-muted-foreground">
                     <span className="font-medium text-foreground/80">{t.source}:</span> {hadithResult.source_hint}
@@ -330,6 +290,47 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
               </div>
             );
           })()}
+        </section>
+      ) : !subject ? (
+        <section className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 z-10 relative">
+          <button
+            onClick={() => setHadithMode(true)}
+            className="group relative text-left rounded-3xl p-6 h-44 border border-primary/40 bg-secondary/40 backdrop-blur overflow-hidden cursor-pointer shadow-lg hover:-translate-y-2 hover:border-primary hover:shadow-[var(--shadow-glow)] transition-all duration-500 animate-fade-up"
+          >
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
+            <div className="relative z-10 flex items-start justify-between">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-primary/15">
+                <ScrollText className="w-6 h-6 text-primary" />
+              </div>
+              <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+            </div>
+            <div className="relative z-10 mt-6">
+              <h3 className="text-2xl font-semibold text-foreground">{t.hadithTitle}</h3>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.hadithDesc}</p>
+            </div>
+          </button>
+          {SUBJECTS_ORDER.map((s, i) => {
+            const Icon = subjectIcons[s.code];
+            return (
+              <button
+                key={s.code}
+                onClick={() => setSubject(s.code)}
+                style={{ animationDelay: `${i * 70}ms` }}
+                className="group relative text-left rounded-3xl p-6 h-44 border border-primary/40 bg-secondary/40 backdrop-blur overflow-hidden cursor-pointer shadow-lg hover:-translate-y-2 hover:border-primary hover:shadow-[var(--shadow-glow)] transition-all duration-500 animate-fade-up"
+              >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
+                <div className="relative z-10 flex items-start justify-between">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-primary/15">
+                    <Icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div className="relative z-10 mt-6">
+                  <h3 className="text-2xl font-semibold text-foreground">{language === "ar" ? s.ar : s.en}</h3>
+                </div>
+              </button>
+            );
+          })}
         </section>
       ) : chapterN === null ? (
         <section className="max-w-6xl mx-auto mt-14 md:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 z-10 relative">
