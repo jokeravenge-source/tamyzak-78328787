@@ -38,6 +38,10 @@ const arabicChapters = [
   { n: 1, title: "Literature 1", arTitle: "الأدب الجزء الأول", subtitle: "", locked: false },
 ];
 
+const islamicChapters = [
+  { n: 1, title: "Meanings", arTitle: "المعاني", subtitle: "معاني كلمات التربية الإسلامية", locked: false },
+];
+
 const frenchChapters = [
   { n: 1, title: "Negation", arTitle: "النفي", subtitle: "ne ... pas / jamais / plus", locked: false },
   { n: 2, title: "Interrogation", arTitle: "الاستفهام", subtitle: "Est-ce que / Inversion", locked: false },
@@ -92,6 +96,7 @@ const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLangua
     subject === "biology" ? biologyChapters :
     subject === "chemistry" ? chemistryChapters :
     subject === "arabic" ? arabicChapters :
+    subject === "islamic" ? islamicChapters :
     subject === "french" ? frenchChapters :
     subject === "english" && englishCategory === "grammar" ? englishGrammarChapters :
     subject === "english" && englishCategory === "literature" ? englishLiteratureChapters :

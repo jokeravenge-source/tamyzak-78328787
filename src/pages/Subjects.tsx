@@ -1,9 +1,9 @@
-import { Lock, ArrowLeft, ArrowRight, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, RefreshCw } from "lucide-react";
+import { Lock, ArrowLeft, ArrowRight, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, RefreshCw, Moon } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 
 export const SUBJECT_STORAGE_KEY = "app_subject_v1";
 
-export type AppSubject = "physics" | "english" | "chemistry" | "biology" | "french" | "arabic" | "revision";
+export type AppSubject = "physics" | "english" | "chemistry" | "biology" | "french" | "arabic" | "islamic" | "revision";
 
 const subjectTelegramLinks: Record<AppSubject, string | null> = {
   physics: "https://t.me/sad6ths/17274",
@@ -12,6 +12,7 @@ const subjectTelegramLinks: Record<AppSubject, string | null> = {
   arabic: "https://t.me/sad6ths/16594",
   french: "https://t.me/sad6ths/14196",
   english: null,
+  islamic: null,
   revision: "https://t.me/sad6ths/17466",
 };
 
@@ -28,6 +29,7 @@ const subjects: Array<{
   { code: "english", en: "English", ar: "الإنجليزية", Icon: BookOpen, locked: false },
   { code: "french", en: "French", ar: "الفرنسية", Icon: LangIcon, locked: false },
   { code: "arabic", en: "Arabic", ar: "العربية", Icon: BookOpen, locked: false },
+  { code: "islamic", en: "Islamic", ar: "التربية الإسلامية", Icon: Moon, locked: false },
 ];
 
 const revisionSubject = { code: "revision" as AppSubject, en: "Revision", ar: "المراجعة", Icon: RefreshCw, locked: false };
