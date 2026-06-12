@@ -123,8 +123,15 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
   const [hadithInput, setHadithInput] = useState("");
   const [hadithLoading, setHadithLoading] = useState(false);
   const [hadithResult, setHadithResult] = useState<HadithResult | null>(null);
+  const [hadithMode, setHadithMode] = useState(false);
 
   const back = () => {
+    if (hadithMode) {
+      setHadithMode(false);
+      setHadithResult(null);
+      setHadithInput("");
+      return;
+    }
     if (reviewing) {
       setReviewing(false);
     } else if (chapterN !== null) {
@@ -133,8 +140,6 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
       setAnswers({});
     } else if (subject) {
       setSubject(null);
-      setHadithInput("");
-      setHadithResult(null);
     } else {
       onBack();
     }
