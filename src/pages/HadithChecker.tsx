@@ -1,16 +1,25 @@
 import { useState } from "react";
-import { ArrowLeft, Sparkles, Eye, Loader2, Check, X, AlertTriangle, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import { ArrowLeft, Sparkles, Eye, Loader2, Check, X, AlertTriangle, ChevronLeft, ChevronRight, BookOpen, Lightbulb, Pencil } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+
+type Mistake = {
+  student_wrote?: string;
+  should_be?: string;
+  kind?: "missing" | "extra" | "wrong_word" | "spelling" | "order" | string;
+  note?: string;
+};
 
 type HadithResult = {
   verdict: "correct" | "minor_errors" | "incorrect" | "not_in_reference";
   score?: number;
   summary?: string;
   correct_text?: string;
-  differences?: string[];
+  mistakes?: Mistake[];
+  /** legacy */ differences?: string[];
+  tips?: string[];
   source_hint?: string;
 };
 
@@ -53,6 +62,16 @@ const copy = {
     prev: "Previous",
     next: "Next",
     hadithLabel: "Hadith",
+    yourAnswer: "Your answer (mistakes highlighted)",
+    notes: "Teacher's notes",
+    tips: "Study tips",
+    kindMissing: "missing word",
+    kindExtra: "extra word",
+    kindWrong: "wrong word",
+    kindSpelling: "spelling",
+    kindOrder: "wrong order",
+    youWrote: "You wrote",
+    shouldBe: "Should be",
   },
   ar: {
     badge: "فاحص الأحاديث",
@@ -73,6 +92,16 @@ const copy = {
     prev: "السابق",
     next: "التالي",
     hadithLabel: "الحديث",
+    yourAnswer: "إجابتك (مع تمييز الأخطاء)",
+    notes: "ملاحظات المعلّم",
+    tips: "نصائح للحفظ",
+    kindMissing: "كلمة ناقصة",
+    kindExtra: "كلمة زائدة",
+    kindWrong: "كلمة خاطئة",
+    kindSpelling: "خطأ إملائي",
+    kindOrder: "ترتيب خاطئ",
+    youWrote: "كتبتَ",
+    shouldBe: "والصواب",
   },
 } as const;
 
@@ -82,12 +111,14 @@ const HadithChecker = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<HadithResult | null>(null);
+  const [submitted, setSubmitted] = useState("");
   const current = HADITHS[index];
 
   const goTo = (i: number) => {
     setIndex(i);
     setInput("");
     setResult(null);
+    setSubmitted("");
   };
   const goPrev = () => goTo((index - 1 + HADITHS.length) % HADITHS.length);
   const goNext = () => goTo((index + 1) % HADITHS.length);
@@ -97,6 +128,7 @@ const HadithChecker = ({ language, onBack }: { language: AppLanguage; onBack: ()
     if (!text || loading) return;
     setLoading(true);
     setResult(null);
+    setSubmitted(text);
     try {
       const { data, error } = await supabase.functions.invoke("verify-hadith", {
         body: { hadith: text, language, hadithName: current.name, referenceText: current.text },
@@ -109,6 +141,45 @@ const HadithChecker = ({ language, onBack }: { language: AppLanguage; onBack: ()
     } finally {
       setLoading(false);
     }
+  };
+
+  const kindLabel = (k?: string) => {
+    switch (k) {
+      case "missing": return t.kindMissing;
+      case "extra": return t.kindExtra;
+      case "wrong_word": return t.kindWrong;
+      case "spelling": return t.kindSpelling;
+      case "order": return t.kindOrder;
+      default: return "";
+    }
+  };
+
+  /** Render the student's text with wrong words highlighted in red. */
+  const renderAnnotated = (text: string, mistakes: Mistake[]) => {
+    const wrongs = mistakes
+      .map((m) => (m.student_wrote || "").trim())
+      .filter(Boolean);
+    if (wrongs.length === 0) return <span>{text}</span>;
+    // Build a regex that matches any of the wrong fragments
+    const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`(${wrongs.map(escape).join("|")})`, "g");
+    const parts = text.split(re);
+    return (
+      <>
+        {parts.map((p, i) =>
+          wrongs.includes(p.trim()) ? (
+            <mark
+              key={i}
+              className="bg-red-500/30 text-red-200 rounded px-1 mx-0.5 underline decoration-red-400 decoration-wavy underline-offset-4"
+            >
+              {p}
+            </mark>
+          ) : (
+            <span key={i}>{p}</span>
+          )
+        )}
+      </>
+    );
   };
 
   const verdictMeta = (v: HadithResult["verdict"]) => {
@@ -233,11 +304,57 @@ const HadithChecker = ({ language, onBack }: { language: AppLanguage; onBack: ()
                   <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap" dir="rtl">{result.correct_text}</p>
                 </div>
               )}
-              {result.differences && result.differences.length > 0 && (
+              {submitted && result.mistakes && result.mistakes.length > 0 && (
+                <div className="rounded-3xl p-6 border border-amber-400/30 bg-amber-500/5 backdrop-blur">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-amber-300 mb-3">
+                    <Pencil className="w-3.5 h-3.5" /> {t.yourAnswer}
+                  </div>
+                  <p className="text-foreground/90 leading-loose whitespace-pre-wrap text-lg" dir="rtl">
+                    {renderAnnotated(submitted, result.mistakes)}
+                  </p>
+                </div>
+              )}
+              {result.mistakes && result.mistakes.length > 0 && (
                 <div className="rounded-3xl p-6 border border-white/10 bg-secondary/40 backdrop-blur">
-                  <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-2">{t.mistakes}</div>
+                  <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground mb-3">{t.notes}</div>
+                  <ol className="space-y-3" dir="rtl">
+                    {result.mistakes.map((mk, i) => (
+                      <li key={i} className="rounded-2xl border border-white/10 bg-background/40 p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold">{i + 1}</span>
+                          {kindLabel(mk.kind) && (
+                            <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{kindLabel(mk.kind)}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm mb-2">
+                          {mk.student_wrote ? (
+                            <span>
+                              <span className="text-muted-foreground">{t.youWrote}: </span>
+                              <span className="text-red-300 line-through">{mk.student_wrote}</span>
+                            </span>
+                          ) : null}
+                          {mk.should_be ? (
+                            <span>
+                              <span className="text-muted-foreground">{t.shouldBe}: </span>
+                              <span className="text-emerald-300 font-semibold">{mk.should_be}</span>
+                            </span>
+                          ) : null}
+                        </div>
+                        {mk.note && (
+                          <p className="text-foreground/80 text-sm leading-relaxed">{mk.note}</p>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+              {result.tips && result.tips.length > 0 && (
+                <div className="rounded-3xl p-6 border border-primary/20 bg-primary/5 backdrop-blur">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-primary mb-2">
+                    <Lightbulb className="w-3.5 h-3.5" /> {t.tips}
+                  </div>
                   <ul className="list-disc ps-5 space-y-1 text-foreground/80">
-                    {result.differences.map((d, i) => <li key={i}>{d}</li>)}
+                    {result.tips.map((tip, i) => <li key={i}>{tip}</li>)}
                   </ul>
                 </div>
               )}
