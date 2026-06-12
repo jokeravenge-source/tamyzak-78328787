@@ -33,6 +33,7 @@ const subjectName = (s: AppSubject, lang: AppLanguage) => {
     english: { en: "English", ar: "الإنجليزية" },
     french: { en: "French", ar: "الفرنسية" },
     arabic: { en: "Arabic", ar: "العربية" },
+    islamic: { en: "Islamic Education", ar: "التربية الإسلامية" },
     revision: { en: "Revision", ar: "المراجعة" },
   };
   return map[s][lang];
