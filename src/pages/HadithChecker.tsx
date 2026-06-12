@@ -14,19 +14,23 @@ type HadithResult = {
   source_hint?: string;
 };
 
-const HADITHS: { name: string }[] = [
-  { name: "حديث النية" },
-  { name: "حديث الإحسان" },
-  { name: "حديث الرفق" },
-  { name: "حديث طلب العلم" },
-  { name: "حديث بر الوالدين" },
-  { name: "حديث الصدق" },
-  { name: "حديث الحياء" },
-  { name: "حديث المسلم من سلم المسلمون من لسانه ويده" },
-  { name: "حديث الجار" },
-  { name: "حديث الكلمة الطيبة صدقة" },
-  { name: "حديث إماطة الأذى عن الطريق" },
-  { name: "حديث من غشّنا فليس منا" },
+const HADITHS: { name: string; text: string }[] = [
+  {
+    name: "التعاون بين المسلمين",
+    text: "من كان معه فضل ظهر فليَعُدْ به على من لا ظهر له، ومن كان له فضل من زاد فليعد به على من لا زاد له",
+  },
+  {
+    name: "الناجون يوم القيامة",
+    text: "سبعة يظلهم الله في ظله يوم لا ظل إلا ظله: إمام عادل، وشاب نشأ في عبادة الله عز وجل، ورجل قلبه معلق بالمساجد، ورجلان تحابا في الله اجتمعا عليه وتفرقا عليه، ورجل دعته امرأة ذات حسن وجمال فقال إني أخاف الله رب العالمين، ورجل تصدق بصدقة فأخفاها حتى لا تعلم شماله ما تنفق يمينه، ورجل ذكر الله خاليا ففاضت عيناه",
+  },
+  {
+    name: "محاسبة النفس",
+    text: "الكيس من دان نفسه وعمل لما بعد الموت، والعاجز من اتبع نفسه هواها وتمنى على الله الأماني",
+  },
+  {
+    name: "في الجهاد وكرامة المجاهد",
+    text: "ما من مكلوم يُكلم في سبيل الله إلا جاء يوم القيامة وكَلْمُه يدمى، اللون لون دم والريح ريح مسك",
+  },
 ];
 
 const copy = {
@@ -95,7 +99,7 @@ const HadithChecker = ({ language, onBack }: { language: AppLanguage; onBack: ()
     setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("verify-hadith", {
-        body: { hadith: text, language, hadithName: current.name },
+        body: { hadith: text, language, hadithName: current.name, referenceText: current.text },
       });
       if (error) throw error;
       if (data?.error) throw new Error(String(data.error));
