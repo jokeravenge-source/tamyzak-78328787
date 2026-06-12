@@ -36,8 +36,8 @@ const chemistryChapters = [
 
 const arabicChapters = [
   { n: 1, title: "Literature 1", arTitle: "الأدب الجزء الأول", subtitle: "", locked: false },
-  { n: 2, title: "Exclamation", arTitle: "التعجب", subtitle: "أسئلة وأجوبة موضوع التعجب", locked: false },
-  { n: 3, title: "Tawkeed", arTitle: "التوكيد", subtitle: "أسلوب التوكيد - الألفية 2026", locked: false },
+  { n: 2, title: "Exclamation", arTitle: "التعجب", subtitle: "", locked: false },
+  { n: 3, title: "Tawkeed", arTitle: "التوكيد", subtitle: "", locked: false },
   { n: 4, title: "Taqdim wa Ta'kheer", arTitle: "التقديم والتاخير", subtitle: "", locked: false },
   { n: 5, title: "Nida", arTitle: "النداء", subtitle: "", locked: false },
   { n: 6, title: "Istifham", arTitle: "الاستفهام", subtitle: "", locked: false },
