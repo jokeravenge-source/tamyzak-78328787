@@ -37,6 +37,9 @@ import { flashcardsChemCh5Ar } from "@/data/flashcardsChemCh5Ar";
 import { flashcardsChemCh6Ar } from "@/data/flashcardsChemCh6Ar";
 import { flashcardsArabicLit1Ar } from "@/data/flashcardsArabicLit1Ar";
 import { flashcardsArabicTaajjubAr } from "@/data/flashcardsArabicTaajjubAr";
+import { flashcardsArabicTawkeedAr } from "@/data/flashcardsArabicTawkeedAr";
+import { flashcardsArabicTaqdimAr } from "@/data/flashcardsArabicTaqdimAr";
+import { flashcardsArabicNidaAr } from "@/data/flashcardsArabicNidaAr";
 import { flashcardsIslamicMeaningsAr } from "@/data/flashcardsIslamicMeaningsAr";
 import { flashcardsEngGrammar1 } from "@/data/flashcardsEngGrammar1";
 import { flashcardsFrenchNegationAr } from "@/data/flashcardsFrenchNegationAr";
@@ -169,6 +172,30 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "العربية · التعجب" : "Arabic · Exclamation",
           cards: flashcardsArabicTaajjubAr,
+        };
+      }
+
+      if (subject === "arabic" && chapter === "3") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "العربية · التوكيد" : "Arabic · Tawkeed",
+          cards: flashcardsArabicTawkeedAr,
+        };
+      }
+
+      if (subject === "arabic" && chapter === "4") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "العربية · التقديم والتاخير" : "Arabic · Taqdim wa Ta'kheer",
+          cards: flashcardsArabicTaqdimAr,
+        };
+      }
+
+      if (subject === "arabic" && chapter === "5") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "العربية · النداء" : "Arabic · Nida",
+          cards: flashcardsArabicNidaAr,
         };
       }
 
