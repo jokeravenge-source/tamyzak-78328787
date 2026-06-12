@@ -36,6 +36,7 @@ import { flashcardsChemCh4Ar } from "@/data/flashcardsChemCh4Ar";
 import { flashcardsChemCh5Ar } from "@/data/flashcardsChemCh5Ar";
 import { flashcardsChemCh6Ar } from "@/data/flashcardsChemCh6Ar";
 import { flashcardsArabicLit1Ar } from "@/data/flashcardsArabicLit1Ar";
+import { flashcardsArabicTaajjubAr } from "@/data/flashcardsArabicTaajjubAr";
 import { flashcardsIslamicMeaningsAr } from "@/data/flashcardsIslamicMeaningsAr";
 import { flashcardsEngGrammar1 } from "@/data/flashcardsEngGrammar1";
 import { flashcardsFrenchNegationAr } from "@/data/flashcardsFrenchNegationAr";
@@ -160,6 +161,14 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "العربية · الأدب" : "Arabic · Literature",
           cards: flashcardsArabicLit1Ar,
+        };
+      }
+
+      if (subject === "arabic" && chapter === "2") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar" ? "العربية · التعجب" : "Arabic · Exclamation",
+          cards: flashcardsArabicTaajjubAr,
         };
       }
 
