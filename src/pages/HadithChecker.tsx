@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Sparkles, Eye, Loader2, Check, X, AlertTriangle, ScrollText } from "lucide-react";
+import { ArrowLeft, Sparkles, Eye, Loader2, Check, X, AlertTriangle } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -173,7 +173,6 @@ const HadithChecker = ({ language, onBack }: { language: AppLanguage; onBack: ()
           );
         })()}
       </section>
-      <div className="hidden"><ScrollText /></div>
     </main>
   );
 };
