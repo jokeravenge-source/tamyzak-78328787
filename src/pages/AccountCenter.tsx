@@ -49,6 +49,24 @@ const HAIR_LABELS: Record<string, { en: string; ar: string }> = {
   braids: { en: "Braids", ar: "ضفائر" },
 };
 
+const SUBJECT_LABELS: Record<string, { en: string; ar: string }> = {
+  islamic: { en: "Islamic", ar: "التربية الإسلامية" },
+  arabic: { en: "Arabic", ar: "العربية" },
+  english: { en: "English", ar: "الإنجليزية" },
+  french: { en: "French", ar: "الفرنسية" },
+  math: { en: "Math", ar: "الرياضيات" },
+  physics: { en: "Physics", ar: "الفيزياء" },
+  chemistry: { en: "Chemistry", ar: "الكيمياء" },
+  biology: { en: "Biology", ar: "الأحياء" },
+};
+
+function formatHours(totalSeconds: number, isAr: boolean) {
+  const hours = totalSeconds / 3600;
+  if (hours >= 1) return `${hours.toFixed(1)} ${isAr ? "س" : "h"}`;
+  const mins = Math.max(0, Math.round(totalSeconds / 60));
+  return `${mins} ${isAr ? "د" : "m"}`;
+}
+
 const AccountCenter = ({
   language,
   onBack,
