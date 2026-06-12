@@ -96,7 +96,7 @@ const copy = {
     notes: "ملاحظات المعلّم",
     tips: "نصائح للحفظ",
     kindMissing: "كلمة ناقصة",
-    kindExtra: "كلمة زائدة",
+    kindExtra: "زاد",
     kindWrong: "كلمة خاطئة",
     kindSpelling: "خطأ إملائي",
     kindOrder: "ترتيب خاطئ",
