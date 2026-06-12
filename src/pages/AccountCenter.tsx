@@ -381,7 +381,53 @@ const AccountCenter = ({
                 <Clock className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold">{language === "ar" ? "ساعات الدراسة" : "Study Hours"}</h2>
+                <h2 className="text-lg font-semibold">{language === "ar" ? "اليوم" : "Today"}</h2>
+                <p className="text-xs text-muted-foreground">
+                  {language === "ar" ? "ساعاتك اليوم لكل مادة" : "Your hours today per subject"}
+                </p>
+              </div>
+              <div className="ms-auto text-right">
+                <p className="text-2xl font-bold gradient-text leading-none">
+                  {formatHours(Object.values(todaySubjectSeconds).reduce((s, n) => s + n, 0), language === "ar")}
+                </p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
+                  {language === "ar" ? "إجمالي" : "Total"}
+                </p>
+              </div>
+            </div>
+            {Object.keys(todaySubjectSeconds).length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {language === "ar" ? "لم تدرس بعد اليوم." : "No study time today yet."}
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {Object.entries(todaySubjectSeconds)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([subj, secs]) => {
+                    const meta = SUBJECT_LABELS[subj];
+                    const label = meta ? (language === "ar" ? meta.ar : meta.en) : subj;
+                    return (
+                      <li key={subj} className="flex items-center justify-between rounded-xl border border-white/5 bg-background/30 px-3 py-2.5">
+                        <span className="text-sm font-medium">{label}</span>
+                        <span className="text-sm font-mono px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
+                          {formatHours(secs, language === "ar")}
+                        </span>
+                      </li>
+                    );
+                  })}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {!loading && (
+          <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">{language === "ar" ? "إجمالي ساعات الدراسة" : "All-time Study Hours"}</h2>
                 <p className="text-xs text-muted-foreground">
                   {language === "ar" ? "إجمالي وقتك لكل مادة" : "Your total time per subject"}
                 </p>
