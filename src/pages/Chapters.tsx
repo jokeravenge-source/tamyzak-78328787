@@ -40,6 +40,7 @@ const arabicChapters = [
   { n: 3, title: "Tawkeed", arTitle: "التوكيد", subtitle: "أسلوب التوكيد - الألفية 2026", locked: false },
   { n: 4, title: "Taqdim wa Ta'kheer", arTitle: "التقديم والتاخير", subtitle: "", locked: false },
   { n: 5, title: "Nida", arTitle: "النداء", subtitle: "", locked: false },
+  { n: 6, title: "Istifham", arTitle: "الاستفهام", subtitle: "", locked: false },
 ];
 
 const islamicChapters = [
