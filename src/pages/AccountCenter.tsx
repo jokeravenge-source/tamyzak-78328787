@@ -439,6 +439,56 @@ const AccountCenter = ({
                   })}
               </ul>
             )}
+
+            {/* 7-day trend */}
+            <div className="mt-5 pt-5 border-t border-white/10">
+              <div className="flex items-end justify-between mb-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                    {language === "ar" ? "آخر 7 أيام" : "Last 7 days"}
+                  </p>
+                  <p className="text-xs text-muted-foreground/80 mt-0.5">
+                    {language === "ar" ? "اتجاه ساعات الدراسة" : "Study hours trend"}
+                  </p>
+                </div>
+                <p className="text-sm font-mono text-primary">
+                  {formatHours(weeklyTotals.reduce((s, d) => s + d.seconds, 0), language === "ar")}
+                </p>
+              </div>
+              {(() => {
+                const max = Math.max(1, ...weeklyTotals.map((d) => d.seconds));
+                const dayNames = language === "ar"
+                  ? ["أحد", "إثن", "ثلا", "أرب", "خمي", "جمع", "سبت"]
+                  : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                return (
+                  <div className="flex items-end justify-between gap-1.5 h-28">
+                    {weeklyTotals.map((d, i) => {
+                      const pct = (d.seconds / max) * 100;
+                      const isToday = i === weeklyTotals.length - 1;
+                      const hrs = d.seconds / 3600;
+                      const label = hrs >= 1 ? `${hrs.toFixed(1)}h` : `${Math.round(d.seconds / 60)}m`;
+                      return (
+                        <div key={d.key} className="flex-1 flex flex-col items-center gap-1.5">
+                          <span className="text-[9px] font-mono text-muted-foreground tabular-nums">
+                            {d.seconds > 0 ? label : ""}
+                          </span>
+                          <div className="w-full flex-1 flex items-end">
+                            <div
+                              className={`w-full rounded-md transition-all ${isToday ? "bg-gradient-to-t from-primary to-primary/60 shadow-[0_0_12px_hsl(var(--primary)/0.4)]" : "bg-primary/30"}`}
+                              style={{ height: `${Math.max(pct, d.seconds > 0 ? 6 : 2)}%` }}
+                              title={label}
+                            />
+                          </div>
+                          <span className={`text-[10px] ${isToday ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                            {dayNames[d.date.getDay()]}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         )}
 
