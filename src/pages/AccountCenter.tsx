@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle, Crown, Settings, Lock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import CurvedNavBar from "@/components/CurvedNavBar";
@@ -70,6 +71,7 @@ const AccountCenter = ({
   const [portalLoading, setPortalLoading] = useState(false);
   const [savedName, setSavedName] = useState("");
   const [pendingRequest, setPendingRequest] = useState<{ id: string; requested_name: string } | null>(null);
+  const [subjectSeconds, setSubjectSeconds] = useState<Record<string, number>>({});
 
   const tryPremium = (apply: () => void) => {
     if (!isPremium) {
@@ -110,6 +112,27 @@ const AccountCenter = ({
       setTraits(((p as any)?.character as CharacterTraits) ?? null);
       const { data: pts } = await supabase.from("user_points").select("points").eq("user_id", u.user.id);
       setPoints((pts ?? []).reduce((s: number, r: any) => s + (r.points ?? 0), 0));
+      // Aggregate study time per subject across all sessions
+      {
+        const totals: Record<string, number> = {};
+        const pageSize = 1000;
+        let from = 0;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { data: page, error } = await supabase
+            .from("study_sessions")
+            .select("subject,duration_seconds")
+            .eq("user_id", u.user.id)
+            .range(from, from + pageSize - 1);
+          if (error) break;
+          (page ?? []).forEach((r: any) => {
+            totals[r.subject] = (totals[r.subject] ?? 0) + (r.duration_seconds ?? 0);
+          });
+          if (!page || page.length < pageSize) break;
+          from += pageSize;
+        }
+        setSubjectSeconds(totals);
+      }
       const { data: pend } = await supabase
         .from("username_requests")
         .select("id, requested_name")
