@@ -31,6 +31,7 @@ export const chemistryChapters: ChapterMeta[] = [
 export const arabicChapters: ChapterMeta[] = [
   { n: 1, title: "Literature 1", arTitle: "الأدب الجزء الأول", subtitle: "", locked: false },
   { n: 2, title: "Istifham", arTitle: "الاستفهام", subtitle: "", locked: false },
+  { n: 3, title: "Madh & Dham", arTitle: "مدح وذم", subtitle: "", locked: false },
 ];
 
 export const frenchChapters: ChapterMeta[] = [
