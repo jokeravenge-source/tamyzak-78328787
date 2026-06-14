@@ -130,6 +130,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "biologyDrawings", labelEn: "Biology Drawings", labelAr: "رسومات الأحياء", Icon: Microscope },
       { key: "essay", labelEn: "Essay Coach", labelAr: "مدرّب المقالات", Icon: BookOpen },
       { key: "hadithChecker", labelEn: "Hadith Checker", labelAr: "فاحص الأحاديث", Icon: Moon },
+      { key: "poemsChecker", labelEn: "Poems Checker", labelAr: "قصائد الأدب", Icon: ScrollText },
     ],
   },
   {
