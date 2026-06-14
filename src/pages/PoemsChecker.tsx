@@ -54,6 +54,7 @@ const copy = {
     kindWrong: "wrong word",
     kindSpelling: "spelling",
     kindOrder: "wrong order",
+    kindTashkeel: "harakah / tashkeel",
     youWrote: "You wrote",
     shouldBe: "Should be",
   },
@@ -87,6 +88,7 @@ const copy = {
     kindWrong: "كلمة خاطئة",
     kindSpelling: "خطأ إملائي",
     kindOrder: "ترتيب خاطئ",
+    kindTashkeel: "حركة/تشكيل",
     youWrote: "كتبتَ",
     shouldBe: "والصواب",
   },
@@ -145,6 +147,7 @@ const PoemsChecker = ({ language, onBack }: { language: AppLanguage; onBack: () 
       case "wrong_word": return t.kindWrong;
       case "spelling": return t.kindSpelling;
       case "order": return t.kindOrder;
+      case "tashkeel": return t.kindTashkeel;
       default: return "";
     }
   };
