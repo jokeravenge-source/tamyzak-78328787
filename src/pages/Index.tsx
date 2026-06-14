@@ -211,6 +211,20 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         };
       }
 
+      if (subject === "arabic" && chapter === "7") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar"
+            ? "العربية · الأدب · سنوات · معاني · تراث أدبي"
+            : "Arabic · Literature · Years · Meanings · Heritage",
+          cards: [
+            ...flashcardsArabicLit1YearsAr,
+            ...flashcardsArabicLit1MeaningsAr,
+            ...flashcardsArabicLit1HeritageAr,
+          ],
+        };
+      }
+
       if (subject === "islamic" && chapter === "1") {
         return {
           title: "بطاقات تعليمية",
