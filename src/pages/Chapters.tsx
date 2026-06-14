@@ -41,6 +41,7 @@ const arabicChapters = [
   { n: 4, title: "Taqdim wa Ta'kheer", arTitle: "التقديم والتاخير", subtitle: "", locked: false },
   { n: 5, title: "Nida", arTitle: "النداء", subtitle: "", locked: false },
   { n: 6, title: "Istifham", arTitle: "الاستفهام", subtitle: "", locked: false },
+  { n: 7, title: "Literature 1 Extras", arTitle: "الأدب · ملحقات", subtitle: "سنوات · معاني · تراث أدبي", locked: false },
 ];
 
 const islamicChapters = [

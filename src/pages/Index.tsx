@@ -36,6 +36,9 @@ import { flashcardsChemCh4Ar } from "@/data/flashcardsChemCh4Ar";
 import { flashcardsChemCh5Ar } from "@/data/flashcardsChemCh5Ar";
 import { flashcardsChemCh6Ar } from "@/data/flashcardsChemCh6Ar";
 import { flashcardsArabicLit1Ar } from "@/data/flashcardsArabicLit1Ar";
+import { flashcardsArabicLit1YearsAr } from "@/data/flashcardsArabicLit1YearsAr";
+import { flashcardsArabicLit1MeaningsAr } from "@/data/flashcardsArabicLit1MeaningsAr";
+import { flashcardsArabicLit1HeritageAr } from "@/data/flashcardsArabicLit1HeritageAr";
 import { flashcardsArabicTaajjubAr } from "@/data/flashcardsArabicTaajjubAr";
 import { flashcardsArabicTawkeedAr } from "@/data/flashcardsArabicTawkeedAr";
 import { flashcardsArabicTaqdimAr } from "@/data/flashcardsArabicTaqdimAr";
@@ -205,6 +208,20 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           title: "بطاقات تعليمية",
           eyebrow: language === "ar" ? "العربية · الاستفهام" : "Arabic · Istifham",
           cards: flashcardsArabicIstifhamAr,
+        };
+      }
+
+      if (subject === "arabic" && chapter === "7") {
+        return {
+          title: "بطاقات تعليمية",
+          eyebrow: language === "ar"
+            ? "العربية · الأدب · سنوات · معاني · تراث أدبي"
+            : "Arabic · Literature · Years · Meanings · Heritage",
+          cards: [
+            ...flashcardsArabicLit1YearsAr,
+            ...flashcardsArabicLit1MeaningsAr,
+            ...flashcardsArabicLit1HeritageAr,
+          ],
         };
       }
 
