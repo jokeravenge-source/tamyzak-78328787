@@ -477,7 +477,6 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   const discardSession = async () => {
     if (!started) return;
-    if (!window.confirm(L.discardConfirm)) return;
     setRunning(false);
     await clearPresence();
     setStarted(false);
@@ -490,6 +489,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     phaseStartRef.current = 0;
     lastPhaseSwitchRef.current = -1;
     localStorage.removeItem(PERSIST_KEY);
+    setDiscardOpen(false);
     toast.success(L.discarded);
   };
 
