@@ -450,6 +450,24 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     setTimeout(() => { savingRef.current = false; }, 500);
   };
 
+  const discardSession = async () => {
+    if (!started) return;
+    if (!window.confirm(L.discardConfirm)) return;
+    setRunning(false);
+    await clearPresence();
+    setStarted(false);
+    setSeconds(0);
+    setMission("");
+    setCompleted(false);
+    accumulatedRef.current = 0;
+    resumeAtRef.current = 0;
+    setPhase("work");
+    phaseStartRef.current = 0;
+    lastPhaseSwitchRef.current = -1;
+    localStorage.removeItem(PERSIST_KEY);
+    toast.success(L.discarded);
+  };
+
   const toggleMusic = async () => {
     const a = audioRef.current;
     if (!a) return;
