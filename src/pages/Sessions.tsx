@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee, Settings } from "lucide-react";
+import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee, Settings, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +79,9 @@ const T = {
     restDone: "Break over — back to focus!",
     workMin: "Study minutes",
     restMin: "Rest minutes",
+    discard: "Discard session",
+    discardConfirm: "Discard this session without saving? Your time and points will not be recorded.",
+    discarded: "Session discarded",
   },
   ar: {
     title: "جلسات الدراسة", desc: "اختر مادة وحدد مهمتك واكسب النقاط.",
@@ -100,6 +103,9 @@ const T = {
     restDone: "انتهت الاستراحة — عُد للتركيز!",
     workMin: "دقائق الدراسة",
     restMin: "دقائق الراحة",
+    discard: "إلغاء الجلسة",
+    discardConfirm: "هل تريد إلغاء هذه الجلسة دون حفظها؟ لن يتم احتساب الوقت أو النقاط.",
+    discarded: "تم إلغاء الجلسة",
   },
 } as const;
 
@@ -444,6 +450,24 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     setTimeout(() => { savingRef.current = false; }, 500);
   };
 
+  const discardSession = async () => {
+    if (!started) return;
+    if (!window.confirm(L.discardConfirm)) return;
+    setRunning(false);
+    await clearPresence();
+    setStarted(false);
+    setSeconds(0);
+    setMission("");
+    setCompleted(false);
+    accumulatedRef.current = 0;
+    resumeAtRef.current = 0;
+    setPhase("work");
+    phaseStartRef.current = 0;
+    lastPhaseSwitchRef.current = -1;
+    localStorage.removeItem(PERSIST_KEY);
+    toast.success(L.discarded);
+  };
+
   const toggleMusic = async () => {
     const a = audioRef.current;
     if (!a) return;
@@ -601,6 +625,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                   <Button size="lg" onClick={() => setRunning(true)} className="gap-2"><Play className="w-4 h-4" /> {L.resume}</Button>
                 )}
                 <Button size="lg" variant="destructive" onClick={stopAndSave} className="gap-2"><Square className="w-4 h-4" /> {L.stop}</Button>
+                <Button size="lg" variant="outline" onClick={discardSession} className="gap-2"><Trash2 className="w-4 h-4" /> {L.discard}</Button>
               </>
             )}
           </div>
