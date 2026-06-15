@@ -3,7 +3,7 @@ import {
   ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
-  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine,
+  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -132,6 +132,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "hadithChecker", labelEn: "Hadith Checker", labelAr: "فاحص الأحاديث", Icon: Moon },
       { key: "poemsChecker", labelEn: "Poems Checker", labelAr: "قصائد الأدب", Icon: ScrollText },
       { key: "englishEssays", labelEn: "English Compositions", labelAr: "إنشاءات الإنكليزي", Icon: PenLine },
+      { key: "englishIsqat", labelEn: "Word Drops (Isqatat)", labelAr: "الإسقاطات", Icon: MousePointerClick },
     ],
   },
   {
