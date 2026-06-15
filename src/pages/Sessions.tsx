@@ -451,6 +451,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   };
 
   const toggleMusic = async () => {
+    void 0;
     const a = audioRef.current;
     if (!a) return;
     if (musicPlaying) { a.pause(); setMusicPlaying(false); }
