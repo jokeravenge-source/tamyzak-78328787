@@ -113,8 +113,13 @@ const EnglishEssays = ({ language, onBack }: { language: AppLanguage; onBack: ()
 
   const check = async () => {
     if (!topic) return;
-    if (essay.trim().length < 20) {
+    const wc = essay.trim().split(/\s+/).filter(Boolean).length;
+    if (wc < 100) {
       toast.error(t.tooShort);
+      return;
+    }
+    if (wc > 200) {
+      toast.error(t.tooLong);
       return;
     }
     setLoading(true);
@@ -235,10 +240,28 @@ const EnglishEssays = ({ language, onBack }: { language: AppLanguage; onBack: ()
                 rows={12}
                 className="resize-none text-base leading-relaxed"
               />
-              <p className="text-xs text-muted-foreground mt-1 text-right" dir="ltr">{essay.trim().split(/\s+/).filter(Boolean).length} words</p>
+              {(() => {
+                const wc = essay.trim().split(/\s+/).filter(Boolean).length;
+                const ok = wc >= 100 && wc <= 200;
+                const tone = wc === 0 ? "text-muted-foreground" : ok ? "text-emerald-600" : "text-rose-500";
+                return (
+                  <div className="flex items-center justify-between mt-1 text-xs" dir="ltr">
+                    <span className="text-muted-foreground">{t.wordRange}</span>
+                    <span className={tone}>{wc} / 100–200 words</span>
+                  </div>
+                );
+              })()}
             </section>
 
-            <Button onClick={check} disabled={loading || !topic || essay.trim().length < 20} size="lg" className="w-full">
+            <Button
+              onClick={check}
+              disabled={(() => {
+                const wc = essay.trim().split(/\s+/).filter(Boolean).length;
+                return loading || !topic || wc < 100 || wc > 200;
+              })()}
+              size="lg"
+              className="w-full"
+            >
               {loading ? (<><Loader2 className="w-4 h-4 animate-spin me-2" /> {t.checking}</>) : (<><PenLine className="w-4 h-4 me-2" /> {t.check}</>)}
             </Button>
           </>
