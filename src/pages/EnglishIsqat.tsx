@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, RefreshCw, XCircle, Eye, EyeOff } from "lucide-react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -222,13 +221,12 @@ export default function EnglishIsqat({ language, onBack }: Props) {
               const available = wordAvailable(w);
               const selected = selectedWord === w;
               return (
-                <motion.button
+                <button
                   key={w}
-                  layout
                   draggable={available}
                   onDragStart={(e) => {
                     if (!available) return;
-                    (e as unknown as DragEvent).dataTransfer?.setData("text/plain", w);
+                    e.dataTransfer.setData("text/plain", w);
                   }}
                   onClick={() => available && setSelectedWord(selected ? null : w)}
                   disabled={!available}
@@ -241,7 +239,7 @@ export default function EnglishIsqat({ language, onBack }: Props) {
                   }`}
                 >
                   {w}
-                </motion.button>
+                </button>
               );
             })}
           </div>
