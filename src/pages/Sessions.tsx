@@ -3,6 +3,16 @@ import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForwa
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import track1 from "@/assets/music/track1.mp3";
@@ -80,8 +90,15 @@ const T = {
     workMin: "Study minutes",
     restMin: "Rest minutes",
     discard: "Discard session",
-    discardConfirm: "Discard this session without saving? Your time and points will not be recorded.",
     discarded: "Session discarded",
+    discardTitle: "Discard this session?",
+    discardIntro: "This will permanently remove the current session. The following will NOT be saved:",
+    discardBullet1: "Time studied so far in this session",
+    discardBullet2: "Points you would have earned (1 per full hour, +1 if mission completed)",
+    discardBullet3: "Your mission text and completion status",
+    discardNote: "Your past saved sessions and leaderboard score are not affected. This action cannot be undone.",
+    discardCancel: "Keep session",
+    discardConfirmBtn: "Yes, discard",
   },
   ar: {
     title: "جلسات الدراسة", desc: "اختر مادة وحدد مهمتك واكسب النقاط.",
@@ -104,8 +121,15 @@ const T = {
     workMin: "دقائق الدراسة",
     restMin: "دقائق الراحة",
     discard: "إلغاء الجلسة",
-    discardConfirm: "هل تريد إلغاء هذه الجلسة دون حفظها؟ لن يتم احتساب الوقت أو النقاط.",
     discarded: "تم إلغاء الجلسة",
+    discardTitle: "إلغاء هذه الجلسة؟",
+    discardIntro: "سيتم حذف الجلسة الحالية نهائياً. لن يتم حفظ ما يلي:",
+    discardBullet1: "الوقت الذي درسته في هذه الجلسة",
+    discardBullet2: "النقاط التي كنت ستكسبها (نقطة لكل ساعة كاملة، +1 عند إنجاز المهمة)",
+    discardBullet3: "نص المهمة وحالة الإنجاز",
+    discardNote: "جلساتك المحفوظة سابقاً ونقاطك على لوحة المتصدرين لن تتأثر. لا يمكن التراجع عن هذا الإجراء.",
+    discardCancel: "الاحتفاظ بالجلسة",
+    discardConfirmBtn: "نعم، احذف",
   },
 } as const;
 
@@ -129,6 +153,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [pomodoro, setPomodoro] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const [pomodoroWorkMin, setPomodoroWorkMin] = useState(DEFAULT_WORK_MIN);
   const [pomodoroRestMin, setPomodoroRestMin] = useState(DEFAULT_REST_MIN);
   const [phase, setPhase] = useState<"work" | "rest">("work");
@@ -452,7 +477,6 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   const discardSession = async () => {
     if (!started) return;
-    if (!window.confirm(L.discardConfirm)) return;
     setRunning(false);
     await clearPresence();
     setStarted(false);
@@ -465,6 +489,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     phaseStartRef.current = 0;
     lastPhaseSwitchRef.current = -1;
     localStorage.removeItem(PERSIST_KEY);
+    setDiscardOpen(false);
     toast.success(L.discarded);
   };
 
@@ -625,7 +650,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                   <Button size="lg" onClick={() => setRunning(true)} className="gap-2"><Play className="w-4 h-4" /> {L.resume}</Button>
                 )}
                 <Button size="lg" variant="destructive" onClick={stopAndSave} className="gap-2"><Square className="w-4 h-4" /> {L.stop}</Button>
-                <Button size="lg" variant="outline" onClick={discardSession} className="gap-2"><Trash2 className="w-4 h-4" /> {L.discard}</Button>
+                <Button size="lg" variant="outline" onClick={() => setDiscardOpen(true)} className="gap-2"><Trash2 className="w-4 h-4" /> {L.discard}</Button>
               </>
             )}
           </div>
@@ -680,6 +705,30 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           )}
         </section>
       </div>
+      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <AlertDialogContent dir={dir}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{L.discardTitle}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>{L.discardIntro}</p>
+                <ul className="list-disc ps-5 space-y-1 text-foreground">
+                  <li>{L.discardBullet1} <span className="text-primary font-mono">({fmt(seconds)})</span></li>
+                  <li>{L.discardBullet2}</li>
+                  <li>{L.discardBullet3}</li>
+                </ul>
+                <p className="text-muted-foreground">{L.discardNote}</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{L.discardCancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={discardSession} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {L.discardConfirmBtn}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };
