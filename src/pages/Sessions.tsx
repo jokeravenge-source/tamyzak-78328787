@@ -153,6 +153,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [pomodoro, setPomodoro] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const [pomodoroWorkMin, setPomodoroWorkMin] = useState(DEFAULT_WORK_MIN);
   const [pomodoroRestMin, setPomodoroRestMin] = useState(DEFAULT_REST_MIN);
   const [phase, setPhase] = useState<"work" | "rest">("work");
