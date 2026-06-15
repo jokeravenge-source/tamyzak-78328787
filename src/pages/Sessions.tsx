@@ -3,6 +3,16 @@ import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForwa
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import track1 from "@/assets/music/track1.mp3";
