@@ -36,9 +36,9 @@ const copy = {
     prompt: "Question",
     showModel: "Show model essay",
     hideModel: "Hide model essay",
-    model: "Model essay (memorize this)",
+    model: "Template & idea suggestion (inspiration only — write in your own words)",
     essay: "Your composition",
-    essayPh: "Write your composition in English here…",
+    essayPh: "Write your composition in English here (100–200 words)…",
     check: "Check my composition",
     checking: "Checking…",
     restart: "Try another",
@@ -48,7 +48,9 @@ const copy = {
     scores: "Scores",
     overall: "Overall",
     feedback: "Feedback",
-    tooShort: "Please write more before checking.",
+    tooShort: "Write at least 100 words before checking.",
+    tooLong: "Maximum is 200 words. Please shorten your composition.",
+    wordRange: "100–200 words required",
     required: "Required for ministerial exam",
   },
   ar: {
@@ -56,11 +58,11 @@ const copy = {
     desc: "اختر إنشاء وزاري، اكتبه من حفظك، والذكاء الاصطناعي يؤشر كل غلطة مقارنةً بالنص الأصلي.",
     pick: "اختر موضوعاً",
     prompt: "السؤال",
-    showModel: "أظهر الإنشاء الأصلي",
-    hideModel: "إخفاء الإنشاء الأصلي",
-    model: "الإنشاء الأصلي (احفظه)",
+    showModel: "أظهر نموذج للأفكار",
+    hideModel: "إخفاء النموذج",
+    model: "قالب واقتراح أفكار (للاستئناس فقط — اكتب بأسلوبك)",
     essay: "إنشاؤك",
-    essayPh: "اكتب إنشاءك بالإنكليزي هنا…",
+    essayPh: "اكتب إنشاءك بالإنكليزي هنا (100–200 كلمة)…",
     check: "صحح إنشائي",
     checking: "جارٍ التصحيح…",
     restart: "موضوع جديد",
@@ -70,7 +72,9 @@ const copy = {
     scores: "الدرجات",
     overall: "المجموع",
     feedback: "الملاحظات",
-    tooShort: "اكتب أكثر قبل التصحيح.",
+    tooShort: "اكتب 100 كلمة على الأقل قبل التصحيح.",
+    tooLong: "الحد الأقصى 200 كلمة. اختصر إنشاءك.",
+    wordRange: "مطلوب 100–200 كلمة",
     required: "مطلوب بالوزاري",
   },
 } as const;
@@ -109,8 +113,13 @@ const EnglishEssays = ({ language, onBack }: { language: AppLanguage; onBack: ()
 
   const check = async () => {
     if (!topic) return;
-    if (essay.trim().length < 20) {
+    const wc = essay.trim().split(/\s+/).filter(Boolean).length;
+    if (wc < 100) {
       toast.error(t.tooShort);
+      return;
+    }
+    if (wc > 200) {
+      toast.error(t.tooLong);
       return;
     }
     setLoading(true);
@@ -231,10 +240,28 @@ const EnglishEssays = ({ language, onBack }: { language: AppLanguage; onBack: ()
                 rows={12}
                 className="resize-none text-base leading-relaxed"
               />
-              <p className="text-xs text-muted-foreground mt-1 text-right" dir="ltr">{essay.trim().split(/\s+/).filter(Boolean).length} words</p>
+              {(() => {
+                const wc = essay.trim().split(/\s+/).filter(Boolean).length;
+                const ok = wc >= 100 && wc <= 200;
+                const tone = wc === 0 ? "text-muted-foreground" : ok ? "text-emerald-600" : "text-rose-500";
+                return (
+                  <div className="flex items-center justify-between mt-1 text-xs" dir="ltr">
+                    <span className="text-muted-foreground">{t.wordRange}</span>
+                    <span className={tone}>{wc} / 100–200 words</span>
+                  </div>
+                );
+              })()}
             </section>
 
-            <Button onClick={check} disabled={loading || !topic || essay.trim().length < 20} size="lg" className="w-full">
+            <Button
+              onClick={check}
+              disabled={(() => {
+                const wc = essay.trim().split(/\s+/).filter(Boolean).length;
+                return loading || !topic || wc < 100 || wc > 200;
+              })()}
+              size="lg"
+              className="w-full"
+            >
               {loading ? (<><Loader2 className="w-4 h-4 animate-spin me-2" /> {t.checking}</>) : (<><PenLine className="w-4 h-4 me-2" /> {t.check}</>)}
             </Button>
           </>
