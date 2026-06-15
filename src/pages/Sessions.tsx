@@ -705,6 +705,30 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           )}
         </section>
       </div>
+      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <AlertDialogContent dir={dir}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{L.discardTitle}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>{L.discardIntro}</p>
+                <ul className="list-disc ps-5 space-y-1 text-foreground">
+                  <li>{L.discardBullet1} <span className="text-primary font-mono">({fmt(seconds)})</span></li>
+                  <li>{L.discardBullet2}</li>
+                  <li>{L.discardBullet3}</li>
+                </ul>
+                <p className="text-muted-foreground">{L.discardNote}</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{L.discardCancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={discardSession} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {L.discardConfirmBtn}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };
