@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, Sparkles, Loader2, CheckCircle2, XCircle, PenLine, RotateCw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Sparkles, Loader2, CheckCircle2, PenLine, RotateCw, BookOpen, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
@@ -31,10 +31,12 @@ type Review = {
 const copy = {
   en: {
     title: "English Compositions",
-    desc: "Pick a topic, write your composition, and AI will mark every mistake.",
+    desc: "Pick a ministerial composition, write it from memory, and AI marks every mistake against the official text.",
     pick: "Pick a topic",
-    custom: "Or write your own topic",
-    customPh: "e.g. My Favorite Day",
+    prompt: "Question",
+    showModel: "Show model essay",
+    hideModel: "Hide model essay",
+    model: "Model essay (memorize this)",
     essay: "Your composition",
     essayPh: "Write your composition in English here…",
     check: "Check my composition",
@@ -47,14 +49,16 @@ const copy = {
     overall: "Overall",
     feedback: "Feedback",
     tooShort: "Please write more before checking.",
-    hint: "Hint",
+    required: "Required for ministerial exam",
   },
   ar: {
     title: "إنشاءات الإنكليزي",
-    desc: "اختر موضوعاً، اكتب إنشاءك، والذكاء الاصطناعي يؤشر كل غلطة.",
+    desc: "اختر إنشاء وزاري، اكتبه من حفظك، والذكاء الاصطناعي يؤشر كل غلطة مقارنةً بالنص الأصلي.",
     pick: "اختر موضوعاً",
-    custom: "أو اكتب موضوعك الخاص",
-    customPh: "مثلاً: My Favorite Day",
+    prompt: "السؤال",
+    showModel: "أظهر الإنشاء الأصلي",
+    hideModel: "إخفاء الإنشاء الأصلي",
+    model: "الإنشاء الأصلي (احفظه)",
     essay: "إنشاؤك",
     essayPh: "اكتب إنشاءك بالإنكليزي هنا…",
     check: "صحح إنشائي",
@@ -67,7 +71,7 @@ const copy = {
     overall: "المجموع",
     feedback: "الملاحظات",
     tooShort: "اكتب أكثر قبل التصحيح.",
-    hint: "تلميح",
+    required: "مطلوب بالوزاري",
   },
 } as const;
 
@@ -88,14 +92,23 @@ const EnglishEssays = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const t = copy[language];
   const rtl = language === "ar";
   const [topic, setTopic] = useState<EnglishEssayTopic | null>(null);
-  const [customTopic, setCustomTopic] = useState("");
   const [essay, setEssay] = useState("");
   const [loading, setLoading] = useState(false);
   const [review, setReview] = useState<Review | null>(null);
+  const [showModel, setShowModel] = useState(false);
 
-  const effectiveTopic = topic ? (language === "ar" ? `${topic.title} — ${topic.titleAr}` : topic.title) : customTopic.trim();
+  const grouped = useMemo(() => {
+    const map = new Map<string, EnglishEssayTopic[]>();
+    englishEssayTopics.forEach((tp) => {
+      const arr = map.get(tp.unit) ?? [];
+      arr.push(tp);
+      map.set(tp.unit, arr);
+    });
+    return Array.from(map.entries());
+  }, []);
 
   const check = async () => {
+    if (!topic) return;
     if (essay.trim().length < 20) {
       toast.error(t.tooShort);
       return;
@@ -103,7 +116,12 @@ const EnglishEssays = ({ language, onBack }: { language: AppLanguage; onBack: ()
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("english-essay-check", {
-        body: { topic: effectiveTopic, essay },
+        body: {
+          topic: `${topic.title} — ${topic.titleAr}`,
+          prompt: topic.prompt,
+          model_essay: topic.modelEssay,
+          essay,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -119,7 +137,7 @@ const EnglishEssays = ({ language, onBack }: { language: AppLanguage; onBack: ()
     setReview(null);
     setEssay("");
     setTopic(null);
-    setCustomTopic("");
+    setShowModel(false);
   };
 
   return (
@@ -145,40 +163,62 @@ const EnglishEssays = ({ language, onBack }: { language: AppLanguage; onBack: ()
           <>
             <section className="mb-6">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t.pick}</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-                {englishEssayTopics.map((tp) => {
-                  const active = topic?.id === tp.id;
-                  return (
-                    <button
-                      key={tp.id}
-                      onClick={() => { setTopic(tp); setCustomTopic(""); }}
-                      className={`text-start rounded-2xl border p-3 transition-all ${active ? "border-primary bg-primary/10" : "border-border bg-secondary/40 hover:border-primary/40"}`}
-                    >
-                      <p className="font-semibold text-foreground text-sm">{tp.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{tp.titleAr}</p>
-                    </button>
-                  );
-                })}
+              <div className="space-y-5">
+                {grouped.map(([unit, list]) => (
+                  <div key={unit}>
+                    <p className="text-xs font-bold text-primary/80 mb-2 px-1">{unit}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {list.map((tp) => {
+                        const active = topic?.id === tp.id;
+                        return (
+                          <button
+                            key={tp.id}
+                            onClick={() => { setTopic(tp); setShowModel(false); }}
+                            className={`text-start rounded-2xl border p-3 transition-all ${active ? "border-primary bg-primary/10" : "border-border bg-secondary/40 hover:border-primary/40"}`}
+                          >
+                            <p className="font-semibold text-foreground text-sm" dir="ltr">{tp.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{tp.titleAr}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </section>
-
-            <section className="mb-6">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t.custom}</h2>
-              <input
-                type="text"
-                value={customTopic}
-                onChange={(e) => { setCustomTopic(e.target.value); setTopic(null); }}
-                placeholder={t.customPh}
-                className="w-full rounded-2xl border border-border bg-secondary/40 px-4 py-3 text-sm outline-none focus:border-primary"
-                dir="ltr"
-              />
             </section>
 
             {topic && (
-              <div className="mb-4 p-3 rounded-2xl border border-primary/30 bg-primary/5 text-sm">
-                <span className="font-semibold text-primary">{t.hint}: </span>
-                <span className="text-foreground/80" dir="ltr">{topic.hint}</span>
-              </div>
+              <>
+                <div className="mb-4 p-4 rounded-2xl border border-primary/30 bg-primary/5 text-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
+                      {t.required}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{topic.unit}</span>
+                  </div>
+                  <p className="font-semibold text-foreground mb-1" dir="ltr">{topic.prompt}</p>
+                  <p className="text-muted-foreground text-xs">{topic.promptAr}</p>
+                </div>
+
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowModel((s) => !s)}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+                  >
+                    {showModel ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showModel ? t.hideModel : t.showModel}
+                  </button>
+                  {showModel && (
+                    <div className="mt-3 p-4 rounded-2xl border border-border bg-secondary/40">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpen className="w-4 h-4 text-primary" />
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.model}</p>
+                      </div>
+                      <p dir="ltr" className="whitespace-pre-wrap leading-relaxed text-sm text-foreground/90">{topic.modelEssay}</p>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
 
             <section className="mb-6">
@@ -194,7 +234,7 @@ const EnglishEssays = ({ language, onBack }: { language: AppLanguage; onBack: ()
               <p className="text-xs text-muted-foreground mt-1 text-right" dir="ltr">{essay.trim().split(/\s+/).filter(Boolean).length} words</p>
             </section>
 
-            <Button onClick={check} disabled={loading || essay.trim().length < 20} size="lg" className="w-full">
+            <Button onClick={check} disabled={loading || !topic || essay.trim().length < 20} size="lg" className="w-full">
               {loading ? (<><Loader2 className="w-4 h-4 animate-spin me-2" /> {t.checking}</>) : (<><PenLine className="w-4 h-4 me-2" /> {t.check}</>)}
             </Button>
           </>

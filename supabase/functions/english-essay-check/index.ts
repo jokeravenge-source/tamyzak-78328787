@@ -29,6 +29,8 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const topic = String(body.topic || "").slice(0, 200);
+    const prompt = String(body.prompt || "").slice(0, 500);
+    const modelEssay = String(body.model_essay || "").slice(0, 5000);
     const essay = String(body.essay || "").slice(0, 8000);
     if (essay.trim().length < 20) {
       return new Response(JSON.stringify({ error: "Essay is too short." }), {
@@ -37,17 +39,29 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are a strict but fair Iraqi 6th-grade English (ministerial-level) composition teacher. The student writes a short English essay (around 80-150 words). Your job:
+    const systemPrompt = `You are a strict but fair Iraqi 6th-grade English (ministerial-level) composition teacher. The student is trying to reproduce a REQUIRED ministerial composition from memory. You receive the official MODEL essay and the student's written essay. Your job:
 
-1. Identify EVERY mistake: spelling, grammar, tenses, articles (a/an/the), prepositions, subject-verb agreement, punctuation, capitalization, word choice, sentence structure.
-2. For each mistake, give: the wrong fragment, the correct fragment, a short reason in Arabic (so the Iraqi student understands).
-3. Produce a fully corrected version of the essay (same ideas, fixed English).
-4. Give scores out of 10 for: grammar, spelling, vocabulary, structure/cohesion, content/relevance to topic. Then total /50 and overall /10.
-5. Write a short feedback message in Arabic (2-4 sentences) with concrete tips.
+1. Compare the student's essay against the MODEL essay. The student is expected to reproduce the MODEL closely (memorization).
+2. Identify EVERY mistake: spelling, grammar, tenses, articles (a/an/the), prepositions, subject-verb agreement, punctuation, capitalization, word choice, sentence structure, AND any missing or wrong sentences vs the model.
+3. For each mistake, return: the wrong fragment (exactly as written by the student, or "(missing)" if the student left it out), the correct fragment from the model, a short reason in Arabic so the Iraqi student understands.
+4. Produce a fully corrected version of the essay that matches the official model (with the student's overall flow preserved when possible).
+5. Give scores out of 10 for: grammar, spelling, vocabulary, structure/cohesion, content (how closely it matches the model). Then overall /10.
+6. Write short feedback in Arabic (2-4 sentences) telling the student which parts they missed or got wrong and what to memorize.
 
-Be honest. Do NOT invent mistakes that aren't there, and do NOT miss real mistakes. Return ONLY via the tool call.`;
+Be honest. Do NOT invent mistakes. Do NOT miss real mistakes. If the student's essay matches the model perfectly, return an empty mistakes array and score 10s. Return ONLY via the tool call.`;
 
-    const userPrompt = `Topic: ${topic || "(not specified)"}\n\nStudent essay:\n"""\n${essay}\n"""`;
+    const userPrompt = `Topic: ${topic || "(not specified)"}
+Question: ${prompt || "(not specified)"}
+
+OFFICIAL MODEL ESSAY (ground truth — student should reproduce this):
+"""
+${modelEssay || "(none provided)"}
+"""
+
+STUDENT'S ESSAY:
+"""
+${essay}
+"""`;
 
     const res = await fetch(AI_URL, {
       method: "POST",
