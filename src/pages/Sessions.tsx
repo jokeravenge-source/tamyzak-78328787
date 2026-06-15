@@ -650,7 +650,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                   <Button size="lg" onClick={() => setRunning(true)} className="gap-2"><Play className="w-4 h-4" /> {L.resume}</Button>
                 )}
                 <Button size="lg" variant="destructive" onClick={stopAndSave} className="gap-2"><Square className="w-4 h-4" /> {L.stop}</Button>
-                <Button size="lg" variant="outline" onClick={discardSession} className="gap-2"><Trash2 className="w-4 h-4" /> {L.discard}</Button>
+                <Button size="lg" variant="outline" onClick={() => setDiscardOpen(true)} className="gap-2"><Trash2 className="w-4 h-4" /> {L.discard}</Button>
               </>
             )}
           </div>
