@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee, Settings } from "lucide-react";
+import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee, Settings, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +79,9 @@ const T = {
     restDone: "Break over — back to focus!",
     workMin: "Study minutes",
     restMin: "Rest minutes",
+    discard: "Discard session",
+    discardConfirm: "Discard this session without saving? Your time and points will not be recorded.",
+    discarded: "Session discarded",
   },
   ar: {
     title: "جلسات الدراسة", desc: "اختر مادة وحدد مهمتك واكسب النقاط.",
@@ -100,6 +103,9 @@ const T = {
     restDone: "انتهت الاستراحة — عُد للتركيز!",
     workMin: "دقائق الدراسة",
     restMin: "دقائق الراحة",
+    discard: "إلغاء الجلسة",
+    discardConfirm: "هل تريد إلغاء هذه الجلسة دون حفظها؟ لن يتم احتساب الوقت أو النقاط.",
+    discarded: "تم إلغاء الجلسة",
   },
 } as const;
 
