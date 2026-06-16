@@ -139,6 +139,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     titleEn: "Progress",
     titleAr: "التقدم",
     items: [
+      { key: "report", labelEn: "Daily Report", labelAr: "تقريري", Icon: Sparkles },
       { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
       { key: "missions", labelEn: "Missions", labelAr: "المهمات", Icon: Target },
       { key: "todo", labelEn: "To-Do List", labelAr: "قائمة المهام", Icon: ListChecks },
@@ -174,7 +175,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
 
 // Featured "Study Tools" cards on the dashboard
 const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }>; tintBg: string; tintText: string }[] = [
-  { key: "report",          Icon: Sparkles,   tintBg: "bg-fuchsia-50",  tintText: "text-fuchsia-600" },
+  { key: "report",          Icon: Sparkles,   tintBg: "bg-primary",     tintText: "text-primary-foreground" },
   { key: "flashcards",      Icon: Layers,     tintBg: "bg-blue-50",    tintText: "text-blue-600" },
   { key: "ministerialBank", Icon: ScrollText, tintBg: "bg-amber-50",   tintText: "text-amber-600" },
   { key: "summaries",       Icon: FileText,   tintBg: "bg-violet-50",  tintText: "text-violet-600" },
@@ -698,6 +699,31 @@ const Basics = ({
             </div>
           )}
 
+          {/* Daily Report CTA */}
+          <section className="mb-10">
+            <div className="relative overflow-hidden rounded-2xl border border-primary bg-primary/5 p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
+              <div className="relative z-10 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                  <Sparkles className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                    {language === "ar" ? "تقريرك اليومي" : "Your Daily Report"}
+                  </h4>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    {language === "ar" ? "راجع تحليلاتك الذكية، تقدمك، وشارك ولي الأمر نتائجك." : "Review your AI insights, progress, and share results with a parent."}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate("report")}
+                className="shrink-0 px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl shadow-sm hover:opacity-95 transition-all active:scale-95"
+              >
+                {language === "ar" ? "عرض التقرير" : "Open Report"}
+              </button>
+            </div>
+          </section>
+
           {/* Study Tools grid */}
           <section>
             <div className="flex items-center justify-between mb-5">
@@ -728,7 +754,7 @@ const Basics = ({
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     whileHover={{ y: -2 }}
                     onClick={() => navigate(it.key)}
-                    className="group bg-card p-5 border border-border rounded-2xl text-left hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all"
+                    className={`group bg-card p-5 border ${it.key === "report" ? "border-primary shadow-[var(--shadow-card)]" : "border-border"} rounded-2xl text-left hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all`}
                   >
                     <div className={`w-11 h-11 ${it.tintBg} rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
                       <Icon className={`w-5 h-5 ${it.tintText}`} />
