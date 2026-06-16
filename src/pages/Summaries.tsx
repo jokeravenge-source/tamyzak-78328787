@@ -14,6 +14,7 @@ export const SUMMARY_SUBJECTS = [
   { code: "arabic", en: "Arabic", ar: "العربية", tag: "#Arabic" },
   { code: "islamic", en: "Islamic", ar: "التربية الإسلامية", tag: "#Islamic" },
   { code: "saitoo", en: "Saitoo", ar: "سايتو", tag: "#saitoo" },
+  { code: "success_keys", en: "Success Keys", ar: "مفاتيح النجاح", tag: "#مفاتيح_النجاح" },
 ] as const;
 
 type SubjectCode = typeof SUMMARY_SUBJECTS[number]["code"];
