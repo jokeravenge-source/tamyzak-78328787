@@ -252,7 +252,9 @@ const MainMenu = ({
               disabled={it.locked}
               className={`group relative text-left rounded-3xl p-6 h-44 border backdrop-blur overflow-hidden
                 ${available
-                  ? "border-primary/40 bg-secondary/40 hover:-translate-y-2 hover:border-primary cursor-pointer shadow-lg hover:shadow-[var(--shadow-glow)]"
+                  ? it.key === "report"
+                    ? "border-primary bg-primary/5 hover:-translate-y-2 hover:border-primary cursor-pointer shadow-lg hover:shadow-[var(--shadow-glow)]"
+                    : "border-primary/40 bg-secondary/40 hover:-translate-y-2 hover:border-primary cursor-pointer shadow-lg hover:shadow-[var(--shadow-glow)]"
                   : "border-white/5 bg-secondary/20 opacity-60 cursor-not-allowed"}`}
             >
               {available && (
@@ -263,8 +265,8 @@ const MainMenu = ({
               )}
 
               <div className="relative z-10 flex items-start justify-between">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${available ? "bg-primary/15" : "bg-muted/20"}`}>
-                  <Icon className={`w-6 h-6 ${available ? "text-primary" : "text-muted-foreground/60"}`} />
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${it.key === "report" ? "bg-primary" : available ? "bg-primary/15" : "bg-muted/20"}`}>
+                  <Icon className={`w-6 h-6 ${it.key === "report" ? "text-primary-foreground" : available ? "text-primary" : "text-muted-foreground/60"}`} />
                 </div>
                 {it.locked ? (
                   <Lock className="w-4 h-4 text-muted-foreground/60" />
