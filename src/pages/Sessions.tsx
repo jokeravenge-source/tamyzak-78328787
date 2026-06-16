@@ -658,7 +658,15 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           {started && (
             <div className="flex justify-center">
               <button
-                onClick={async () => { await stopAndSave(); setSubject(null); }}
+                onClick={async () => {
+                  // Switch room without ending the session: pause the timer,
+                  // clear presence in the current room, and return to room picker.
+                  // The session (time, mission, completion) is preserved and will
+                  // continue under whichever room the user enters next.
+                  setRunning(false);
+                  await clearPresence();
+                  setSubject(null);
+                }}
                 className="text-xs text-primary underline underline-offset-4 hover:text-primary/80"
               >
                 {L.switchRoom}
