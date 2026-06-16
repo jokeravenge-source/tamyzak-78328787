@@ -174,6 +174,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
 
 // Featured "Study Tools" cards on the dashboard
 const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }>; tintBg: string; tintText: string }[] = [
+  { key: "report",          Icon: Sparkles,   tintBg: "bg-fuchsia-50",  tintText: "text-fuchsia-600" },
   { key: "flashcards",      Icon: Layers,     tintBg: "bg-blue-50",    tintText: "text-blue-600" },
   { key: "ministerialBank", Icon: ScrollText, tintBg: "bg-amber-50",   tintText: "text-amber-600" },
   { key: "summaries",       Icon: FileText,   tintBg: "bg-violet-50",  tintText: "text-violet-600" },
@@ -184,6 +185,7 @@ const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: s
 
 const FEATURED_COPY = {
   en: {
+    report: { title: "Daily Report", subtitle: "AI insights + parent follow-up link." },
     flashcards: { title: "Flashcards", subtitle: "Smart Q&A cards across every subject." },
     ministerialBank: { title: "Ministerial Bank", subtitle: "Past ministerial questions by chapter." },
     summaries: { title: "Notes & Summaries", subtitle: "Upload and browse approved notes." },
@@ -192,6 +194,7 @@ const FEATURED_COPY = {
     leaderboard: { title: "Leaderboard", subtitle: "See where you stand this week." },
   },
   ar: {
+    report: { title: "تقريري اليومي", subtitle: "ملاحظات ذكية ورابط متابعة لولي الأمر." },
     flashcards: { title: "البطاقات", subtitle: "بطاقات سؤال وجواب لكل المواد." },
     ministerialBank: { title: "بنك الوزاريات", subtitle: "أسئلة وزارية سابقة حسب الفصل." },
     summaries: { title: "ملخصات", subtitle: "ارفع وتصفّح ملاحظات معتمدة." },

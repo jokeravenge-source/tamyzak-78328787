@@ -44,6 +44,9 @@ import HadithChecker from "./pages/HadithChecker";
 import PoemsChecker from "./pages/PoemsChecker";
 import EnglishEssays from "./pages/EnglishEssays";
 import EnglishIsqat from "./pages/EnglishIsqat";
+import DailyReport from "./pages/DailyReport";
+import Onboarding from "./pages/Onboarding";
+import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 
@@ -52,12 +55,27 @@ const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Public parent follow-up route — intercept before any auth gating
+  const followMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/follow\/([A-Za-z0-9_-]+)/) : null;
+  if (followMatch) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <ParentFollow token={followMatch[1]} />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
   useEffect(() => {
     applyTheme(getInitialTheme());
   }, []);
   const [authed, setAuthed] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [tgVerified, setTgVerified] = useState<boolean>(
     () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1",
   );
@@ -124,8 +142,15 @@ const App = () => {
           .eq("role", "admin")
           .maybeSingle()
           .then(({ data }) => setIsAdmin(!!data));
+        supabase
+          .from("student_profile")
+          .select("onboarded")
+          .eq("user_id", session.user.id)
+          .maybeSingle()
+          .then(({ data }) => setNeedsOnboarding(!data?.onboarded));
       } else {
         setIsAdmin(false);
+        setNeedsOnboarding(false);
       }
     });
     supabase.auth.getSession().then(({ data, error }) => {
@@ -144,6 +169,12 @@ const App = () => {
           .eq("role", "admin")
           .maybeSingle()
           .then(({ data: r }) => setIsAdmin(!!r));
+        supabase
+          .from("student_profile")
+          .select("onboarded")
+          .eq("user_id", data.session.user.id)
+          .maybeSingle()
+          .then(({ data: p }) => setNeedsOnboarding(!p?.onboarded));
       }
       setAuthLoading(false);
     });
@@ -158,7 +189,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -241,6 +272,8 @@ const App = () => {
         <TelegramGate onUnlock={() => setTgVerified(true)} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
+      ) : needsOnboarding ? (
+        <Onboarding language={language} onDone={() => setNeedsOnboarding(false)} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
           language={language}
@@ -284,6 +317,8 @@ const App = () => {
         <EnglishEssays language={language} onBack={backToBasics} />
       ) : menuChoice === "englishIsqat" ? (
         <EnglishIsqat language={language} onBack={backToBasics} />
+      ) : menuChoice === "report" ? (
+        <DailyReport language={language} onBack={resetMenu} />
       ) : menuChoice === "premium" ? (
         <Premium language={language} onBack={resetMenu} />
       ) : menuChoice === "more" ? (

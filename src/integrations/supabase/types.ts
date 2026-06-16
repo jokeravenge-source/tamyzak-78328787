@@ -142,6 +142,60 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_reports: {
+        Row: {
+          ai_plan: Json | null
+          ai_strengths: Json | null
+          ai_summary: string | null
+          ai_weaknesses: Json | null
+          created_at: string
+          focused_minutes: number
+          id: string
+          language: string
+          missions_completed: number
+          points_earned: number
+          report_date: string
+          sessions_count: number
+          subjects_breakdown: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_plan?: Json | null
+          ai_strengths?: Json | null
+          ai_summary?: string | null
+          ai_weaknesses?: Json | null
+          created_at?: string
+          focused_minutes?: number
+          id?: string
+          language?: string
+          missions_completed?: number
+          points_earned?: number
+          report_date: string
+          sessions_count?: number
+          subjects_breakdown?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_plan?: Json | null
+          ai_strengths?: Json | null
+          ai_summary?: string | null
+          ai_weaknesses?: Json | null
+          created_at?: string
+          focused_minutes?: number
+          id?: string
+          language?: string
+          missions_completed?: number
+          points_earned?: number
+          report_date?: string
+          sessions_count?: number
+          subjects_breakdown?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       feature_usage: {
         Row: {
           created_at: string
@@ -256,6 +310,36 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_follow_links: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          parent_name: string | null
+          revoked_at: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          parent_name?: string | null
+          revoked_at?: string | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          parent_name?: string | null
+          revoked_at?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_events: {
         Row: {
           created_at: string
@@ -319,6 +403,45 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      student_profile: {
+        Row: {
+          created_at: string
+          exam_date: string | null
+          onboarded: boolean
+          study_window: string | null
+          target_grade: number | null
+          track: string | null
+          updated_at: string
+          user_id: string
+          weak_subjects: string[] | null
+          weekly_goal_hours: number | null
+        }
+        Insert: {
+          created_at?: string
+          exam_date?: string | null
+          onboarded?: boolean
+          study_window?: string | null
+          target_grade?: number | null
+          track?: string | null
+          updated_at?: string
+          user_id: string
+          weak_subjects?: string[] | null
+          weekly_goal_hours?: number | null
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string | null
+          onboarded?: boolean
+          study_window?: string | null
+          target_grade?: number | null
+          track?: string | null
+          updated_at?: string
+          user_id?: string
+          weak_subjects?: string[] | null
+          weekly_goal_hours?: number | null
         }
         Relationships: []
       }
