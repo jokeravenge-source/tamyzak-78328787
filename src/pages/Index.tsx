@@ -46,6 +46,7 @@ import { flashcardsArabicNidaAr } from "@/data/flashcardsArabicNidaAr";
 import { flashcardsArabicIstifhamAr } from "@/data/flashcardsArabicIstifhamAr";
 import { flashcardsIslamicMeaningsAr } from "@/data/flashcardsIslamicMeaningsAr";
 import { flashcardsEngGrammar1 } from "@/data/flashcardsEngGrammar1";
+import { flashcardsEngParagraphs } from "@/data/flashcardsEngParagraphs";
 import { flashcardsFrenchNegationAr } from "@/data/flashcardsFrenchNegationAr";
 import { flashcardsFrenchInterrogationAr } from "@/data/flashcardsFrenchInterrogationAr";
 import { flashcardsFrenchRelativePronounsAr } from "@/data/flashcardsFrenchRelativePronounsAr";
@@ -230,6 +231,16 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           title: "بطاقات تعليمية",
           eyebrow: "التربية الإسلامية · المعاني",
           cards: flashcardsIslamicMeaningsAr,
+        };
+      }
+
+      const engCat = typeof window !== "undefined" ? localStorage.getItem("app_english_category_v1") : null;
+
+      if (subject === "english" && engCat === "paragraphs" && chapter === "1") {
+        return {
+          title: language === "ar" ? "بطاقات تعليمية" : "Flashcards",
+          eyebrow: language === "ar" ? "الإنجليزية · الفقرات" : "English · Paragraphs",
+          cards: flashcardsEngParagraphs,
         };
       }
 
