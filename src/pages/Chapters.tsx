@@ -68,7 +68,7 @@ const englishLiteratureChapters = [
   { n: 1, title: "Coming Soon", arTitle: "قريباً", subtitle: "", locked: true },
 ];
 const englishParagraphsChapters = [
-  { n: 1, title: "Coming Soon", arTitle: "قريباً", subtitle: "", locked: true },
+  { n: 1, title: "Paragraphs", arTitle: "الفقرات", subtitle: "Reading comprehension flashcards", locked: false },
 ];
 
 const copy = {
