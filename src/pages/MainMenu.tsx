@@ -1,4 +1,4 @@
-import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, Compass } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, Compass, LineChart } from "lucide-react";
 import { motion } from "framer-motion";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
@@ -25,6 +25,7 @@ const copy = {
       videoNotes: { title: "Video to Notes", subtitle: "Paste a YouTube link and get AI-generated study notes." },
       account: { title: "Account Center", subtitle: "Set your username and manage your profile." },
       essay: { title: "Essay Coach", subtitle: "Upload a file and get essay questions graded 1–10 by AI." },
+      report: { title: "Daily Report", subtitle: "AI insights on today's study + share progress with a parent." },
     },
   },
   ar: {
@@ -45,11 +46,12 @@ const copy = {
       videoNotes: { title: "من الفيديو إلى ملاحظات", subtitle: "ألصق رابط يوتيوب واحصل على ملاحظات دراسية بالذكاء الاصطناعي." },
       account: { title: "مركز الحساب", subtitle: "حدّد اسم المستخدم وأدر ملفك الشخصي." },
       essay: { title: "مدرّب المقالات", subtitle: "ارفع ملفاً واحصل على أسئلة مقالية مُقيَّمة من 1 إلى 10." },
+      report: { title: "تقريري اليومي", subtitle: "تحليل ذكي ليومك الدراسي ومشاركة تقدمك مع ولي الأمر." },
     },
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "leaderboard" | "news" | "premium" | "more" | "todo" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "leaderboard" | "news" | "premium" | "more" | "todo" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report";
 
 const MainMenu = ({
   language,
@@ -102,6 +104,7 @@ const MainMenu = ({
 
   const items = [
     { key: "basics" as const, Icon: Compass, locked: false, ...text.items.basics },
+    { key: "report" as const, Icon: LineChart, locked: false, ...text.items.report },
     { key: "flashcards" as const, Icon: Layers, locked: false, ...text.items.flashcards },
     { key: "malazam", Icon: BookMarked, locked: false, ...text.items.malazam },
     { key: "summaries", Icon: FileText, locked: false, ...text.items.summaries },
