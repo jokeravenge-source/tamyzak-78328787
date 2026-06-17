@@ -141,12 +141,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
         if (upErr) throw upErr;
         image_path = path;
       }
-      const { error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, link: linkTrim || null, created_by: u.user?.id });
+      const { data: newsRow, error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, link: linkTrim || null, created_by: u.user?.id }).select("id").single();
       if (error) throw error;
       toast.success("News posted — all users notified");
       try {
         const { data: tg } = await supabase.functions.invoke("telegram-notify", {
-          body: { title: `📰 ${newsForm.title}`, body: newsForm.description, link: linkTrim || null, audience: "all" },
+          body: { title: `📰 ${newsForm.title}`, body: newsForm.description, link: linkTrim || null, audience: "all", notification_key: `news:${newsRow?.id}` },
         });
         if (tg && typeof tg === "object" && "sent" in (tg as Record<string, unknown>)) {
           const t = tg as { sent: number; failed: number; total: number };
