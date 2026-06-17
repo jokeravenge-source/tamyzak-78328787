@@ -92,6 +92,17 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     const { error } = await supabase.from("notifications").insert({ title: notifForm.title, body: notifForm.body, link: link || null, created_by: u.user?.id });
     if (error) return toast.error(error.message);
     toast.success("Notification sent to all users");
+    try {
+      const { data: tg } = await supabase.functions.invoke("telegram-notify", {
+        body: { title: notifForm.title, body: notifForm.body, link: link || null, audience: "all" },
+      });
+      if (tg && typeof tg === "object" && "sent" in (tg as Record<string, unknown>)) {
+        const t = tg as { sent: number; failed: number; total: number };
+        toast.success(`Telegram: ${t.sent}/${t.total} delivered${t.failed ? ` (${t.failed} failed)` : ""}`);
+      }
+    } catch (e: any) {
+      toast.error(`Telegram push failed: ${e?.message ?? e}`);
+    }
     setNotifForm({ title: "", body: "", link: "" });
     loadNotifs();
   };
@@ -133,6 +144,17 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
       const { error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, link: linkTrim || null, created_by: u.user?.id });
       if (error) throw error;
       toast.success("News posted — all users notified");
+      try {
+        const { data: tg } = await supabase.functions.invoke("telegram-notify", {
+          body: { title: `📰 ${newsForm.title}`, body: newsForm.description, link: linkTrim || null, audience: "all" },
+        });
+        if (tg && typeof tg === "object" && "sent" in (tg as Record<string, unknown>)) {
+          const t = tg as { sent: number; failed: number; total: number };
+          toast.success(`Telegram: ${t.sent}/${t.total} delivered${t.failed ? ` (${t.failed} failed)` : ""}`);
+        }
+      } catch (e: any) {
+        toast.error(`Telegram push failed: ${e?.message ?? e}`);
+      }
       setNewsForm({ title: "", description: "", link: "", file: null });
       loadNews();
     } catch (e: any) {
