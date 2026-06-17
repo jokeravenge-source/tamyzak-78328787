@@ -19,5 +19,12 @@ export async function pushTodos(items: SyncedTodo[]) {
       { user_id: u.user.id, items: items as unknown as never, week_key: getISOWeek(), updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     );
+    // Notify any parent dashboard listening on this user's channel.
+    try {
+      const ch = supabase.channel(`todos:${u.user.id}`);
+      await ch.subscribe();
+      await ch.send({ type: "broadcast", event: "todos-changed", payload: { at: Date.now() } });
+      await supabase.removeChannel(ch);
+    } catch { /* noop */ }
   } catch { /* noop */ }
 }

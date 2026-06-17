@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
       last_report: report ?? null,
       todays_todos: todaysTodos,
       all_todos: allItems,
+      channel: `todos:${userId}`,
     });
   } catch (e) {
     return json({ error: String(e) }, 500);
