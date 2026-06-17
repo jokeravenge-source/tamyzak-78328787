@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Clock, Target, Trophy, CalendarDays, GraduationCap, Brain } from "lucide-react";
+import { Clock, Target, Trophy, CalendarDays, GraduationCap, Brain, ListChecks, CheckCircle2, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 
@@ -12,6 +12,7 @@ type Snapshot = {
   weekly_goal_hours: number | null;
   last_7_days: Array<{ date: string; minutes: number }>;
   last_report: any;
+  todays_todos?: Array<{ id: string; text: string; done: boolean; day?: string }>;
 };
 
 export default function ParentFollow({ token }: { token: string }) {
@@ -85,6 +86,22 @@ export default function ParentFollow({ token }: { token: string }) {
             {r.ai_plan?.length ? <Section title="Plan for tomorrow" items={r.ai_plan} /> : null}
           </div>
         )}
+
+        <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
+          <div className="flex items-center gap-2 mb-3"><ListChecks className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">Today's to-do list</span></div>
+          {!data.todays_todos?.length ? (
+            <p className="text-sm text-muted-foreground">No tasks planned for today.</p>
+          ) : (
+            <ul className="space-y-2">
+              {data.todays_todos.map((td) => (
+                <li key={td.id} className={`flex items-center gap-3 rounded-xl border p-3 ${td.done ? "border-primary/40 bg-primary/10" : "border-white/10 bg-background/40"}`}>
+                  {td.done ? <CheckCircle2 className="w-5 h-5 text-primary shrink-0" /> : <Circle className="w-5 h-5 text-muted-foreground shrink-0" />}
+                  <span className={`text-sm ${td.done ? "line-through text-muted-foreground" : "text-foreground"}`}>{td.text}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </main>
   );

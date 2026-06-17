@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import GeminiStatus from "@/components/GeminiStatus";
 import ChatBlobBackground from "@/components/ChatBlobBackground";
 import type { AppLanguage } from "@/components/LanguageGate";
+import { pushTodos } from "@/lib/todosSync";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Mode = "schedule" | "problem";
@@ -79,8 +80,8 @@ function stripPlanBlock(text: string): string {
   return text.replace(/```json\s*[\s\S]*?```/gi, "").trim();
 }
 
-const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
-  const [open, setOpen] = useState(false);
+const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLanguage; embedded?: boolean }) => {
+  const [open, setOpen] = useState(embedded);
   const [mode, setMode] = useState<Mode | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -165,28 +166,18 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
     localStorage.setItem(TODOS_KEY, JSON.stringify(merged));
     localStorage.removeItem("app_todos_celebrated_v1");
     window.dispatchEvent(new Event("app:todos-changed"));
+    pushTodos(merged);
     setApproved(true);
   };
 
-  return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label={t.fab}
-        className="fixed bottom-32 right-5 z-[55] inline-flex items-center gap-2 h-12 px-4 rounded-full border border-primary/50 bg-gradient-to-r from-primary/90 to-accent/90 text-primary-foreground shadow-lg hover:scale-105 transition-all duration-300"
-      >
-        <Sparkles className="w-4 h-4" />
-        <span className="text-sm font-semibold">{t.fab}</span>
-      </button>
-
-      {open && (
-        <div
-          className="fixed inset-0 z-[80] bg-background/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-          onClick={() => setOpen(false)}
-        >
+  const panel = (
           <div
             dir={language === "ar" ? "rtl" : "ltr"}
-            className="relative w-full sm:max-w-lg h-[88vh] sm:h-[640px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 gemini-chat-bg shadow-[var(--shadow-glow)] overflow-hidden"
+            className={
+              embedded
+                ? "relative w-full h-[640px] flex flex-col rounded-3xl border border-primary/30 gemini-chat-bg shadow-[var(--shadow-glow)] overflow-hidden"
+                : "relative w-full sm:max-w-lg h-[88vh] sm:h-[640px] flex flex-col rounded-t-3xl sm:rounded-3xl border border-primary/30 gemini-chat-bg shadow-[var(--shadow-glow)] overflow-hidden"
+            }
             onClick={(e) => e.stopPropagation()}
           >
             <ChatBlobBackground />
@@ -202,9 +193,11 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
                   )}
                 </div>
               </div>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1">
-                <X className="w-5 h-5" />
-              </button>
+              {!embedded && (
+                <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1">
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
 
             {!mode ? (
@@ -297,6 +290,27 @@ const ExcellenceCompanion = ({ language }: { language: AppLanguage }) => {
               </>
             )}
           </div>
+  );
+
+  if (embedded) return panel;
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        aria-label={t.fab}
+        className="fixed bottom-32 right-5 z-[55] inline-flex items-center gap-2 h-12 px-4 rounded-full border border-primary/50 bg-gradient-to-r from-primary/90 to-accent/90 text-primary-foreground shadow-lg hover:scale-105 transition-all duration-300"
+      >
+        <Sparkles className="w-4 h-4" />
+        <span className="text-sm font-semibold">{t.fab}</span>
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-[80] bg-background/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onClick={() => setOpen(false)}
+        >
+          {panel}
         </div>
       )}
     </>

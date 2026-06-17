@@ -21,10 +21,11 @@ Deno.serve(async (req) => {
     if (!link || !link.enabled || link.revoked_at) return json({ error: "invalid_or_revoked" }, 404);
 
     const userId = link.user_id;
-    const [{ data: profile }, { data: studentProfile }, { data: report }] = await Promise.all([
+    const [{ data: profile }, { data: studentProfile }, { data: report }, { data: todosRow }] = await Promise.all([
       admin.from("profiles").select("display_name").eq("user_id", userId).maybeSingle(),
       admin.from("student_profile").select("exam_date, target_grade, weekly_goal_hours").eq("user_id", userId).maybeSingle(),
       admin.from("daily_reports").select("*").eq("user_id", userId).order("report_date", { ascending: false }).limit(1).maybeSingle(),
+      admin.from("student_todos").select("items, week_key, updated_at").eq("user_id", userId).maybeSingle(),
     ]);
 
     // 7-day study sessions for chart
@@ -52,6 +53,20 @@ Deno.serve(async (req) => {
       daysToExam = Math.max(0, Math.round(dx));
     }
 
+    // Filter today's todos by day-of-week label (EN + AR)
+    const dayIdx = new Date().getDay(); // 0=Sun..6=Sat
+    const enDays = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    const arDays = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+    const todayEn = enDays[dayIdx];
+    const todayAr1 = arDays[dayIdx];
+    const todayAr2 = dayIdx === 1 ? "الاثنين" : null;
+    const allItems = Array.isArray(todosRow?.items) ? (todosRow!.items as Array<{ id: string; text: string; done: boolean; day?: string }>) : [];
+    const todaysTodos = allItems.filter((t) => {
+      if (!t || typeof t.text !== "string") return false;
+      if (!t.day) return true;
+      return t.day === todayEn || t.day === todayAr1 || (todayAr2 && t.day === todayAr2);
+    });
+
     return json({
       student_name: profile?.display_name ?? "Student",
       parent_name: link.parent_name,
@@ -61,6 +76,8 @@ Deno.serve(async (req) => {
       weekly_goal_hours: studentProfile?.weekly_goal_hours ?? null,
       last_7_days: Object.entries(byDay).map(([date, minutes]) => ({ date, minutes })),
       last_report: report ?? null,
+      todays_todos: todaysTodos,
+      all_todos: allItems,
     });
   } catch (e) {
     return json({ error: String(e) }, 500);
