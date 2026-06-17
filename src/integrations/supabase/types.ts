@@ -618,6 +618,27 @@ export type Database = {
           },
         ]
       }
+      telegram_notifications_sent: {
+        Row: {
+          id: string
+          notification_key: string
+          sent_at: string
+          telegram_user_id: number
+        }
+        Insert: {
+          id?: string
+          notification_key: string
+          sent_at?: string
+          telegram_user_id: number
+        }
+        Update: {
+          id?: string
+          notification_key?: string
+          sent_at?: string
+          telegram_user_id?: number
+        }
+        Relationships: []
+      }
       telegram_verifications: {
         Row: {
           created_at: string
