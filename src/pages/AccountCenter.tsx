@@ -592,6 +592,8 @@ const AccountCenter = ({
           <ThemePicker language={language} variant="inline" />
         </div>
 
+        <CountdownSettings language={language} />
+
         <a
           href="https://t.me/ias404"
           target="_blank"

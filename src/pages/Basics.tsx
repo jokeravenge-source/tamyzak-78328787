@@ -294,9 +294,24 @@ const Basics = ({
     };
   }, []);
 
-  const TARGET = new Date(2026, 5, 13, 7, 0, 0).getTime();
+  const DEFAULT_TARGET_ISO = "2026-06-13T07:00";
+  const [eventName, setEventName] = useState<string>(() => localStorage.getItem("custom_countdown_name_v1") || "");
+  const [eventDateISO, setEventDateISO] = useState<string>(() => localStorage.getItem("custom_countdown_date_v1") || DEFAULT_TARGET_ISO);
+  useEffect(() => {
+    const sync = () => {
+      setEventName(localStorage.getItem("custom_countdown_name_v1") || "");
+      setEventDateISO(localStorage.getItem("custom_countdown_date_v1") || DEFAULT_TARGET_ISO);
+    };
+    window.addEventListener("storage", sync);
+    window.addEventListener("app:countdown-changed", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("app:countdown-changed", sync);
+    };
+  }, []);
+  const TARGET = new Date(eventDateISO).getTime();
   const [now, setNow] = useState<number>(() => Date.now());
-  const [showTimer, setShowTimer] = useState<boolean>(() => localStorage.getItem("countdown_jun13_hidden_v1") !== "1");
+  const [showTimer, setShowTimer] = useState<boolean>(() => localStorage.getItem("countdown_hidden_v1") !== "1");
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(i);
@@ -308,12 +323,18 @@ const Basics = ({
     m: Math.floor((diff % 3600000) / 60000),
     s: Math.floor((diff % 60000) / 1000),
   };
-  const timerLabel = language === "ar" ? "العد التنازلي حتى ١٣ يونيو، ٧ صباحاً" : "Countdown to June 13, 7:00 AM";
+  const targetDate = new Date(eventDateISO);
+  const formattedTarget = isNaN(targetDate.getTime())
+    ? ""
+    : targetDate.toLocaleString(language === "ar" ? "ar-EG" : "en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const defaultEvtName = language === "ar" ? "موعد مهم" : "Important date";
+  const evtName = eventName.trim() || defaultEvtName;
+  const timerLabel = language === "ar" ? `${evtName} — ${formattedTarget}` : `${evtName} — ${formattedTarget}`;
   const units = language === "ar"
     ? { d: "يوم", h: "ساعة", m: "دقيقة", s: "ثانية" }
     : { d: "Days", h: "Hours", m: "Min", s: "Sec" };
   const dismissTimer = () => {
-    localStorage.setItem("countdown_jun13_hidden_v1", "1");
+    localStorage.setItem("countdown_hidden_v1", "1");
     setShowTimer(false);
   };
 
