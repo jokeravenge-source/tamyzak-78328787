@@ -13,33 +13,58 @@ type Entry = {
   key: SearchNavChoice;
   en: { title: string; desc: string; tags?: string };
   ar: { title: string; desc: string; tags?: string };
+  keywords?: string[];
 };
 
 const ENTRIES: Entry[] = [
-  { key: "basics", en: { title: "The Basics", desc: "Hub for essential study tools" }, ar: { title: "الأساسيات", desc: "كل أدواتك الدراسية" } },
-  { key: "report", en: { title: "Daily Report", desc: "AI insights on today's study", tags: "parent follow" }, ar: { title: "تقريري اليومي", desc: "تحليل ذكي ليومك", tags: "ولي الأمر" } },
-  { key: "flashcards", en: { title: "Flashcards", desc: "Study Q&A cards" }, ar: { title: "البطاقات", desc: "بطاقات السؤال والجواب" } },
-  { key: "malazam", en: { title: "Malazam", desc: "Booklets & notes" }, ar: { title: "الملازم", desc: "ملازم ومذكرات" } },
-  { key: "summaries", en: { title: "Notes & Summaries", desc: "Community summaries" }, ar: { title: "الملخصات", desc: "ملاحظات وملخصات" } },
-  { key: "missions", en: { title: "My Missions", desc: "Chapter checklists" }, ar: { title: "مهماتي", desc: "مواضيع كل فصل" } },
-  { key: "mcq", en: { title: "MCQ Generator", desc: "Generate MCQs from a file" }, ar: { title: "مولّد الأسئلة", desc: "أسئلة من ملف" } },
-  { key: "sessions", en: { title: "Sessions", desc: "Study timer & leaderboard" }, ar: { title: "الجلسات", desc: "وقت دراستك" } },
-  { key: "videoNotes", en: { title: "Video to Notes", desc: "YouTube → notes" }, ar: { title: "فيديو إلى ملاحظات", desc: "يوتيوب إلى ملاحظات" } },
-  { key: "account", en: { title: "Account Center", desc: "Settings, countdown event" }, ar: { title: "مركز الحساب", desc: "الإعدادات" } },
-  { key: "essay", en: { title: "Essay Coach", desc: "AI essay grading" }, ar: { title: "مدرّب المقالات", desc: "تصحيح مقالات" } },
-  { key: "biologyDrawings", en: { title: "Biology Drawings", desc: "Labeled diagrams" }, ar: { title: "رسومات الأحياء", desc: "رسومات معنونة" } },
-  { key: "todo", en: { title: "To-Do List", desc: "Daily tasks" }, ar: { title: "قائمة المهام", desc: "مهام اليوم" } },
-  { key: "news", en: { title: "News", desc: "Announcements" }, ar: { title: "الأخبار", desc: "الإعلانات" } },
-  { key: "premium", en: { title: "Premium", desc: "Upgrade plan" }, ar: { title: "بريميوم", desc: "ترقية الخطة" } },
-  { key: "ministerialBank", en: { title: "Ministerial Bank", desc: "Past exam questions" }, ar: { title: "البنك الوزاري", desc: "أسئلة وزارية" } },
-  { key: "mindmap", en: { title: "Mind Map", desc: "AI mind maps" }, ar: { title: "الخرائط الذهنية", desc: "خرائط ذهنية" } },
-  { key: "islamicSurahs", en: { title: "Islamic Surahs", desc: "Quran audio + text" }, ar: { title: "السور الإسلامية", desc: "تلاوة ونص" } },
-  { key: "hadithChecker", en: { title: "Hadith Checker", desc: "Verify hadith" }, ar: { title: "تدقيق الحديث", desc: "تحقق من الحديث" } },
-  { key: "poemsChecker", en: { title: "Poems Checker", desc: "Verify Arabic poems" }, ar: { title: "تدقيق القصائد", desc: "تحقق من القصائد" } },
-  { key: "englishEssays", en: { title: "English Essays", desc: "English essay topics" }, ar: { title: "مقالات إنجليزية", desc: "مواضيع مقالات" } },
-  { key: "englishIsqat", en: { title: "English Isqat", desc: "English exercises" }, ar: { title: "إسقاط إنجليزي", desc: "تمارين" } },
-  { key: "leaderboard", en: { title: "Leaderboard", desc: "Top students" }, ar: { title: "المتصدرون", desc: "أعلى الطلاب" } },
-  { key: "more", en: { title: "More Tools", desc: "All other features" }, ar: { title: "المزيد", desc: "كل الميزات" } },
+  { key: "basics", en: { title: "The Basics", desc: "Hub for essential study tools" }, ar: { title: "الأساسيات", desc: "كل أدواتك الدراسية" },
+    keywords: ["home", "main", "menu", "dashboard", "hub", "start", "tools", "رئيسية", "أساسيات", "قائمة"] },
+  { key: "report", en: { title: "Daily Report", desc: "AI insights on today's study", tags: "parent follow" }, ar: { title: "تقريري اليومي", desc: "تحليل ذكي ليومك", tags: "ولي الأمر" },
+    keywords: ["parent", "mom", "dad", "father", "mother", "family", "progress", "share", "follow", "tracking", "track", "review", "stats", "analytics", "insight", "today", "summary", "success companion", "excellence", "ولي الأمر", "أهل", "أب", "أم", "تقرير", "متابعة", "تقدم", "مشاركة", "إحصائيات", "تحليل"] },
+  { key: "flashcards", en: { title: "Flashcards", desc: "Study Q&A cards" }, ar: { title: "البطاقات", desc: "بطاقات السؤال والجواب" },
+    keywords: ["cards", "qa", "question", "answer", "study", "memorize", "memorization", "revise", "review", "بطاقات", "أسئلة", "حفظ", "مذاكرة", "مراجعة"] },
+  { key: "malazam", en: { title: "Malazam", desc: "Booklets & notes" }, ar: { title: "الملازم", desc: "ملازم ومذكرات" },
+    keywords: ["booklet", "book", "notes", "pdf", "documents", "files", "library", "ملزمة", "ملازم", "كتب", "مذكرات", "ملفات", "مكتبة"] },
+  { key: "summaries", en: { title: "Notes & Summaries", desc: "Community summaries" }, ar: { title: "الملخصات", desc: "ملاحظات وملخصات" },
+    keywords: ["summary", "notes", "share", "upload", "community", "ملخص", "ملاحظات", "رفع"] },
+  { key: "missions", en: { title: "My Missions", desc: "Chapter checklists" }, ar: { title: "مهماتي", desc: "مواضيع كل فصل" },
+    keywords: ["tasks", "goals", "checklist", "chapters", "topics", "progress", "checkoff", "مهام", "أهداف", "فصول", "مواضيع", "تقدم"] },
+  { key: "mcq", en: { title: "MCQ Generator", desc: "Generate MCQs from a file" }, ar: { title: "مولّد الأسئلة", desc: "أسئلة من ملف" },
+    keywords: ["multiple choice", "quiz", "questions", "test", "exam", "ai", "generate", "اختبار", "أسئلة", "امتحان", "اختيار من متعدد", "كويز"] },
+  { key: "sessions", en: { title: "Sessions", desc: "Study timer & leaderboard" }, ar: { title: "الجلسات", desc: "وقت دراستك" },
+    keywords: ["timer", "pomodoro", "study time", "track time", "stopwatch", "focus", "concentration", "مؤقت", "وقت", "تركيز", "دراسة"] },
+  { key: "videoNotes", en: { title: "Video to Notes", desc: "YouTube → notes" }, ar: { title: "فيديو إلى ملاحظات", desc: "يوتيوب إلى ملاحظات" },
+    keywords: ["youtube", "video", "transcript", "lecture", "summarize", "notes", "فيديو", "يوتيوب", "محاضرة", "ملاحظات"] },
+  { key: "account", en: { title: "Account Center", desc: "Settings, countdown event, profile" }, ar: { title: "مركز الحساب", desc: "الإعدادات والملف الشخصي" },
+    keywords: ["profile", "settings", "username", "name", "avatar", "countdown", "timer", "event", "exam date", "theme", "language", "preferences", "signout", "logout", "telegram", "linked", "حساب", "إعدادات", "اسم", "ملف شخصي", "موعد", "عد تنازلي", "امتحان", "تليغرام", "خروج"] },
+  { key: "essay", en: { title: "Essay Coach", desc: "AI essay grading" }, ar: { title: "مدرّب المقالات", desc: "تصحيح مقالات" },
+    keywords: ["writing", "essays", "grade", "score", "feedback", "ai", "كتابة", "مقال", "تصحيح", "علامة"] },
+  { key: "biologyDrawings", en: { title: "Biology Drawings", desc: "Labeled diagrams" }, ar: { title: "رسومات الأحياء", desc: "رسومات معنونة" },
+    keywords: ["biology", "diagrams", "drawings", "labels", "anatomy", "cell", "أحياء", "رسومات", "تشريح", "خلية"] },
+  { key: "todo", en: { title: "To-Do List", desc: "Daily tasks" }, ar: { title: "قائمة المهام", desc: "مهام اليوم" },
+    keywords: ["tasks", "todos", "checklist", "today", "homework", "plan", "schedule", "reminder", "مهام", "اليوم", "واجبات", "تذكير", "جدول"] },
+  { key: "news", en: { title: "News", desc: "Announcements" }, ar: { title: "الأخبار", desc: "الإعلانات" },
+    keywords: ["announcements", "updates", "posts", "notifications", "feed", "أخبار", "إعلانات", "تنبيهات", "تحديثات"] },
+  { key: "premium", en: { title: "Premium", desc: "Upgrade plan" }, ar: { title: "بريميوم", desc: "ترقية الخطة" },
+    keywords: ["upgrade", "subscription", "pay", "paddle", "pro", "vip", "plan", "billing", "اشتراك", "ترقية", "دفع", "خطة", "فاتورة"] },
+  { key: "ministerialBank", en: { title: "Ministerial Bank", desc: "Past exam questions" }, ar: { title: "البنك الوزاري", desc: "أسئلة وزارية" },
+    keywords: ["past papers", "exam", "ministry", "وزاري", "بنك", "امتحانات", "أسئلة سابقة"] },
+  { key: "mindmap", en: { title: "Mind Map", desc: "AI mind maps" }, ar: { title: "الخرائط الذهنية", desc: "خرائط ذهنية" },
+    keywords: ["mind map", "diagram", "visual", "concept", "خريطة", "ذهنية", "مفاهيم"] },
+  { key: "islamicSurahs", en: { title: "Islamic Surahs", desc: "Quran audio + text" }, ar: { title: "السور الإسلامية", desc: "تلاوة ونص" },
+    keywords: ["quran", "surah", "islamic", "religion", "tilawa", "audio", "recitation", "قرآن", "سور", "تلاوة", "إسلامي", "دين"] },
+  { key: "hadithChecker", en: { title: "Hadith Checker", desc: "Verify hadith" }, ar: { title: "تدقيق الحديث", desc: "تحقق من الحديث" },
+    keywords: ["hadith", "islamic", "verify", "authentic", "حديث", "تحقق", "صحيح", "إسلامي"] },
+  { key: "poemsChecker", en: { title: "Poems Checker", desc: "Verify Arabic poems" }, ar: { title: "تدقيق القصائد", desc: "تحقق من القصائد" },
+    keywords: ["poems", "arabic", "poetry", "literature", "verify", "قصائد", "شعر", "أدب", "تحقق"] },
+  { key: "englishEssays", en: { title: "English Essays", desc: "English essay topics" }, ar: { title: "مقالات إنجليزية", desc: "مواضيع مقالات" },
+    keywords: ["english", "essay", "writing", "topics", "إنجليزي", "مقال", "كتابة"] },
+  { key: "englishIsqat", en: { title: "English Isqat", desc: "English exercises" }, ar: { title: "إسقاط إنجليزي", desc: "تمارين" },
+    keywords: ["english", "exercises", "grammar", "isqat", "إنجليزي", "تمارين", "قواعد", "إسقاط"] },
+  { key: "leaderboard", en: { title: "Leaderboard", desc: "Top students, ranking, points" }, ar: { title: "المتصدرون", desc: "أعلى الطلاب والنقاط" },
+    keywords: ["ranking", "rank", "top", "points", "score", "competition", "متصدرون", "ترتيب", "نقاط", "منافسة"] },
+  { key: "more", en: { title: "More Tools", desc: "All other features" }, ar: { title: "المزيد", desc: "كل الميزات" },
+    keywords: ["all", "extra", "other", "tools", "features", "مزيد", "كل", "ميزات"] },
 ];
 
 export default function SearchFAB({
@@ -70,15 +95,45 @@ export default function SearchFAB({
   }, [open]);
 
   const results = useMemo(() => {
-    const query = q.trim().toLowerCase();
+    const raw = q.trim().toLowerCase();
+    if (!raw) return ENTRIES.slice(0, 12);
+    const stop = new Set(["the", "a", "an", "of", "to", "for", "and", "or", "is", "my", "i", "want", "need", "how", "do", "in", "on", "with", "show", "open", "find", "get", "me", "في", "من", "على", "إلى", "هو", "هي", "كيف", "أريد", "افتح"]);
+    const tokens = raw.split(/[\s,;.!?]+/).filter((t) => t.length > 1 && !stop.has(t));
+    if (tokens.length === 0) tokens.push(raw);
+
     const scored = ENTRIES.map((e) => {
       const t = e[language];
       const other = language === "en" ? e.ar : e.en;
-      const hay = `${t.title} ${t.desc} ${t.tags ?? ""} ${other.title} ${other.desc} ${e.key}`.toLowerCase();
-      if (!query) return { e, score: 0 };
-      if (hay.includes(query)) return { e, score: t.title.toLowerCase().startsWith(query) ? 3 : t.title.toLowerCase().includes(query) ? 2 : 1 };
-      return { e, score: -1 };
-    }).filter((r) => r.score >= 0).sort((a, b) => b.score - a.score);
+      const titleHay = `${t.title} ${other.title}`.toLowerCase();
+      const fullHay = [
+        t.title, t.desc, t.tags ?? "",
+        other.title, other.desc, other.tags ?? "",
+        e.key, (e.keywords ?? []).join(" "),
+      ].join(" ").toLowerCase();
+
+      let score = 0;
+      let matched = 0;
+      for (const tok of tokens) {
+        let hit = false;
+        if (titleHay.startsWith(tok)) { score += 8; hit = true; }
+        else if (titleHay.includes(tok)) { score += 5; hit = true; }
+        if (fullHay.includes(tok)) { score += 3; hit = true; }
+        else {
+          // partial / substring fuzz: token appears as substring of any word
+          const words = fullHay.split(/\s+/);
+          if (words.some((w) => w.length >= 3 && tok.length >= 3 && (w.includes(tok) || tok.includes(w)))) {
+            score += 1; hit = true;
+          }
+        }
+        if (hit) matched += 1;
+      }
+      // bonus for matching more of the query tokens
+      score += matched * 2;
+      return { e, score };
+    })
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score);
+
     return scored.slice(0, 12).map((r) => r.e);
   }, [q, language]);
 
