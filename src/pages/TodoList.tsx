@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, PartyPopper } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
+import { pushTodos } from "@/lib/todosSync";
 
 type Todo = { id: string; text: string; done: boolean; day?: string };
 
@@ -84,6 +85,7 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    pushTodos(todos);
     if (todos.length > 0 && todos.every((t) => t.done)) {
       if (localStorage.getItem(CELEBRATED_KEY) !== "1") {
         setShowCongrats(true);
