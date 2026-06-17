@@ -144,10 +144,14 @@ const App = () => {
           .then(({ data }) => setIsAdmin(!!data));
         supabase
           .from("student_profile")
-          .select("onboarded")
+          .select("onboarded, exam_date")
           .eq("user_id", session.user.id)
           .maybeSingle()
-          .then(({ data }) => setNeedsOnboarding(!data?.onboarded));
+          .then(({ data }) => {
+            const today = new Date().toISOString().slice(0, 10);
+            const examPassed = !!data?.exam_date && data.exam_date <= today;
+            setNeedsOnboarding(!data?.onboarded || examPassed);
+          });
       } else {
         setIsAdmin(false);
         setNeedsOnboarding(false);
@@ -171,10 +175,14 @@ const App = () => {
           .then(({ data: r }) => setIsAdmin(!!r));
         supabase
           .from("student_profile")
-          .select("onboarded")
+          .select("onboarded, exam_date")
           .eq("user_id", data.session.user.id)
           .maybeSingle()
-          .then(({ data: p }) => setNeedsOnboarding(!p?.onboarded));
+          .then(({ data: p }) => {
+            const today = new Date().toISOString().slice(0, 10);
+            const examPassed = !!p?.exam_date && p.exam_date <= today;
+            setNeedsOnboarding(!p?.onboarded || examPassed);
+          });
       }
       setAuthLoading(false);
     });
@@ -272,7 +280,7 @@ const App = () => {
         <TelegramGate onUnlock={() => setTgVerified(true)} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
-      ) : needsOnboarding && (typeof window !== "undefined" && localStorage.getItem("session_completed_today_v1") === new Date().toISOString().slice(0,10)) ? (
+      ) : needsOnboarding ? (
         <Onboarding language={language} onDone={() => setNeedsOnboarding(false)} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
