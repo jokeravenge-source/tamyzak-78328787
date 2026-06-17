@@ -106,15 +106,20 @@ Deno.serve(async (req) => {
   }
 
   const check = await checkAllChannels(fromId);
+  // On transient errors (e.g. bot not yet admin in a channel, Telegram throttling)
+  // preserve the user's existing verified state instead of flipping it to false.
+  const updatePayload: Record<string, unknown> = {
+    telegram_user_id: fromId,
+    telegram_username: username,
+    last_checked_at: new Date().toISOString(),
+    last_error: check.error ?? null,
+  };
+  if (!check.error) {
+    updatePayload.verified = check.ok;
+  }
   await supabase
     .from("telegram_verifications")
-    .update({
-      telegram_user_id: fromId,
-      telegram_username: username,
-      verified: check.ok,
-      last_checked_at: new Date().toISOString(),
-      last_error: check.error ?? null,
-    })
+    .update(updatePayload)
     .eq("user_id", row.user_id);
 
   if (check.ok) {
@@ -123,10 +128,9 @@ Deno.serve(async (req) => {
       text: "✅ Verified! You're subscribed to all required channels. You can return to the app now.",
     });
   } else if (check.error) {
-    await tg("sendMessage", {
-      chat_id: chatId,
-      text: "⚠️ Something went wrong while checking your subscriptions. Please try again later.",
-    });
+    // Silent on transient errors — don't spam users with scary messages.
+    // The next /start or re-check will resolve it.
+    console.warn("checkAllChannels error for", fromId, check.error);
   } else {
     await tg("sendMessage", {
       chat_id: chatId,
