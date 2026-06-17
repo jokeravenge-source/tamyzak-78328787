@@ -13,6 +13,7 @@ type Snapshot = {
   last_7_days: Array<{ date: string; minutes: number }>;
   last_report: any;
   todays_todos?: Array<{ id: string; text: string; done: boolean; day?: string }>;
+  channel?: string;
 };
 
 export default function ParentFollow({ token }: { token: string }) {
@@ -20,15 +21,31 @@ export default function ParentFollow({ token }: { token: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchSnapshot = async () => {
+    const { data: d, error } = await supabase.functions.invoke("parent-follow-view", { body: { token } });
+    if (error) { setErr(error.message); return null; }
+    if ((d as any)?.error) { setErr((d as any).error); return null; }
+    setData(d as Snapshot);
+    return d as Snapshot;
+  };
+
   useEffect(() => {
     (async () => {
-      const { data: d, error } = await supabase.functions.invoke("parent-follow-view", { body: { token } });
-      if (error) setErr(error.message);
-      else if ((d as any)?.error) setErr((d as any).error);
-      else setData(d as Snapshot);
+      await fetchSnapshot();
       setLoading(false);
     })();
   }, [token]);
+
+  // Live updates: subscribe to the student's broadcast channel and refetch on changes.
+  useEffect(() => {
+    const channelName = data?.channel;
+    if (!channelName) return;
+    const ch = supabase
+      .channel(channelName)
+      .on("broadcast", { event: "todos-changed" }, () => { fetchSnapshot(); })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [data?.channel]);
 
   if (loading) return <main className="min-h-screen flex items-center justify-center"><div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /></main>;
   if (err || !data) return (
