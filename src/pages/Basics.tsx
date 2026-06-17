@@ -10,7 +10,6 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { useSubscription } from "@/hooks/useSubscription";
-import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 import { missionsData, missionsOrder } from "@/data/missions";
 
 export type BasicsChoice =
