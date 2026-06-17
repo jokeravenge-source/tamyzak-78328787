@@ -272,6 +272,28 @@ const Basics = ({
   };
   const signOut = async () => { await supabase.auth.signOut(); };
 
+  // Today's pending tasks (todos in localStorage) + unread notifs → quick badge
+  const [pendingTodos, setPendingTodos] = useState<number>(() => {
+    try {
+      const arr = JSON.parse(localStorage.getItem("app_todos_v1") || "[]");
+      return Array.isArray(arr) ? arr.filter((t: any) => !t.done).length : 0;
+    } catch { return 0; }
+  });
+  useEffect(() => {
+    const sync = () => {
+      try {
+        const arr = JSON.parse(localStorage.getItem("app_todos_v1") || "[]");
+        setPendingTodos(Array.isArray(arr) ? arr.filter((t: any) => !t.done).length : 0);
+      } catch { setPendingTodos(0); }
+    };
+    window.addEventListener("app:todos-changed", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("app:todos-changed", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
   const TARGET = new Date(2026, 5, 13, 7, 0, 0).getTime();
   const [now, setNow] = useState<number>(() => Date.now());
   const [showTimer, setShowTimer] = useState<boolean>(() => localStorage.getItem("countdown_jun13_hidden_v1") !== "1");
