@@ -56,9 +56,9 @@ Deno.serve(async (req) => {
     // Filter today's todos by day-of-week label (EN + AR)
     const dayIdx = new Date().getDay(); // 0=Sun..6=Sat
     const enDays = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-    const arDays = ["الأحد","الإثنين","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+    const arDays = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
     const todayEn = enDays[dayIdx];
-    const todayAr1 = arDays[dayIdx === 6 ? 7 : dayIdx];
+    const todayAr1 = arDays[dayIdx];
     const todayAr2 = dayIdx === 1 ? "الاثنين" : null;
     const allItems = Array.isArray(todosRow?.items) ? (todosRow!.items as Array<{ id: string; text: string; done: boolean; day?: string }>) : [];
     const todaysTodos = allItems.filter((t) => {
