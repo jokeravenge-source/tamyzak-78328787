@@ -16,7 +16,7 @@ export async function pushTodos(items: SyncedTodo[]) {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     await supabase.from("student_todos").upsert(
-      { user_id: u.user.id, items: items as unknown as object[], week_key: getISOWeek(), updated_at: new Date().toISOString() },
+      { user_id: u.user.id, items: items as unknown as never, week_key: getISOWeek(), updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     );
   } catch { /* noop */ }
