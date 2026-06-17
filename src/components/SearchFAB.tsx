@@ -65,6 +65,8 @@ const ENTRIES: Entry[] = [
     keywords: ["ranking", "rank", "top", "points", "score", "competition", "متصدرون", "ترتيب", "نقاط", "منافسة"] },
   { key: "more", en: { title: "More Tools", desc: "All other features" }, ar: { title: "المزيد", desc: "كل الميزات" },
     keywords: ["all", "extra", "other", "tools", "features", "مزيد", "كل", "ميزات"] },
+  { key: "advices", en: { title: "Advices", desc: "Tips from top students" }, ar: { title: "النصائح", desc: "نصائح من المتفوقين" },
+    keywords: ["advice", "tips", "guidance", "top students", "share", "experience", "نصائح", "إرشاد", "متفوقين", "خبرة", "تجربة"] },
 ];
 
 export default function SearchFAB({
