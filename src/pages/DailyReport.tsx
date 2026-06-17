@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
+import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 
 const T = {
   en: {
@@ -17,6 +18,7 @@ const T = {
     parent: "Parent follow-up", parentDesc: "Share this link so a parent can view your progress (read-only).",
     enable: "Enable parent link", revoke: "Revoke link", copy: "Copy link", copied: "Copied!",
     min: "min",
+    companion: "Excellence Companion", companionDesc: "Plan your week or work through a problem with AI.",
   },
   ar: {
     title: "تقريري اليومي", back: "رجوع",
@@ -29,6 +31,7 @@ const T = {
     parent: "متابعة ولي الأمر", parentDesc: "شارك هذا الرابط ليتابع ولي الأمر تقدمك (للقراءة فقط).",
     enable: "تفعيل رابط ولي الأمر", revoke: "إلغاء الرابط", copy: "نسخ الرابط", copied: "تم النسخ!",
     min: "د",
+    companion: "رفيق التميز", companionDesc: "نظّم أسبوعك أو حل مشكلتك مع الذكاء الاصطناعي.",
   },
 } as const;
 
@@ -209,6 +212,13 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Excellence Companion */}
+            <div className="rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5">
+              <div className="flex items-center gap-2 mb-1"><Sparkles className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">{t.companion}</span></div>
+              <p className="text-xs text-muted-foreground mb-3">{t.companionDesc}</p>
+              <ExcellenceCompanion language={language} embedded />
             </div>
           </>
         )}
