@@ -89,12 +89,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     const link = notifForm.link.trim();
     if (link && !/^https?:\/\//i.test(link)) return toast.error("Link must start with http:// or https://");
     const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from("notifications").insert({ title: notifForm.title, body: notifForm.body, link: link || null, created_by: u.user?.id });
+    const { data: inserted, error } = await supabase.from("notifications").insert({ title: notifForm.title, body: notifForm.body, link: link || null, created_by: u.user?.id }).select("id").single();
     if (error) return toast.error(error.message);
     toast.success("Notification sent to all users");
     try {
       const { data: tg } = await supabase.functions.invoke("telegram-notify", {
-        body: { title: notifForm.title, body: notifForm.body, link: link || null, audience: "all" },
+        body: { title: notifForm.title, body: notifForm.body, link: link || null, audience: "all", notification_key: `notif:${inserted?.id}` },
       });
       if (tg && typeof tg === "object" && "sent" in (tg as Record<string, unknown>)) {
         const t = tg as { sent: number; failed: number; total: number };
@@ -141,12 +141,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
         if (upErr) throw upErr;
         image_path = path;
       }
-      const { error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, link: linkTrim || null, created_by: u.user?.id });
+      const { data: newsRow, error } = await supabase.from("news").insert({ title: newsForm.title, description: newsForm.description, image_path, link: linkTrim || null, created_by: u.user?.id }).select("id").single();
       if (error) throw error;
       toast.success("News posted — all users notified");
       try {
         const { data: tg } = await supabase.functions.invoke("telegram-notify", {
-          body: { title: `📰 ${newsForm.title}`, body: newsForm.description, link: linkTrim || null, audience: "all" },
+          body: { title: `📰 ${newsForm.title}`, body: newsForm.description, link: linkTrim || null, audience: "all", notification_key: `news:${newsRow?.id}` },
         });
         if (tg && typeof tg === "object" && "sent" in (tg as Record<string, unknown>)) {
           const t = tg as { sent: number; failed: number; total: number };

@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
     const link = body.link ? String(body.link).slice(0, 500) : null;
     const audience: "all" | "user" = body.audience === "user" ? "user" : "all";
     const targetUserId = body.target_user_id ? String(body.target_user_id) : null;
+    const notificationKey = body.notification_key ? String(body.notification_key).slice(0, 200) : null;
     if (!title && !text) return json({ error: "empty_message" }, 400);
 
     let query = admin
@@ -75,16 +76,26 @@ Deno.serve(async (req) => {
 
     const msg = [title ? `<b>${esc(title)}</b>` : "", text ? esc(text) : ""].filter(Boolean).join("\n\n");
 
-    let sent = 0, failed = 0;
+    let sent = 0, failed = 0, skipped = 0;
     for (const r of rows ?? []) {
       const id = (r as { telegram_user_id: number | null }).telegram_user_id;
       if (!id) continue;
+      if (notificationKey) {
+        const { error: insErr } = await admin
+          .from("telegram_notifications_sent")
+          .insert({ notification_key: notificationKey, telegram_user_id: id });
+        if (insErr) {
+          // duplicate (already delivered) or other write error — skip send
+          skipped++;
+          continue;
+        }
+      }
       const res = await tgSend(id, msg, link);
       if (res.ok) sent++; else failed++;
       await new Promise((r) => setTimeout(r, 40));
     }
 
-    return json({ sent, failed, total: rows?.length ?? 0 });
+    return json({ sent, failed, skipped, total: rows?.length ?? 0 });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
