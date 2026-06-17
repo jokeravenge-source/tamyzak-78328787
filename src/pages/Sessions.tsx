@@ -466,6 +466,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       });
     }
     toast.success(`${L.saved} (+${points} ${L.points})`);
+    try { localStorage.setItem("session_completed_today_v1", new Date().toISOString().slice(0,10)); } catch {}
     setStarted(false); setSeconds(0); setMission(""); setCompleted(false);
     localStorage.removeItem(PERSIST_KEY);
     setPhase("work");

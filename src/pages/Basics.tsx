@@ -272,6 +272,28 @@ const Basics = ({
   };
   const signOut = async () => { await supabase.auth.signOut(); };
 
+  // Today's pending tasks (todos in localStorage) + unread notifs → quick badge
+  const [pendingTodos, setPendingTodos] = useState<number>(() => {
+    try {
+      const arr = JSON.parse(localStorage.getItem("app_todos_v1") || "[]");
+      return Array.isArray(arr) ? arr.filter((t: any) => !t.done).length : 0;
+    } catch { return 0; }
+  });
+  useEffect(() => {
+    const sync = () => {
+      try {
+        const arr = JSON.parse(localStorage.getItem("app_todos_v1") || "[]");
+        setPendingTodos(Array.isArray(arr) ? arr.filter((t: any) => !t.done).length : 0);
+      } catch { setPendingTodos(0); }
+    };
+    window.addEventListener("app:todos-changed", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("app:todos-changed", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
   const TARGET = new Date(2026, 5, 13, 7, 0, 0).getTime();
   const [now, setNow] = useState<number>(() => Date.now());
   const [showTimer, setShowTimer] = useState<boolean>(() => localStorage.getItem("countdown_jun13_hidden_v1") !== "1");
@@ -443,6 +465,19 @@ const Basics = ({
               <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
             <p className="text-base font-bold text-primary leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>tamayzak</p>
+            <button
+              onClick={() => onNav("report")}
+              aria-label={language === "ar" ? "خطتي اليوم" : "Today's plan"}
+              title={language === "ar" ? "خطتك اليوم — اضغط لعرض الخطة" : "Today's plan — tap to open"}
+              className="relative inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-[11px] font-semibold hover:bg-primary/15 transition-colors"
+            >
+              <Target className="w-3.5 h-3.5" />
+              <span>{pendingTodos + unread.length}</span>
+              <span className="hidden sm:inline opacity-80">{language === "ar" ? "لليوم" : "today"}</span>
+              {(pendingTodos + unread.length) > 0 && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-accent animate-pulse" />
+              )}
+            </button>
           </div>
           <div className="flex items-center gap-1.5">
             <button onClick={onChangeLanguage} aria-label="lang" className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 rounded-lg border border-border bg-card text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">

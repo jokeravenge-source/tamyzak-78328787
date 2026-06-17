@@ -272,7 +272,7 @@ const App = () => {
         <TelegramGate onUnlock={() => setTgVerified(true)} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
-      ) : needsOnboarding ? (
+      ) : needsOnboarding && (typeof window !== "undefined" && localStorage.getItem("session_completed_today_v1") === new Date().toISOString().slice(0,10)) ? (
         <Onboarding language={language} onDone={() => setNeedsOnboarding(false)} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
