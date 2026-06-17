@@ -445,6 +445,27 @@ export type Database = {
         }
         Relationships: []
       }
+      student_todos: {
+        Row: {
+          items: Json
+          updated_at: string
+          user_id: string
+          week_key: string | null
+        }
+        Insert: {
+          items?: Json
+          updated_at?: string
+          user_id: string
+          week_key?: string | null
+        }
+        Update: {
+          items?: Json
+          updated_at?: string
+          user_id?: string
+          week_key?: string | null
+        }
+        Relationships: []
+      }
       study_sessions: {
         Row: {
           created_at: string
