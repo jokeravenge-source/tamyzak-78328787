@@ -925,8 +925,6 @@ const Basics = ({
           </LayoutGroup>
         </motion.nav>
       </div>
-
-      <ExcellenceCompanion language={language} />
     </div>
   );
 };
