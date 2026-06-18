@@ -98,7 +98,7 @@ export default function SearchFAB({
 
   const results = useMemo(() => {
     const raw = q.trim().toLowerCase();
-    if (!raw) return ENTRIES.slice(0, 12);
+    if (!raw) return ENTRIES;
     const stop = new Set(["the", "a", "an", "of", "to", "for", "and", "or", "is", "my", "i", "want", "need", "how", "do", "in", "on", "with", "show", "open", "find", "get", "me", "في", "من", "على", "إلى", "هو", "هي", "كيف", "أريد", "افتح"]);
     const tokens = raw.split(/[\s,;.!?]+/).filter((t) => t.length > 1 && !stop.has(t));
     if (tokens.length === 0) tokens.push(raw);
@@ -136,7 +136,7 @@ export default function SearchFAB({
       .filter((r) => r.score > 0)
       .sort((a, b) => b.score - a.score);
 
-    return scored.slice(0, 12).map((r) => r.e);
+    return scored.map((r) => r.e);
   }, [q, language]);
 
   const pick = (k: SearchNavChoice) => {
