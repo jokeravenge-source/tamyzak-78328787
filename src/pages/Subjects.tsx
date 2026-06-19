@@ -8,7 +8,7 @@ export type AppSubject = "physics" | "english" | "chemistry" | "biology" | "fren
 const subjectTelegramLinks: Record<AppSubject, string | null> = {
   physics: "https://t.me/sad6ths/17274",
   chemistry: "https://t.me/sad6ths/17140",
-  biology: "https://t.me/sad6ths/17525",
+  biology: "https://t.me/sad6ths/14821",
   arabic: "https://t.me/sad6ths/16594",
   french: "https://t.me/sad6ths/14196",
   english: null,
