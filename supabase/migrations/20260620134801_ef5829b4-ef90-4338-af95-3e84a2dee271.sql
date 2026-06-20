@@ -1,0 +1,2 @@
+CREATE POLICY "Admins manage files bucket" ON storage.objects FOR ALL TO authenticated USING (bucket_id = 'files' AND public.has_role(auth.uid(), 'admin')) WITH CHECK (bucket_id = 'files' AND public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Auth users read files bucket" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'files');
