@@ -406,6 +406,24 @@ export type Database = {
         }
         Relationships: []
       }
+      site_stats: {
+        Row: {
+          count: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          count?: number
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          count?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_profile: {
         Row: {
           created_at: string
@@ -777,6 +795,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_site_visits: { Args: never; Returns: number }
+      set_site_visits: { Args: { _count: number }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
