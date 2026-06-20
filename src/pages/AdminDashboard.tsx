@@ -259,6 +259,8 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [aiUploading, setAiUploading] = useState(false);
+  const [aiRefreshTick, setAiRefreshTick] = useState(0);
+  const refreshAiChapters = () => setAiRefreshTick((t) => t + 1);
   const loadAi = async () => {
     setAiLoading(true);
     const folder = aiChapter === "general" ? aiSubject : `${aiSubject}/${aiChapter}`;
@@ -278,7 +280,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setAiAllChapters(chs);
     setAiLoading(false);
   };
-  useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject, aiChapter]);
+  useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject, aiChapter, aiRefreshTick]);
 
   // Auto-discover chapters in the storage bucket whenever the subject changes,
   // and auto-switch aiChapter to the first chapter that actually has files.
@@ -306,7 +308,27 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiSubject, tab]);
+  }, [aiSubject, tab, aiRefreshTick]);
+
+  // Refresh chapter list when storage objects change (any admin upload/delete)
+  // and when the window/tab regains focus.
+  useEffect(() => {
+    if (tab !== "aifiles") return;
+    const channel = supabase
+      .channel("ai-files-storage")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "storage", table: "objects", filter: "bucket_id=eq.files" },
+        () => refreshAiChapters(),
+      )
+      .subscribe();
+    const onFocus = () => refreshAiChapters();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [tab]);
   const uploadAi = async (file: File) => {
     setAiUploading(true);
     const path = aiChapter === "general" ? `${aiSubject}/${file.name}` : `${aiSubject}/${aiChapter}/${file.name}`;
@@ -314,7 +336,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setAiUploading(false);
     if (error) return toast.error(error.message);
     toast.success("Uploaded. Click Index to extract text.");
-    loadAi();
+    refreshAiChapters();
   };
   const indexOne = async (name: string) => {
     setAiBusy(name);
@@ -340,7 +362,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     await supabase.storage.from("files").remove([delPath]).catch(() => {});
     await supabase.from("subject_file_text").delete().eq("subject", aiSubject).eq("chapter", aiChapter).eq("file_name", name);
     toast.success("Deleted");
-    loadAi();
+    refreshAiChapters();
   };
   const addChapter = () => {
     const c = aiChapterInput.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-");
