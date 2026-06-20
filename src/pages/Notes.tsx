@@ -632,6 +632,115 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
     updateNote(id, { title });
   }, [updateNote]);
 
+  // ----- Drag & drop handlers -----
+  const reorderNotebooks = useCallback((draggedId: string, targetId: string) => {
+    setNotebooks((prev) => {
+      const arr = [...prev].sort((a, b) => a.position - b.position);
+      const from = arr.findIndex((n) => n.id === draggedId);
+      const to = arr.findIndex((n) => n.id === targetId);
+      if (from < 0 || to < 0 || from === to) return prev;
+      const [m] = arr.splice(from, 1);
+      arr.splice(to, 0, m);
+      const next = arr.map((n, i) => ({ ...n, position: i }));
+      Promise.all(next.map((n) => supabase.from("notebooks").update({ position: n.position }).eq("id", n.id)));
+      return next;
+    });
+  }, []);
+
+  const reorderPage = useCallback((draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+    const dragged = notes.find((n) => n.id === draggedId);
+    const target = notes.find((n) => n.id === targetId);
+    if (!dragged || !target) return;
+    // Prevent dropping a parent into one of its descendants
+    const isDescendant = (parentId: string, childId: string): boolean => {
+      let cur = notes.find((n) => n.id === childId);
+      while (cur?.parent_id) {
+        if (cur.parent_id === parentId) return true;
+        cur = notes.find((n) => n.id === cur!.parent_id);
+      }
+      return false;
+    };
+    if (isDescendant(draggedId, targetId)) return;
+    const newParentId = target.parent_id;
+    const newNotebookId = target.notebook_id;
+    const siblings = notes
+      .filter((n) => n.parent_id === newParentId && n.id !== draggedId)
+      .sort((a, b) => a.position - b.position);
+    const idx = siblings.findIndex((n) => n.id === targetId);
+    const newDragged: Note = { ...dragged, parent_id: newParentId, notebook_id: newNotebookId };
+    siblings.splice(idx, 0, newDragged);
+    const updates = siblings.map((n, i) => ({ id: n.id, position: i, parent_id: newParentId, notebook_id: newNotebookId }));
+    setNotes((prev) => prev.map((n) => {
+      const u = updates.find((x) => x.id === n.id);
+      return u ? { ...n, position: u.position, parent_id: u.parent_id, notebook_id: u.notebook_id } : n;
+    }));
+    Promise.all(updates.map((u) =>
+      supabase.from("notes").update({ position: u.position, parent_id: u.parent_id, notebook_id: u.notebook_id }).eq("id", u.id)
+    ));
+  }, [notes]);
+
+  const dropPageOnNotebook = useCallback((pageId: string, notebookId: string | null) => {
+    const dragged = notes.find((n) => n.id === pageId);
+    if (!dragged) return;
+    const siblings = notes
+      .filter((n) => n.parent_id === null && n.notebook_id === notebookId && n.id !== pageId)
+      .sort((a, b) => a.position - b.position);
+    siblings.push({ ...dragged, parent_id: null, notebook_id: notebookId });
+    const updates = siblings.map((n, i) => ({ id: n.id, position: i }));
+    setNotes((prev) => prev.map((n) => {
+      if (n.id === pageId) return { ...n, parent_id: null, notebook_id: notebookId, position: siblings.length - 1 };
+      const u = updates.find((x) => x.id === n.id);
+      return u ? { ...n, position: u.position } : n;
+    }));
+    Promise.all([
+      supabase.from("notes").update({ parent_id: null, notebook_id: notebookId, position: siblings.length - 1 }).eq("id", pageId),
+      ...updates.filter((u) => u.id !== pageId).map((u) =>
+        supabase.from("notes").update({ position: u.position }).eq("id", u.id)
+      ),
+    ]);
+    if (notebookId) setExpandedNotebooks((s) => new Set(s).add(notebookId));
+  }, [notes]);
+
+  const onPageDragStart = useCallback((id: string) => {
+    dragRef.current = { type: "page", id };
+  }, []);
+  const onPageDragOver = useCallback((e: React.DragEvent, id: string) => {
+    if (dragRef.current?.type !== "page") return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverId(id);
+  }, []);
+  const onPageDrop = useCallback((e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    const drag = dragRef.current;
+    if (drag?.type === "page") reorderPage(drag.id, id);
+    clearDrag();
+  }, [reorderPage]);
+  const onPageDragEnd = useCallback(() => { clearDrag(); }, []);
+
+  const onNotebookDragStart = useCallback((id: string) => {
+    dragRef.current = { type: "notebook", id };
+  }, []);
+  const onNotebookDragOver = useCallback((e: React.DragEvent, id: string | null) => {
+    if (!dragRef.current) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverId(id === null ? "__none" : `nb:${id}`);
+  }, []);
+  const onNotebookDrop = useCallback((e: React.DragEvent, id: string | null) => {
+    e.preventDefault();
+    const drag = dragRef.current;
+    if (!drag) return;
+    if (drag.type === "notebook" && id) {
+      reorderNotebooks(drag.id, id);
+    } else if (drag.type === "page") {
+      dropPageOnNotebook(drag.id, id);
+    }
+    clearDrag();
+  }, [reorderNotebooks, dropPageOnNotebook]);
+
   // Block ops on active note
   const setBlocks = (updater: (blocks: Block[]) => Block[]) => {
     if (!active) return;
