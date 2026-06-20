@@ -50,15 +50,16 @@ function getObjectMeta(obj: unknown) {
 
 async function waitForGeminiFile(apiKey: string, ref: GeminiFileRef): Promise<GeminiFileRef | null> {
   if (!ref.resourceName) return ref;
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 60; i++) {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/${ref.resourceName}?key=${encodeURIComponent(apiKey)}`);
-    if (!res.ok) return ref;
+    if (!res.ok) return null;
     const data = await res.json();
-    if (data.state === "ACTIVE" || data.file?.state === "ACTIVE") return ref;
-    if (data.state === "FAILED" || data.file?.state === "FAILED") return null;
+    const state = data.state ?? data.file?.state;
+    if (state === "ACTIVE") return ref;
+    if (state === "FAILED") return null;
     await sleep(1000);
   }
-  return ref;
+  return null;
 }
 
 async function uploadStoragePdfToGemini(admin: ReturnType<typeof createClient>, path: string, displayName: string, mimeType: string, size: number, cacheKey: string): Promise<GeminiFileRef | null> {
