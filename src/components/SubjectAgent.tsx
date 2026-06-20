@@ -15,6 +15,9 @@ const labels = {
     welcome: (s: string) => `Hi! I'm your ${s} tutor. Ask me anything.`,
     send: "Send",
     error: "Something went wrong. Please try again.",
+    pickChapter: "Which chapter would you like to study? Pick one to get started:",
+    noChapters: "No chapters have been uploaded for this subject yet. Please ask an admin to add files.",
+    changeChapter: "Change chapter",
   },
   ar: {
     title: "المعلم الذكي",
@@ -22,6 +25,9 @@ const labels = {
     welcome: (s: string) => `مرحباً! أنا معلمك في مادة ${s}. اسألني أي شيء.`,
     send: "إرسال",
     error: "حدث خطأ. حاول مرة أخرى.",
+    pickChapter: "أي فصل تريد أن تدرس؟ اختر فصلاً للبدء:",
+    noChapters: "لا توجد فصول مرفوعة لهذه المادة بعد. يرجى الطلب من المسؤول إضافة ملفات.",
+    changeChapter: "تغيير الفصل",
   },
 };
 
@@ -45,7 +51,8 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [chapters, setChapters] = useState<string[]>([]);
-  const [chapter, setChapter] = useState<string>("general");
+  const [chapter, setChapter] = useState<string>("");
+  const [chaptersLoading, setChaptersLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const t = labels[language];
   const sName = subjectName(subject, language);
@@ -57,21 +64,31 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
   useEffect(() => {
     if (!open) return;
     (async () => {
-      const { data } = await supabase
-        .from("subject_file_text")
-        .select("chapter")
-        .eq("subject", subject);
-      const uniq = Array.from(new Set((data ?? []).map((r) => r.chapter).filter(Boolean))) as string[];
-      const list = uniq.length ? uniq.sort() : ["general"];
+      setChaptersLoading(true);
+      const { data } = await supabase.rpc("list_subject_chapters", { _subject: subject });
+      const list = ((data ?? []) as Array<{ chapter: string }>)
+        .map((r) => r.chapter)
+        .filter(Boolean);
+      const order = ["general", "ch1", "ch2", "ch3", "ch4", "ch5", "ch6", "ch7", "ch8"];
+      list.sort((a, b) => {
+        const ai = order.indexOf(a);
+        const bi = order.indexOf(b);
+        if (ai !== -1 && bi !== -1) return ai - bi;
+        if (ai !== -1) return -1;
+        if (bi !== -1) return 1;
+        return a.localeCompare(b);
+      });
       setChapters(list);
-      if (!list.includes(chapter)) setChapter(list[0]);
+      setChapter("");
+      setMessages([]);
+      setChaptersLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, subject]);
 
   const send = async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if (!text || loading || !chapter) return;
     const next: Msg[] = [...messages, { role: "user", content: text }];
     setMessages(next);
     setInput("");
@@ -88,6 +105,11 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
     } finally {
       setLoading(false);
     }
+  };
+
+  const pickChapter = (c: string) => {
+    setChapter(c);
+    setMessages([]);
   };
 
   return (
@@ -121,14 +143,17 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <select
-                  value={chapter}
-                  onChange={(e) => setChapter(e.target.value)}
-                  className="h-8 px-2 rounded-lg bg-background border border-border text-xs"
-                  aria-label="Chapter"
-                >
-                  {chapters.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                {chapter && (
+                  <>
+                    <span className="text-xs px-2 py-1 rounded-lg bg-primary/15 text-primary border border-primary/30">{chapter}</span>
+                    <button
+                      onClick={() => { setChapter(""); setMessages([]); }}
+                      className="text-xs px-2 py-1 rounded-lg border border-border hover:bg-secondary"
+                    >
+                      {t.changeChapter}
+                    </button>
+                  </>
+                )}
                 <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1">
                   <X className="w-5 h-5" />
                 </button>
@@ -136,7 +161,30 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
             </div>
 
             <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.length === 0 && (
+              {!chapter && (
+                <div className="space-y-4 py-4">
+                  <div className="flex gap-3 items-start">
+                    <span className="gemini-dot mt-1 inline-block w-5 h-5 rounded-full shrink-0" aria-hidden />
+                    <div className="flex-1 text-sm leading-relaxed text-foreground">
+                      {chaptersLoading ? "..." : (chapters.length === 0 ? t.noChapters : t.pickChapter)}
+                    </div>
+                  </div>
+                  {chapters.length > 0 && (
+                    <div className="flex flex-wrap gap-2 ps-8">
+                      {chapters.map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => pickChapter(c)}
+                          className="px-3 py-1.5 rounded-xl bg-secondary border border-border text-sm hover:border-primary hover:bg-primary/10 transition"
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {chapter && messages.length === 0 && (
                 <div className="text-sm text-muted-foreground text-center py-8">{t.welcome(sName)}</div>
               )}
               {messages.map((m, i) => (
