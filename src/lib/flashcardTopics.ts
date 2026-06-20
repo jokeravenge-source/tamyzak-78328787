@@ -71,6 +71,30 @@ export interface TopicResult {
 const ALL_KEY = "__all__";
 const GENERAL_KEY = "__general__";
 
+export const FLASHCARD_ALL_KEY = ALL_KEY;
+
+/**
+ * Build a TopicResult from explicit, pre-named buckets (e.g. when a deck
+ * is composed of several named source files). Returns null when there's
+ * only a single bucket so the caller can fall back to auto-detection or
+ * no chips at all.
+ */
+export function explicitTopics(
+  buckets: { key: string; label: string; cards: Flashcard[] }[],
+  uiLang: "ar" | "en",
+): TopicResult | null {
+  const nonEmpty = buckets.filter((b) => b.cards.length > 0);
+  if (nonEmpty.length < 2) return null;
+  const all = nonEmpty.flatMap((b) => b.cards);
+  return {
+    allKey: ALL_KEY,
+    topics: [
+      { key: ALL_KEY, label: uiLang === "ar" ? "الكل" : "All", cards: all },
+      ...nonEmpty.map((b) => ({ key: b.key, label: b.label, cards: b.cards })),
+    ],
+  };
+}
+
 export function groupFlashcardsByTopic(
   cards: Flashcard[],
   uiLang: "ar" | "en",
