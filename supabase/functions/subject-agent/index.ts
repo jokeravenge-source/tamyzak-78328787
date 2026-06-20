@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
         role: "user",
         parts: [
           { text: `${system}\n\nConversation:\n${conversation}` },
-          ...context.fileRefs.map((f) => ({ file_data: { mime_type: f.mimeType, file_uri: f.uri } })),
+          ...context.fileRefs.map((f) => ({ fileData: { mimeType: f.mimeType, fileUri: f.uri } })),
         ],
       }];
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_GENERATE_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
