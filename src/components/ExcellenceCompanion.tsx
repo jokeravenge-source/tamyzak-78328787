@@ -87,6 +87,13 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [approved, setApproved] = useState(false);
+
+  useEffect(() => {
+    if (embedded) return;
+    const onOpen = () => setOpen(true);
+    window.addEventListener("app:open-excellence-companion", onOpen);
+    return () => window.removeEventListener("app:open-excellence-companion", onOpen);
+  }, [embedded]);
   const endRef = useRef<HTMLDivElement>(null);
   const t = labels[language];
 
