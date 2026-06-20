@@ -3,7 +3,7 @@ import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Laye
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
-import { extractTextFromFile } from "@/lib/fileText";
+import { extractTextFromFile, extractStudyMaterial } from "@/lib/fileText";
 
 type Row = {
   id: string;
@@ -277,7 +277,18 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setAiUploading(true);
     try {
       toast.message(`Extracting text from ${file.name}…`);
-      const text = await extractTextFromFile(file, { maxChars: 200000, maxPages: 600 });
+      const material = await extractStudyMaterial(file, { maxChars: 200000, maxPages: 600 });
+      let text = material.text ?? "";
+      // OCR fallback for scanned/image PDFs
+      if (text.trim().length < 50 && material.pageImages && material.pageImages.length > 0) {
+        toast.message(`Scanned PDF detected — running OCR on ${material.pageImages.length} pages…`);
+        const { data: ocrData, error: ocrErr } = await supabase.functions.invoke("ocr-images", {
+          body: { images: material.pageImages },
+        });
+        if (ocrErr) throw ocrErr;
+        const ocrText = (ocrData as { text?: string })?.text ?? "";
+        if (ocrText.trim().length > 20) text = ocrText;
+      }
       if (!text || text.trim().length < 20) {
         throw new Error("No extractable text found in file");
       }
