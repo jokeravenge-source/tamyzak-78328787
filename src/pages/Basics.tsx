@@ -227,6 +227,7 @@ const Basics = ({
   const todos = useTodos();
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
+  const [heroMode, setHeroMode] = useState<"flashcards" | "todo">("flashcards");
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
@@ -399,6 +400,31 @@ const Basics = ({
     en: { tag: "Recommended next step", title: motivationalPhrase, body: "Open your flashcards deck and review what you scheduled today.", resume: "Resume studying", view: "View summary", progress: "Progress" },
     ar: { tag: "خطوتك التالية المقترحة", title: motivationalPhrase, body: "افتح بطاقاتك وراجع ما خططت له اليوم.", resume: "استئناف الدراسة", view: "عرض الملخص", progress: "التقدم" },
   }[language];
+  const todoCopy = {
+    en: {
+      tag: "Your To-Do List",
+      title: todoTotal > 0
+        ? (todoDone === todoTotal ? "All tasks complete — great job!" : `${todoTotal - todoDone} task${todoTotal - todoDone === 1 ? "" : "s"} left to finish`)
+        : "Plan your day with a quick To-Do list",
+      body: todoTotal > 0
+        ? `You've completed ${todoDone} of ${todoTotal} tasks. Keep the momentum going.`
+        : "Add tasks, track them, and watch your progress grow.",
+      resume: "Open To-Do List",
+      view: "View tasks",
+    },
+    ar: {
+      tag: "قائمة مهامك",
+      title: todoTotal > 0
+        ? (todoDone === todoTotal ? "أنجزت كل المهام — أحسنت!" : `تبقّى ${todoTotal - todoDone} من المهام`)
+        : "خطّط ليومك بقائمة مهام سريعة",
+      body: todoTotal > 0
+        ? `أنجزت ${todoDone} من ${todoTotal} مهمة. واصل التقدم.`
+        : "أضف المهام وتابع إنجازك خطوة بخطوة.",
+      resume: "افتح قائمة المهام",
+      view: "عرض المهام",
+    },
+  }[language];
+  const activeCopy = heroMode === "todo" ? todoCopy : recCopy;
   const toolsHeader = { en: "Study tools", ar: "أدوات الدراسة" }[language];
   const viewAll = { en: "View all tools", ar: "عرض كل الأدوات" }[language];
 
