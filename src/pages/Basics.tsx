@@ -408,8 +408,7 @@ const Basics = ({
       body: todoTotal > 0
         ? `You've completed ${todoDone} of ${todoTotal} tasks. Keep the momentum going.`
         : "Add tasks, track them, and watch your progress grow.",
-      resume: "Open To-Do List",
-      view: "View tasks",
+      resume: "Generate To-Do",
     },
     ar: {
       tag: "قائمة مهامك",
@@ -419,8 +418,7 @@ const Basics = ({
       body: todoTotal > 0
         ? `أنجزت ${todoDone} من ${todoTotal} مهمة. واصل التقدم.`
         : "أضف المهام وتابع إنجازك خطوة بخطوة.",
-      resume: "افتح قائمة المهام",
-      view: "عرض المهام",
+      resume: "أنشئ قائمة المهام",
     },
   }[language];
   const activeCopy = todoCopy;
@@ -716,16 +714,10 @@ const Basics = ({
                 <p className="text-muted-foreground max-w-md mb-6 text-sm md:text-base">{activeCopy.body}</p>
                 <div className="flex flex-wrap gap-3">
                   <button
-                    onClick={() => onSelect("todo")}
+                    onClick={() => window.dispatchEvent(new Event("app:open-excellence-companion"))}
                     className="px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl transition-transform active:scale-95"
                   >
                     {activeCopy.resume}
-                  </button>
-                  <button
-                    onClick={() => onSelect("todo")}
-                    className="px-5 py-2.5 border border-border bg-card text-foreground/80 font-semibold rounded-xl hover:bg-secondary transition-colors"
-                  >
-                    {activeCopy.view}
                   </button>
                 </div>
               </div>
