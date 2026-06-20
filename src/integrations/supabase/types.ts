@@ -601,6 +601,33 @@ export type Database = {
         }
         Relationships: []
       }
+      subject_file_text: {
+        Row: {
+          char_count: number
+          file_name: string
+          id: string
+          subject: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          char_count?: number
+          file_name: string
+          id?: string
+          subject: string
+          text?: string
+          updated_at?: string
+        }
+        Update: {
+          char_count?: number
+          file_name?: string
+          id?: string
+          subject?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null

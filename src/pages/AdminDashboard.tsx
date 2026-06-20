@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -16,7 +16,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles";
   const [tab, setTab] = useState<Tab>("pending");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -244,6 +244,62 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setUreqLoading(false);
   };
   useEffect(() => { if (tab === "usernames") loadUreqs(); }, [tab]);
+
+  // AI Files (subject reference indexing)
+  const SUBJECTS = ["biology","physics","chemistry","arabic","french","english"];
+  type StorageObj = { name: string };
+  type IndexedRow = { file_name: string; char_count: number; updated_at: string };
+  const [aiSubject, setAiSubject] = useState("biology");
+  const [aiFiles, setAiFiles] = useState<StorageObj[]>([]);
+  const [aiIndexed, setAiIndexed] = useState<IndexedRow[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiBusy, setAiBusy] = useState<string | null>(null);
+  const [aiUploading, setAiUploading] = useState(false);
+  const loadAi = async () => {
+    setAiLoading(true);
+    const [filesRes, idxRes] = await Promise.all([
+      supabase.storage.from("files").list(aiSubject, { limit: 100 }),
+      supabase.from("subject_file_text").select("file_name,char_count,updated_at").eq("subject", aiSubject),
+    ]);
+    setAiFiles((filesRes.data ?? []).filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep"));
+    setAiIndexed((idxRes.data ?? []) as IndexedRow[]);
+    setAiLoading(false);
+  };
+  useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject]);
+  const uploadAi = async (file: File) => {
+    setAiUploading(true);
+    const path = `${aiSubject}/${file.name}`;
+    const { error } = await supabase.storage.from("files").upload(path, file, { upsert: true });
+    setAiUploading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Uploaded. Click Index to extract text.");
+    loadAi();
+  };
+  const indexOne = async (name: string) => {
+    setAiBusy(name);
+    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, file_name: name } });
+    setAiBusy(null);
+    if (error) return toast.error(error.message);
+    const r = (data as { results?: Array<{ ok: boolean; chars?: number; error?: string }> })?.results?.[0];
+    if (r?.ok) toast.success(`Indexed (${r.chars} chars)`); else toast.error(r?.error ?? "Index failed");
+    loadAi();
+  };
+  const indexAll = async () => {
+    setAiBusy("__all__");
+    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, all: true } });
+    setAiBusy(null);
+    if (error) return toast.error(error.message);
+    const results = (data as { results?: Array<{ ok: boolean }> })?.results ?? [];
+    toast.success(`Indexed ${results.filter((x) => x.ok).length}/${results.length} files`);
+    loadAi();
+  };
+  const deleteAi = async (name: string) => {
+    if (!confirm(`Delete ${name} from storage and index?`)) return;
+    await supabase.storage.from("files").remove([`${aiSubject}/${name}`]);
+    await supabase.from("subject_file_text").delete().eq("subject", aiSubject).eq("file_name", name);
+    toast.success("Deleted");
+    loadAi();
+  };
   const decideUreq = async (r: UReq, decision: "approved" | "rejected") => {
     const { data: u } = await supabase.auth.getUser();
     setUreqBusyId(r.id);
@@ -329,6 +385,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           </button>
           <button onClick={() => setTab("usernames")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "usernames" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <UserCog className="w-4 h-4 inline mr-1.5" />Username Requests
+          </button>
+          <button onClick={() => setTab("aifiles")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "aifiles" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            <BookOpen className="w-4 h-4 inline mr-1.5" />AI Files
           </button>
         </div>
 
@@ -593,6 +652,57 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                     </div>
                   </article>
                 ))}
+              </div>
+            )}
+          </div>
+        ) : tab === "aifiles" ? (
+          <div className="space-y-6">
+            <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur space-y-3">
+              <h3 className="font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /> Subject reference files (for AI tutor)</h3>
+              <p className="text-xs text-muted-foreground">Upload PDFs / text files per subject, then click "Index" to extract their text so the AI tutor can answer exactly from them.</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <select value={aiSubject} onChange={(e) => setAiSubject(e.target.value)} className="h-10 px-3 rounded-lg bg-background border border-white/10 text-sm">
+                  {SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 hover:border-primary/40 text-sm cursor-pointer">
+                  <Upload className="w-4 h-4" /> {aiUploading ? "Uploading…" : "Upload file"}
+                  <input type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAi(f); e.target.value = ""; }} />
+                </label>
+                <button onClick={indexAll} disabled={aiBusy === "__all__" || aiFiles.length === 0} className="inline-flex items-center gap-2 px-3 h-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
+                  {aiBusy === "__all__" ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />} Index all
+                </button>
+              </div>
+            </div>
+            {aiLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+            ) : aiFiles.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10">No files for {aiSubject}.</p>
+            ) : (
+              <div className="grid gap-3">
+                {aiFiles.map((f) => {
+                  const idx = aiIndexed.find((i) => i.file_name === f.name);
+                  return (
+                    <article key={f.name} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-[220px]">
+                        <h3 className="font-semibold break-all">{f.name}</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {idx ? <>Indexed · {idx.char_count.toLocaleString()} chars · {new Date(idx.updated_at).toLocaleString()}</> : <span className="text-amber-400">Not indexed yet</span>}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => indexOne(f.name)} disabled={aiBusy === f.name} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
+                          {aiBusy === f.name ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />} {idx ? "Re-index" : "Index"}
+                        </button>
+                        <button onClick={() => deleteAi(f.name)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm">
+                          <Trash2 className="w-4 h-4" /> Delete
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
