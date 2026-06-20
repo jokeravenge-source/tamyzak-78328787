@@ -18,10 +18,12 @@ const SUBJECT_LABELS: Record<string, string> = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = "google/gemini-2.5-flash";
-const MAX_CONTEXT_CHARS = 40000;
-const MAX_FILE_CHARS = 12000;
-const MAX_FILES = 3;
-const MAX_CHAT_MESSAGES = 10;
+const MAX_CONTEXT_CHARS = 18000;
+const MAX_FILE_CHARS = 6000;
+const MAX_FILES = 2;
+const MAX_CHAT_MESSAGES = 8;
+const MAX_PDF_BYTES = 3 * 1024 * 1024; // 3MB — bigger PDFs OOM the edge runtime
+const MAX_PDF_PAGES = 15;
 
 async function fetchSubjectContext(subject: string): Promise<string> {
   const url = Deno.env.get("SUPABASE_URL")!;
@@ -67,11 +69,25 @@ async function fetchSubjectContext(subject: string): Promise<string> {
       parts.push(`### File: ${f.name}\n${text}`);
       total += text.length;
     } else if (f.file_path.toLowerCase().endsWith(".pdf") || f.mime_type === "application/pdf" || (blob.type || "") === "application/pdf") {
+      if (blob.size > MAX_PDF_BYTES) {
+        parts.push(`### File: ${f.name} (PDF too large to parse inline)`);
+        continue;
+      }
       try {
         const buf = new Uint8Array(await blob.arrayBuffer());
         const pdf = await getDocumentProxy(buf);
-        const { text } = await extractText(pdf, { mergePages: true });
-        const clean = (Array.isArray(text) ? text.join("\n") : text).slice(0, MAX_FILE_CHARS);
+        const pageCount = Math.min(pdf.numPages ?? MAX_PDF_PAGES, MAX_PDF_PAGES);
+        const pages: string[] = [];
+        let collected = 0;
+        for (let i = 1; i <= pageCount && collected < MAX_FILE_CHARS; i++) {
+          try {
+            const { text } = await extractText(pdf, { mergePages: true, pages: [i] });
+            const pageText = Array.isArray(text) ? text.join("\n") : text;
+            pages.push(pageText);
+            collected += pageText.length;
+          } catch { /* skip bad page */ }
+        }
+        const clean = pages.join("\n").slice(0, MAX_FILE_CHARS);
         parts.push(`### File: ${f.name}\n${clean}`);
         total += clean.length;
       } catch (err) {
