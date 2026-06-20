@@ -24,12 +24,38 @@ function AnimatedDigit({ digit }: { digit: string }) {
   );
 }
 
-export default function VisitCounter({ isAdmin = false }: { isAdmin?: boolean }) {
+export default function VisitCounter({
+  isAdmin = false,
+  inline = false,
+}: {
+  isAdmin?: boolean;
+  inline?: boolean;
+}) {
   const [count, setCount] = useState<number>(0);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [pulse, setPulse] = useState(false);
+  const [adminDetected, setAdminDetected] = useState(false);
   const incremented = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: sess } = await supabase.auth.getSession();
+      const uid = sess.session?.user?.id;
+      if (!uid) return;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", uid)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!cancelled) setAdminDetected(!!data);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const canEdit = isAdmin || adminDetected;
 
   // Load + increment once per browser session (shared across all users via backend)
   useEffect(() => {
@@ -99,7 +125,7 @@ export default function VisitCounter({ isAdmin = false }: { isAdmin?: boolean })
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, type: "spring", stiffness: 220, damping: 22 }}
-      className="fixed bottom-4 left-4 z-40"
+      className={inline ? "inline-flex" : "fixed bottom-4 left-4 z-40"}
     >
       <motion.div
         animate={pulse ? { scale: [1, 1.08, 1] } : { scale: 1 }}
@@ -157,7 +183,7 @@ export default function VisitCounter({ isAdmin = false }: { isAdmin?: boolean })
                 )}
               </span>
             </div>
-            {isAdmin && (
+            {canEdit && (
               <button
                 onClick={() => {
                   setDraft(String(count));

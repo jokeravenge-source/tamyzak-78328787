@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { useSubscription } from "@/hooks/useSubscription";
 import { missionsData, missionsOrder } from "@/data/missions";
+import VisitCounter from "@/components/VisitCounter";
 
 export type BasicsChoice =
   | "flashcards"
@@ -686,6 +687,9 @@ const Basics = ({
                 <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
                   {recCopy.title}
                 </h3>
+                <div className="mb-3">
+                  <VisitCounter inline />
+                </div>
                 <p className="text-muted-foreground max-w-md mb-6 text-sm md:text-base">{recCopy.body}</p>
                 <div className="flex flex-wrap gap-3">
                   <button
