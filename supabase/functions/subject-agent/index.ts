@@ -88,7 +88,10 @@ async function uploadStoragePdfToGemini(admin: ReturnType<typeof createClient>, 
     body: JSON.stringify({ file: { display_name: displayName } }),
   });
   const uploadUrl = start.headers.get("x-goog-upload-url");
-  if (!start.ok || !uploadUrl) return null;
+  if (!start.ok || !uploadUrl) {
+    console.warn("gemini_file_upload_start_failed", { status: start.status, hasUploadUrl: Boolean(uploadUrl), path });
+    return null;
+  }
 
   const uploaded = await fetch(uploadUrl, {
     method: "POST",
@@ -100,10 +103,16 @@ async function uploadStoragePdfToGemini(admin: ReturnType<typeof createClient>, 
     },
     body: source.body,
   });
-  if (!uploaded.ok) return null;
+  if (!uploaded.ok) {
+    console.warn("gemini_file_upload_failed", { status: uploaded.status, path });
+    return null;
+  }
   const data = await uploaded.json();
   const file = data.file ?? data;
-  if (!file?.uri) return null;
+  if (!file?.uri) {
+    console.warn("gemini_file_upload_missing_uri", { path });
+    return null;
+  }
   const ref = await waitForGeminiFile(apiKey, {
     uri: file.uri,
     mimeType: file.mimeType ?? mimeType,
@@ -256,7 +265,10 @@ Deno.serve(async (req) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contents }),
       });
-      if (!r.ok) return null;
+      if (!r.ok) {
+        console.warn("gemini_direct_generate_failed", { status: r.status });
+        return null;
+      }
       const data = await r.json();
       const text = data.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("").trim();
       return text || null;
