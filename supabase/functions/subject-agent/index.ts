@@ -17,18 +17,13 @@ const SUBJECT_LABELS: Record<string, string> = {
 };
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const CANDIDATE_MODELS = [
-  "google/gemini-2.5-flash",
-  "openai/gpt-5-mini",
-  "google/gemini-2.5-pro",
-];
-const JUDGE_MODEL = "google/gemini-2.5-pro";
+const AI_MODEL = "google/gemini-3-flash-preview";
 const MAX_CONTEXT_CHARS = 200000;
 const MAX_FILE_CHARS = 30000;
 const MAX_FILES = 6;
 const MAX_CHAT_MESSAGES = 8;
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
-const MODEL_TIMEOUT_MS = 18_000;
+const MODEL_TIMEOUT_MS = 60_000;
 const GEMINI_DIRECT_TIMEOUT_MS = 25_000;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const GEMINI_FILE_CACHE_TTL_MS = 45 * 60 * 1000;
