@@ -66,6 +66,7 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import type { AppSubject } from "@/pages/Subjects";
 import { groupFlashcardsByTopic } from "@/lib/flashcardTopics";
 import { explicitTopics, type TopicGroup } from "@/lib/flashcardTopics";
+import { buildPresetGroups } from "@/lib/flashcardTopicPresets";
 
 const decks: Record<string, { title: string; eyebrow: string; cards: typeof flashcards }> = {
   "1": { title: "Flashcards", eyebrow: "Ch 01 · Capacitors", cards: flashcardsCh1 },
@@ -378,9 +379,16 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         const preset = explicitTopics(withExtras, language);
         if (preset) return preset;
       }
+      // Curriculum-driven preset groups (PDF: دفتر مراجعة المتميزين).
+      const baseCards = [...deck.cards, ...extraCards];
+      const presetGroups = buildPresetGroups(subject, String(chapter), language, baseCards);
+      if (presetGroups) {
+        const preset = explicitTopics(presetGroups, language);
+        if (preset) return preset;
+      }
       return groupFlashcardsByTopic([...deck.cards, ...extraCards], language);
     },
-    [deck, extraCards, language, explicitGroups]
+    [deck, extraCards, language, explicitGroups, subject, chapter]
   );
   const hasTopics = topicResult.topics.length > 1;
   const [topicKey, setTopicKey] = useState<string>(topicResult.allKey);
