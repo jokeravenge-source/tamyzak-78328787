@@ -167,10 +167,6 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
     setLoading(true);
     try {
       const clientContext = await buildChapterContext(chapter);
-      if (!clientContext) {
-        setMessages([...next, { role: "assistant", content: t.extractFailed }]);
-        return;
-      }
       const { data, error } = await supabase.functions.invoke("subject-agent", {
         body: { subject, chapter, language, messages: next, clientContext },
       });
