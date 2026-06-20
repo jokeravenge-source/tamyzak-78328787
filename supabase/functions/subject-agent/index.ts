@@ -260,7 +260,7 @@ Deno.serve(async (req) => {
     const noFiles = language === "ar"
       ? "لا توجد ملفات مرفوعة أو قابلة للقراءة لهذا الفصل بعد. اطلب من المسؤول رفع ملفات في هذا الفصل."
       : "No uploaded readable files for this chapter yet. Ask an admin to upload files for this chapter.";
-    if (!context.text && context.fileRefs.length === 0) {
+    if (!context.text) {
       return new Response(JSON.stringify({ reply: noFiles }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
