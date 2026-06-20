@@ -64,6 +64,7 @@ import { Flashcard } from "@/components/Flashcard";
 import { Button } from "@/components/ui/button";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { AppSubject } from "@/pages/Subjects";
+import { groupFlashcardsByTopic } from "@/lib/flashcardTopics";
 
 const decks: Record<string, { title: string; eyebrow: string; cards: typeof flashcards }> = {
   "1": { title: "Flashcards", eyebrow: "Ch 01 · Capacitors", cards: flashcardsCh1 },
@@ -308,7 +309,22 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     [baseDeck, chapter, language, subject]
   );
   const text = copy[language];
-  const [cards, setCards] = useState([...deck.cards, ...extraCards]);
+  // Topic grouping (per-deck, auto-detected).
+  const topicResult = useMemo(
+    () => groupFlashcardsByTopic([...deck.cards, ...extraCards], language),
+    [deck, extraCards, language]
+  );
+  const hasTopics = topicResult.topics.length > 1;
+  const [topicKey, setTopicKey] = useState<string>(topicResult.allKey);
+  useEffect(() => {
+    setTopicKey(topicResult.allKey);
+  }, [topicResult]);
+  const activeTopicCards = useMemo(() => {
+    const t = topicResult.topics.find((g) => g.key === topicKey) ?? topicResult.topics[0];
+    return t?.cards ?? [];
+  }, [topicResult, topicKey]);
+
+  const [cards, setCards] = useState(activeTopicCards);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right">("right");
 
@@ -340,12 +356,12 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     if (savedView) {
       setCards(saved.map((s) => ({ q: s.q, a: s.a })));
     } else {
-      setCards([...deck.cards, ...extraCards]);
+      setCards(activeTopicCards);
     }
     setIndex(0);
     // intentionally exclude `saved` so bookmarking a card doesn't reset position
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deck, extraCards, savedView]);
+  }, [activeTopicCards, savedView]);
 
   // When in saved view and the saved list changes (e.g. unbookmark),
   // update cards in place without snapping back to the first card.
@@ -467,6 +483,34 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-3">{deck.eyebrow}</p>
         <h1 className="text-4xl md:text-5xl font-bold gradient-text">{deck.title}</h1>
       </header>
+
+      {hasTopics && !savedView && (
+        <nav
+          className="w-full max-w-3xl z-10 overflow-x-auto whitespace-nowrap px-1 mt-4 [scrollbar-width:thin]"
+          aria-label={language === "ar" ? "المواضيع" : "Topics"}
+        >
+          <div className="inline-flex gap-2">
+            {topicResult.topics.map((t) => {
+              const active = t.key === topicKey;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTopicKey(t.key)}
+                  className={
+                    "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 " +
+                    (active
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-secondary/60 border-white/10 text-muted-foreground hover:text-foreground hover:border-primary/40")
+                  }
+                >
+                  {t.label}
+                  <span className={"ms-1 opacity-70"}>· {t.cards.length}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
 
       <section className="w-full flex flex-col items-center gap-8 z-10 my-8">
         <Flashcard
