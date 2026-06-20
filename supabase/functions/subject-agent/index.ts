@@ -27,11 +27,93 @@ const MAX_CONTEXT_CHARS = 60000;
 const MAX_FILE_CHARS = 30000;
 const MAX_FILES = 6;
 const MAX_CHAT_MESSAGES = 8;
-const MAX_PDF_BYTES = 120 * 1024 * 1024;
+const MAX_PDF_BYTES = 15 * 1024 * 1024;
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const GEMINI_FILE_CACHE_TTL_MS = 45 * 60 * 1000;
+const GEMINI_GENERATE_MODEL = "gemini-2.5-flash";
 
 type CacheEntry = { at: number; text: string };
+type GeminiFileRef = { uri: string; mimeType: string; name: string; resourceName?: string };
+type SubjectContext = { text: string; fileRefs: GeminiFileRef[] };
 const fileCache = new Map<string, CacheEntry>();
+const geminiFileCache = new Map<string, { at: number; ref: GeminiFileRef }>();
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function getObjectMeta(obj: unknown) {
+  const metadata = (obj as { metadata?: Record<string, unknown>; updated_at?: string }).metadata ?? {};
+  const size = Number(metadata.size ?? metadata.contentLength ?? 0);
+  const mimeType = String(metadata.mimetype ?? metadata.mimeType ?? "application/pdf");
+  const updatedAt = (obj as { updated_at?: string }).updated_at ?? "";
+  return { size, mimeType, updatedAt };
+}
+
+async function waitForGeminiFile(apiKey: string, ref: GeminiFileRef): Promise<GeminiFileRef | null> {
+  if (!ref.resourceName) return ref;
+  for (let i = 0; i < 15; i++) {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/${ref.resourceName}?key=${encodeURIComponent(apiKey)}`);
+    if (!res.ok) return ref;
+    const data = await res.json();
+    if (data.state === "ACTIVE" || data.file?.state === "ACTIVE") return ref;
+    if (data.state === "FAILED" || data.file?.state === "FAILED") return null;
+    await sleep(1000);
+  }
+  return ref;
+}
+
+async function uploadStoragePdfToGemini(admin: ReturnType<typeof createClient>, path: string, displayName: string, mimeType: string, size: number, cacheKey: string): Promise<GeminiFileRef | null> {
+  const cached = geminiFileCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < GEMINI_FILE_CACHE_TTL_MS) return cached.ref;
+
+  const apiKey = Deno.env.get("GEMINI_API_KEY");
+  if (!apiKey) return null;
+
+  const { data: signed, error } = await admin.storage.from("files").createSignedUrl(path, 10 * 60);
+  if (error || !signed?.signedUrl) return null;
+
+  const source = await fetch(signed.signedUrl);
+  if (!source.ok || !source.body) return null;
+  const contentLength = size > 0 ? size : Number(source.headers.get("content-length") ?? 0);
+  if (!contentLength) return null;
+
+  const start = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?key=${encodeURIComponent(apiKey)}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Upload-Protocol": "resumable",
+      "X-Goog-Upload-Command": "start",
+      "X-Goog-Upload-Header-Content-Length": String(contentLength),
+      "X-Goog-Upload-Header-Content-Type": mimeType,
+    },
+    body: JSON.stringify({ file: { display_name: displayName } }),
+  });
+  const uploadUrl = start.headers.get("x-goog-upload-url");
+  if (!start.ok || !uploadUrl) return null;
+
+  const uploaded = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      "Content-Length": String(contentLength),
+      "Content-Type": mimeType,
+      "X-Goog-Upload-Offset": "0",
+      "X-Goog-Upload-Command": "upload, finalize",
+    },
+    body: source.body,
+  });
+  if (!uploaded.ok) return null;
+  const data = await uploaded.json();
+  const file = data.file ?? data;
+  if (!file?.uri) return null;
+  const ref = await waitForGeminiFile(apiKey, {
+    uri: file.uri,
+    mimeType: file.mimeType ?? mimeType,
+    name: displayName,
+    resourceName: file.name,
+  });
+  if (!ref) return null;
+  geminiFileCache.set(cacheKey, { at: Date.now(), ref });
+  return ref;
+}
 
 async function extractFromBlob(name: string, blob: Blob): Promise<string> {
   const lower = name.toLowerCase();
