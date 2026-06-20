@@ -283,6 +283,50 @@ export type Database = {
         }
         Relationships: []
       }
+      notes: {
+        Row: {
+          content: Json
+          created_at: string
+          icon: string | null
+          id: string
+          parent_id: string | null
+          position: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          icon?: string | null
+          id?: string
+          parent_id?: string | null
+          position?: number
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          icon?: string | null
+          id?: string
+          parent_id?: string | null
+          position?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
