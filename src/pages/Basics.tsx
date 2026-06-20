@@ -3,7 +3,7 @@ import {
   ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
-  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick,
+  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -121,6 +121,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     titleAr: "الدراسة",
     items: [
       { key: "flashcards", labelEn: "Flashcards", labelAr: "البطاقات", Icon: Layers },
+      { key: "notes", labelEn: "Notes", labelAr: "ملاحظاتي", Icon: NotebookPen },
       { key: "summaries", labelEn: "Summaries", labelAr: "الملخصات", Icon: FileText },
       { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
       { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
