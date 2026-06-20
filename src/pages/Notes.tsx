@@ -711,6 +711,42 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
     return buildTree(filtered);
   }, [notes, search]);
 
+  // Group root pages by notebook
+  const notebookGroups = useMemo(() => {
+    const filtered = search.trim()
+      ? notes.filter((n) => (n.title || "").toLowerCase().includes(search.toLowerCase()))
+      : notes;
+    const byParent = new Map<string | null, Note[]>();
+    filtered.forEach((n) => {
+      const arr = byParent.get(n.parent_id) || [];
+      arr.push(n);
+      byParent.set(n.parent_id, arr);
+    });
+    const fullTree = buildTree(filtered);
+    // map id -> tree node for quick lookup
+    const treeMap = new Map<string, TreeNode>();
+    const walk = (n: TreeNode) => { treeMap.set(n.id, n); n.children.forEach(walk); };
+    fullTree.forEach(walk);
+
+    const groups = notebooks.map((nb) => ({
+      notebook: nb as Notebook | null,
+      roots: filtered
+        .filter((n) => n.parent_id === null && n.notebook_id === nb.id)
+        .map((n) => treeMap.get(n.id)!)
+        .filter(Boolean)
+        .sort((a, b) => a.position - b.position),
+    }));
+    const unassignedRoots = filtered
+      .filter((n) => n.parent_id === null && !n.notebook_id)
+      .map((n) => treeMap.get(n.id)!)
+      .filter(Boolean)
+      .sort((a, b) => a.position - b.position);
+    if (unassignedRoots.length > 0) {
+      groups.push({ notebook: null, roots: unassignedRoots });
+    }
+    return groups;
+  }, [notes, notebooks, search]);
+
   // Breadcrumb for active page
   const breadcrumb = useMemo(() => {
     if (!active) return [];
