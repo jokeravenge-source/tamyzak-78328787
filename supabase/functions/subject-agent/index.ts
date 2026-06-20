@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
@@ -22,8 +21,6 @@ const MAX_CONTEXT_CHARS = 18000;
 const MAX_FILE_CHARS = 6000;
 const MAX_FILES = 2;
 const MAX_CHAT_MESSAGES = 8;
-const MAX_PDF_BYTES = 3 * 1024 * 1024; // 3MB — bigger PDFs OOM the edge runtime
-const MAX_PDF_PAGES = 15;
 
 async function fetchSubjectContext(subject: string): Promise<string> {
   const url = Deno.env.get("SUPABASE_URL")!;
@@ -39,7 +36,7 @@ async function fetchSubjectContext(subject: string): Promise<string> {
 
   const files = objects
     .filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep")
-    .slice(0, MAX_FILES)
+    .slice(0, 20)
     .map((o) => ({
       name: o.name,
       file_path: `${subject}/${o.name}`,
@@ -51,49 +48,28 @@ async function fetchSubjectContext(subject: string): Promise<string> {
   const parts: string[] = [];
   let total = 0;
   const MAX = MAX_CONTEXT_CHARS;
-  for (const f of files) {
+  const pdfNames: string[] = [];
+  const textFiles = files.filter((f) => {
+    const lower = f.file_path.toLowerCase();
+    const isPdf = lower.endsWith(".pdf") || f.mime_type === "application/pdf";
+    if (isPdf) pdfNames.push(f.name);
+    return !isPdf;
+  }).slice(0, MAX_FILES);
+
+  if (pdfNames.length) {
+    parts.push(`### Reference PDFs available for this subject (not parsed inline):\n- ${pdfNames.join("\n- ")}`);
+  }
+
+  for (const f of textFiles) {
     if (total >= MAX) break;
     if (!f.file_path) continue;
     const { data: blob } = await admin.storage.from("files").download(f.file_path);
     if (!blob) continue;
-
-    const isText =
-      f.file_path.endsWith(".txt") ||
-      f.file_path.endsWith(".md") ||
-      f.file_path.endsWith(".json") ||
-      f.file_path.endsWith(".csv") ||
-      (blob.type || "").startsWith("text/");
-
-    if (isText) {
+    try {
       const text = (await blob.text()).slice(0, MAX_FILE_CHARS);
       parts.push(`### File: ${f.name}\n${text}`);
       total += text.length;
-    } else if (f.file_path.toLowerCase().endsWith(".pdf") || f.mime_type === "application/pdf" || (blob.type || "") === "application/pdf") {
-      if (blob.size > MAX_PDF_BYTES) {
-        parts.push(`### File: ${f.name} (PDF too large to parse inline)`);
-        continue;
-      }
-      try {
-        const buf = new Uint8Array(await blob.arrayBuffer());
-        const pdf = await getDocumentProxy(buf);
-        const pageCount = Math.min(pdf.numPages ?? MAX_PDF_PAGES, MAX_PDF_PAGES);
-        const pages: string[] = [];
-        let collected = 0;
-        for (let i = 1; i <= pageCount && collected < MAX_FILE_CHARS; i++) {
-          try {
-            const { text } = await extractText(pdf, { mergePages: true, pages: [i] });
-            const pageText = Array.isArray(text) ? text.join("\n") : text;
-            pages.push(pageText);
-            collected += pageText.length;
-          } catch { /* skip bad page */ }
-        }
-        const clean = pages.join("\n").slice(0, MAX_FILE_CHARS);
-        parts.push(`### File: ${f.name}\n${clean}`);
-        total += clean.length;
-      } catch (err) {
-        parts.push(`### File: ${f.name} (failed to parse PDF: ${String(err)})`);
-      }
-    }
+    } catch { /* skip binary */ }
   }
   return parts.join("\n\n");
 }
@@ -134,13 +110,10 @@ Deno.serve(async (req) => {
       ? "تعذر إكمال الطلب الآن. حاول مرة أخرى بعد قليل."
       : "I couldn't complete that right now. Please try again shortly.";
 
-    if (!context) {
-      return new Response(JSON.stringify({ reply: noFiles }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const system = `You are a friendly ${label} tutor for high-school students.\n\nHow to answer:\n- PREFER the REFERENCE MATERIAL below whenever it covers the question. When you use it, you may cite the file name in parentheses, e.g. (source: filename.pdf).\n- If the reference material does not cover the question, or if the extracted text is incomplete/garbled (common with scanned PDFs), you MAY still answer using your own accurate ${label} knowledge.\n- Only refuse with "${refusal}" if the question is clearly OFF-TOPIC for ${label}. Do NOT refuse just because the wording isn't in the reference.\n\nTEACHING STYLE (very important):\n- Always explain in SIMPLE, everyday language — as if talking to a 14-year-old. Avoid jargon; when you must use a technical term, define it in one short sentence.\n- Break ideas into small steps and short paragraphs or bullet points.\n- ALWAYS include at least one REAL-LIFE EXAMPLE or analogy from everyday life (kitchen, sports, phone, car, weather, school, etc.) so the concept feels concrete.\n- End with a one-line "في الحياة اليومية" / "In real life" takeaway that ties the idea to something the student already knows.\n- Always respond in ${lang}.\n\n---REFERENCE MATERIAL (may be partial)---\n${context}\n---END REFERENCE---`;
+    const referenceBlock = context
+      ? `\n\n---REFERENCE MATERIAL (may be partial)---\n${context}\n---END REFERENCE---`
+      : "";
+    const system = `You are a friendly ${label} tutor for high-school students.\n\nHow to answer:\n- Answer using your own accurate ${label} knowledge. If reference material is provided below, prefer it when it covers the question and you may cite the file name in parentheses.\n- Only refuse with "${refusal}" if the question is clearly OFF-TOPIC for ${label}.\n\nTEACHING STYLE (very important):\n- Always explain in SIMPLE, everyday language — as if talking to a 14-year-old. Avoid jargon; when you must use a technical term, define it in one short sentence.\n- Break ideas into small steps and short paragraphs or bullet points.\n- ALWAYS include at least one REAL-LIFE EXAMPLE or analogy from everyday life (kitchen, sports, phone, car, weather, school, etc.) so the concept feels concrete.\n- End with a one-line "في الحياة اليومية" / "In real life" takeaway that ties the idea to something the student already knows.\n- Always respond in ${lang}.${referenceBlock}`;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
     const safeMessages = messages
