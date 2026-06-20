@@ -331,6 +331,7 @@ const buildTree = (notes: Note[]): TreeNode[] => {
 
 const TreeItem = ({
   node, depth, activeId, expanded, onToggle, onSelect, onAddChild, onDelete, onRename, language,
+  onPageDragStart, onPageDragOver, onPageDrop, onPageDragEnd, dragOverId,
 }: {
   node: TreeNode;
   depth: number;
@@ -342,6 +343,11 @@ const TreeItem = ({
   onDelete: (id: string) => void;
   onRename: (id: string, newTitle: string) => void;
   language: AppLanguage;
+  onPageDragStart: (id: string) => void;
+  onPageDragOver: (e: React.DragEvent, id: string) => void;
+  onPageDrop: (e: React.DragEvent, id: string) => void;
+  onPageDragEnd: () => void;
+  dragOverId: string | null;
 }) => {
   const t = copy[language];
   const isOpen = expanded.has(node.id);
@@ -351,12 +357,19 @@ const TreeItem = ({
   const [draft, setDraft] = useState(node.title);
   useEffect(() => { setDraft(node.title); }, [node.title]);
   const commit = () => { onRename(node.id, draft.trim() || t.untitledPage); setEditing(false); };
+  const isDragTarget = dragOverId === node.id;
   return (
     <div>
       <div
+        draggable={!editing}
+        onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.effectAllowed = "move"; onPageDragStart(node.id); }}
+        onDragOver={(e) => onPageDragOver(e, node.id)}
+        onDragLeave={() => { /* handled at root */ }}
+        onDrop={(e) => { e.stopPropagation(); onPageDrop(e, node.id); }}
+        onDragEnd={onPageDragEnd}
         className={`group flex items-center gap-1 rounded-md px-1 py-1 cursor-pointer transition-colors ${
           active ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-secondary"
-        }`}
+        } ${isDragTarget ? "ring-2 ring-primary/60" : ""}`}
         style={{ paddingInlineStart: `${depth * 0.75 + 0.25}rem` }}
         onClick={() => { if (!editing) onSelect(node.id); }}
         onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
@@ -431,6 +444,11 @@ const TreeItem = ({
                 onDelete={onDelete}
                 onRename={onRename}
                 language={language}
+                onPageDragStart={onPageDragStart}
+                onPageDragOver={onPageDragOver}
+                onPageDrop={onPageDrop}
+                onPageDragEnd={onPageDragEnd}
+                dragOverId={dragOverId}
               />
             ))}
           </motion.div>
@@ -458,6 +476,11 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const [slash, setSlash] = useState<{ blockId: string; x: number; y: number } | null>(null);
   const [iconPickerFor, setIconPickerFor] = useState<string | null>(null);
   const [focusBlockId, setFocusBlockId] = useState<string | null>(null);
+
+  // Drag-and-drop state
+  const dragRef = useRef<{ type: "notebook" | "page"; id: string } | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const clearDrag = () => { dragRef.current = null; setDragOverId(null); };
 
   // Load notes
   useEffect(() => {
@@ -608,6 +631,115 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const renamePage = useCallback((id: string, title: string) => {
     updateNote(id, { title });
   }, [updateNote]);
+
+  // ----- Drag & drop handlers -----
+  const reorderNotebooks = useCallback((draggedId: string, targetId: string) => {
+    setNotebooks((prev) => {
+      const arr = [...prev].sort((a, b) => a.position - b.position);
+      const from = arr.findIndex((n) => n.id === draggedId);
+      const to = arr.findIndex((n) => n.id === targetId);
+      if (from < 0 || to < 0 || from === to) return prev;
+      const [m] = arr.splice(from, 1);
+      arr.splice(to, 0, m);
+      const next = arr.map((n, i) => ({ ...n, position: i }));
+      Promise.all(next.map((n) => supabase.from("notebooks").update({ position: n.position }).eq("id", n.id)));
+      return next;
+    });
+  }, []);
+
+  const reorderPage = useCallback((draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+    const dragged = notes.find((n) => n.id === draggedId);
+    const target = notes.find((n) => n.id === targetId);
+    if (!dragged || !target) return;
+    // Prevent dropping a parent into one of its descendants
+    const isDescendant = (parentId: string, childId: string): boolean => {
+      let cur = notes.find((n) => n.id === childId);
+      while (cur?.parent_id) {
+        if (cur.parent_id === parentId) return true;
+        cur = notes.find((n) => n.id === cur!.parent_id);
+      }
+      return false;
+    };
+    if (isDescendant(draggedId, targetId)) return;
+    const newParentId = target.parent_id;
+    const newNotebookId = target.notebook_id;
+    const siblings = notes
+      .filter((n) => n.parent_id === newParentId && n.id !== draggedId)
+      .sort((a, b) => a.position - b.position);
+    const idx = siblings.findIndex((n) => n.id === targetId);
+    const newDragged: Note = { ...dragged, parent_id: newParentId, notebook_id: newNotebookId };
+    siblings.splice(idx, 0, newDragged);
+    const updates = siblings.map((n, i) => ({ id: n.id, position: i, parent_id: newParentId, notebook_id: newNotebookId }));
+    setNotes((prev) => prev.map((n) => {
+      const u = updates.find((x) => x.id === n.id);
+      return u ? { ...n, position: u.position, parent_id: u.parent_id, notebook_id: u.notebook_id } : n;
+    }));
+    Promise.all(updates.map((u) =>
+      supabase.from("notes").update({ position: u.position, parent_id: u.parent_id, notebook_id: u.notebook_id }).eq("id", u.id)
+    ));
+  }, [notes]);
+
+  const dropPageOnNotebook = useCallback((pageId: string, notebookId: string | null) => {
+    const dragged = notes.find((n) => n.id === pageId);
+    if (!dragged) return;
+    const siblings = notes
+      .filter((n) => n.parent_id === null && n.notebook_id === notebookId && n.id !== pageId)
+      .sort((a, b) => a.position - b.position);
+    siblings.push({ ...dragged, parent_id: null, notebook_id: notebookId });
+    const updates = siblings.map((n, i) => ({ id: n.id, position: i }));
+    setNotes((prev) => prev.map((n) => {
+      if (n.id === pageId) return { ...n, parent_id: null, notebook_id: notebookId, position: siblings.length - 1 };
+      const u = updates.find((x) => x.id === n.id);
+      return u ? { ...n, position: u.position } : n;
+    }));
+    Promise.all([
+      supabase.from("notes").update({ parent_id: null, notebook_id: notebookId, position: siblings.length - 1 }).eq("id", pageId),
+      ...updates.filter((u) => u.id !== pageId).map((u) =>
+        supabase.from("notes").update({ position: u.position }).eq("id", u.id)
+      ),
+    ]);
+    if (notebookId) setExpandedNotebooks((s) => new Set(s).add(notebookId));
+  }, [notes]);
+
+  const onPageDragStart = useCallback((id: string) => {
+    dragRef.current = { type: "page", id };
+  }, []);
+  const onPageDragOver = useCallback((e: React.DragEvent, id: string) => {
+    if (dragRef.current?.type !== "page") return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverId(id);
+  }, []);
+  const onPageDrop = useCallback((e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    const drag = dragRef.current;
+    if (drag?.type === "page") reorderPage(drag.id, id);
+    clearDrag();
+  }, [reorderPage]);
+  const onPageDragEnd = useCallback(() => { clearDrag(); }, []);
+
+  const onNotebookDragStart = useCallback((id: string) => {
+    dragRef.current = { type: "notebook", id };
+  }, []);
+  const onNotebookDragOver = useCallback((e: React.DragEvent, id: string | null) => {
+    if (!dragRef.current) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverId(id === null ? "__none" : `nb:${id}`);
+  }, []);
+  const onNotebookDrop = useCallback((e: React.DragEvent, id: string | null) => {
+    e.preventDefault();
+    const drag = dragRef.current;
+    if (!drag) return;
+    if (drag.type === "notebook" && id) {
+      reorderNotebooks(drag.id, id);
+    } else if (drag.type === "page") {
+      dropPageOnNotebook(drag.id, id);
+    }
+    clearDrag();
+  }, [reorderNotebooks, dropPageOnNotebook]);
 
   // Block ops on active note
   const setBlocks = (updater: (blocks: Block[]) => Block[]) => {
@@ -815,7 +947,16 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                       const isEditingNb = nb && editingNotebookId === nb.id;
                       return (
                         <div key={nbId}>
-                          <div className="group flex items-center gap-1 rounded-md px-1 py-1.5 hover:bg-secondary/60 transition-colors">
+                          <div
+                            draggable={!!nb && !isEditingNb}
+                            onDragStart={(e) => { if (nb) { e.stopPropagation(); e.dataTransfer.effectAllowed = "move"; onNotebookDragStart(nb.id); } }}
+                            onDragOver={(e) => onNotebookDragOver(e, nb?.id ?? null)}
+                            onDrop={(e) => { e.stopPropagation(); onNotebookDrop(e, nb?.id ?? null); }}
+                            onDragEnd={clearDrag}
+                            className={`group flex items-center gap-1 rounded-md px-1 py-1.5 hover:bg-secondary/60 transition-colors ${
+                              dragOverId === (nb ? `nb:${nb.id}` : "__none") ? "ring-2 ring-primary/60 bg-primary/5" : ""
+                            }`}
+                          >
                             <button
                               onClick={() => {
                                 if (!nb) return;
@@ -902,6 +1043,11 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                                       onDelete={deleteNote}
                                       onRename={renamePage}
                                       language={language}
+                                      onPageDragStart={onPageDragStart}
+                                      onPageDragOver={onPageDragOver}
+                                      onPageDrop={onPageDrop}
+                                      onPageDragEnd={onPageDragEnd}
+                                      dragOverId={dragOverId}
                                     />
                                   ))
                                 )}
