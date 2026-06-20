@@ -11,10 +11,12 @@ import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 type Msg = { role: "user" | "assistant"; content: string };
-type StorageObj = { name: string; id?: string | null };
+type StorageObj = { name: string; id?: string | null; metadata?: { size?: number; contentLength?: number; mimetype?: string } };
 
 const MAX_CLIENT_CONTEXT_CHARS = 200_000;
 const MAX_CLIENT_FILES = 4;
+const MAX_CLIENT_PDF_BYTES = 8 * 1024 * 1024;
+const CLIENT_CONTEXT_TIMEOUT_MS = 12_000;
 
 const labels = {
   en: {
@@ -125,11 +127,16 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
     for (const file of files) {
       if (total >= MAX_CLIENT_CONTEXT_CHARS) break;
       const path = `${folder}/${file.name}`;
+      const lowerName = file.name.toLowerCase();
+      const size = Number(file.metadata?.size ?? file.metadata?.contentLength ?? 0);
+      const mimeType = file.metadata?.mimetype ?? "";
+      const isPdf = lowerName.endsWith(".pdf") || mimeType === "application/pdf";
+      if (isPdf && size > MAX_CLIENT_PDF_BYTES) continue;
       const { data: blob } = await supabase.storage.from("files").download(path);
       if (!blob) continue;
       let text = "";
       try {
-        text = file.name.toLowerCase().endsWith(".pdf") || blob.type === "application/pdf"
+        text = isPdf || blob.type === "application/pdf"
           ? await extractPdfText(blob)
           : await blob.text();
       } catch {
@@ -153,7 +160,10 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
     setInput("");
     setLoading(true);
     try {
-      const clientContext = await buildChapterContext(chapter);
+      const clientContext = await Promise.race([
+        buildChapterContext(chapter),
+        new Promise<string>((resolve) => window.setTimeout(() => resolve(""), CLIENT_CONTEXT_TIMEOUT_MS)),
+      ]);
       const { data, error } = await supabase.functions.invoke("subject-agent", {
         body: { subject, chapter, language, messages: next, clientContext },
       });
