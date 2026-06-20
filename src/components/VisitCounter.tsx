@@ -57,29 +57,24 @@ export default function VisitCounter({
 
   const canEdit = isAdmin || adminDetected;
 
-  // Load + increment once per browser session (shared across all users via backend)
+  // Increment on every page load so the counter grows for each visit
   useEffect(() => {
     if (incremented.current) return;
     incremented.current = true;
     (async () => {
-      const alreadyCounted =
-        typeof window !== "undefined" && !!sessionStorage.getItem(SESSION_KEY);
-      if (!alreadyCounted) {
-        try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
-        const { data, error } = await supabase.rpc("increment_site_visits");
-        if (!error && data != null) {
-          setCount(Number(data));
-          setPulse(true);
-          setTimeout(() => setPulse(false), 900);
-          return;
-        }
+      const { data, error } = await supabase.rpc("increment_site_visits");
+      if (!error && data != null) {
+        setCount(Number(data));
+        setPulse(true);
+        setTimeout(() => setPulse(false), 900);
+        return;
       }
-      const { data } = await supabase
+      const { data: row } = await supabase
         .from("site_stats")
         .select("count")
         .eq("id", "global")
         .maybeSingle();
-      if (data?.count != null) setCount(Number(data.count));
+      if (row?.count != null) setCount(Number(row.count));
     })();
   }, []);
 
