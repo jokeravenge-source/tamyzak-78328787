@@ -248,27 +248,33 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   // AI Files (subject reference indexing)
   const SUBJECTS = ["biology","physics","chemistry","arabic","french","english"];
   type StorageObj = { name: string };
-  type IndexedRow = { file_name: string; char_count: number; updated_at: string };
+  type IndexedRow = { file_name: string; char_count: number; updated_at: string; chapter: string };
   const [aiSubject, setAiSubject] = useState("biology");
+  const [aiChapter, setAiChapter] = useState("ch1");
+  const [aiChapterInput, setAiChapterInput] = useState("");
   const [aiFiles, setAiFiles] = useState<StorageObj[]>([]);
   const [aiIndexed, setAiIndexed] = useState<IndexedRow[]>([]);
+  const [aiAllChapters, setAiAllChapters] = useState<string[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [aiUploading, setAiUploading] = useState(false);
   const loadAi = async () => {
     setAiLoading(true);
     const [filesRes, idxRes] = await Promise.all([
-      supabase.storage.from("files").list(aiSubject, { limit: 100 }),
-      supabase.from("subject_file_text").select("file_name,char_count,updated_at").eq("subject", aiSubject),
+      supabase.storage.from("files").list(`${aiSubject}/${aiChapter}`, { limit: 100 }),
+      supabase.from("subject_file_text").select("file_name,char_count,updated_at,chapter").eq("subject", aiSubject),
     ]);
     setAiFiles((filesRes.data ?? []).filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep"));
-    setAiIndexed((idxRes.data ?? []) as IndexedRow[]);
+    const all = (idxRes.data ?? []) as IndexedRow[];
+    setAiIndexed(all.filter((r) => r.chapter === aiChapter));
+    const chs = Array.from(new Set(all.map((r) => r.chapter).filter(Boolean))).sort();
+    setAiAllChapters(chs);
     setAiLoading(false);
   };
-  useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject]);
+  useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject, aiChapter]);
   const uploadAi = async (file: File) => {
     setAiUploading(true);
-    const path = `${aiSubject}/${file.name}`;
+    const path = `${aiSubject}/${aiChapter}/${file.name}`;
     const { error } = await supabase.storage.from("files").upload(path, file, { upsert: true });
     setAiUploading(false);
     if (error) return toast.error(error.message);
@@ -277,7 +283,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
   const indexOne = async (name: string) => {
     setAiBusy(name);
-    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, file_name: name } });
+    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, chapter: aiChapter, file_name: name } });
     setAiBusy(null);
     if (error) return toast.error(error.message);
     const r = (data as { results?: Array<{ ok: boolean; chars?: number; error?: string }> })?.results?.[0];
@@ -286,7 +292,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
   const indexAll = async () => {
     setAiBusy("__all__");
-    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, all: true } });
+    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, chapter: aiChapter, all: true } });
     setAiBusy(null);
     if (error) return toast.error(error.message);
     const results = (data as { results?: Array<{ ok: boolean }> })?.results ?? [];
@@ -295,10 +301,16 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
   const deleteAi = async (name: string) => {
     if (!confirm(`Delete ${name} from storage and index?`)) return;
-    await supabase.storage.from("files").remove([`${aiSubject}/${name}`]);
-    await supabase.from("subject_file_text").delete().eq("subject", aiSubject).eq("file_name", name);
+    await supabase.storage.from("files").remove([`${aiSubject}/${aiChapter}/${name}`]);
+    await supabase.from("subject_file_text").delete().eq("subject", aiSubject).eq("chapter", aiChapter).eq("file_name", name);
     toast.success("Deleted");
     loadAi();
+  };
+  const addChapter = () => {
+    const c = aiChapterInput.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+    if (!c) return;
+    setAiChapter(c);
+    setAiChapterInput("");
   };
   const decideUreq = async (r: UReq, decision: "approved" | "rejected") => {
     const { data: u } = await supabase.auth.getUser();
