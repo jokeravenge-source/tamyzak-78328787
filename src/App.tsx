@@ -267,8 +267,10 @@ const App = () => {
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
       {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
-        <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
-        <VisitCounter isAdmin={isAdmin} />
+        <>
+          <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
+          <VisitCounter isAdmin={isAdmin} />
+        </>
       )}
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
