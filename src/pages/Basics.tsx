@@ -227,7 +227,6 @@ const Basics = ({
   const todos = useTodos();
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
-  const [heroMode, setHeroMode] = useState<"flashcards" | "todo">("flashcards");
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
@@ -424,7 +423,7 @@ const Basics = ({
       view: "عرض المهام",
     },
   }[language];
-  const activeCopy = heroMode === "todo" ? todoCopy : recCopy;
+  const activeCopy = todoCopy;
   const toolsHeader = { en: "Study tools", ar: "أدوات الدراسة" }[language];
   const viewAll = { en: "View all tools", ar: "عرض كل الأدوات" }[language];
 
@@ -705,25 +704,9 @@ const Basics = ({
           <section className="mb-10">
             <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
               <div className="relative z-10 flex-1">
-                <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-                  <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full">
-                    {activeCopy.tag}
-                  </span>
-                  <div className="inline-flex rounded-full border border-border bg-secondary p-0.5 text-[11px] font-semibold">
-                    <button
-                      onClick={() => setHeroMode("flashcards")}
-                      className={`px-3 py-1 rounded-full transition-colors ${heroMode === "flashcards" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      {language === "ar" ? "البطاقات" : "Flashcards"}
-                    </button>
-                    <button
-                      onClick={() => setHeroMode("todo")}
-                      className={`px-3 py-1 rounded-full transition-colors ${heroMode === "todo" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      {language === "ar" ? "قائمة المهام" : "To-Do"}
-                    </button>
-                  </div>
-                </div>
+                <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full mb-4">
+                  {activeCopy.tag}
+                </span>
                 <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
                   {activeCopy.title}
                 </h3>
@@ -733,13 +716,13 @@ const Basics = ({
                 <p className="text-muted-foreground max-w-md mb-6 text-sm md:text-base">{activeCopy.body}</p>
                 <div className="flex flex-wrap gap-3">
                   <button
-                    onClick={() => onSelect(heroMode === "todo" ? "todo" : "flashcards")}
+                    onClick={() => onSelect("todo")}
                     className="px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl transition-transform active:scale-95"
                   >
                     {activeCopy.resume}
                   </button>
                   <button
-                    onClick={() => onSelect(heroMode === "todo" ? "todo" : "summaries")}
+                    onClick={() => onSelect("todo")}
                     className="px-5 py-2.5 border border-border bg-card text-foreground/80 font-semibold rounded-xl hover:bg-secondary transition-colors"
                   >
                     {activeCopy.view}
