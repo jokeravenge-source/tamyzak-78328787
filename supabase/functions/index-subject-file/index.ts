@@ -29,15 +29,16 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { subject, file_name, all } = await req.json();
-    if (!subject) {
-      return new Response(JSON.stringify({ error: "subject required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const { subject, chapter, file_name, all } = await req.json();
+    if (!subject || !chapter) {
+      return new Response(JSON.stringify({ error: "subject and chapter required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    const folder = `${subject}/${chapter}`;
 
     // Resolve list of files to index
     let files: string[] = [];
     if (all) {
-      const { data: objects } = await admin.storage.from("files").list(subject, { limit: 100 });
+      const { data: objects } = await admin.storage.from("files").list(folder, { limit: 100 });
       files = (objects ?? [])
         .filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep")
         .map((o) => o.name);
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
 
     for (const name of files) {
       try {
-        const path = `${subject}/${name}`;
+        const path = `${folder}/${name}`;
         const { data: blob, error } = await admin.storage.from("files").download(path);
         if (error || !blob) {
           results.push({ file_name: name, ok: false, error: error?.message ?? "download failed" });
@@ -89,7 +90,7 @@ Deno.serve(async (req) => {
 
         const { error: upErr } = await admin
           .from("subject_file_text")
-          .upsert({ subject, file_name: name, text, char_count: text.length }, { onConflict: "subject,file_name" });
+          .upsert({ subject, chapter, file_name: name, text, char_count: text.length }, { onConflict: "subject,chapter,file_name" });
         if (upErr) {
           results.push({ file_name: name, ok: false, error: upErr.message });
         } else {
