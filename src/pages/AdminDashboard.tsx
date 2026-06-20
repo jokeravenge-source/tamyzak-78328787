@@ -335,8 +335,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     toast.success("Uploaded. Click Index to extract text.");
     refreshAiChapters();
   };
-  const indexOne = async (name: string) => {
-    setAiBusy(name);
+  const buildIndexBody = async (name: string) => {
     let body: Record<string, unknown> = { subject: aiSubject, chapter: aiChapter, file_name: name };
     if (name.toLowerCase().endsWith(".pdf")) {
       try {
@@ -357,6 +356,11 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
         }
       } catch { /* fall back to server-side indexing */ }
     }
+    return body;
+  };
+  const indexOne = async (name: string) => {
+    setAiBusy(name);
+    const body = await buildIndexBody(name);
     const { data, error } = await supabase.functions.invoke("index-subject-file", { body });
     setAiBusy(null);
     if (error) return toast.error(error.message);
@@ -366,10 +370,14 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
   const indexAll = async () => {
     setAiBusy("__all__");
-    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, chapter: aiChapter, all: true } });
+    const results: Array<{ ok: boolean }> = [];
+    for (const file of aiFiles) {
+      const body = await buildIndexBody(file.name);
+      const { data, error } = await supabase.functions.invoke("index-subject-file", { body });
+      const r = (data as { results?: Array<{ ok: boolean }> })?.results?.[0];
+      results.push({ ok: !error && r?.ok === true });
+    }
     setAiBusy(null);
-    if (error) return toast.error(error.message);
-    const results = (data as { results?: Array<{ ok: boolean }> })?.results ?? [];
     toast.success(`Indexed ${results.filter((x) => x.ok).length}/${results.length} files`);
     loadAi();
   };
