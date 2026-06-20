@@ -35,7 +35,27 @@ export default function VisitCounter({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [pulse, setPulse] = useState(false);
+  const [adminDetected, setAdminDetected] = useState(false);
   const incremented = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: sess } = await supabase.auth.getSession();
+      const uid = sess.session?.user?.id;
+      if (!uid) return;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", uid)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!cancelled) setAdminDetected(!!data);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const canEdit = isAdmin || adminDetected;
 
   // Load + increment once per browser session (shared across all users via backend)
   useEffect(() => {
@@ -163,7 +183,7 @@ export default function VisitCounter({
                 )}
               </span>
             </div>
-            {isAdmin && (
+            {canEdit && (
               <button
                 onClick={() => {
                   setDraft(String(count));
