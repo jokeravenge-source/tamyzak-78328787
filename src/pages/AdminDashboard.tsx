@@ -655,6 +655,57 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               </div>
             )}
           </div>
+        ) : tab === "aifiles" ? (
+          <div className="space-y-6">
+            <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur space-y-3">
+              <h3 className="font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /> Subject reference files (for AI tutor)</h3>
+              <p className="text-xs text-muted-foreground">Upload PDFs / text files per subject, then click "Index" to extract their text so the AI tutor can answer exactly from them.</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <select value={aiSubject} onChange={(e) => setAiSubject(e.target.value)} className="h-10 px-3 rounded-lg bg-background border border-white/10 text-sm">
+                  {SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 hover:border-primary/40 text-sm cursor-pointer">
+                  <Upload className="w-4 h-4" /> {aiUploading ? "Uploading…" : "Upload file"}
+                  <input type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAi(f); e.target.value = ""; }} />
+                </label>
+                <button onClick={indexAll} disabled={aiBusy === "__all__" || aiFiles.length === 0} className="inline-flex items-center gap-2 px-3 h-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
+                  {aiBusy === "__all__" ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />} Index all
+                </button>
+              </div>
+            </div>
+            {aiLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+            ) : aiFiles.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10">No files for {aiSubject}.</p>
+            ) : (
+              <div className="grid gap-3">
+                {aiFiles.map((f) => {
+                  const idx = aiIndexed.find((i) => i.file_name === f.name);
+                  return (
+                    <article key={f.name} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-[220px]">
+                        <h3 className="font-semibold break-all">{f.name}</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {idx ? <>Indexed · {idx.char_count.toLocaleString()} chars · {new Date(idx.updated_at).toLocaleString()}</> : <span className="text-amber-400">Not indexed yet</span>}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => indexOne(f.name)} disabled={aiBusy === f.name} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
+                          {aiBusy === f.name ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />} {idx ? "Re-index" : "Index"}
+                        </button>
+                        <button onClick={() => deleteAi(f.name)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm">
+                          <Trash2 className="w-4 h-4" /> Delete
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         ) : loading ? (
           <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : rows.length === 0 ? (
