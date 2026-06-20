@@ -16,7 +16,12 @@ const SUBJECT_LABELS: Record<string, string> = {
 };
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const AI_MODEL = "google/gemini-2.5-flash";
+const CANDIDATE_MODELS = [
+  "google/gemini-2.5-flash",
+  "openai/gpt-5-mini",
+  "google/gemini-2.5-pro",
+];
+const JUDGE_MODEL = "google/gemini-2.5-pro";
 const MAX_CONTEXT_CHARS = 60000;
 const MAX_FILE_CHARS = 30000;
 const MAX_FILES = 6;
@@ -99,36 +104,69 @@ Deno.serve(async (req) => {
       .filter((msg) => msg && (msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string")
       .slice(-MAX_CHAT_MESSAGES);
 
-    const resp = await fetch(AI_URL, {
+    const callModel = async (model: string) => {
+      const r = await fetch(AI_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "system", content: system }, ...safeMessages],
+        }),
+      });
+      return { model, status: r.status, body: r.ok ? await r.json() : await r.text() };
+    };
+
+    const candidateResults = await Promise.all(CANDIDATE_MODELS.map((m) => callModel(m).catch((e) => ({ model: m, status: 0, body: String(e) }))));
+
+    const tooMany = candidateResults.find((c) => c.status === 429);
+    const noCredits = candidateResults.find((c) => c.status === 402);
+    const candidates = candidateResults
+      .filter((c) => c.status === 200 && typeof c.body === "object")
+      .map((c) => ({ model: c.model, text: (c.body as { choices?: Array<{ message?: { content?: string } }> }).choices?.[0]?.message?.content ?? "" }))
+      .filter((c) => c.text.trim().length > 0);
+
+    if (candidates.length === 0) {
+      if (noCredits) {
+        return new Response(JSON.stringify({ reply: creditsExhausted, temporary: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (tooMany) {
+        return new Response(JSON.stringify({ reply: rateLimited, temporary: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ reply: temporaryFailure, temporary: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // If only one candidate succeeded, just return it.
+    if (candidates.length === 1) {
+      return new Response(JSON.stringify({ reply: candidates[0].text, sources: candidates.map((c) => c.model) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Judge step: compare candidate answers, pick the one that best matches the reference, or merge them.
+    const lastUser = [...safeMessages].reverse().find((m) => m.role === "user")?.content ?? "";
+    const judgeSystem = `You are an answer-quality judge for a ${label} tutor. You receive a student question, the strict REFERENCE MATERIAL, and ${candidates.length} candidate answers from different AI models. Your job:\n1. Compare every candidate against the reference material ONLY.\n2. Pick the candidate that is the most faithful to the reference (correct facts, proper citations, no outside knowledge). You may merge complementary correct parts from multiple candidates, but never add anything not in the reference.\n3. If none of them are correct or the reference does not cover it, reply with exactly: "${refusal}".\n4. Respond in ${lang} only. Do NOT mention the candidates, the comparison process, or model names. Output ONLY the final best answer for the student.`;
+    const candidateBlock = candidates
+      .map((c, i) => `--- CANDIDATE ${i + 1} ---\n${c.text}`)
+      .join("\n\n");
+    const judgeUser = `STUDENT QUESTION:\n${lastUser}\n\nREFERENCE MATERIAL:\n${context}\n\n${candidateBlock}`;
+
+    const judgeResp = await fetch(AI_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: AI_MODEL,
-        messages: [{ role: "system", content: system }, ...safeMessages],
+        model: JUDGE_MODEL,
+        messages: [
+          { role: "system", content: judgeSystem },
+          { role: "user", content: judgeUser },
+        ],
       }),
     });
-    if (!resp.ok) {
-      const t = await resp.text();
-      if (resp.status === 429) {
-        return new Response(JSON.stringify({ reply: rateLimited, temporary: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (resp.status === 402) {
-        return new Response(JSON.stringify({ reply: creditsExhausted, temporary: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: t }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!judgeResp.ok) {
+      // Fall back to the longest candidate answer.
+      const best = candidates.slice().sort((a, b) => b.text.length - a.text.length)[0];
+      return new Response(JSON.stringify({ reply: best.text, sources: candidates.map((c) => c.model) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const data = await resp.json();
-    const reply = data.choices?.[0]?.message?.content ?? temporaryFailure;
-    return new Response(JSON.stringify({ reply }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const judgeData = await judgeResp.json();
+    const finalReply = judgeData.choices?.[0]?.message?.content ?? candidates[0].text;
+    return new Response(JSON.stringify({ reply: finalReply, sources: candidates.map((c) => c.model) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), {
       status: 500,
