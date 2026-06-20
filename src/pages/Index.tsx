@@ -310,10 +310,77 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     [baseDeck, chapter, language, subject]
   );
   const text = copy[language];
+  // Explicit, source-derived topic groups for decks that are built from
+  // multiple named source files. Falls back to keyword auto-detection
+  // when no preset matches.
+  const explicitGroups: TopicGroup[] | null = useMemo(() => {
+    if (subject === "arabic" && chapter === "7") {
+      return [
+        {
+          key: "lit1-years",
+          label: language === "ar" ? "سنوات" : "Years",
+          cards: flashcardsArabicLit1YearsAr,
+        },
+        {
+          key: "lit1-meanings",
+          label: language === "ar" ? "معاني" : "Meanings",
+          cards: flashcardsArabicLit1MeaningsAr,
+        },
+        {
+          key: "lit1-heritage",
+          label: language === "ar" ? "تراث أدبي" : "Heritage",
+          cards: flashcardsArabicLit1HeritageAr,
+        },
+      ];
+    }
+    if (subject === "arabic" && chapter === "1") {
+      return [
+        {
+          key: "lit1-poems",
+          label: language === "ar" ? "القصائد" : "Poems",
+          cards: flashcardsArabicLit1Ar,
+        },
+        {
+          key: "lit1-years",
+          label: language === "ar" ? "سنوات" : "Years",
+          cards: flashcardsArabicLit1YearsAr,
+        },
+        {
+          key: "lit1-meanings",
+          label: language === "ar" ? "معاني" : "Meanings",
+          cards: flashcardsArabicLit1MeaningsAr,
+        },
+        {
+          key: "lit1-heritage",
+          label: language === "ar" ? "تراث أدبي" : "Heritage",
+          cards: flashcardsArabicLit1HeritageAr,
+        },
+      ];
+    }
+    return null;
+  }, [subject, chapter, language]);
+
   // Topic grouping (per-deck, auto-detected).
   const topicResult = useMemo(
-    () => groupFlashcardsByTopic([...deck.cards, ...extraCards], language),
-    [deck, extraCards, language]
+    () => {
+      if (explicitGroups) {
+        const withExtras: TopicGroup[] =
+          extraCards.length > 0
+            ? [
+                ...explicitGroups,
+                {
+                  key: "user-added",
+                  label: language === "ar" ? "إضافات الطلبة" : "User-added",
+                  cards: extraCards,
+                },
+              ]
+            : explicitGroups;
+        const preset = explicitTopics(withExtras, language);
+        if (preset) return preset;
+      }
+      return groupFlashcardsByTopic([...deck.cards, ...extraCards], language);
+    },
+    [deck, extraCards, language, explicitGroups]
   );
   const hasTopics = topicResult.topics.length > 1;
   const [topicKey, setTopicKey] = useState<string>(topicResult.allKey);
