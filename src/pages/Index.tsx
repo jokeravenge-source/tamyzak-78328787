@@ -463,7 +463,19 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   });
 
   const card = cards[index];
-  const progress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
+  const cardProgress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
+  // Tie the main progress indicator to the user's To-Do List:
+  // prefer todos matching the active topic, then any todos, then card position.
+  const activeTopicLabel =
+    topicResult.topics.find((g) => g.key === topicKey)?.label ?? "";
+  const topicTodo = topicProgress(activeTopicLabel, todos, `${subject} ${deck.eyebrow}`);
+  const totalTodos = todos.length;
+  const doneTodos = todos.filter((t) => t.done).length;
+  const todoMatched = topicTodo.matched > 0 ? topicTodo.matched : totalTodos;
+  const todoDone = topicTodo.matched > 0 ? topicTodo.done : doneTodos;
+  const todoPct = todoMatched > 0 ? (todoDone / todoMatched) * 100 : 0;
+  const progress = todoMatched > 0 ? todoPct : cardProgress;
+  const usingTodos = todoMatched > 0;
   const isSaved = !!card && saved.some((s) => s.q === card.q && s.a === card.a);
   const toggleSave = () => {
     if (!card) return;
@@ -641,11 +653,35 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
             <ChevronLeft className="w-6 h-6 group-hover:text-primary-foreground" />
           </button>
 
-          <div className="text-center min-w-[80px]">
-            <div className="text-2xl font-mono font-bold gradient-text">
-              {String(index + 1).padStart(2, "0")}
+          <div className="relative w-20 h-20 flex items-center justify-center">
+            <svg className="absolute inset-0 -rotate-90" viewBox="0 0 36 36" aria-hidden>
+              <circle
+                cx="18" cy="18" r="16"
+                fill="none"
+                stroke="hsl(var(--secondary))"
+                strokeWidth="2.5"
+                className="opacity-60"
+              />
+              <circle
+                cx="18" cy="18" r="16"
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeDasharray={`${(progress / 100) * 100.53} 100.53`}
+                style={{ transition: "stroke-dasharray 500ms ease-out" }}
+              />
+            </svg>
+            <div className="text-center leading-tight">
+              <div className="text-lg font-mono font-bold gradient-text">
+                {String(index + 1).padStart(2, "0")}
+              </div>
+              <div className="text-[10px] text-muted-foreground tracking-widest">
+                {usingTodos
+                  ? `${todoDone}/${todoMatched}`
+                  : `${text.of} ${cards.length}`}
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground tracking-widest">{text.of} {cards.length}</div>
           </div>
 
           <button
@@ -657,12 +693,23 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           </button>
         </div>
 
-        {/* Progress */}
-        <div className="w-full max-w-2xl h-1 bg-secondary/60 rounded-full overflow-hidden">
-          <div
-            className="h-full transition-all duration-500 ease-out rounded-full"
-            style={{ width: `${progress}%`, background: "var(--gradient-primary)" }}
-          />
+        {/* Linear progress mirrors the circle (todo-driven when available) */}
+        <div className="w-full max-w-2xl flex flex-col items-center gap-1">
+          <div className="w-full h-1 bg-secondary/60 rounded-full overflow-hidden">
+            <div
+              className="h-full transition-all duration-500 ease-out rounded-full"
+              style={{ width: `${progress}%`, background: "var(--gradient-primary)" }}
+            />
+          </div>
+          <div className="text-[10px] text-muted-foreground tracking-wider">
+            {usingTodos
+              ? (language === "ar"
+                  ? `تقدم المهام: ${todoDone}/${todoMatched}`
+                  : `Todos: ${todoDone}/${todoMatched}`)
+              : (language === "ar"
+                  ? `بطاقة ${index + 1} من ${cards.length}`
+                  : `Card ${index + 1} of ${cards.length}`)}
+          </div>
         </div>
       </section>
 
