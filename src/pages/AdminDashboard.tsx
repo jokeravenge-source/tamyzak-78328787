@@ -671,11 +671,25 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           <div className="space-y-6">
             <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur space-y-3">
               <h3 className="font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /> Subject reference files (for AI tutor)</h3>
-              <p className="text-xs text-muted-foreground">Upload PDFs / text files per subject, then click "Index" to extract their text so the AI tutor can answer exactly from them.</p>
+              <p className="text-xs text-muted-foreground">Pick a subject and a chapter, upload PDFs / text files, then click "Index" so the AI tutor uses exactly that chapter's content.</p>
               <div className="flex flex-wrap items-center gap-3">
                 <select value={aiSubject} onChange={(e) => setAiSubject(e.target.value)} className="h-10 px-3 rounded-lg bg-background border border-white/10 text-sm">
                   {SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
+                <select value={aiChapter} onChange={(e) => setAiChapter(e.target.value)} className="h-10 px-3 rounded-lg bg-background border border-white/10 text-sm">
+                  {Array.from(new Set([aiChapter, ...aiAllChapters, "ch1","ch2","ch3","ch4","ch5","ch6","ch7","ch8","general"])).map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <div className="flex items-center gap-1">
+                  <input
+                    value={aiChapterInput}
+                    onChange={(e) => setAiChapterInput(e.target.value)}
+                    placeholder="new chapter id (e.g. ch9)"
+                    className="h-10 px-3 rounded-lg bg-background border border-white/10 text-sm w-44"
+                  />
+                  <button onClick={addChapter} className="h-10 px-3 rounded-lg border border-white/10 hover:border-primary/40 text-sm">Use</button>
+                </div>
                 <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 hover:border-primary/40 text-sm cursor-pointer">
                   <Upload className="w-4 h-4" /> {aiUploading ? "Uploading…" : "Upload file"}
                   <input type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAi(f); e.target.value = ""; }} />
@@ -684,11 +698,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                   {aiBusy === "__all__" ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />} Index all
                 </button>
               </div>
+              <p className="text-[11px] text-muted-foreground">Currently editing <span className="text-primary">{aiSubject} / {aiChapter}</span></p>
             </div>
             {aiLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : aiFiles.length === 0 ? (
-              <p className="text-center text-muted-foreground py-10">No files for {aiSubject}.</p>
+              <p className="text-center text-muted-foreground py-10">No files for {aiSubject} / {aiChapter}.</p>
             ) : (
               <div className="grid gap-3">
                 {aiFiles.map((f) => {
