@@ -463,7 +463,19 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   });
 
   const card = cards[index];
-  const progress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
+  const cardProgress = cards.length ? ((index + 1) / cards.length) * 100 : 0;
+  // Tie the main progress indicator to the user's To-Do List:
+  // prefer todos matching the active topic, then any todos, then card position.
+  const activeTopicLabel =
+    topicResult.topics.find((g) => g.key === topicKey)?.label ?? "";
+  const topicTodo = topicProgress(activeTopicLabel, todos, `${subject} ${deck.eyebrow}`);
+  const totalTodos = todos.length;
+  const doneTodos = todos.filter((t) => t.done).length;
+  const todoMatched = topicTodo.matched > 0 ? topicTodo.matched : totalTodos;
+  const todoDone = topicTodo.matched > 0 ? topicTodo.done : doneTodos;
+  const todoPct = todoMatched > 0 ? (todoDone / todoMatched) * 100 : 0;
+  const progress = todoMatched > 0 ? todoPct : cardProgress;
+  const usingTodos = todoMatched > 0;
   const isSaved = !!card && saved.some((s) => s.q === card.q && s.a === card.a);
   const toggleSave = () => {
     if (!card) return;
