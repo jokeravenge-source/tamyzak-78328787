@@ -97,9 +97,6 @@ Deno.serve(async (req) => {
     const refusal = language === "ar"
       ? "هذا السؤال غير مذكور في الملفات المرفوعة، لذلك لا أستطيع الإجابة عنه."
       : "This question is not covered in the uploaded files, so I can't answer it.";
-    const noFiles = language === "ar"
-      ? "لا توجد ملفات مرفوعة لهذه المادة بعد، لذلك لا يمكنني الإجابة."
-      : "No reference files have been uploaded for this subject yet, so I can't answer.";
     const rateLimited = language === "ar"
       ? "الطلبات كثيرة الآن. حاول مرة أخرى بعد ثوانٍ قليلة."
       : "Too many requests right now. Please try again in a few seconds.";
