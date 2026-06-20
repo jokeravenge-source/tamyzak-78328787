@@ -121,18 +121,41 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
   }, [open, subject]);
 
   const extractPdfText = async (blob: Blob) => {
-    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+    const objectUrl = URL.createObjectURL(blob);
+    const loadingTask = pdfjsLib.getDocument({
+      url: objectUrl,
+      cMapUrl: `${PDF_ASSET_BASE}/cmaps/`,
+      cMapPacked: true,
+      standardFontDataUrl: `${PDF_ASSET_BASE}/standard_fonts/`,
+      wasmUrl: `${PDF_ASSET_BASE}/wasm/`,
+      useSystemFonts: true,
+      useWorkerFetch: false,
+      disableFontFace: true,
+    });
     const chunks: string[] = [];
     let chars = 0;
-    for (let pageNo = 1; pageNo <= pdf.numPages && chars < MAX_CLIENT_CONTEXT_CHARS; pageNo++) {
-      const page = await pdf.getPage(pageNo);
-      const content = await page.getTextContent();
-      const text = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
-      chunks.push(text);
-      chars += text.length;
-      page.cleanup();
+    try {
+      const pdf = await loadingTask.promise;
+      const pagePlan = buildPagePlan(pdf.numPages, Math.min(pdf.numPages, MAX_CLIENT_PDF_PAGES));
+      for (let i = 0; i < pagePlan.length && chars < MAX_CLIENT_CONTEXT_CHARS; i++) {
+        const page = await pdf.getPage(pagePlan[i]);
+        try {
+          const content = await page.getTextContent({ includeMarkedContent: false });
+          const text = normalizePageText(content.items.map((item) => ("str" in item ? item.str : "")).join(" "));
+          if (text) chunks.push(`[Page ${pagePlan[i]}]\n${text}`);
+          chars += text.length;
+        } finally {
+          page.cleanup();
+        }
+        if (i % 5 === 4) {
+          pdf.cleanup();
+          await waitForBrowser();
+        }
+      }
+    } finally {
+      await loadingTask.destroy();
+      URL.revokeObjectURL(objectUrl);
     }
-    await pdf.destroy();
     return chunks.join("\n");
   };
 
@@ -154,7 +177,6 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
       const size = Number(file.metadata?.size ?? file.metadata?.contentLength ?? 0);
       const mimeType = file.metadata?.mimetype ?? "";
       const isPdf = lowerName.endsWith(".pdf") || mimeType === "application/pdf";
-      if (isPdf && size > MAX_CLIENT_PDF_BYTES) continue;
       const { data: blob } = await supabase.storage.from("files").download(path);
       if (!blob) continue;
       let text = "";
