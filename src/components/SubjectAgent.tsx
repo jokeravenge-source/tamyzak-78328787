@@ -15,32 +15,6 @@ type StorageObj = { name: string; id?: string | null; metadata?: { size?: number
 
 const MAX_CLIENT_CONTEXT_CHARS = 200_000;
 const MAX_CLIENT_FILES = 4;
-const CLIENT_CONTEXT_TIMEOUT_MS = 90_000;
-const PDF_ASSET_BASE = "/pdfjs";
-const MAX_CLIENT_PDF_PAGES = 450;
-const PDF_FRONT_PAGES = 25;
-const PDF_END_PAGES = 10;
-
-const waitForBrowser = () => new Promise<void>((resolve) => window.setTimeout(resolve, 0));
-const normalizePageText = (text: string) => text.replace(/\s+/g, " ").trim();
-
-const buildPagePlan = (totalPages: number, maxPages: number) => {
-  if (totalPages <= maxPages) return Array.from({ length: totalPages }, (_, i) => i + 1);
-  const pages = new Set<number>();
-  const startCount = Math.min(PDF_FRONT_PAGES, totalPages, maxPages);
-  for (let page = 1; page <= startCount; page++) pages.add(page);
-  const endCount = Math.min(PDF_END_PAGES, totalPages - pages.size, maxPages - pages.size);
-  for (let page = totalPages - endCount + 1; page <= totalPages; page++) pages.add(page);
-  const remainingSlots = maxPages - pages.size;
-  const middleStart = startCount + 1;
-  const middleEnd = totalPages - endCount;
-  const middlePages = Math.max(0, middleEnd - middleStart + 1);
-  for (let i = 0; i < remainingSlots && middlePages > 0; i++) {
-    const offset = Math.floor((i * (middlePages - 1)) / Math.max(1, remainingSlots - 1));
-    pages.add(middleStart + offset);
-  }
-  return Array.from(pages).sort((a, b) => a - b).slice(0, maxPages);
-};
 
 const labels = {
   en: {
@@ -52,6 +26,8 @@ const labels = {
     pickChapter: "Which chapter would you like to study? Pick one to get started:",
     noChapters: "No chapters have been uploaded for this subject yet. Please ask an admin to add files.",
     changeChapter: "Change chapter",
+    preparing: "Reading the chapter files... this may take a moment for large PDFs.",
+    extractFailed: "I couldn't read the chapter files (they may be scanned images). Try a smaller PDF or ask an admin.",
   },
   ar: {
     title: "المعلم الذكي",
@@ -62,6 +38,8 @@ const labels = {
     pickChapter: "أي فصل تريد أن تدرس؟ اختر فصلاً للبدء:",
     noChapters: "لا توجد فصول مرفوعة لهذه المادة بعد. يرجى الطلب من المسؤول إضافة ملفات.",
     changeChapter: "تغيير الفصل",
+    preparing: "جاري قراءة ملفات الفصل... قد يستغرق ذلك بعض الوقت للملفات الكبيرة.",
+    extractFailed: "تعذر قراءة ملفات الفصل (قد تكون صوراً ممسوحة). جرب ملف PDF أصغر أو اطلب من المسؤول.",
   },
 };
 
@@ -121,40 +99,23 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
   }, [open, subject]);
 
   const extractPdfText = async (blob: Blob) => {
-    const objectUrl = URL.createObjectURL(blob);
-    const loadingTask = pdfjsLib.getDocument({
-      url: objectUrl,
-      cMapUrl: `${PDF_ASSET_BASE}/cmaps/`,
-      cMapPacked: true,
-      standardFontDataUrl: `${PDF_ASSET_BASE}/standard_fonts/`,
-      wasmUrl: `${PDF_ASSET_BASE}/wasm/`,
-      useSystemFonts: true,
-      useWorkerFetch: false,
-      disableFontFace: true,
-    });
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
     const chunks: string[] = [];
     let chars = 0;
     try {
-      const pdf = await loadingTask.promise;
-      const pagePlan = buildPagePlan(pdf.numPages, Math.min(pdf.numPages, MAX_CLIENT_PDF_PAGES));
-      for (let i = 0; i < pagePlan.length && chars < MAX_CLIENT_CONTEXT_CHARS; i++) {
-        const page = await pdf.getPage(pagePlan[i]);
+      for (let pageNo = 1; pageNo <= pdf.numPages && chars < MAX_CLIENT_CONTEXT_CHARS; pageNo++) {
+        const page = await pdf.getPage(pageNo);
         try {
-          const content = await page.getTextContent({ includeMarkedContent: false });
-          const text = normalizePageText(content.items.map((item) => ("str" in item ? item.str : "")).join(" "));
-          if (text) chunks.push(`[Page ${pagePlan[i]}]\n${text}`);
+          const content = await page.getTextContent();
+          const text = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
+          if (text.trim()) chunks.push(text);
           chars += text.length;
         } finally {
           page.cleanup();
         }
-        if (i % 5 === 4) {
-          pdf.cleanup();
-          await waitForBrowser();
-        }
       }
     } finally {
-      await loadingTask.destroy();
-      URL.revokeObjectURL(objectUrl);
+      await pdf.destroy();
     }
     return chunks.join("\n");
   };
@@ -205,10 +166,11 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
     setInput("");
     setLoading(true);
     try {
-      const clientContext = await Promise.race([
-        buildChapterContext(chapter),
-        new Promise<string>((resolve) => window.setTimeout(() => resolve(""), CLIENT_CONTEXT_TIMEOUT_MS)),
-      ]);
+      const clientContext = await buildChapterContext(chapter);
+      if (!clientContext) {
+        setMessages([...next, { role: "assistant", content: t.extractFailed }]);
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("subject-agent", {
         body: { subject, chapter, language, messages: next, clientContext },
       });

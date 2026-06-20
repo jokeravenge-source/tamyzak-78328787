@@ -260,57 +260,17 @@ Deno.serve(async (req) => {
     const noFiles = language === "ar"
       ? "لا توجد ملفات مرفوعة أو قابلة للقراءة لهذا الفصل بعد. اطلب من المسؤول رفع ملفات في هذا الفصل."
       : "No uploaded readable files for this chapter yet. Ask an admin to upload files for this chapter.";
-    if (!context.text && context.fileRefs.length === 0) {
+    if (!context.text) {
       return new Response(JSON.stringify({ reply: noFiles }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const fileNames = context.fileRefs.map((f) => f.name).join(", ");
-    const system = `You are a strict ${label} tutor for high-school students. Your ONLY source of truth is the REFERENCE MATERIAL below and any attached uploaded Cloud storage files for the selected chapter.\n\nHow to answer:\n- Answer EXACTLY as the reference material says. Quote or closely paraphrase it. Cite the file name in parentheses, e.g. (source: filename.pdf).\n- If the answer is not in the reference material or attached files, reply with exactly: "${refusal}". Do NOT use outside knowledge.\n- Keep the wording faithful to the PDF; do not invent facts, numbers, names, or definitions.\n\nSTYLE:\n- Always respond in ${lang}.\n- Short paragraphs or bullet points. Define technical terms only when the reference defines them.\n\nAttached chapter files: ${fileNames || "none"}\n\n---REFERENCE MATERIAL (from uploaded chapter files)---\n${context.text || "See attached uploaded chapter files."}\n---END REFERENCE---`;
+    const system = `You are a strict ${label} tutor for high-school students. Your ONLY source of truth is the REFERENCE MATERIAL below (extracted from the uploaded Cloud storage chapter files).\n\nHow to answer:\n- Answer EXACTLY as the reference material says. Quote or closely paraphrase it. Cite the file name in parentheses, e.g. (source: filename.pdf).\n- If the answer is not in the reference material, reply with exactly: "${refusal}". Do NOT use outside knowledge.\n- Keep the wording faithful to the PDF; do not invent facts, numbers, names, or definitions.\n\nSTYLE:\n- Always respond in ${lang}.\n- Short paragraphs or bullet points. Define technical terms only when the reference defines them.\n\n---REFERENCE MATERIAL (from uploaded chapter files)---\n${context.text}\n---END REFERENCE---`;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
     const safeMessages = messages
       .filter((msg) => msg && (msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string")
       .slice(-MAX_CHAT_MESSAGES);
-
-    const geminiDirect = async () => {
-      if (context.fileRefs.length === 0) return null;
-      const apiKey = Deno.env.get("GEMINI_API_KEY");
-      if (!apiKey) return null;
-      const conversation = safeMessages.map((msg) => `${msg.role === "assistant" ? "Tutor" : "Student"}: ${msg.content}`).join("\n\n");
-      const contents = [{
-        role: "user",
-        parts: [
-          ...context.fileRefs.map((f) => ({ fileData: { mimeType: f.mimeType, fileUri: f.uri } })),
-          { text: `${system}\n\nConversation:\n${conversation}` },
-        ],
-      }];
-      const r = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_GENERATE_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents }),
-      }, GEMINI_DIRECT_TIMEOUT_MS);
-      if (!r.ok) {
-        console.warn("gemini_direct_generate_failed", { status: r.status, body: (await r.text()).slice(0, 500) });
-        return null;
-      }
-      const data = await r.json();
-      const text = data.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("").trim();
-      return text || null;
-    };
-
-    if (context.fileRefs.length > 0) {
-      const directReply = await geminiDirect();
-      if (directReply) {
-        return new Response(JSON.stringify({ reply: directReply, sources: context.fileRefs.map((f) => f.name) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (!context.text) {
-        const uploadedButUnreadable = language === "ar"
-          ? "وجدت ملفات مرفوعة لهذا الفصل، لكن لا أستطيع قراءتها الآن. اطلب من المسؤول الضغط على Index للملفات مرة واحدة."
-          : "I found uploaded files for this chapter, but I can't read them right now. Ask an admin to click Index for the files once.";
-        return new Response(JSON.stringify({ reply: uploadedButUnreadable, temporary: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
 
     const callModel = async () => {
       const r = await fetchWithTimeout(AI_URL, {
