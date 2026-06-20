@@ -231,15 +231,24 @@ const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
       toast.error(language === "ar" ? "اكتب موضوعاً" : "Enter a topic");
       return;
     }
+    if (!file) {
+      toast.error(language === "ar" ? "ارفع ملف PDF لاستخراج الخريطة منه" : "Upload a PDF — mind maps are built only from the file");
+      return;
+    }
     setLoading(true);
     try {
       let context = "";
-      if (file) {
-        try {
-          context = await extractTextFromFile(file);
-        } catch {
-          toast.error(language === "ar" ? "تعذّر قراءة الملف" : "Could not read file");
-        }
+      try {
+        context = await extractTextFromFile(file);
+      } catch {
+        toast.error(language === "ar" ? "تعذّر قراءة الملف" : "Could not read file");
+        setLoading(false);
+        return;
+      }
+      if (!context.trim()) {
+        toast.error(language === "ar" ? "لم يتم استخراج نص من الملف" : "No text extracted from the file");
+        setLoading(false);
+        return;
       }
       const { data, error } = await supabase.functions.invoke("generate-mindmap", {
         body: { topic: topic.trim(), context },
