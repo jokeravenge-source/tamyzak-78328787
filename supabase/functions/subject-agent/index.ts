@@ -141,7 +141,7 @@ async function extractFromBlob(name: string, blob: Blob): Promise<string> {
   }
 }
 
-async function fetchSubjectContext(subject: string, chapter?: string): Promise<string> {
+async function fetchSubjectContext(subject: string, chapter?: string): Promise<SubjectContext> {
   const url = Deno.env.get("SUPABASE_URL")!;
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, key);
@@ -151,18 +151,25 @@ async function fetchSubjectContext(subject: string, chapter?: string): Promise<s
   const folder = ch === "general" ? subject : `${subject}/${ch}`;
 
   const { data: objects, error: listErr } = await admin.storage.from("files").list(folder, { limit: 100 });
-  if (listErr || !objects?.length) return "";
+  if (listErr || !objects?.length) return { text: "", fileRefs: [] };
 
   const files = objects
     .filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep")
     .slice(0, MAX_FILES);
 
   const parts: string[] = [];
+  const fileRefs: GeminiFileRef[] = [];
   let total = 0;
   for (const obj of files) {
     if (total >= MAX_CONTEXT_CHARS) break;
     const path = `${folder}/${obj.name}`;
-    const cacheKey = `${path}:${(obj as { updated_at?: string }).updated_at ?? ""}`;
+    const { size, mimeType, updatedAt } = getObjectMeta(obj);
+    const cacheKey = `${path}:${updatedAt}`;
+    if ((obj.name.toLowerCase().endsWith(".pdf") || mimeType === "application/pdf") && size > MAX_PDF_BYTES) {
+      const ref = await uploadStoragePdfToGemini(admin, path, obj.name, mimeType, size, cacheKey);
+      if (ref) fileRefs.push(ref);
+      continue;
+    }
     let text = "";
     const cached = fileCache.get(cacheKey);
     if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
@@ -180,7 +187,7 @@ async function fetchSubjectContext(subject: string, chapter?: string): Promise<s
     parts.push(`### File: ${obj.name} (chapter: ${ch})\n${slice}`);
     total += slice.length;
   }
-  return parts.join("\n\n");
+  return { text: parts.join("\n\n"), fileRefs };
 }
 
 Deno.serve(async (req) => {
