@@ -217,13 +217,14 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
                     send();
                   }
                 }}
-                placeholder={t.placeholder}
+                placeholder={chapter ? t.placeholder : t.pickChapter}
+                disabled={!chapter}
                 rows={1}
-                className="flex-1 resize-none rounded-xl bg-background border border-border px-3 py-2 text-sm focus:outline-none focus:border-primary max-h-32"
+                className="flex-1 resize-none rounded-xl bg-background border border-border px-3 py-2 text-sm focus:outline-none focus:border-primary max-h-32 disabled:opacity-60"
               />
               <button
                 onClick={send}
-                disabled={!input.trim() || loading}
+                disabled={!input.trim() || loading || !chapter}
                 className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition"
                 aria-label={t.send}
               >
