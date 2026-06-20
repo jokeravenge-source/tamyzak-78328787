@@ -30,7 +30,7 @@ const MAX_CHAT_MESSAGES = 8;
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const GEMINI_FILE_CACHE_TTL_MS = 45 * 60 * 1000;
-const GEMINI_GENERATE_MODEL = "gemini-2.5-flash";
+const GEMINI_GENERATE_MODEL = "gemini-2.0-flash";
 
 type CacheEntry = { at: number; text: string };
 type GeminiFileRef = { uri: string; mimeType: string; name: string; resourceName?: string };
@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
         role: "user",
         parts: [
           { text: `${system}\n\nConversation:\n${conversation}` },
-          ...context.fileRefs.map((f) => ({ fileData: { mimeType: f.mimeType, fileUri: f.uri } })),
+          ...context.fileRefs.map((f) => ({ file_data: { mime_type: f.mimeType, file_uri: f.uri } })),
         ],
       }];
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_GENERATE_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
