@@ -15,8 +15,32 @@ type StorageObj = { name: string; id?: string | null; metadata?: { size?: number
 
 const MAX_CLIENT_CONTEXT_CHARS = 200_000;
 const MAX_CLIENT_FILES = 4;
-const MAX_CLIENT_PDF_BYTES = 8 * 1024 * 1024;
-const CLIENT_CONTEXT_TIMEOUT_MS = 12_000;
+const CLIENT_CONTEXT_TIMEOUT_MS = 90_000;
+const PDF_ASSET_BASE = "/pdfjs";
+const MAX_CLIENT_PDF_PAGES = 450;
+const PDF_FRONT_PAGES = 25;
+const PDF_END_PAGES = 10;
+
+const waitForBrowser = () => new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+const normalizePageText = (text: string) => text.replace(/\s+/g, " ").trim();
+
+const buildPagePlan = (totalPages: number, maxPages: number) => {
+  if (totalPages <= maxPages) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages = new Set<number>();
+  const startCount = Math.min(PDF_FRONT_PAGES, totalPages, maxPages);
+  for (let page = 1; page <= startCount; page++) pages.add(page);
+  const endCount = Math.min(PDF_END_PAGES, totalPages - pages.size, maxPages - pages.size);
+  for (let page = totalPages - endCount + 1; page <= totalPages; page++) pages.add(page);
+  const remainingSlots = maxPages - pages.size;
+  const middleStart = startCount + 1;
+  const middleEnd = totalPages - endCount;
+  const middlePages = Math.max(0, middleEnd - middleStart + 1);
+  for (let i = 0; i < remainingSlots && middlePages > 0; i++) {
+    const offset = Math.floor((i * (middlePages - 1)) / Math.max(1, remainingSlots - 1));
+    pages.add(middleStart + offset);
+  }
+  return Array.from(pages).sort((a, b) => a - b).slice(0, maxPages);
+};
 
 const labels = {
   en: {
@@ -97,18 +121,41 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
   }, [open, subject]);
 
   const extractPdfText = async (blob: Blob) => {
-    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+    const objectUrl = URL.createObjectURL(blob);
+    const loadingTask = pdfjsLib.getDocument({
+      url: objectUrl,
+      cMapUrl: `${PDF_ASSET_BASE}/cmaps/`,
+      cMapPacked: true,
+      standardFontDataUrl: `${PDF_ASSET_BASE}/standard_fonts/`,
+      wasmUrl: `${PDF_ASSET_BASE}/wasm/`,
+      useSystemFonts: true,
+      useWorkerFetch: false,
+      disableFontFace: true,
+    });
     const chunks: string[] = [];
     let chars = 0;
-    for (let pageNo = 1; pageNo <= pdf.numPages && chars < MAX_CLIENT_CONTEXT_CHARS; pageNo++) {
-      const page = await pdf.getPage(pageNo);
-      const content = await page.getTextContent();
-      const text = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
-      chunks.push(text);
-      chars += text.length;
-      page.cleanup();
+    try {
+      const pdf = await loadingTask.promise;
+      const pagePlan = buildPagePlan(pdf.numPages, Math.min(pdf.numPages, MAX_CLIENT_PDF_PAGES));
+      for (let i = 0; i < pagePlan.length && chars < MAX_CLIENT_CONTEXT_CHARS; i++) {
+        const page = await pdf.getPage(pagePlan[i]);
+        try {
+          const content = await page.getTextContent({ includeMarkedContent: false });
+          const text = normalizePageText(content.items.map((item) => ("str" in item ? item.str : "")).join(" "));
+          if (text) chunks.push(`[Page ${pagePlan[i]}]\n${text}`);
+          chars += text.length;
+        } finally {
+          page.cleanup();
+        }
+        if (i % 5 === 4) {
+          pdf.cleanup();
+          await waitForBrowser();
+        }
+      }
+    } finally {
+      await loadingTask.destroy();
+      URL.revokeObjectURL(objectUrl);
     }
-    await pdf.destroy();
     return chunks.join("\n");
   };
 
@@ -130,7 +177,6 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
       const size = Number(file.metadata?.size ?? file.metadata?.contentLength ?? 0);
       const mimeType = file.metadata?.mimetype ?? "";
       const isPdf = lowerName.endsWith(".pdf") || mimeType === "application/pdf";
-      if (isPdf && size > MAX_CLIENT_PDF_BYTES) continue;
       const { data: blob } = await supabase.storage.from("files").download(path);
       if (!blob) continue;
       let text = "";
