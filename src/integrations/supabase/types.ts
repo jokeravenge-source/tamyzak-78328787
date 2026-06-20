@@ -283,12 +283,43 @@ export type Database = {
         }
         Relationships: []
       }
+      notebooks: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           content: Json
           created_at: string
           icon: string | null
           id: string
+          notebook_id: string | null
           parent_id: string | null
           position: number
           title: string
@@ -300,6 +331,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          notebook_id?: string | null
           parent_id?: string | null
           position?: number
           title?: string
@@ -311,6 +343,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          notebook_id?: string | null
           parent_id?: string | null
           position?: number
           title?: string
@@ -318,6 +351,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notes_notebook_id_fkey"
+            columns: ["notebook_id"]
+            isOneToOne: false
+            referencedRelation: "notebooks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notes_parent_id_fkey"
             columns: ["parent_id"]
