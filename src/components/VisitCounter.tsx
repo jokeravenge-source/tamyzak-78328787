@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, Pencil, Check, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const COUNT_KEY = "site_visit_count_v1";
 const SESSION_KEY = "site_visit_session_v1";
-const BASE_KEY = "site_visit_base_v1";
-
-function readCount(): number {
-  const n = Number(localStorage.getItem(COUNT_KEY) || "0");
-  return Number.isFinite(n) ? n : 0;
-}
 
 function AnimatedDigit({ digit }: { digit: string }) {
   return (
@@ -31,50 +25,69 @@ function AnimatedDigit({ digit }: { digit: string }) {
 }
 
 export default function VisitCounter({ isAdmin = false }: { isAdmin?: boolean }) {
-  const [count, setCount] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    return readCount();
-  });
+  const [count, setCount] = useState<number>(0);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [pulse, setPulse] = useState(false);
   const incremented = useRef(false);
 
-  // Increment once per browser session
+  // Load + increment once per browser session (shared across all users via backend)
   useEffect(() => {
     if (incremented.current) return;
     incremented.current = true;
-    try {
-      if (!sessionStorage.getItem(SESSION_KEY)) {
-        sessionStorage.setItem(SESSION_KEY, "1");
-        const base = Number(localStorage.getItem(BASE_KEY) || "0");
-        const current = readCount();
-        const next = Math.max(current + 1, base);
-        localStorage.setItem(COUNT_KEY, String(next));
-        setCount(next);
+    (async () => {
+      const alreadyCounted =
+        typeof window !== "undefined" && !!sessionStorage.getItem(SESSION_KEY);
+      if (!alreadyCounted) {
+        try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
+        const { data, error } = await supabase.rpc("increment_site_visits");
+        if (!error && data != null) {
+          setCount(Number(data));
+          setPulse(true);
+          setTimeout(() => setPulse(false), 900);
+          return;
+        }
+      }
+      const { data } = await supabase
+        .from("site_stats")
+        .select("count")
+        .eq("id", "global")
+        .maybeSingle();
+      if (data?.count != null) setCount(Number(data.count));
+    })();
+  }, []);
+
+  // Poll every 20s so the number stays roughly live for everyone
+  useEffect(() => {
+    const t = setInterval(async () => {
+      const { data } = await supabase
+        .from("site_stats")
+        .select("count")
+        .eq("id", "global")
+        .maybeSingle();
+      if (data?.count != null) {
+        setCount((prev) => {
+          const next = Number(data.count);
+          if (next !== prev) {
+            setPulse(true);
+            setTimeout(() => setPulse(false), 700);
+          }
+          return next;
+        });
+      }
+    }, 20000);
+    return () => clearInterval(t);
+  }, []);
+
+  const saveEdit = async () => {
+    const n = Math.max(0, Math.floor(Number(draft)));
+    if (Number.isFinite(n)) {
+      const { data, error } = await supabase.rpc("set_site_visits", { _count: n });
+      if (!error && data != null) {
+        setCount(Number(data));
         setPulse(true);
         setTimeout(() => setPulse(false), 900);
       }
-    } catch {}
-  }, []);
-
-  // Sync across tabs
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === COUNT_KEY) setCount(readCount());
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
-  const saveEdit = () => {
-    const n = Math.max(0, Math.floor(Number(draft)));
-    if (Number.isFinite(n)) {
-      localStorage.setItem(COUNT_KEY, String(n));
-      localStorage.setItem(BASE_KEY, String(n));
-      setCount(n);
-      setPulse(true);
-      setTimeout(() => setPulse(false), 900);
     }
     setEditing(false);
   };
