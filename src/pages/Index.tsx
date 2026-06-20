@@ -67,6 +67,7 @@ import type { AppSubject } from "@/pages/Subjects";
 import { groupFlashcardsByTopic } from "@/lib/flashcardTopics";
 import { explicitTopics, type TopicGroup } from "@/lib/flashcardTopics";
 import { buildPresetGroups } from "@/lib/flashcardTopicPresets";
+import { useTodos, topicProgress } from "@/lib/todoTopicProgress";
 
 const decks: Record<string, { title: string; eyebrow: string; cards: typeof flashcards }> = {
   "1": { title: "Flashcards", eyebrow: "Ch 01 · Capacitors", cards: flashcardsCh1 },
@@ -392,6 +393,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   );
   const hasTopics = topicResult.topics.length > 1;
   const [topicKey, setTopicKey] = useState<string>(topicResult.allKey);
+  const todos = useTodos();
   useEffect(() => {
     setTopicKey(topicResult.allKey);
   }, [topicResult]);
@@ -568,19 +570,50 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           <div className="inline-flex gap-2">
             {topicResult.topics.map((t) => {
               const active = t.key === topicKey;
+              const ctx = `${subject} ${deck.eyebrow}`;
+              const { matched, done } = topicProgress(t.label, todos, ctx);
+              const pct = matched > 0 ? Math.round((done / matched) * 100) : 0;
               return (
                 <button
                   key={t.key}
                   onClick={() => setTopicKey(t.key)}
                   className={
-                    "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 " +
+                    "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 flex flex-col items-stretch gap-1 min-w-[88px] " +
                     (active
                       ? "bg-primary text-primary-foreground border-primary shadow-sm"
                       : "bg-secondary/60 border-white/10 text-muted-foreground hover:text-foreground hover:border-primary/40")
                   }
+                  title={
+                    matched > 0
+                      ? (language === "ar"
+                          ? `${done}/${matched} مهمة منجزة`
+                          : `${done}/${matched} todos done`)
+                      : (language === "ar" ? "لا توجد مهام مرتبطة" : "No related todos")
+                  }
                 >
-                  {t.label}
-                  <span className={"ms-1 opacity-70"}>· {t.cards.length}</span>
+                  <span className="leading-tight">
+                    {t.label}
+                    <span className="ms-1 opacity-70">· {t.cards.length}</span>
+                  </span>
+                  <span
+                    className={
+                      "h-1 rounded-full overflow-hidden " +
+                      (active ? "bg-primary-foreground/25" : "bg-white/10")
+                    }
+                    aria-label={
+                      matched > 0
+                        ? `${done} of ${matched} related todos done`
+                        : "no related todos"
+                    }
+                  >
+                    <span
+                      className={
+                        "block h-full transition-all duration-500 " +
+                        (active ? "bg-primary-foreground" : "bg-primary")
+                      }
+                      style={{ width: `${pct}%` }}
+                    />
+                  </span>
                 </button>
               );
             })}
