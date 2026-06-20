@@ -309,7 +309,22 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     [baseDeck, chapter, language, subject]
   );
   const text = copy[language];
-  const [cards, setCards] = useState([...deck.cards, ...extraCards]);
+  // Topic grouping (per-deck, auto-detected).
+  const topicResult = useMemo(
+    () => groupFlashcardsByTopic([...deck.cards, ...extraCards], language),
+    [deck, extraCards, language]
+  );
+  const hasTopics = topicResult.topics.length > 1;
+  const [topicKey, setTopicKey] = useState<string>(topicResult.allKey);
+  useEffect(() => {
+    setTopicKey(topicResult.allKey);
+  }, [topicResult]);
+  const activeTopicCards = useMemo(() => {
+    const t = topicResult.topics.find((g) => g.key === topicKey) ?? topicResult.topics[0];
+    return t?.cards ?? [];
+  }, [topicResult, topicKey]);
+
+  const [cards, setCards] = useState(activeTopicCards);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right">("right");
 
@@ -341,12 +356,12 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     if (savedView) {
       setCards(saved.map((s) => ({ q: s.q, a: s.a })));
     } else {
-      setCards([...deck.cards, ...extraCards]);
+      setCards(activeTopicCards);
     }
     setIndex(0);
     // intentionally exclude `saved` so bookmarking a card doesn't reset position
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deck, extraCards, savedView]);
+  }, [activeTopicCards, savedView]);
 
   // When in saved view and the saved list changes (e.g. unbookmark),
   // update cards in place without snapping back to the first card.
