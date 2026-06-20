@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -16,7 +16,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles";
   const [tab, setTab] = useState<Tab>("pending");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -329,6 +329,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           </button>
           <button onClick={() => setTab("usernames")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "usernames" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <UserCog className="w-4 h-4 inline mr-1.5" />Username Requests
+          </button>
+          <button onClick={() => setTab("aifiles")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "aifiles" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            <BookOpen className="w-4 h-4 inline mr-1.5" />AI Files
           </button>
         </div>
 
