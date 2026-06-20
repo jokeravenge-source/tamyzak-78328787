@@ -44,6 +44,8 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [chapters, setChapters] = useState<string[]>([]);
+  const [chapter, setChapter] = useState<string>("general");
   const endRef = useRef<HTMLDivElement>(null);
   const t = labels[language];
   const sName = subjectName(subject, language);
@@ -51,6 +53,21 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data } = await supabase
+        .from("subject_file_text")
+        .select("chapter")
+        .eq("subject", subject);
+      const uniq = Array.from(new Set((data ?? []).map((r) => r.chapter).filter(Boolean))) as string[];
+      const list = uniq.length ? uniq.sort() : ["general"];
+      setChapters(list);
+      if (!list.includes(chapter)) setChapter(list[0]);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, subject]);
 
   const send = async () => {
     const text = input.trim();
@@ -61,7 +78,7 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("subject-agent", {
-        body: { subject, language, messages: next },
+        body: { subject, chapter, language, messages: next },
       });
       if (error) throw error;
       const reply = (data as { reply?: string })?.reply ?? "";
@@ -103,9 +120,19 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
                   <div className="text-xs text-muted-foreground">{sName}</div>
                 </div>
               </div>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1">
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <select
+                  value={chapter}
+                  onChange={(e) => setChapter(e.target.value)}
+                  className="h-8 px-2 rounded-lg bg-background border border-border text-xs"
+                  aria-label="Chapter"
+                >
+                  {chapters.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-3">

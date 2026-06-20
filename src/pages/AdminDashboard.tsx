@@ -248,27 +248,33 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   // AI Files (subject reference indexing)
   const SUBJECTS = ["biology","physics","chemistry","arabic","french","english"];
   type StorageObj = { name: string };
-  type IndexedRow = { file_name: string; char_count: number; updated_at: string };
+  type IndexedRow = { file_name: string; char_count: number; updated_at: string; chapter: string };
   const [aiSubject, setAiSubject] = useState("biology");
+  const [aiChapter, setAiChapter] = useState("ch1");
+  const [aiChapterInput, setAiChapterInput] = useState("");
   const [aiFiles, setAiFiles] = useState<StorageObj[]>([]);
   const [aiIndexed, setAiIndexed] = useState<IndexedRow[]>([]);
+  const [aiAllChapters, setAiAllChapters] = useState<string[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [aiUploading, setAiUploading] = useState(false);
   const loadAi = async () => {
     setAiLoading(true);
     const [filesRes, idxRes] = await Promise.all([
-      supabase.storage.from("files").list(aiSubject, { limit: 100 }),
-      supabase.from("subject_file_text").select("file_name,char_count,updated_at").eq("subject", aiSubject),
+      supabase.storage.from("files").list(`${aiSubject}/${aiChapter}`, { limit: 100 }),
+      supabase.from("subject_file_text").select("file_name,char_count,updated_at,chapter").eq("subject", aiSubject),
     ]);
     setAiFiles((filesRes.data ?? []).filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep"));
-    setAiIndexed((idxRes.data ?? []) as IndexedRow[]);
+    const all = (idxRes.data ?? []) as IndexedRow[];
+    setAiIndexed(all.filter((r) => r.chapter === aiChapter));
+    const chs = Array.from(new Set(all.map((r) => r.chapter).filter(Boolean))).sort();
+    setAiAllChapters(chs);
     setAiLoading(false);
   };
-  useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject]);
+  useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject, aiChapter]);
   const uploadAi = async (file: File) => {
     setAiUploading(true);
-    const path = `${aiSubject}/${file.name}`;
+    const path = `${aiSubject}/${aiChapter}/${file.name}`;
     const { error } = await supabase.storage.from("files").upload(path, file, { upsert: true });
     setAiUploading(false);
     if (error) return toast.error(error.message);
@@ -277,7 +283,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
   const indexOne = async (name: string) => {
     setAiBusy(name);
-    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, file_name: name } });
+    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, chapter: aiChapter, file_name: name } });
     setAiBusy(null);
     if (error) return toast.error(error.message);
     const r = (data as { results?: Array<{ ok: boolean; chars?: number; error?: string }> })?.results?.[0];
@@ -286,7 +292,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
   const indexAll = async () => {
     setAiBusy("__all__");
-    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, all: true } });
+    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, chapter: aiChapter, all: true } });
     setAiBusy(null);
     if (error) return toast.error(error.message);
     const results = (data as { results?: Array<{ ok: boolean }> })?.results ?? [];
@@ -295,10 +301,16 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
   const deleteAi = async (name: string) => {
     if (!confirm(`Delete ${name} from storage and index?`)) return;
-    await supabase.storage.from("files").remove([`${aiSubject}/${name}`]);
-    await supabase.from("subject_file_text").delete().eq("subject", aiSubject).eq("file_name", name);
+    await supabase.storage.from("files").remove([`${aiSubject}/${aiChapter}/${name}`]);
+    await supabase.from("subject_file_text").delete().eq("subject", aiSubject).eq("chapter", aiChapter).eq("file_name", name);
     toast.success("Deleted");
     loadAi();
+  };
+  const addChapter = () => {
+    const c = aiChapterInput.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-");
+    if (!c) return;
+    setAiChapter(c);
+    setAiChapterInput("");
   };
   const decideUreq = async (r: UReq, decision: "approved" | "rejected") => {
     const { data: u } = await supabase.auth.getUser();
@@ -659,11 +671,25 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           <div className="space-y-6">
             <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur space-y-3">
               <h3 className="font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /> Subject reference files (for AI tutor)</h3>
-              <p className="text-xs text-muted-foreground">Upload PDFs / text files per subject, then click "Index" to extract their text so the AI tutor can answer exactly from them.</p>
+              <p className="text-xs text-muted-foreground">Pick a subject and a chapter, upload PDFs / text files, then click "Index" so the AI tutor uses exactly that chapter's content.</p>
               <div className="flex flex-wrap items-center gap-3">
                 <select value={aiSubject} onChange={(e) => setAiSubject(e.target.value)} className="h-10 px-3 rounded-lg bg-background border border-white/10 text-sm">
                   {SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
+                <select value={aiChapter} onChange={(e) => setAiChapter(e.target.value)} className="h-10 px-3 rounded-lg bg-background border border-white/10 text-sm">
+                  {Array.from(new Set([aiChapter, ...aiAllChapters, "ch1","ch2","ch3","ch4","ch5","ch6","ch7","ch8","general"])).map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <div className="flex items-center gap-1">
+                  <input
+                    value={aiChapterInput}
+                    onChange={(e) => setAiChapterInput(e.target.value)}
+                    placeholder="new chapter id (e.g. ch9)"
+                    className="h-10 px-3 rounded-lg bg-background border border-white/10 text-sm w-44"
+                  />
+                  <button onClick={addChapter} className="h-10 px-3 rounded-lg border border-white/10 hover:border-primary/40 text-sm">Use</button>
+                </div>
                 <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 hover:border-primary/40 text-sm cursor-pointer">
                   <Upload className="w-4 h-4" /> {aiUploading ? "Uploading…" : "Upload file"}
                   <input type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAi(f); e.target.value = ""; }} />
@@ -672,11 +698,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                   {aiBusy === "__all__" ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />} Index all
                 </button>
               </div>
+              <p className="text-[11px] text-muted-foreground">Currently editing <span className="text-primary">{aiSubject} / {aiChapter}</span></p>
             </div>
             {aiLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : aiFiles.length === 0 ? (
-              <p className="text-center text-muted-foreground py-10">No files for {aiSubject}.</p>
+              <p className="text-center text-muted-foreground py-10">No files for {aiSubject} / {aiChapter}.</p>
             ) : (
               <div className="grid gap-3">
                 {aiFiles.map((f) => {

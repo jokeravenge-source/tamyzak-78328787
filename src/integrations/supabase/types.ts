@@ -603,6 +603,7 @@ export type Database = {
       }
       subject_file_text: {
         Row: {
+          chapter: string
           char_count: number
           file_name: string
           id: string
@@ -611,6 +612,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          chapter?: string
           char_count?: number
           file_name: string
           id?: string
@@ -619,6 +621,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          chapter?: string
           char_count?: number
           file_name?: string
           id?: string
