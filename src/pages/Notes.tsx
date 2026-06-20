@@ -331,6 +331,7 @@ const buildTree = (notes: Note[]): TreeNode[] => {
 
 const TreeItem = ({
   node, depth, activeId, expanded, onToggle, onSelect, onAddChild, onDelete, onRename, language,
+  onPageDragStart, onPageDragOver, onPageDrop, onPageDragEnd, dragOverId,
 }: {
   node: TreeNode;
   depth: number;
@@ -342,6 +343,11 @@ const TreeItem = ({
   onDelete: (id: string) => void;
   onRename: (id: string, newTitle: string) => void;
   language: AppLanguage;
+  onPageDragStart: (id: string) => void;
+  onPageDragOver: (e: React.DragEvent, id: string) => void;
+  onPageDrop: (e: React.DragEvent, id: string) => void;
+  onPageDragEnd: () => void;
+  dragOverId: string | null;
 }) => {
   const t = copy[language];
   const isOpen = expanded.has(node.id);
@@ -351,12 +357,19 @@ const TreeItem = ({
   const [draft, setDraft] = useState(node.title);
   useEffect(() => { setDraft(node.title); }, [node.title]);
   const commit = () => { onRename(node.id, draft.trim() || t.untitledPage); setEditing(false); };
+  const isDragTarget = dragOverId === node.id;
   return (
     <div>
       <div
+        draggable={!editing}
+        onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.effectAllowed = "move"; onPageDragStart(node.id); }}
+        onDragOver={(e) => onPageDragOver(e, node.id)}
+        onDragLeave={() => { /* handled at root */ }}
+        onDrop={(e) => { e.stopPropagation(); onPageDrop(e, node.id); }}
+        onDragEnd={onPageDragEnd}
         className={`group flex items-center gap-1 rounded-md px-1 py-1 cursor-pointer transition-colors ${
           active ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-secondary"
-        }`}
+        } ${isDragTarget ? "ring-2 ring-primary/60" : ""}`}
         style={{ paddingInlineStart: `${depth * 0.75 + 0.25}rem` }}
         onClick={() => { if (!editing) onSelect(node.id); }}
         onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
@@ -431,6 +444,11 @@ const TreeItem = ({
                 onDelete={onDelete}
                 onRename={onRename}
                 language={language}
+                onPageDragStart={onPageDragStart}
+                onPageDragOver={onPageDragOver}
+                onPageDrop={onPageDrop}
+                onPageDragEnd={onPageDragEnd}
+                dragOverId={dragOverId}
               />
             ))}
           </motion.div>
