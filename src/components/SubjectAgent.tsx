@@ -15,8 +15,32 @@ type StorageObj = { name: string; id?: string | null; metadata?: { size?: number
 
 const MAX_CLIENT_CONTEXT_CHARS = 200_000;
 const MAX_CLIENT_FILES = 4;
-const MAX_CLIENT_PDF_BYTES = 8 * 1024 * 1024;
-const CLIENT_CONTEXT_TIMEOUT_MS = 12_000;
+const CLIENT_CONTEXT_TIMEOUT_MS = 90_000;
+const PDF_ASSET_BASE = "/pdfjs";
+const MAX_CLIENT_PDF_PAGES = 450;
+const PDF_FRONT_PAGES = 25;
+const PDF_END_PAGES = 10;
+
+const waitForBrowser = () => new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+const normalizePageText = (text: string) => text.replace(/\s+/g, " ").trim();
+
+const buildPagePlan = (totalPages: number, maxPages: number) => {
+  if (totalPages <= maxPages) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages = new Set<number>();
+  const startCount = Math.min(PDF_FRONT_PAGES, totalPages, maxPages);
+  for (let page = 1; page <= startCount; page++) pages.add(page);
+  const endCount = Math.min(PDF_END_PAGES, totalPages - pages.size, maxPages - pages.size);
+  for (let page = totalPages - endCount + 1; page <= totalPages; page++) pages.add(page);
+  const remainingSlots = maxPages - pages.size;
+  const middleStart = startCount + 1;
+  const middleEnd = totalPages - endCount;
+  const middlePages = Math.max(0, middleEnd - middleStart + 1);
+  for (let i = 0; i < remainingSlots && middlePages > 0; i++) {
+    const offset = Math.floor((i * (middlePages - 1)) / Math.max(1, remainingSlots - 1));
+    pages.add(middleStart + offset);
+  }
+  return Array.from(pages).sort((a, b) => a - b).slice(0, maxPages);
+};
 
 const labels = {
   en: {
