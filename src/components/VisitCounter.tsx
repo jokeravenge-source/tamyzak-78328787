@@ -24,7 +24,13 @@ function AnimatedDigit({ digit }: { digit: string }) {
   );
 }
 
-export default function VisitCounter({ isAdmin = false }: { isAdmin?: boolean }) {
+export default function VisitCounter({
+  isAdmin = false,
+  inline = false,
+}: {
+  isAdmin?: boolean;
+  inline?: boolean;
+}) {
   const [count, setCount] = useState<number>(0);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -99,7 +105,7 @@ export default function VisitCounter({ isAdmin = false }: { isAdmin?: boolean })
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, type: "spring", stiffness: 220, damping: 22 }}
-      className="fixed bottom-4 left-4 z-40"
+      className={inline ? "inline-flex" : "fixed bottom-4 left-4 z-40"}
     >
       <motion.div
         animate={pulse ? { scale: [1, 1.08, 1] } : { scale: 1 }}

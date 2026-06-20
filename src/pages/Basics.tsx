@@ -686,6 +686,9 @@ const Basics = ({
                 <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
                   {recCopy.title}
                 </h3>
+                <div className="mb-3">
+                  <VisitCounter isAdmin={isAdmin} inline />
+                </div>
                 <p className="text-muted-foreground max-w-md mb-6 text-sm md:text-base">{recCopy.body}</p>
                 <div className="flex flex-wrap gap-3">
                   <button
