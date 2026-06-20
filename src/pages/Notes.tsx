@@ -804,26 +804,124 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
               <div className="flex-1 overflow-y-auto px-2 pb-2">
                 {loading ? (
                   <div className="p-4 text-xs text-muted-foreground">Loading…</div>
-                ) : tree.length === 0 ? (
+                ) : notebooks.length === 0 && notes.length === 0 ? (
                   <div className="p-4 text-xs text-muted-foreground">{t.emptySidebar}</div>
                 ) : (
-                  tree.map((n) => (
-                    <TreeItem
-                      key={n.id}
-                      node={n}
-                      depth={0}
-                      activeId={activeId}
-                      expanded={expanded}
-                      onToggle={(id) => setExpanded((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; })}
-                      onSelect={setActiveId}
-                      onAddChild={createNote}
-                      onDelete={deleteNote}
-                      language={language}
-                    />
-                  ))
+                  <div className="space-y-3">
+                    {notebookGroups.map((g, gi) => {
+                      const nb = g.notebook;
+                      const nbId = nb?.id ?? "__none";
+                      const open = nb ? expandedNotebooks.has(nb.id) : true;
+                      const isEditingNb = nb && editingNotebookId === nb.id;
+                      return (
+                        <div key={nbId}>
+                          <div className="group flex items-center gap-1 rounded-md px-1 py-1.5 hover:bg-secondary/60 transition-colors">
+                            <button
+                              onClick={() => {
+                                if (!nb) return;
+                                setExpandedNotebooks((s) => { const n = new Set(s); n.has(nb.id) ? n.delete(nb.id) : n.add(nb.id); return n; });
+                              }}
+                              className="w-4 h-4 flex items-center justify-center shrink-0 rounded hover:bg-foreground/10"
+                            >
+                              {open ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                            </button>
+                            <span className="text-base shrink-0">{nb ? nb.icon : "📥"}</span>
+                            {isEditingNb ? (
+                              <input
+                                autoFocus
+                                value={notebookDraft}
+                                onChange={(e) => setNotebookDraft(e.target.value)}
+                                onBlur={() => { renameNotebook(nb!.id, notebookDraft); setEditingNotebookId(null); }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") { e.preventDefault(); renameNotebook(nb!.id, notebookDraft); setEditingNotebookId(null); }
+                                  else if (e.key === "Escape") { setEditingNotebookId(null); }
+                                }}
+                                className="flex-1 min-w-0 text-xs font-bold uppercase tracking-wider bg-card border border-primary/40 rounded px-1 outline-none"
+                              />
+                            ) : (
+                              <button
+                                onDoubleClick={() => { if (nb) { setNotebookDraft(nb.name); setEditingNotebookId(nb.id); } }}
+                                className="flex-1 text-start text-xs font-bold uppercase tracking-wider truncate text-foreground/70"
+                              >
+                                {nb ? nb.name : t.unassigned}
+                              </button>
+                            )}
+                            {nb && (
+                              <>
+                                <button
+                                  onClick={() => { setNotebookDraft(nb.name); setEditingNotebookId(nb.id); }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-foreground/10"
+                                  aria-label={t.rename}
+                                  title={t.rename}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => createNote(null, nb.id)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-foreground/10"
+                                  aria-label={t.addPage}
+                                  title={t.addPage}
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => deleteNotebook(nb.id)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/20 hover:text-destructive"
+                                  aria-label={t.deleteNotebook}
+                                  title={t.deleteNotebook}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                          <AnimatePresence initial={false}>
+                            {open && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                style={{ overflow: "hidden" }}
+                              >
+                                {g.roots.length === 0 ? (
+                                  <p className="text-[11px] text-muted-foreground/70 italic px-3 py-1">
+                                    {language === "ar" ? "لا توجد صفحات" : "No pages"}
+                                  </p>
+                                ) : (
+                                  g.roots.map((n) => (
+                                    <TreeItem
+                                      key={n.id}
+                                      node={n}
+                                      depth={0}
+                                      activeId={activeId}
+                                      expanded={expanded}
+                                      onToggle={(id) => setExpanded((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; })}
+                                      onSelect={setActiveId}
+                                      onAddChild={(pid) => createNote(pid)}
+                                      onDelete={deleteNote}
+                                      onRename={renamePage}
+                                      language={language}
+                                    />
+                                  ))
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-              <div className="p-2 border-t border-border">
+              <div className="p-2 border-t border-border space-y-2">
+                <button
+                  onClick={createNotebook}
+                  className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-sm font-semibold hover:bg-secondary transition-colors"
+                >
+                  <FolderPlus className="w-4 h-4" />
+                  {t.newNotebook}
+                </button>
                 <button
                   onClick={() => createNote(null)}
                   className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-95 transition-opacity"
