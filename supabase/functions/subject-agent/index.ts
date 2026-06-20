@@ -27,7 +27,7 @@ const MAX_CONTEXT_CHARS = 60000;
 const MAX_FILE_CHARS = 30000;
 const MAX_FILES = 6;
 const MAX_CHAT_MESSAGES = 8;
-const MAX_PDF_BYTES = 15 * 1024 * 1024;
+const MAX_PDF_BYTES = 120 * 1024 * 1024;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
 type CacheEntry = { at: number; text: string };
@@ -64,7 +64,7 @@ async function fetchSubjectContext(subject: string, chapter?: string): Promise<s
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, key);
 
-  // Read files directly from the Cloud storage bucket `files/{subject}/{chapter}/`.
+    // Read files directly from the Cloud storage bucket `files/{subject}/{chapter}/`.
   const ch = chapter && chapter.length ? chapter : "general";
   const folder = ch === "general" ? subject : `${subject}/${ch}`;
 
@@ -135,14 +135,14 @@ Deno.serve(async (req) => {
       : "I couldn't complete that right now. Please try again shortly.";
 
     const noFiles = language === "ar"
-      ? "لا توجد ملفات مفهرسة لهذه المادة بعد. اطلب من المسؤول فهرسة الملفات."
-      : "No indexed reference files for this subject yet. Ask an admin to index the files.";
+      ? "لا توجد ملفات مرفوعة أو قابلة للقراءة لهذا الفصل بعد. اطلب من المسؤول رفع ملفات في هذا الفصل."
+      : "No uploaded readable files for this chapter yet. Ask an admin to upload files for this chapter.";
     if (!context) {
       return new Response(JSON.stringify({ reply: noFiles }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const system = `You are a strict ${label} tutor for high-school students. Your ONLY source of truth is the REFERENCE MATERIAL below (extracted from the official PDF files).\n\nHow to answer:\n- Answer EXACTLY as the reference material says. Quote or closely paraphrase it. Cite the file name in parentheses, e.g. (source: filename.pdf).\n- If the answer is not in the reference material, reply with exactly: "${refusal}". Do NOT use outside knowledge.\n- Keep the wording faithful to the PDF; do not invent facts, numbers, names, or definitions.\n\nSTYLE:\n- Always respond in ${lang}.\n- Short paragraphs or bullet points. Define technical terms only when the reference defines them.\n\n---REFERENCE MATERIAL (from indexed PDFs)---\n${context}\n---END REFERENCE---`;
+    const system = `You are a strict ${label} tutor for high-school students. Your ONLY source of truth is the REFERENCE MATERIAL below (extracted directly from the uploaded Cloud storage files for the selected chapter).\n\nHow to answer:\n- Answer EXACTLY as the reference material says. Quote or closely paraphrase it. Cite the file name in parentheses, e.g. (source: filename.pdf).\n- If the answer is not in the reference material, reply with exactly: "${refusal}". Do NOT use outside knowledge.\n- Keep the wording faithful to the PDF; do not invent facts, numbers, names, or definitions.\n\nSTYLE:\n- Always respond in ${lang}.\n- Short paragraphs or bullet points. Define technical terms only when the reference defines them.\n\n---REFERENCE MATERIAL (from uploaded chapter files)---\n${context}\n---END REFERENCE---`;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
     const safeMessages = messages
