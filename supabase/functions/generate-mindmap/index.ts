@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { topic, context } = await req.json();
+    const { topic, context, fileBase64, fileName } = await req.json();
     if (!topic || typeof topic !== "string") {
       return new Response(JSON.stringify({ error: "Missing topic" }), {
         status: 400,
@@ -31,13 +31,27 @@ Deno.serve(async (req) => {
     }
 
     const ctx = typeof context === "string" ? context.slice(0, MAX_CHARS) : "";
-    if (!ctx.trim()) {
+    const hasFile = typeof fileBase64 === "string" && fileBase64.length > 0;
+    if (!ctx.trim() && !hasFile) {
       return new Response(
         JSON.stringify({ error: "No source material provided. Mind maps must be built only from the uploaded PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    const userPrompt = `Topic: ${topic}\n\nUse ONLY the following source material. Do not add any information that is not present in it. If a detail is not in the source, omit it.\n\n=== SOURCE START ===\n${ctx}\n=== SOURCE END ===`;
+    const instructions = `Topic: ${topic}\n\nUse ONLY the source material below (text and/or the attached PDF). Do not add any information not present in it. If a detail is not in the source, omit it.`;
+    const userContent: any[] = [{ type: "text", text: instructions }];
+    if (ctx.trim()) {
+      userContent.push({ type: "text", text: `=== SOURCE TEXT START ===\n${ctx}\n=== SOURCE TEXT END ===` });
+    }
+    if (hasFile) {
+      userContent.push({
+        type: "file",
+        file: {
+          filename: typeof fileName === "string" && fileName ? fileName : "source.pdf",
+          file_data: `data:application/pdf;base64,${fileBase64}`,
+        },
+      });
+    }
 
     const res = await fetch(AI_URL, {
       method: "POST",
@@ -49,7 +63,7 @@ Deno.serve(async (req) => {
         model: AI_MODEL,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
+          { role: "user", content: userContent },
         ],
         tools: [
           {

@@ -241,17 +241,29 @@ const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
       try {
         context = await extractTextFromFile(file);
       } catch {
-        toast.error(language === "ar" ? "تعذّر قراءة الملف" : "Could not read file");
-        setLoading(false);
-        return;
+        context = "";
       }
-      if (!context.trim()) {
+      let fileBase64: string | undefined;
+      let fileName: string | undefined;
+      const isPdf = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
+      if (!context.trim() && isPdf) {
+        // Scanned/image PDF: send the file directly so the backend can read it.
+        const buf = await file.arrayBuffer();
+        let binary = "";
+        const bytes = new Uint8Array(buf);
+        const chunk = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunk) {
+          binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
+        }
+        fileBase64 = btoa(binary);
+        fileName = file.name;
+      } else if (!context.trim()) {
         toast.error(language === "ar" ? "لم يتم استخراج نص من الملف" : "No text extracted from the file");
         setLoading(false);
         return;
       }
       const { data, error } = await supabase.functions.invoke("generate-mindmap", {
-        body: { topic: topic.trim(), context },
+        body: { topic: topic.trim(), context, fileBase64, fileName },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
