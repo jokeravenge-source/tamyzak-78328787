@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
-import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 
 const T = {
   en: {
