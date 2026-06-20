@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MAX_TEXT_CHARS = 120_000; // per file
+const MAX_TEXT_CHARS = 200_000; // per file
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
 
 Deno.serve(async (req) => {
@@ -29,11 +29,23 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { subject, chapter, file_name, all } = await req.json();
+    const { subject, chapter, file_name, all, text: directText } = await req.json();
     if (!subject || !chapter) {
       return new Response(JSON.stringify({ error: "subject and chapter required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const folder = `${subject}/${chapter}`;
+
+    // Direct-text mode: client extracted the text (handles huge PDFs without storage limits).
+    if (directText && file_name) {
+      const text = String(directText).slice(0, MAX_TEXT_CHARS);
+      const { error: upErr } = await admin
+        .from("subject_file_text")
+        .upsert({ subject, chapter, file_name, text, char_count: text.length }, { onConflict: "subject,chapter,file_name" });
+      if (upErr) {
+        return new Response(JSON.stringify({ results: [{ file_name, ok: false, error: upErr.message }] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ results: [{ file_name, ok: true, chars: text.length }] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // Resolve list of files to index
     let files: string[] = [];

@@ -3,6 +3,7 @@ import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Laye
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
+import { extractTextFromFile } from "@/lib/fileText";
 
 type Row = {
   id: string;
@@ -260,13 +261,13 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [aiUploading, setAiUploading] = useState(false);
   const loadAi = async () => {
     setAiLoading(true);
-    const [filesRes, idxRes] = await Promise.all([
-      supabase.storage.from("files").list(`${aiSubject}/${aiChapter}`, { limit: 100 }),
-      supabase.from("subject_file_text").select("file_name,char_count,updated_at,chapter").eq("subject", aiSubject),
-    ]);
-    setAiFiles((filesRes.data ?? []).filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep"));
+    const idxRes = await supabase
+      .from("subject_file_text")
+      .select("file_name,char_count,updated_at,chapter")
+      .eq("subject", aiSubject);
     const all = (idxRes.data ?? []) as IndexedRow[];
     setAiIndexed(all.filter((r) => r.chapter === aiChapter));
+    setAiFiles(all.filter((r) => r.chapter === aiChapter).map((r) => ({ name: r.file_name })));
     const chs = Array.from(new Set(all.map((r) => r.chapter).filter(Boolean))).sort();
     setAiAllChapters(chs);
     setAiLoading(false);
@@ -274,34 +275,35 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject, aiChapter]);
   const uploadAi = async (file: File) => {
     setAiUploading(true);
-    const path = `${aiSubject}/${aiChapter}/${file.name}`;
-    const { error } = await supabase.storage.from("files").upload(path, file, { upsert: true });
-    setAiUploading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Uploaded. Click Index to extract text.");
-    loadAi();
+    try {
+      toast.message(`Extracting text from ${file.name}…`);
+      const text = await extractTextFromFile(file, { maxChars: 200000, maxPages: 600 });
+      if (!text || text.trim().length < 20) {
+        throw new Error("No extractable text found in file");
+      }
+      const { data, error } = await supabase.functions.invoke("index-subject-file", {
+        body: { subject: aiSubject, chapter: aiChapter, file_name: file.name, text },
+      });
+      if (error) throw error;
+      const r = (data as { results?: Array<{ ok: boolean; chars?: number; error?: string }> })?.results?.[0];
+      if (r?.ok) toast.success(`Indexed ${file.name} (${r.chars?.toLocaleString()} chars)`);
+      else throw new Error(r?.error ?? "Index failed");
+      loadAi();
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setAiUploading(false);
+    }
   };
   const indexOne = async (name: string) => {
-    setAiBusy(name);
-    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, chapter: aiChapter, file_name: name } });
-    setAiBusy(null);
-    if (error) return toast.error(error.message);
-    const r = (data as { results?: Array<{ ok: boolean; chars?: number; error?: string }> })?.results?.[0];
-    if (r?.ok) toast.success(`Indexed (${r.chars} chars)`); else toast.error(r?.error ?? "Index failed");
-    loadAi();
+    toast.message("Re-upload the file to re-index it.");
   };
   const indexAll = async () => {
-    setAiBusy("__all__");
-    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, chapter: aiChapter, all: true } });
-    setAiBusy(null);
-    if (error) return toast.error(error.message);
-    const results = (data as { results?: Array<{ ok: boolean }> })?.results ?? [];
-    toast.success(`Indexed ${results.filter((x) => x.ok).length}/${results.length} files`);
-    loadAi();
+    toast.message("Re-upload files to refresh the index.");
   };
   const deleteAi = async (name: string) => {
     if (!confirm(`Delete ${name} from storage and index?`)) return;
-    await supabase.storage.from("files").remove([`${aiSubject}/${aiChapter}/${name}`]);
+    await supabase.storage.from("files").remove([`${aiSubject}/${aiChapter}/${name}`]).catch(() => {});
     await supabase.from("subject_file_text").delete().eq("subject", aiSubject).eq("chapter", aiChapter).eq("file_name", name);
     toast.success("Deleted");
     loadAi();
