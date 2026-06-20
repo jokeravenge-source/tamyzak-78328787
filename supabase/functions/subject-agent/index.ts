@@ -243,16 +243,14 @@ Deno.serve(async (req) => {
       if (context.fileRefs.length === 0) return null;
       const apiKey = Deno.env.get("GEMINI_API_KEY");
       if (!apiKey) return null;
-      const contents = [
-        { role: "user", parts: [{ text: system }] },
-        ...safeMessages.map((msg) => ({
-          role: msg.role === "assistant" ? "model" : "user",
-          parts: [
-            ...context.fileRefs.map((f) => ({ fileData: { mimeType: f.mimeType, fileUri: f.uri } })),
-            { text: msg.content },
-          ],
-        })),
-      ];
+      const conversation = safeMessages.map((msg) => `${msg.role === "assistant" ? "Tutor" : "Student"}: ${msg.content}`).join("\n\n");
+      const contents = [{
+        role: "user",
+        parts: [
+          { text: `${system}\n\nConversation:\n${conversation}` },
+          ...context.fileRefs.map((f) => ({ file_data: { mime_type: f.mimeType, file_uri: f.uri } })),
+        ],
+      }];
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_GENERATE_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
