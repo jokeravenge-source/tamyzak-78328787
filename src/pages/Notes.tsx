@@ -445,6 +445,11 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const t = copy[language];
   const isRTL = language === "ar";
   const [notes, setNotes] = useState<Note[]>([]);
+  const [notebooks, setNotebooks] = useState<Notebook[]>([]);
+  const [expandedNotebooks, setExpandedNotebooks] = useState<Set<string>>(new Set());
+  const [editingNotebookId, setEditingNotebookId] = useState<string | null>(null);
+  const [notebookDraft, setNotebookDraft] = useState("");
+  const [moveMenuFor, setMoveMenuFor] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -457,10 +462,16 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   // Load notes
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
-        .from("notes")
-        .select("*")
-        .order("position", { ascending: true });
+      const [notesRes, nbRes] = await Promise.all([
+        supabase.from("notes").select("*").order("position", { ascending: true }),
+        supabase.from("notebooks").select("*").order("position", { ascending: true }),
+      ]);
+      if (nbRes.error) toast.error(nbRes.error.message);
+      else if (nbRes.data) {
+        setNotebooks(nbRes.data as Notebook[]);
+        setExpandedNotebooks(new Set((nbRes.data as Notebook[]).map((n) => n.id)));
+      }
+      const { data, error } = notesRes;
       if (error) {
         toast.error(error.message);
       } else if (data) {
@@ -493,6 +504,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
           content: note.content as any,
           position: note.position,
           parent_id: note.parent_id,
+          notebook_id: note.notebook_id,
         })
         .eq("id", note.id);
     }, 600);
@@ -509,15 +521,17 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   }, [scheduleSave]);
 
   // Create page
-  const createNote = useCallback(async (parentId: string | null = null) => {
+  const createNote = useCallback(async (parentId: string | null = null, notebookId: string | null = null) => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { toast.error("Not signed in"); return; }
+    const nb = parentId ? notes.find((p) => p.id === parentId)?.notebook_id ?? null : notebookId;
     const position = notes.filter((n) => n.parent_id === parentId).length;
     const { data, error } = await supabase
       .from("notes")
       .insert({
         user_id: u.user.id,
         parent_id: parentId,
+        notebook_id: nb,
         title: "",
         icon: "📄",
         content: [blankBlock()] as any,
@@ -530,6 +544,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
     setNotes((prev) => [...prev, newNote]);
     setActiveId(newNote.id);
     if (parentId) setExpanded((s) => new Set(s).add(parentId));
+    if (nb) setExpandedNotebooks((s) => new Set(s).add(nb));
   }, [notes]);
 
   // Delete
@@ -551,6 +566,48 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
     setNotes((prev) => prev.filter((n) => !toRemove.has(n.id)));
     if (activeId && toRemove.has(activeId)) setActiveId(null);
   }, [notes, activeId]);
+
+  // ----- Notebook CRUD -----
+  const createNotebook = useCallback(async () => {
+    const name = window.prompt(t.createPrompt, t.newNotebook);
+    if (!name || !name.trim()) return;
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { toast.error("Not signed in"); return; }
+    const position = notebooks.length;
+    const { data, error } = await supabase
+      .from("notebooks")
+      .insert({ user_id: u.user.id, name: name.trim(), icon: "📚", position })
+      .select()
+      .single();
+    if (error) { toast.error(error.message); return; }
+    setNotebooks((prev) => [...prev, data as Notebook]);
+    setExpandedNotebooks((s) => new Set(s).add((data as Notebook).id));
+  }, [notebooks, t]);
+
+  const renameNotebook = useCallback(async (id: string, name: string) => {
+    const clean = name.trim() || t.newNotebook;
+    setNotebooks((prev) => prev.map((n) => n.id === id ? { ...n, name: clean } : n));
+    await supabase.from("notebooks").update({ name: clean }).eq("id", id);
+  }, [t]);
+
+  const deleteNotebook = useCallback(async (id: string) => {
+    if (!confirm(t.deleteNotebookConfirm)) return;
+    const { error } = await supabase.from("notebooks").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setNotebooks((prev) => prev.filter((n) => n.id !== id));
+    // Pages will have notebook_id = null due to ON DELETE SET NULL
+    setNotes((prev) => prev.map((n) => n.notebook_id === id ? { ...n, notebook_id: null } : n));
+  }, [t]);
+
+  const moveNoteToNotebook = useCallback((noteId: string, notebookId: string | null) => {
+    updateNote(noteId, { notebook_id: notebookId });
+    if (notebookId) setExpandedNotebooks((s) => new Set(s).add(notebookId));
+    setMoveMenuFor(null);
+  }, [updateNote]);
+
+  const renamePage = useCallback((id: string, title: string) => {
+    updateNote(id, { title });
+  }, [updateNote]);
 
   // Block ops on active note
   const setBlocks = (updater: (blocks: Block[]) => Block[]) => {
