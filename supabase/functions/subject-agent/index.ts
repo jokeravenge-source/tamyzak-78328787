@@ -226,12 +226,13 @@ Deno.serve(async (req) => {
     const noFiles = language === "ar"
       ? "لا توجد ملفات مرفوعة أو قابلة للقراءة لهذا الفصل بعد. اطلب من المسؤول رفع ملفات في هذا الفصل."
       : "No uploaded readable files for this chapter yet. Ask an admin to upload files for this chapter.";
-    if (!context) {
+    if (!context.text && context.fileRefs.length === 0) {
       return new Response(JSON.stringify({ reply: noFiles }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const system = `You are a strict ${label} tutor for high-school students. Your ONLY source of truth is the REFERENCE MATERIAL below (extracted directly from the uploaded Cloud storage files for the selected chapter).\n\nHow to answer:\n- Answer EXACTLY as the reference material says. Quote or closely paraphrase it. Cite the file name in parentheses, e.g. (source: filename.pdf).\n- If the answer is not in the reference material, reply with exactly: "${refusal}". Do NOT use outside knowledge.\n- Keep the wording faithful to the PDF; do not invent facts, numbers, names, or definitions.\n\nSTYLE:\n- Always respond in ${lang}.\n- Short paragraphs or bullet points. Define technical terms only when the reference defines them.\n\n---REFERENCE MATERIAL (from uploaded chapter files)---\n${context}\n---END REFERENCE---`;
+    const fileNames = context.fileRefs.map((f) => f.name).join(", ");
+    const system = `You are a strict ${label} tutor for high-school students. Your ONLY source of truth is the REFERENCE MATERIAL below and any attached uploaded Cloud storage files for the selected chapter.\n\nHow to answer:\n- Answer EXACTLY as the reference material says. Quote or closely paraphrase it. Cite the file name in parentheses, e.g. (source: filename.pdf).\n- If the answer is not in the reference material or attached files, reply with exactly: "${refusal}". Do NOT use outside knowledge.\n- Keep the wording faithful to the PDF; do not invent facts, numbers, names, or definitions.\n\nSTYLE:\n- Always respond in ${lang}.\n- Short paragraphs or bullet points. Define technical terms only when the reference defines them.\n\nAttached chapter files: ${fileNames || "none"}\n\n---REFERENCE MATERIAL (from uploaded chapter files)---\n${context.text || "See attached uploaded chapter files."}\n---END REFERENCE---`;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
     const safeMessages = messages
