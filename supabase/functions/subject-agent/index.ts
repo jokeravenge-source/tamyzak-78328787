@@ -239,6 +239,38 @@ Deno.serve(async (req) => {
       .filter((msg) => msg && (msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string")
       .slice(-MAX_CHAT_MESSAGES);
 
+    const geminiDirect = async () => {
+      if (context.fileRefs.length === 0) return null;
+      const apiKey = Deno.env.get("GEMINI_API_KEY");
+      if (!apiKey) return null;
+      const contents = [
+        { role: "user", parts: [{ text: system }] },
+        ...safeMessages.map((msg) => ({
+          role: msg.role === "assistant" ? "model" : "user",
+          parts: [
+            ...context.fileRefs.map((f) => ({ fileData: { mimeType: f.mimeType, fileUri: f.uri } })),
+            { text: msg.content },
+          ],
+        })),
+      ];
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_GENERATE_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents }),
+      });
+      if (!r.ok) return null;
+      const data = await r.json();
+      const text = data.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("").trim();
+      return text || null;
+    };
+
+    if (context.fileRefs.length > 0) {
+      const directReply = await geminiDirect();
+      if (directReply) {
+        return new Response(JSON.stringify({ reply: directReply, sources: context.fileRefs.map((f) => f.name) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
     const callModel = async (model: string) => {
       const r = await fetch(AI_URL, {
         method: "POST",
@@ -281,7 +313,7 @@ Deno.serve(async (req) => {
     const candidateBlock = candidates
       .map((c, i) => `--- CANDIDATE ${i + 1} ---\n${c.text}`)
       .join("\n\n");
-    const judgeUser = `STUDENT QUESTION:\n${lastUser}\n\nREFERENCE MATERIAL:\n${context}\n\n${candidateBlock}`;
+    const judgeUser = `STUDENT QUESTION:\n${lastUser}\n\nREFERENCE MATERIAL:\n${context.text}\n\n${candidateBlock}`;
 
     const judgeResp = await fetch(AI_URL, {
       method: "POST",
