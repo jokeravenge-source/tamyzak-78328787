@@ -330,7 +330,7 @@ const buildTree = (notes: Note[]): TreeNode[] => {
 };
 
 const TreeItem = ({
-  node, depth, activeId, expanded, onToggle, onSelect, onAddChild, onDelete, language,
+  node, depth, activeId, expanded, onToggle, onSelect, onAddChild, onDelete, onRename, language,
 }: {
   node: TreeNode;
   depth: number;
@@ -340,12 +340,17 @@ const TreeItem = ({
   onSelect: (id: string) => void;
   onAddChild: (parentId: string) => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, newTitle: string) => void;
   language: AppLanguage;
 }) => {
   const t = copy[language];
   const isOpen = expanded.has(node.id);
   const active = activeId === node.id;
   const hasChildren = node.children.length > 0;
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(node.title);
+  useEffect(() => { setDraft(node.title); }, [node.title]);
+  const commit = () => { onRename(node.id, draft.trim() || t.untitledPage); setEditing(false); };
   return (
     <div>
       <div
@@ -353,7 +358,8 @@ const TreeItem = ({
           active ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-secondary"
         }`}
         style={{ paddingInlineStart: `${depth * 0.75 + 0.25}rem` }}
-        onClick={() => onSelect(node.id)}
+        onClick={() => { if (!editing) onSelect(node.id); }}
+        onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
       >
         <button
           onClick={(e) => { e.stopPropagation(); if (hasChildren) onToggle(node.id); }}
@@ -362,7 +368,30 @@ const TreeItem = ({
           {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         </button>
         <span className="text-sm shrink-0">{node.icon || "📄"}</span>
-        <span className="text-sm truncate flex-1">{node.title || t.untitled}</span>
+        {editing ? (
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); commit(); }
+              else if (e.key === "Escape") { setDraft(node.title); setEditing(false); }
+            }}
+            className="flex-1 min-w-0 text-sm bg-card border border-primary/40 rounded px-1 outline-none"
+          />
+        ) : (
+          <span className="text-sm truncate flex-1">{node.title || t.untitled}</span>
+        )}
+        <button
+          onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-foreground/10"
+          aria-label={t.rename}
+          title={t.rename}
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
         <button
           onClick={(e) => { e.stopPropagation(); onAddChild(node.id); }}
           className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-foreground/10"
@@ -400,6 +429,7 @@ const TreeItem = ({
                 onSelect={onSelect}
                 onAddChild={onAddChild}
                 onDelete={onDelete}
+                onRename={onRename}
                 language={language}
               />
             ))}
