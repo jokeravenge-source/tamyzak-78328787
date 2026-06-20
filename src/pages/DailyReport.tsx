@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
-import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 
 const T = {
   en: {
@@ -214,12 +213,6 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
               )}
             </div>
 
-            {/* Excellence Companion */}
-            <div className="rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5">
-              <div className="flex items-center gap-2 mb-1"><Sparkles className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">{t.companion}</span></div>
-              <p className="text-xs text-muted-foreground mb-3">{t.companionDesc}</p>
-              <ExcellenceCompanion language={language} embedded />
-            </div>
           </>
         )}
       </section>

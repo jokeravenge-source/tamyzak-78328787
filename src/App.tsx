@@ -51,6 +51,7 @@ import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 import SearchFAB from "./components/SearchFAB";
+import ExcellenceCompanion from "./components/ExcellenceCompanion";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -269,6 +270,9 @@ const App = () => {
       {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
+      {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
+        <ExcellenceCompanion language={language} />
+      )}
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authLoading ? (
@@ -305,7 +309,7 @@ const App = () => {
       ) : menuChoice === "sessions" ? (
         <Sessions language={language} onBack={resetMenu} />
       ) : menuChoice === "account" ? (
-        <AccountCenter language={language} onBack={resetMenu} onNav={chooseMenu} />
+        <AccountCenter language={language} onBack={resetMenu} onNav={chooseMenu} onChangeLanguage={resetLanguage} />
       ) : menuChoice === "essay" ? (
         <Essay language={language} onBack={resetMenu} />
       ) : menuChoice === "videoNotes" ? (

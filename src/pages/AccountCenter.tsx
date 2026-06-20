@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle, Crown, Settings, Lock } from "lucide-react";
+import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle, Crown, Settings, Lock, LogOut, Globe } from "lucide-react";
 import { Clock } from "lucide-react";
 import { CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
+import { LANGUAGE_STORAGE_KEY } from "@/components/LanguageGate";
 import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
@@ -31,8 +32,8 @@ import {
 } from "@/components/CharacterAvatar";
 
 const t = {
-  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", crown: "Crown", on: "On", off: "Off", randomize: "Randomize", premiumOnly: "Premium only", upgrade: "Upgrade to unlock", manageSub: "Manage subscription", openingPortal: "Opening…", makeupRoom: "Makeup Room", lipstick: "Lipstick", eyeshadow: "Eyeshadow", musclePack: "Muscle Pack", muscleDesc: "Show off those gains", headband: "Headband", accessories: "Accessories", necklaceGold: "Gold chain", necklacePearl: "Pearl necklace", none: "None", requestSent: "Name change request submitted — waiting for admin approval", pendingReview: "Pending admin approval", pendingHint: "Your requested name is awaiting admin review.", requestName: "Request name change", noChange: "No change to save" },
-  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", crown: "تاج", on: "نعم", off: "لا", randomize: "عشوائي", premiumOnly: "للبريميوم فقط", upgrade: "رقّ لفتح هذه الميزة", manageSub: "إدارة الاشتراك", openingPortal: "جاري الفتح…", makeupRoom: "غرفة المكياج", lipstick: "أحمر الشفاه", eyeshadow: "ظلال العيون", musclePack: "حزمة العضلات", muscleDesc: "أظهر عضلاتك", headband: "عصابة الرأس", accessories: "إكسسوارات", necklaceGold: "سلسلة ذهبية", necklacePearl: "عقد لؤلؤ", none: "بدون", requestSent: "تم إرسال طلب تغيير الاسم — بانتظار موافقة الإدارة", pendingReview: "بانتظار موافقة الإدارة", pendingHint: "اسمك المطلوب قيد المراجعة من قبل الإدارة.", requestName: "طلب تغيير الاسم", noChange: "لا يوجد تغيير للحفظ" },
+  en: { title: "Account Center", subtitle: "Manage your profile and username.", username: "Username", save: "Save", saving: "Saving…", back: "Back", email: "Email", saved: "Profile updated", points: "Your Points", rank: "Rank", nextRank: "to next rank", theme: "Theme", support: "Support", supportDesc: "Contact us on Telegram for help or feedback.", character: "Your Character", male: "Male", female: "Female", pickGender: "Pick your character", skin: "Skin", hairStyle: "Hair style", hairColor: "Hair color", shirt: "Shirt", glasses: "Glasses", crown: "Crown", on: "On", off: "Off", randomize: "Randomize", premiumOnly: "Premium only", upgrade: "Upgrade to unlock", manageSub: "Manage subscription", openingPortal: "Opening…", makeupRoom: "Makeup Room", lipstick: "Lipstick", eyeshadow: "Eyeshadow", musclePack: "Muscle Pack", muscleDesc: "Show off those gains", headband: "Headband", accessories: "Accessories", necklaceGold: "Gold chain", necklacePearl: "Pearl necklace", none: "None", requestSent: "Name change request submitted — waiting for admin approval", pendingReview: "Pending admin approval", pendingHint: "Your requested name is awaiting admin review.", requestName: "Request name change", noChange: "No change to save", signOut: "Sign out", changeLanguage: "Change language", account: "Account" },
+  ar: { title: "مركز الحساب", subtitle: "أدر ملفك الشخصي واسم المستخدم.", username: "اسم المستخدم", save: "حفظ", saving: "جارٍ الحفظ…", back: "رجوع", email: "البريد الإلكتروني", saved: "تم تحديث الملف", points: "نقاطك", rank: "المرتبة", nextRank: "للمرتبة التالية", theme: "الثيم", support: "الدعم", supportDesc: "تواصل معنا على تيليجرام للمساعدة أو الملاحظات.", character: "شخصيتك", male: "ذكر", female: "أنثى", pickGender: "اختر شخصيتك", skin: "لون البشرة", hairStyle: "تسريحة الشعر", hairColor: "لون الشعر", shirt: "القميص", glasses: "النظارات", crown: "تاج", on: "نعم", off: "لا", randomize: "عشوائي", premiumOnly: "للبريميوم فقط", upgrade: "رقّ لفتح هذه الميزة", manageSub: "إدارة الاشتراك", openingPortal: "جاري الفتح…", makeupRoom: "غرفة المكياج", lipstick: "أحمر الشفاه", eyeshadow: "ظلال العيون", musclePack: "حزمة العضلات", muscleDesc: "أظهر عضلاتك", headband: "عصابة الرأس", accessories: "إكسسوارات", necklaceGold: "سلسلة ذهبية", necklacePearl: "عقد لؤلؤ", none: "بدون", requestSent: "تم إرسال طلب تغيير الاسم — بانتظار موافقة الإدارة", pendingReview: "بانتظار موافقة الإدارة", pendingHint: "اسمك المطلوب قيد المراجعة من قبل الإدارة.", requestName: "طلب تغيير الاسم", noChange: "لا يوجد تغيير للحفظ", signOut: "تسجيل الخروج", changeLanguage: "تغيير اللغة", account: "الحساب" },
 } as const;
 
 const HAIR_LABELS: Record<string, { en: string; ar: string }> = {
@@ -72,10 +73,12 @@ const AccountCenter = ({
   language,
   onBack,
   onNav,
+  onChangeLanguage,
 }: {
   language: AppLanguage;
   onBack: () => void;
   onNav?: (c: MainMenuChoice) => void;
+  onChangeLanguage?: () => void;
 }) => {
   const text = t[language];
   const [name, setName] = useState("");
@@ -611,6 +614,34 @@ const AccountCenter = ({
             </div>
           </div>
         </a>
+
+        <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">{text.account}</h2>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+              onChangeLanguage?.();
+            }}
+            className="w-full inline-flex items-center justify-between gap-3 h-11 px-4 rounded-xl border border-white/10 bg-background/40 text-sm text-foreground hover:border-primary/40 transition"
+          >
+            <span className="inline-flex items-center gap-2"><Globe className="w-4 h-4 text-primary" />{text.changeLanguage}</span>
+            <span className="text-xs text-muted-foreground uppercase">{language}</span>
+          </button>
+          <button
+            onClick={async () => { await supabase.auth.signOut(); }}
+            className="w-full inline-flex items-center gap-2 h-11 px-4 rounded-xl border border-destructive/40 text-destructive text-sm font-semibold hover:bg-destructive/10 transition"
+          >
+            <LogOut className="w-4 h-4" />
+            {text.signOut}
+          </button>
+        </div>
       </section>
       {onNav && <CurvedNavBar language={language} active="account" onSelect={onNav} />}
     </main>

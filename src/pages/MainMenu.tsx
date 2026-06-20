@@ -1,6 +1,6 @@
-import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, ArrowLeft, Sparkles, Lock, LogOut, Bell, X, Compass, LineChart } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, Sparkles, Lock, Bell, X, Compass, LineChart, Search } from "lucide-react";
 import { motion } from "framer-motion";
-import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
+import { type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import StreakTree from "@/components/StreakTree";
@@ -84,7 +84,6 @@ const MainMenu = ({
     setReadIds(next);
     localStorage.setItem(READ_KEY, JSON.stringify(next));
   };
-  const signOut = async () => { await supabase.auth.signOut(); };
 
   const [username, setUsername] = useState<string>(() => localStorage.getItem("app_display_name_v1") || "");
   useEffect(() => {
@@ -113,32 +112,24 @@ const MainMenu = ({
     { key: "videoNotes", Icon: Headphones, locked: false, ...text.items.videoNotes },
   ];
 
-  const handleBack = () => {
-    localStorage.removeItem(LANGUAGE_STORAGE_KEY);
-    onChangeLanguage();
-  };
+  const openSearch = () => window.dispatchEvent(new Event("app:open-search"));
 
   return (
     <main className="min-h-screen px-4 py-12 md:py-20 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
-      <button
-        onClick={handleBack}
-        aria-label={language === "ar" ? "تغيير اللغة" : "Change language"}
-        className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
-      >
-        <ArrowLeft className="w-5 h-5" />
-      </button>
-
-      <div className="absolute top-6 right-6 z-20 flex items-center gap-2">
+      <div className="absolute top-6 inset-x-6 z-20 flex justify-center">
         <button
-          onClick={signOut}
-          aria-label={language === "ar" ? "تسجيل الخروج" : "Sign out"}
-          className="inline-flex items-center gap-2 h-11 px-4 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
+          onClick={openSearch}
+          aria-label={language === "ar" ? "بحث" : "Search"}
+          className="w-full max-w-md inline-flex items-center gap-2 h-11 px-4 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all duration-300"
         >
-          <LogOut className="w-4 h-4" />
-          <span className="hidden sm:inline">{language === "ar" ? "خروج" : "Sign out"}</span>
+          <Search className="w-4 h-4 text-primary" />
+          <span className="flex-1 text-start">
+            {language === "ar" ? "ابحث عن أداة أو ميزة..." : "Search for a tool or feature..."}
+          </span>
+          <kbd className="hidden sm:inline-block text-[10px] text-muted-foreground border border-white/10 rounded px-1.5 py-0.5">⌘K</kbd>
         </button>
       </div>
 

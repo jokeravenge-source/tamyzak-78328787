@@ -89,7 +89,12 @@ export default function SearchFAB({
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const onOpen = () => setOpen(true);
+    window.addEventListener("app:open-search", onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("app:open-search", onOpen);
+    };
   }, []);
 
   useEffect(() => {
