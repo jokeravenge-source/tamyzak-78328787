@@ -455,24 +455,12 @@ const Basics = ({
               : language === "ar" ? "ترقية إلى بريميوم" : "Upgrade to Premium"}
           </p>
         </button>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onChangeLanguage}
-            aria-label={language === "ar" ? "تغيير اللغة" : "Change language"}
-            className="flex-1 inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-          >
-            <Globe className="w-3.5 h-3.5" />
-            {language === "ar" ? "EN" : "AR"}
-          </button>
-          <button
-            onClick={signOut}
-            aria-label={language === "ar" ? "تسجيل الخروج" : "Sign out"}
-            className="flex-1 inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            {language === "ar" ? "خروج" : "Sign out"}
-          </button>
-        </div>
+        <button
+          onClick={() => onNav("account")}
+          className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+        >
+          {language === "ar" ? "إعدادات الحساب" : "Account settings"}
+        </button>
       </div>
     </>
   );
@@ -501,15 +489,17 @@ const Basics = ({
               )}
             </button>
           </div>
-          <div className="flex items-center gap-1.5">
-            <button onClick={onChangeLanguage} aria-label="lang" className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 rounded-lg border border-border bg-card text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-              <Globe className="w-3.5 h-3.5" />
-              {language === "ar" ? "EN" : "AR"}
-            </button>
-            <button onClick={signOut} aria-label="sign out" className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <button
+            onClick={() => window.dispatchEvent(new Event("app:open-search"))}
+            aria-label={language === "ar" ? "بحث" : "Search"}
+            className="inline-flex items-center gap-2 h-8 px-3 rounded-lg border border-border bg-card text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors min-w-[10rem] sm:min-w-[16rem]"
+          >
+            <Search className="w-3.5 h-3.5 text-primary" />
+            <span className="flex-1 text-start truncate">
+              {language === "ar" ? "ابحث عن أداة..." : "Search tools..."}
+            </span>
+            <kbd className="hidden sm:inline-block text-[10px] text-muted-foreground/70 border border-border rounded px-1">⌘K</kbd>
+          </button>
         </div>
       </div>
 
