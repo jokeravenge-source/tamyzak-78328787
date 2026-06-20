@@ -255,6 +255,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [aiFiles, setAiFiles] = useState<StorageObj[]>([]);
   const [aiIndexed, setAiIndexed] = useState<IndexedRow[]>([]);
   const [aiAllChapters, setAiAllChapters] = useState<string[]>([]);
+  const [aiSubjectChapters, setAiSubjectChapters] = useState<string[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [aiUploading, setAiUploading] = useState(false);
@@ -278,6 +279,34 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setAiLoading(false);
   };
   useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject, aiChapter]);
+
+  // Auto-discover chapters in the storage bucket whenever the subject changes,
+  // and auto-switch aiChapter to the first chapter that actually has files.
+  useEffect(() => {
+    if (tab !== "aifiles") return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.storage.from("files").list(aiSubject, { limit: 200 });
+      if (cancelled || error) return;
+      const entries = data ?? [];
+      const subfolders = entries
+        .filter((e: { name: string; id?: string | null }) => e.id === null && e.name && !e.name.startsWith("."))
+        .map((e) => e.name);
+      const hasRootFiles = entries.some(
+        (e: { name: string; id?: string | null }) =>
+          e.id !== null && e.name && !e.name.startsWith(".") && e.name !== ".lovkeep",
+      );
+      const discovered = [...subfolders];
+      if (hasRootFiles) discovered.push("general");
+      const ordered = Array.from(new Set(discovered)).sort();
+      setAiSubjectChapters(ordered);
+      if (ordered.length > 0 && !ordered.includes(aiChapter)) {
+        setAiChapter(ordered[0]);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiSubject, tab]);
   const uploadAi = async (file: File) => {
     setAiUploading(true);
     const path = aiChapter === "general" ? `${aiSubject}/${file.name}` : `${aiSubject}/${aiChapter}/${file.name}`;
@@ -684,7 +713,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                   {SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
                 <select value={aiChapter} onChange={(e) => setAiChapter(e.target.value)} className="h-10 px-3 rounded-lg bg-background border border-white/10 text-sm">
-                  {Array.from(new Set([aiChapter, ...aiAllChapters, "ch1","ch2","ch3","ch4","ch5","ch6","ch7","ch8","general"])).map((c) => (
+                  {Array.from(new Set([aiChapter, ...aiSubjectChapters, ...aiAllChapters, "ch1","ch2","ch3","ch4","ch5","ch6","ch7","ch8","general"])).map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
