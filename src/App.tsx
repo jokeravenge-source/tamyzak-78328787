@@ -45,6 +45,7 @@ import PoemsChecker from "./pages/PoemsChecker";
 import EnglishEssays from "./pages/EnglishEssays";
 import EnglishIsqat from "./pages/EnglishIsqat";
 import DailyReport from "./pages/DailyReport";
+import Notes from "./pages/Notes";
 import Onboarding from "./pages/Onboarding";
 import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
@@ -198,7 +199,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -331,6 +332,8 @@ const App = () => {
         <EnglishIsqat language={language} onBack={backToBasics} />
       ) : menuChoice === "report" ? (
         <DailyReport language={language} onBack={resetMenu} />
+      ) : menuChoice === "notes" ? (
+        <Notes language={language} onBack={resetMenu} />
       ) : menuChoice === "premium" ? (
         <Premium language={language} onBack={resetMenu} />
       ) : menuChoice === "more" ? (

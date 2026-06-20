@@ -1,0 +1,822 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowLeft, Plus, ChevronRight, ChevronDown, Trash2, FileText, Search,
+  Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
+  Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
+} from "lucide-react";
+import type { AppLanguage } from "@/components/LanguageGate";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
+
+type BlockType =
+  | "text" | "h1" | "h2" | "h3"
+  | "bullet" | "numbered" | "todo"
+  | "toggle" | "quote" | "code" | "divider";
+
+type Block = {
+  id: string;
+  type: BlockType;
+  text: string;
+  checked?: boolean;
+  collapsed?: boolean;
+  indent?: number;
+};
+
+type Note = {
+  id: string;
+  parent_id: string | null;
+  title: string;
+  icon: string;
+  content: Block[];
+  position: number;
+  updated_at: string;
+};
+
+const newId = () => Math.random().toString(36).slice(2, 11);
+const blankBlock = (type: BlockType = "text"): Block => ({ id: newId(), type, text: "" });
+
+const SLASH_OPTIONS: { type: BlockType; labelEn: string; labelAr: string; Icon: any; descEn: string; descAr: string }[] = [
+  { type: "text",     labelEn: "Text",          labelAr: "نص",            Icon: Type,        descEn: "Plain paragraph",         descAr: "فقرة عادية" },
+  { type: "h1",       labelEn: "Heading 1",     labelAr: "عنوان 1",       Icon: Heading1,    descEn: "Big section heading",     descAr: "عنوان كبير" },
+  { type: "h2",       labelEn: "Heading 2",     labelAr: "عنوان 2",       Icon: Heading2,    descEn: "Medium heading",          descAr: "عنوان متوسط" },
+  { type: "h3",       labelEn: "Heading 3",     labelAr: "عنوان 3",       Icon: Heading3,    descEn: "Small heading",           descAr: "عنوان صغير" },
+  { type: "bullet",   labelEn: "Bulleted list", labelAr: "قائمة نقطية",   Icon: List,        descEn: "Bullet point",            descAr: "نقطة" },
+  { type: "numbered", labelEn: "Numbered list", labelAr: "قائمة مرقمة",   Icon: ListOrdered, descEn: "Numbered list",           descAr: "قائمة مرقمة" },
+  { type: "todo",     labelEn: "To-do",         labelAr: "مهمة",          Icon: CheckSquare, descEn: "Checkbox task",           descAr: "مربع اختيار" },
+  { type: "toggle",   labelEn: "Toggle",        labelAr: "قابل للطي",     Icon: ChevronRight,descEn: "Collapsible block",       descAr: "قابل للطي" },
+  { type: "quote",    labelEn: "Quote",         labelAr: "اقتباس",        Icon: Quote,       descEn: "Quote block",             descAr: "اقتباس" },
+  { type: "code",     labelEn: "Code",          labelAr: "كود",           Icon: Code,        descEn: "Code snippet",            descAr: "مقتطف كود" },
+  { type: "divider",  labelEn: "Divider",       labelAr: "فاصل",          Icon: Minus,       descEn: "Visual separator",        descAr: "خط فاصل" },
+];
+
+const ICONS = ["📄","📝","📚","📒","📓","📕","📗","📘","📙","🧠","💡","⭐","🎯","🔥","🚀","🌱","🌟","✨","🧪","🧬","🔬","📊","📈","💻","🎨","🎵","⚽","🏆","💎","🦄","🐱","🐶","🌈","☕","🍎","🍕"];
+
+const copy = {
+  en: {
+    title: "Notes",
+    back: "Back",
+    untitled: "Untitled",
+    newPage: "New page",
+    addSubpage: "Add sub-page",
+    delete: "Delete",
+    deleteConfirm: "Delete this page and all sub-pages?",
+    emptySidebar: "No pages yet. Create one to get started.",
+    emptyState: "Pick a page on the left or create a new one.",
+    typeSlash: "Type '/' for commands",
+    titlePlaceholder: "Untitled",
+    search: "Search pages",
+    pickIcon: "Pick an icon",
+    todoPlaceholder: "To-do",
+    togglePlaceholder: "Toggle",
+    quotePlaceholder: "Quote",
+    codePlaceholder: "Code",
+  },
+  ar: {
+    title: "ملاحظاتي",
+    back: "رجوع",
+    untitled: "بدون عنوان",
+    newPage: "صفحة جديدة",
+    addSubpage: "إضافة صفحة فرعية",
+    delete: "حذف",
+    deleteConfirm: "حذف هذه الصفحة وكل صفحاتها الفرعية؟",
+    emptySidebar: "لا توجد صفحات بعد. أنشئ واحدة للبدء.",
+    emptyState: "اختر صفحة من اليسار أو أنشئ صفحة جديدة.",
+    typeSlash: "اكتب '/' لعرض الأوامر",
+    titlePlaceholder: "بدون عنوان",
+    search: "ابحث في الصفحات",
+    pickIcon: "اختر أيقونة",
+    todoPlaceholder: "مهمة",
+    togglePlaceholder: "قابل للطي",
+    quotePlaceholder: "اقتباس",
+    codePlaceholder: "كود",
+  },
+} as const;
+
+// ---------- Block row ----------
+const BlockRow = ({
+  block, language, onChange, onEnter, onBackspaceEmpty, onIndent, onOutdent, onSlash,
+  onToggleCheck, onToggleCollapse, autoFocus,
+}: {
+  block: Block;
+  language: AppLanguage;
+  onChange: (text: string) => void;
+  onEnter: () => void;
+  onBackspaceEmpty: () => void;
+  onIndent: () => void;
+  onOutdent: () => void;
+  onSlash: (rect: DOMRect, ref: HTMLDivElement) => void;
+  onToggleCheck: () => void;
+  onToggleCollapse: () => void;
+  autoFocus?: boolean;
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const t = copy[language];
+
+  // Set initial text once per id/type change
+  useEffect(() => {
+    if (!ref.current) return;
+    if (ref.current.innerText !== block.text) {
+      ref.current.innerText = block.text;
+    }
+  }, [block.id, block.type]);
+
+  useEffect(() => {
+    if (autoFocus && ref.current) {
+      ref.current.focus();
+      // place caret end
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(ref.current);
+      range.collapse(false);
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  }, [autoFocus]);
+
+  if (block.type === "divider") {
+    return (
+      <div className="my-3 px-1">
+        <hr className="border-border" />
+      </div>
+    );
+  }
+
+  const indent = Math.min(block.indent ?? 0, 4);
+
+  const baseEditable = "outline-none w-full whitespace-pre-wrap break-words";
+  const placeholderEmpty = !block.text;
+
+  const editor = (
+    <div
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      data-placeholder={
+        block.type === "h1" ? "Heading 1" :
+        block.type === "h2" ? "Heading 2" :
+        block.type === "h3" ? "Heading 3" :
+        block.type === "quote" ? t.quotePlaceholder :
+        block.type === "code" ? t.codePlaceholder :
+        block.type === "toggle" ? t.togglePlaceholder :
+        block.type === "todo" ? t.todoPlaceholder :
+        t.typeSlash
+      }
+      onInput={(e) => {
+        const txt = (e.currentTarget as HTMLDivElement).innerText;
+        onChange(txt);
+        if (txt === "/" && ref.current) {
+          const rect = ref.current.getBoundingClientRect();
+          onSlash(rect, ref.current);
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          onEnter();
+        } else if (e.key === "Backspace") {
+          if ((ref.current?.innerText ?? "") === "") {
+            e.preventDefault();
+            onBackspaceEmpty();
+          }
+        } else if (e.key === "Tab") {
+          e.preventDefault();
+          if (e.shiftKey) onOutdent();
+          else onIndent();
+        }
+      }}
+      className={[
+        baseEditable,
+        block.type === "h1" && "text-3xl md:text-4xl font-bold py-1",
+        block.type === "h2" && "text-2xl md:text-3xl font-bold py-1",
+        block.type === "h3" && "text-xl md:text-2xl font-semibold py-1",
+        block.type === "text" && "text-[15px] leading-relaxed",
+        block.type === "bullet" && "text-[15px] leading-relaxed",
+        block.type === "numbered" && "text-[15px] leading-relaxed",
+        block.type === "todo" && `text-[15px] leading-relaxed ${block.checked ? "line-through text-muted-foreground" : ""}`,
+        block.type === "toggle" && "text-[15px] font-medium leading-relaxed",
+        block.type === "quote" && "text-[15px] italic leading-relaxed",
+        block.type === "code" && "font-mono text-sm",
+        placeholderEmpty && "before:content-[attr(data-placeholder)] before:text-muted-foreground/40 before:pointer-events-none empty:before:block",
+      ].filter(Boolean).join(" ")}
+      style={{ caretColor: "hsl(var(--primary))" }}
+    />
+  );
+
+  const wrapperBase = "group flex items-start gap-2 rounded-md px-2 py-0.5 hover:bg-secondary/40 transition-colors";
+  const indentPad = { paddingInlineStart: `${indent * 1.5}rem` };
+
+  if (block.type === "bullet") {
+    return (
+      <div className={wrapperBase} style={indentPad}>
+        <span className="mt-2 w-1.5 h-1.5 rounded-full bg-foreground shrink-0" />
+        <div className="flex-1 min-w-0">{editor}</div>
+      </div>
+    );
+  }
+  if (block.type === "numbered") {
+    return (
+      <div className={wrapperBase} style={indentPad}>
+        <span className="mt-1 text-sm text-muted-foreground shrink-0 min-w-[1ch]">•</span>
+        <div className="flex-1 min-w-0">{editor}</div>
+      </div>
+    );
+  }
+  if (block.type === "todo") {
+    return (
+      <div className={wrapperBase} style={indentPad}>
+        <button
+          onClick={onToggleCheck}
+          className={`mt-1.5 w-4 h-4 rounded border ${block.checked ? "bg-primary border-primary" : "border-border bg-card"} shrink-0 flex items-center justify-center transition-colors`}
+          aria-label="toggle"
+        >
+          {block.checked && <CheckSquare className="w-3 h-3 text-primary-foreground" />}
+        </button>
+        <div className="flex-1 min-w-0">{editor}</div>
+      </div>
+    );
+  }
+  if (block.type === "toggle") {
+    return (
+      <div className={wrapperBase} style={indentPad}>
+        <button onClick={onToggleCollapse} className="mt-1 shrink-0 text-muted-foreground hover:text-foreground transition-colors">
+          {block.collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        <div className="flex-1 min-w-0">{editor}</div>
+      </div>
+    );
+  }
+  if (block.type === "quote") {
+    return (
+      <div className={wrapperBase} style={indentPad}>
+        <div className="flex-1 min-w-0 border-l-4 border-primary/60 pl-3">{editor}</div>
+      </div>
+    );
+  }
+  if (block.type === "code") {
+    return (
+      <div className="my-2 px-2" style={indentPad}>
+        <div className="rounded-lg bg-secondary/60 border border-border p-3">{editor}</div>
+      </div>
+    );
+  }
+  return (
+    <div className={wrapperBase} style={indentPad}>
+      <div className="flex-1 min-w-0">{editor}</div>
+    </div>
+  );
+};
+
+// ---------- Sidebar tree ----------
+type TreeNode = Note & { children: TreeNode[] };
+const buildTree = (notes: Note[]): TreeNode[] => {
+  const map = new Map<string, TreeNode>();
+  notes.forEach((n) => map.set(n.id, { ...n, children: [] }));
+  const roots: TreeNode[] = [];
+  map.forEach((node) => {
+    if (node.parent_id && map.has(node.parent_id)) {
+      map.get(node.parent_id)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+  const sort = (arr: TreeNode[]) => {
+    arr.sort((a, b) => a.position - b.position || a.title.localeCompare(b.title));
+    arr.forEach((c) => sort(c.children));
+  };
+  sort(roots);
+  return roots;
+};
+
+const TreeItem = ({
+  node, depth, activeId, expanded, onToggle, onSelect, onAddChild, onDelete, language,
+}: {
+  node: TreeNode;
+  depth: number;
+  activeId: string | null;
+  expanded: Set<string>;
+  onToggle: (id: string) => void;
+  onSelect: (id: string) => void;
+  onAddChild: (parentId: string) => void;
+  onDelete: (id: string) => void;
+  language: AppLanguage;
+}) => {
+  const t = copy[language];
+  const isOpen = expanded.has(node.id);
+  const active = activeId === node.id;
+  const hasChildren = node.children.length > 0;
+  return (
+    <div>
+      <div
+        className={`group flex items-center gap-1 rounded-md px-1 py-1 cursor-pointer transition-colors ${
+          active ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-secondary"
+        }`}
+        style={{ paddingInlineStart: `${depth * 0.75 + 0.25}rem` }}
+        onClick={() => onSelect(node.id)}
+      >
+        <button
+          onClick={(e) => { e.stopPropagation(); if (hasChildren) onToggle(node.id); }}
+          className={`w-4 h-4 flex items-center justify-center shrink-0 rounded hover:bg-foreground/10 ${hasChildren ? "" : "opacity-30 cursor-default"}`}
+        >
+          {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        </button>
+        <span className="text-sm shrink-0">{node.icon || "📄"}</span>
+        <span className="text-sm truncate flex-1">{node.title || t.untitled}</span>
+        <button
+          onClick={(e) => { e.stopPropagation(); onAddChild(node.id); }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-foreground/10"
+          aria-label={t.addSubpage}
+          title={t.addSubpage}
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); if (confirm(t.deleteConfirm)) onDelete(node.id); }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/20 hover:text-destructive"
+          aria-label={t.delete}
+          title={t.delete}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <AnimatePresence initial={false}>
+        {isOpen && hasChildren && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ overflow: "hidden" }}
+          >
+            {node.children.map((c) => (
+              <TreeItem
+                key={c.id}
+                node={c}
+                depth={depth + 1}
+                activeId={activeId}
+                expanded={expanded}
+                onToggle={onToggle}
+                onSelect={onSelect}
+                onAddChild={onAddChild}
+                onDelete={onDelete}
+                language={language}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ---------- Main page ----------
+const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  const t = copy[language];
+  const isRTL = language === "ar";
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [search, setSearch] = useState("");
+  const [slash, setSlash] = useState<{ blockId: string; x: number; y: number } | null>(null);
+  const [iconPickerFor, setIconPickerFor] = useState<string | null>(null);
+  const [focusBlockId, setFocusBlockId] = useState<string | null>(null);
+
+  // Load notes
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("notes")
+        .select("*")
+        .order("position", { ascending: true });
+      if (error) {
+        toast.error(error.message);
+      } else if (data) {
+        const fixed: Note[] = data.map((n: any) => ({
+          ...n,
+          content: Array.isArray(n.content) && n.content.length > 0 ? n.content : [blankBlock()],
+        }));
+        setNotes(fixed);
+        if (fixed.length > 0 && !activeId) setActiveId(fixed[0].id);
+      }
+      setLoading(false);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const active = useMemo(() => notes.find((n) => n.id === activeId) || null, [notes, activeId]);
+
+  // Debounced save per note
+  const saveTimers = useRef<Map<string, number>>(new Map());
+  const scheduleSave = useCallback((note: Note) => {
+    const map = saveTimers.current;
+    const prev = map.get(note.id);
+    if (prev) window.clearTimeout(prev);
+    const id = window.setTimeout(async () => {
+      await supabase
+        .from("notes")
+        .update({
+          title: note.title,
+          icon: note.icon,
+          content: note.content as any,
+          position: note.position,
+          parent_id: note.parent_id,
+        })
+        .eq("id", note.id);
+    }, 600);
+    map.set(note.id, id);
+  }, []);
+
+  const updateNote = useCallback((id: string, patch: Partial<Note>) => {
+    setNotes((prev) => {
+      const next = prev.map((n) => (n.id === id ? { ...n, ...patch } : n));
+      const updated = next.find((n) => n.id === id);
+      if (updated) scheduleSave(updated);
+      return next;
+    });
+  }, [scheduleSave]);
+
+  // Create page
+  const createNote = useCallback(async (parentId: string | null = null) => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) { toast.error("Not signed in"); return; }
+    const position = notes.filter((n) => n.parent_id === parentId).length;
+    const { data, error } = await supabase
+      .from("notes")
+      .insert({
+        user_id: u.user.id,
+        parent_id: parentId,
+        title: "",
+        icon: "📄",
+        content: [blankBlock()] as any,
+        position,
+      })
+      .select()
+      .single();
+    if (error) { toast.error(error.message); return; }
+    const newNote: Note = { ...(data as any), content: [blankBlock()] };
+    setNotes((prev) => [...prev, newNote]);
+    setActiveId(newNote.id);
+    if (parentId) setExpanded((s) => new Set(s).add(parentId));
+  }, [notes]);
+
+  // Delete
+  const deleteNote = useCallback(async (id: string) => {
+    const { error } = await supabase.from("notes").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    // remove id and all descendants from state
+    const toRemove = new Set<string>([id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      notes.forEach((n) => {
+        if (n.parent_id && toRemove.has(n.parent_id) && !toRemove.has(n.id)) {
+          toRemove.add(n.id);
+          changed = true;
+        }
+      });
+    }
+    setNotes((prev) => prev.filter((n) => !toRemove.has(n.id)));
+    if (activeId && toRemove.has(activeId)) setActiveId(null);
+  }, [notes, activeId]);
+
+  // Block ops on active note
+  const setBlocks = (updater: (blocks: Block[]) => Block[]) => {
+    if (!active) return;
+    const newBlocks = updater(active.content);
+    updateNote(active.id, { content: newBlocks });
+  };
+
+  const onBlockChange = (blockId: string, text: string) => {
+    if (!active) return;
+    // Markdown shortcuts: detect at start
+    const trimmed = text;
+    let newType: BlockType | null = null;
+    let stripLen = 0;
+    if (trimmed === "# " || trimmed.startsWith("# ")) { newType = "h1"; stripLen = 2; }
+    else if (trimmed.startsWith("## ")) { newType = "h2"; stripLen = 3; }
+    else if (trimmed.startsWith("### ")) { newType = "h3"; stripLen = 4; }
+    else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) { newType = "bullet"; stripLen = 2; }
+    else if (trimmed.startsWith("1. ")) { newType = "numbered"; stripLen = 3; }
+    else if (trimmed.startsWith("[] ") || trimmed.startsWith("[ ] ")) { newType = "todo"; stripLen = trimmed.startsWith("[] ") ? 3 : 4; }
+    else if (trimmed.startsWith("> ")) { newType = "quote"; stripLen = 2; }
+    else if (trimmed === "---") { newType = "divider"; stripLen = 3; }
+
+    setBlocks((blocks) => blocks.map((b) => {
+      if (b.id !== blockId) return b;
+      if (newType && b.type === "text" && b.text === "") {
+        // transform only when current was text & empty -> typed shortcut
+        return { ...b, type: newType, text: text.slice(stripLen) };
+      }
+      return { ...b, text };
+    }));
+    // For shortcut transform, force re-render of editor to clear text
+    if (newType) {
+      setFocusBlockId(blockId);
+    }
+  };
+
+  const onBlockEnter = (blockId: string) => {
+    setBlocks((blocks) => {
+      const idx = blocks.findIndex((b) => b.id === blockId);
+      if (idx === -1) return blocks;
+      const current = blocks[idx];
+      // Empty list item on Enter -> convert to text instead of new block
+      if ((current.type === "bullet" || current.type === "numbered" || current.type === "todo") && !current.text) {
+        const copy = [...blocks];
+        copy[idx] = { ...current, type: "text" };
+        return copy;
+      }
+      const inheritType: BlockType =
+        current.type === "bullet" || current.type === "numbered" || current.type === "todo"
+          ? current.type
+          : "text";
+      const nb: Block = { id: newId(), type: inheritType, text: "", indent: current.indent };
+      setFocusBlockId(nb.id);
+      const copy = [...blocks];
+      copy.splice(idx + 1, 0, nb);
+      return copy;
+    });
+  };
+
+  const onBackspaceEmpty = (blockId: string) => {
+    setBlocks((blocks) => {
+      const idx = blocks.findIndex((b) => b.id === blockId);
+      if (idx === -1) return blocks;
+      const current = blocks[idx];
+      // Non-text empty block -> convert to text
+      if (current.type !== "text") {
+        const copy = [...blocks];
+        copy[idx] = { ...current, type: "text" };
+        setFocusBlockId(current.id);
+        return copy;
+      }
+      // Text empty -> remove and focus previous
+      if (blocks.length === 1) return blocks;
+      const prev = blocks[idx - 1];
+      if (prev) setFocusBlockId(prev.id);
+      return blocks.filter((b, i) => i !== idx);
+    });
+  };
+
+  const onIndent = (blockId: string) => {
+    setBlocks((blocks) => blocks.map((b) => b.id === blockId ? { ...b, indent: Math.min((b.indent ?? 0) + 1, 4) } : b));
+  };
+  const onOutdent = (blockId: string) => {
+    setBlocks((blocks) => blocks.map((b) => b.id === blockId ? { ...b, indent: Math.max((b.indent ?? 0) - 1, 0) } : b));
+  };
+
+  const applySlashType = (type: BlockType) => {
+    if (!slash) return;
+    setBlocks((blocks) => blocks.map((b) => b.id === slash.blockId ? { ...b, type, text: "" } : b));
+    setFocusBlockId(slash.blockId);
+    setSlash(null);
+  };
+
+  const tree = useMemo(() => {
+    let filtered = notes;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      filtered = notes.filter((n) => (n.title || "").toLowerCase().includes(q));
+    }
+    return buildTree(filtered);
+  }, [notes, search]);
+
+  // Breadcrumb for active page
+  const breadcrumb = useMemo(() => {
+    if (!active) return [];
+    const chain: Note[] = [];
+    let cur: Note | null = active;
+    while (cur) {
+      chain.unshift(cur);
+      cur = cur.parent_id ? notes.find((n) => n.id === cur!.parent_id) || null : null;
+    }
+    return chain;
+  }, [active, notes]);
+
+  return (
+    <div className="min-h-screen w-full bg-background text-foreground flex" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Sidebar */}
+      <AnimatePresence initial={false}>
+        {sidebarOpen && (
+          <motion.aside
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 280, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="border-r border-border bg-secondary/30 backdrop-blur-sm flex flex-col h-screen sticky top-0 overflow-hidden"
+            style={{ minWidth: 0 }}
+          >
+            <div className="w-[280px] flex flex-col h-full">
+              <div className="p-3 border-b border-border flex items-center gap-2">
+                <button
+                  onClick={onBack}
+                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label={t.back}
+                >
+                  <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+                </button>
+                <span className="text-sm font-bold flex-1 truncate">{t.title}</span>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  aria-label="collapse"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-2">
+                <div className="relative">
+                  <Search className={`w-3.5 h-3.5 absolute top-1/2 -translate-y-1/2 ${isRTL ? "right-2.5" : "left-2.5"} text-muted-foreground`} />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t.search}
+                    className={`w-full h-8 ${isRTL ? "pr-8 pl-2" : "pl-8 pr-2"} rounded-md bg-card border border-border text-sm outline-none focus:border-primary/40`}
+                  />
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-2 pb-2">
+                {loading ? (
+                  <div className="p-4 text-xs text-muted-foreground">Loading…</div>
+                ) : tree.length === 0 ? (
+                  <div className="p-4 text-xs text-muted-foreground">{t.emptySidebar}</div>
+                ) : (
+                  tree.map((n) => (
+                    <TreeItem
+                      key={n.id}
+                      node={n}
+                      depth={0}
+                      activeId={activeId}
+                      expanded={expanded}
+                      onToggle={(id) => setExpanded((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; })}
+                      onSelect={setActiveId}
+                      onAddChild={createNote}
+                      onDelete={deleteNote}
+                      language={language}
+                    />
+                  ))
+                )}
+              </div>
+              <div className="p-2 border-t border-border">
+                <button
+                  onClick={() => createNote(null)}
+                  className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-95 transition-opacity"
+                >
+                  <Plus className="w-4 h-4" />
+                  {t.newPage}
+                </button>
+              </div>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* Main */}
+      <main className="flex-1 min-w-0 flex flex-col">
+        {/* Top bar */}
+        <div className="sticky top-0 z-30 backdrop-blur-md bg-background/70 border-b border-border h-12 flex items-center px-3 gap-2">
+          {!sidebarOpen && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+              aria-label="open sidebar"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </button>
+          )}
+          <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0 flex-1 overflow-hidden">
+            {breadcrumb.length === 0 ? (
+              <span>{t.title}</span>
+            ) : (
+              breadcrumb.map((b, i) => (
+                <span key={b.id} className="inline-flex items-center gap-1 truncate">
+                  {i > 0 && <ChevronRight className={`w-3 h-3 ${isRTL ? "rotate-180" : ""}`} />}
+                  <span className="truncate">{b.icon} {b.title || t.untitled}</span>
+                </span>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        {!active ? (
+          <div className="flex-1 flex items-center justify-center text-center px-6">
+            <div className="max-w-md">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center mb-4">
+                <FileText className="w-8 h-8 text-primary" />
+              </div>
+              <p className="text-muted-foreground mb-5">{t.emptyState}</p>
+              <button
+                onClick={() => createNote(null)}
+                className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-95 transition-opacity"
+              >
+                <Plus className="w-4 h-4" />
+                {t.newPage}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-3xl mx-auto px-4 md:px-12 py-12 pb-40">
+              {/* Icon */}
+              <div className="relative inline-block mb-3">
+                <button
+                  onClick={() => setIconPickerFor(iconPickerFor === active.id ? null : active.id)}
+                  className="text-5xl md:text-6xl hover:bg-secondary rounded-lg px-2 py-1 transition-colors"
+                  aria-label={t.pickIcon}
+                >
+                  {active.icon || "📄"}
+                </button>
+                {iconPickerFor === active.id && (
+                  <div className="absolute z-40 mt-2 p-3 rounded-xl bg-popover border border-border shadow-lg grid grid-cols-9 gap-1 w-[22rem]">
+                    {ICONS.map((ic) => (
+                      <button
+                        key={ic}
+                        onClick={() => { updateNote(active.id, { icon: ic }); setIconPickerFor(null); }}
+                        className="text-xl hover:bg-secondary rounded p-1.5 transition-colors"
+                      >
+                        {ic}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Title */}
+              <input
+                value={active.title}
+                onChange={(e) => updateNote(active.id, { title: e.target.value })}
+                placeholder={t.titlePlaceholder}
+                className="w-full text-4xl md:text-5xl font-bold bg-transparent outline-none placeholder:text-muted-foreground/30 mb-6"
+              />
+
+              {/* Blocks */}
+              <div className="space-y-0.5" onClick={(e) => { if (slash) setSlash(null); }}>
+                {active.content.map((b, idx) => (
+                  <BlockRow
+                    key={b.id}
+                    block={b}
+                    language={language}
+                    autoFocus={focusBlockId === b.id}
+                    onChange={(text) => onBlockChange(b.id, text)}
+                    onEnter={() => onBlockEnter(b.id)}
+                    onBackspaceEmpty={() => onBackspaceEmpty(b.id)}
+                    onIndent={() => onIndent(b.id)}
+                    onOutdent={() => onOutdent(b.id)}
+                    onSlash={(rect) => setSlash({ blockId: b.id, x: rect.left, y: rect.bottom + window.scrollY })}
+                    onToggleCheck={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, checked: !x.checked } : x))}
+                    onToggleCollapse={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, collapsed: !x.collapsed } : x))}
+                  />
+                ))}
+
+                {/* Add block button */}
+                <button
+                  onClick={() => {
+                    const nb = blankBlock();
+                    setBlocks((blocks) => [...blocks, nb]);
+                    setFocusBlockId(nb.id);
+                  }}
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-md px-2 py-1 hover:bg-secondary transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  {language === "ar" ? "إضافة كتلة" : "Add block"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Slash menu */}
+      {slash && (
+        <div
+          className="fixed z-50 w-64 max-h-80 overflow-y-auto rounded-xl bg-popover border border-border shadow-xl p-1"
+          style={{ left: Math.min(slash.x, window.innerWidth - 280), top: slash.y + 4 }}
+        >
+          {SLASH_OPTIONS.map((opt) => {
+            const Icon = opt.Icon;
+            return (
+              <button
+                key={opt.type}
+                onClick={() => applySlashType(opt.type)}
+                className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-secondary text-left transition-colors"
+              >
+                <div className="w-8 h-8 rounded-md bg-card border border-border flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{language === "ar" ? opt.labelAr : opt.labelEn}</p>
+                  <p className="text-xs text-muted-foreground truncate">{language === "ar" ? opt.descAr : opt.descEn}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Notes;
