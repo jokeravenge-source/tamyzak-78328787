@@ -947,7 +947,16 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                       const isEditingNb = nb && editingNotebookId === nb.id;
                       return (
                         <div key={nbId}>
-                          <div className="group flex items-center gap-1 rounded-md px-1 py-1.5 hover:bg-secondary/60 transition-colors">
+                          <div
+                            draggable={!!nb && !isEditingNb}
+                            onDragStart={(e) => { if (nb) { e.stopPropagation(); e.dataTransfer.effectAllowed = "move"; onNotebookDragStart(nb.id); } }}
+                            onDragOver={(e) => onNotebookDragOver(e, nb?.id ?? null)}
+                            onDrop={(e) => { e.stopPropagation(); onNotebookDrop(e, nb?.id ?? null); }}
+                            onDragEnd={clearDrag}
+                            className={`group flex items-center gap-1 rounded-md px-1 py-1.5 hover:bg-secondary/60 transition-colors ${
+                              dragOverId === (nb ? `nb:${nb.id}` : "__none") ? "ring-2 ring-primary/60 bg-primary/5" : ""
+                            }`}
+                          >
                             <button
                               onClick={() => {
                                 if (!nb) return;
@@ -1034,6 +1043,11 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                                       onDelete={deleteNote}
                                       onRename={renamePage}
                                       language={language}
+                                      onPageDragStart={onPageDragStart}
+                                      onPageDragOver={onPageDragOver}
+                                      onPageDrop={onPageDrop}
+                                      onPageDragEnd={onPageDragEnd}
+                                      dragOverId={dragOverId}
                                     />
                                   ))
                                 )}
