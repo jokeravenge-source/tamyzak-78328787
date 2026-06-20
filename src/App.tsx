@@ -50,6 +50,7 @@ import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 import SearchFAB from "./components/SearchFAB";
+import VisitCounter from "./components/VisitCounter";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 
@@ -267,6 +268,7 @@ const App = () => {
       {language && <PremiumWelcomeOverlay language={language} />}
       {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
+        <VisitCounter isAdmin={isAdmin} />
       )}
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
