@@ -12,6 +12,7 @@ import type { MainMenuChoice } from "@/pages/MainMenu";
 import { useSubscription } from "@/hooks/useSubscription";
 import { missionsData, missionsOrder } from "@/data/missions";
 import VisitCounter from "@/components/VisitCounter";
+import { useTodos } from "@/lib/todoTopicProgress";
 
 export type BasicsChoice =
   | "flashcards"
@@ -223,6 +224,7 @@ const Basics = ({
   const fc = FEATURED_COPY[language];
   const [activeKey, setActiveKey] = useState<MainMenuChoice>("flashcards");
   const [activeGroup, setActiveGroup] = useState<string>(NAV_GROUPS[0].titleEn);
+  const todos = useTodos();
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
 
@@ -250,6 +252,11 @@ const Basics = ({
   }, []);
 
   const missionsPct = missionsTotal ? Math.min(100, Math.round((missionsDone / missionsTotal) * 100)) : 0;
+  const todoDone = todos.filter((todo) => todo.done).length;
+  const todoTotal = todos.length;
+  const heroProgressDone = todoTotal > 0 ? todoDone : missionsDone;
+  const heroProgressTotal = todoTotal > 0 ? todoTotal : missionsTotal;
+  const heroProgressPct = heroProgressTotal ? Math.min(100, Math.round((heroProgressDone / heroProgressTotal) * 100)) : 0;
 
   const READ_KEY = "notif_read_ids_v1";
   const [notifs, setNotifs] = useState<Notif[]>([]);
@@ -708,18 +715,20 @@ const Basics = ({
                       strokeLinecap="round"
                       strokeDasharray={2 * Math.PI * 52}
                       initial={{ strokeDashoffset: 2 * Math.PI * 52 }}
-                      animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - missionsPct / 100) }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - heroProgressPct / 100) }}
                       transition={{ duration: 1.1, ease: "easeOut" }}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold tabular-nums">{missionsPct}%</span>
+                    <span className="text-2xl font-bold tabular-nums">{heroProgressPct}%</span>
                     <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {missionsDone}/{missionsTotal}
+                      {heroProgressDone}/{heroProgressTotal}
                     </span>
                   </div>
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-card border border-border shadow-sm rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                    {language === "ar" ? "تقدم المهمات" : "Missions progress"}
+                    {todoTotal > 0
+                      ? (language === "ar" ? "تقدم المهام" : "To-Do progress")
+                      : (language === "ar" ? "تقدم المهمات" : "Missions progress")}
                   </div>
                 </div>
               </div>
