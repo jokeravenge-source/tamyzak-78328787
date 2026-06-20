@@ -153,15 +153,6 @@ export default function SearchFAB({
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label={isAr ? "بحث" : "Search"}
-        className="fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:shadow-[var(--shadow-glow)] hover:scale-105 transition-all border border-primary/40 bg-primary text-primary-foreground"
-        style={{ background: "var(--gradient-primary)" }}
-      >
-        <Search className="w-6 h-6" />
-      </button>
-
       {open && (
         <div
           className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:p-10 bg-background/70 backdrop-blur-sm animate-fade-in"
