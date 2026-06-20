@@ -244,6 +244,62 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setUreqLoading(false);
   };
   useEffect(() => { if (tab === "usernames") loadUreqs(); }, [tab]);
+
+  // AI Files (subject reference indexing)
+  const SUBJECTS = ["biology","physics","chemistry","arabic","french","english"];
+  type StorageObj = { name: string };
+  type IndexedRow = { file_name: string; char_count: number; updated_at: string };
+  const [aiSubject, setAiSubject] = useState("biology");
+  const [aiFiles, setAiFiles] = useState<StorageObj[]>([]);
+  const [aiIndexed, setAiIndexed] = useState<IndexedRow[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiBusy, setAiBusy] = useState<string | null>(null);
+  const [aiUploading, setAiUploading] = useState(false);
+  const loadAi = async () => {
+    setAiLoading(true);
+    const [filesRes, idxRes] = await Promise.all([
+      supabase.storage.from("files").list(aiSubject, { limit: 100 }),
+      supabase.from("subject_file_text").select("file_name,char_count,updated_at").eq("subject", aiSubject),
+    ]);
+    setAiFiles((filesRes.data ?? []).filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep"));
+    setAiIndexed((idxRes.data ?? []) as IndexedRow[]);
+    setAiLoading(false);
+  };
+  useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject]);
+  const uploadAi = async (file: File) => {
+    setAiUploading(true);
+    const path = `${aiSubject}/${file.name}`;
+    const { error } = await supabase.storage.from("files").upload(path, file, { upsert: true });
+    setAiUploading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Uploaded. Click Index to extract text.");
+    loadAi();
+  };
+  const indexOne = async (name: string) => {
+    setAiBusy(name);
+    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, file_name: name } });
+    setAiBusy(null);
+    if (error) return toast.error(error.message);
+    const r = (data as { results?: Array<{ ok: boolean; chars?: number; error?: string }> })?.results?.[0];
+    if (r?.ok) toast.success(`Indexed (${r.chars} chars)`); else toast.error(r?.error ?? "Index failed");
+    loadAi();
+  };
+  const indexAll = async () => {
+    setAiBusy("__all__");
+    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, all: true } });
+    setAiBusy(null);
+    if (error) return toast.error(error.message);
+    const results = (data as { results?: Array<{ ok: boolean }> })?.results ?? [];
+    toast.success(`Indexed ${results.filter((x) => x.ok).length}/${results.length} files`);
+    loadAi();
+  };
+  const deleteAi = async (name: string) => {
+    if (!confirm(`Delete ${name} from storage and index?`)) return;
+    await supabase.storage.from("files").remove([`${aiSubject}/${name}`]);
+    await supabase.from("subject_file_text").delete().eq("subject", aiSubject).eq("file_name", name);
+    toast.success("Deleted");
+    loadAi();
+  };
   const decideUreq = async (r: UReq, decision: "approved" | "rejected") => {
     const { data: u } = await supabase.auth.getUser();
     setUreqBusyId(r.id);
