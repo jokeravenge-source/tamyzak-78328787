@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
-  LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network,
+  LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network, Search,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
   Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen,
 } from "lucide-react";
