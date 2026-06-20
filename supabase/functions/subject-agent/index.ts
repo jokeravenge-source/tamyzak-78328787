@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { claimFeature } from "../_shared/entitlement.ts";
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,31 +27,75 @@ const MAX_CONTEXT_CHARS = 60000;
 const MAX_FILE_CHARS = 30000;
 const MAX_FILES = 6;
 const MAX_CHAT_MESSAGES = 8;
+const MAX_PDF_BYTES = 15 * 1024 * 1024;
+const CACHE_TTL_MS = 10 * 60 * 1000;
+
+type CacheEntry = { at: number; text: string };
+const fileCache = new Map<string, CacheEntry>();
+
+async function extractFromBlob(name: string, blob: Blob): Promise<string> {
+  const lower = name.toLowerCase();
+  if (lower.endsWith(".pdf") || blob.type === "application/pdf") {
+    if (blob.size > MAX_PDF_BYTES) return "";
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    const pdf = await getDocumentProxy(buf);
+    const pageCount = pdf.numPages ?? 0;
+    const chunks: string[] = [];
+    let collected = 0;
+    for (let i = 1; i <= pageCount && collected < MAX_FILE_CHARS; i++) {
+      try {
+        const { text: t } = await extractText(pdf, { mergePages: true, pages: [i] });
+        const pageText = Array.isArray(t) ? t.join("\n") : t;
+        chunks.push(pageText);
+        collected += pageText.length;
+      } catch { /* skip page */ }
+    }
+    return chunks.join("\n").slice(0, MAX_FILE_CHARS);
+  }
+  try {
+    return (await blob.text()).slice(0, MAX_FILE_CHARS);
+  } catch {
+    return "";
+  }
+}
 
 async function fetchSubjectContext(subject: string, chapter?: string): Promise<string> {
   const url = Deno.env.get("SUPABASE_URL")!;
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, key);
 
-  // Read pre-indexed text from subject_file_text (extracted by index-subject-file).
-  let q = admin
-    .from("subject_file_text")
-    .select("file_name,text,chapter")
-    .eq("subject", subject)
-    .order("updated_at", { ascending: false })
-    .limit(MAX_FILES);
-  if (chapter) q = q.eq("chapter", chapter);
-  const { data: rows, error } = await q;
+  // Read files directly from the Cloud storage bucket `files/{subject}/{chapter}/`.
+  const ch = chapter && chapter.length ? chapter : "general";
+  const folder = ch === "general" ? subject : `${subject}/${ch}`;
 
-  if (error || !rows?.length) return "";
+  const { data: objects, error: listErr } = await admin.storage.from("files").list(folder, { limit: 100 });
+  if (listErr || !objects?.length) return "";
+
+  const files = objects
+    .filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep")
+    .slice(0, MAX_FILES);
 
   const parts: string[] = [];
   let total = 0;
-  for (const r of rows) {
+  for (const obj of files) {
     if (total >= MAX_CONTEXT_CHARS) break;
-    const slice = (r.text ?? "").slice(0, MAX_FILE_CHARS);
-    if (!slice) continue;
-    parts.push(`### File: ${r.file_name} (chapter: ${(r as { chapter?: string }).chapter ?? "general"})\n${slice}`);
+    const path = `${folder}/${obj.name}`;
+    const cacheKey = `${path}:${(obj as { updated_at?: string }).updated_at ?? ""}`;
+    let text = "";
+    const cached = fileCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
+      text = cached.text;
+    } else {
+      const { data: blob, error: dErr } = await admin.storage.from("files").download(path);
+      if (dErr || !blob) continue;
+      try {
+        text = await extractFromBlob(obj.name, blob);
+      } catch { text = ""; }
+      fileCache.set(cacheKey, { at: Date.now(), text });
+    }
+    if (!text) continue;
+    const slice = text.slice(0, MAX_FILE_CHARS);
+    parts.push(`### File: ${obj.name} (chapter: ${ch})\n${slice}`);
     total += slice.length;
   }
   return parts.join("\n\n");
