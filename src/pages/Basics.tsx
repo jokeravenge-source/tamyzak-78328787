@@ -12,6 +12,7 @@ import type { MainMenuChoice } from "@/pages/MainMenu";
 import { useSubscription } from "@/hooks/useSubscription";
 import { missionsData, missionsOrder } from "@/data/missions";
 import VisitCounter from "@/components/VisitCounter";
+import { useTodos } from "@/lib/todoTopicProgress";
 
 export type BasicsChoice =
   | "flashcards"
@@ -223,6 +224,7 @@ const Basics = ({
   const fc = FEATURED_COPY[language];
   const [activeKey, setActiveKey] = useState<MainMenuChoice>("flashcards");
   const [activeGroup, setActiveGroup] = useState<string>(NAV_GROUPS[0].titleEn);
+  const todos = useTodos();
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
 
@@ -250,6 +252,11 @@ const Basics = ({
   }, []);
 
   const missionsPct = missionsTotal ? Math.min(100, Math.round((missionsDone / missionsTotal) * 100)) : 0;
+  const todoDone = todos.filter((todo) => todo.done).length;
+  const todoTotal = todos.length;
+  const heroProgressDone = todoTotal > 0 ? todoDone : missionsDone;
+  const heroProgressTotal = todoTotal > 0 ? todoTotal : missionsTotal;
+  const heroProgressPct = heroProgressTotal ? Math.min(100, Math.round((heroProgressDone / heroProgressTotal) * 100)) : 0;
 
   const READ_KEY = "notif_read_ids_v1";
   const [notifs, setNotifs] = useState<Notif[]>([]);
