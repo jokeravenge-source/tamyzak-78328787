@@ -17,9 +17,9 @@ const SUBJECT_LABELS: Record<string, string> = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = "google/gemini-2.5-flash";
-const MAX_CONTEXT_CHARS = 18000;
-const MAX_FILE_CHARS = 6000;
-const MAX_FILES = 2;
+const MAX_CONTEXT_CHARS = 60000;
+const MAX_FILE_CHARS = 30000;
+const MAX_FILES = 6;
 const MAX_CHAT_MESSAGES = 8;
 
 async function fetchSubjectContext(subject: string): Promise<string> {
@@ -27,49 +27,24 @@ async function fetchSubjectContext(subject: string): Promise<string> {
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, key);
 
-  // List files from the `files` storage bucket, organized by subject folder.
-  const { data: objects, error } = await admin.storage
-    .from("files")
-    .list(subject, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+  // Read pre-indexed text from subject_file_text (extracted by index-subject-file).
+  const { data: rows, error } = await admin
+    .from("subject_file_text")
+    .select("file_name,text")
+    .eq("subject", subject)
+    .order("updated_at", { ascending: false })
+    .limit(MAX_FILES);
 
-  if (error || !objects?.length) return "";
-
-  const files = objects
-    .filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep")
-    .slice(0, 20)
-    .map((o) => ({
-      name: o.name,
-      file_path: `${subject}/${o.name}`,
-      mime_type: (o.metadata as { mimetype?: string } | null)?.mimetype ?? "",
-    }));
-
-  if (!files.length) return "";
+  if (error || !rows?.length) return "";
 
   const parts: string[] = [];
   let total = 0;
-  const MAX = MAX_CONTEXT_CHARS;
-  const pdfNames: string[] = [];
-  const textFiles = files.filter((f) => {
-    const lower = f.file_path.toLowerCase();
-    const isPdf = lower.endsWith(".pdf") || f.mime_type === "application/pdf";
-    if (isPdf) pdfNames.push(f.name);
-    return !isPdf;
-  }).slice(0, MAX_FILES);
-
-  if (pdfNames.length) {
-    parts.push(`### Reference PDFs available for this subject (not parsed inline):\n- ${pdfNames.join("\n- ")}`);
-  }
-
-  for (const f of textFiles) {
-    if (total >= MAX) break;
-    if (!f.file_path) continue;
-    const { data: blob } = await admin.storage.from("files").download(f.file_path);
-    if (!blob) continue;
-    try {
-      const text = (await blob.text()).slice(0, MAX_FILE_CHARS);
-      parts.push(`### File: ${f.name}\n${text}`);
-      total += text.length;
-    } catch { /* skip binary */ }
+  for (const r of rows) {
+    if (total >= MAX_CONTEXT_CHARS) break;
+    const slice = (r.text ?? "").slice(0, MAX_FILE_CHARS);
+    if (!slice) continue;
+    parts.push(`### File: ${r.file_name}\n${slice}`);
+    total += slice.length;
   }
   return parts.join("\n\n");
 }
@@ -107,10 +82,15 @@ Deno.serve(async (req) => {
       ? "تعذر إكمال الطلب الآن. حاول مرة أخرى بعد قليل."
       : "I couldn't complete that right now. Please try again shortly.";
 
-    const referenceBlock = context
-      ? `\n\n---REFERENCE MATERIAL (may be partial)---\n${context}\n---END REFERENCE---`
-      : "";
-    const system = `You are a friendly ${label} tutor for high-school students.\n\nHow to answer:\n- Answer using your own accurate ${label} knowledge. If reference material is provided below, prefer it when it covers the question and you may cite the file name in parentheses.\n- Only refuse with "${refusal}" if the question is clearly OFF-TOPIC for ${label}.\n\nTEACHING STYLE (very important):\n- Always explain in SIMPLE, everyday language — as if talking to a 14-year-old. Avoid jargon; when you must use a technical term, define it in one short sentence.\n- Break ideas into small steps and short paragraphs or bullet points.\n- ALWAYS include at least one REAL-LIFE EXAMPLE or analogy from everyday life (kitchen, sports, phone, car, weather, school, etc.) so the concept feels concrete.\n- End with a one-line "في الحياة اليومية" / "In real life" takeaway that ties the idea to something the student already knows.\n- Always respond in ${lang}.${referenceBlock}`;
+    const noFiles = language === "ar"
+      ? "لا توجد ملفات مفهرسة لهذه المادة بعد. اطلب من المسؤول فهرسة الملفات."
+      : "No indexed reference files for this subject yet. Ask an admin to index the files.";
+    if (!context) {
+      return new Response(JSON.stringify({ reply: noFiles }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const system = `You are a strict ${label} tutor for high-school students. Your ONLY source of truth is the REFERENCE MATERIAL below (extracted from the official PDF files).\n\nHow to answer:\n- Answer EXACTLY as the reference material says. Quote or closely paraphrase it. Cite the file name in parentheses, e.g. (source: filename.pdf).\n- If the answer is not in the reference material, reply with exactly: "${refusal}". Do NOT use outside knowledge.\n- Keep the wording faithful to the PDF; do not invent facts, numbers, names, or definitions.\n\nSTYLE:\n- Always respond in ${lang}.\n- Short paragraphs or bullet points. Define technical terms only when the reference defines them.\n\n---REFERENCE MATERIAL (from indexed PDFs)---\n${context}\n---END REFERENCE---`;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
     const safeMessages = messages
