@@ -28,6 +28,8 @@ const MAX_FILE_CHARS = 30000;
 const MAX_FILES = 6;
 const MAX_CHAT_MESSAGES = 8;
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
+const MODEL_TIMEOUT_MS = 18_000;
+const GEMINI_DIRECT_TIMEOUT_MS = 25_000;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const GEMINI_FILE_CACHE_TTL_MS = 45 * 60 * 1000;
 const GEMINI_GENERATE_MODEL = "gemini-2.5-flash";
@@ -39,6 +41,16 @@ const fileCache = new Map<string, CacheEntry>();
 const geminiFileCache = new Map<string, { at: number; ref: GeminiFileRef }>();
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function getObjectMeta(obj: unknown) {
   const metadata = (obj as { metadata?: Record<string, unknown>; updated_at?: string }).metadata ?? {};
@@ -274,15 +286,15 @@ Deno.serve(async (req) => {
       const contents = [{
         role: "user",
         parts: [
+          ...context.fileRefs.map((f) => ({ fileData: { mimeType: f.mimeType, fileUri: f.uri } })),
           { text: `${system}\n\nConversation:\n${conversation}` },
-          ...context.fileRefs.map((f) => ({ file_data: { mime_type: f.mimeType, file_uri: f.uri } })),
         ],
       }];
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_GENERATE_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      const r = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_GENERATE_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contents }),
-      });
+      }, GEMINI_DIRECT_TIMEOUT_MS);
       if (!r.ok) {
         console.warn("gemini_direct_generate_failed", { status: r.status, body: (await r.text()).slice(0, 500) });
         return null;
@@ -306,14 +318,14 @@ Deno.serve(async (req) => {
     }
 
     const callModel = async (model: string) => {
-      const r = await fetch(AI_URL, {
+      const r = await fetchWithTimeout(AI_URL, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model,
           messages: [{ role: "system", content: system }, ...safeMessages],
         }),
-      });
+      }, MODEL_TIMEOUT_MS);
       return { model, status: r.status, body: r.ok ? await r.json() : await r.text() };
     };
 
@@ -349,7 +361,7 @@ Deno.serve(async (req) => {
       .join("\n\n");
     const judgeUser = `STUDENT QUESTION:\n${lastUser}\n\nREFERENCE MATERIAL:\n${context.text}\n\n${candidateBlock}`;
 
-    const judgeResp = await fetch(AI_URL, {
+    const judgeResp = await fetchWithTimeout(AI_URL, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -359,7 +371,7 @@ Deno.serve(async (req) => {
           { role: "user", content: judgeUser },
         ],
       }),
-    });
+    }, MODEL_TIMEOUT_MS);
     if (!judgeResp.ok) {
       // Fall back to the longest candidate answer.
       const best = candidates.slice().sort((a, b) => b.text.length - a.text.length)[0];
