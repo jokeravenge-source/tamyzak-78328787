@@ -393,6 +393,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   );
   const hasTopics = topicResult.topics.length > 1;
   const [topicKey, setTopicKey] = useState<string>(topicResult.allKey);
+  const todos = useTodos();
   useEffect(() => {
     setTopicKey(topicResult.allKey);
   }, [topicResult]);
