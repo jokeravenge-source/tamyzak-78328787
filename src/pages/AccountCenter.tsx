@@ -614,6 +614,34 @@ const AccountCenter = ({
             </div>
           </div>
         </a>
+
+        <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">{text.account}</h2>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem(LANGUAGE_STORAGE_KEY);
+              onChangeLanguage?.();
+            }}
+            className="w-full inline-flex items-center justify-between gap-3 h-11 px-4 rounded-xl border border-white/10 bg-background/40 text-sm text-foreground hover:border-primary/40 transition"
+          >
+            <span className="inline-flex items-center gap-2"><Globe className="w-4 h-4 text-primary" />{text.changeLanguage}</span>
+            <span className="text-xs text-muted-foreground uppercase">{language}</span>
+          </button>
+          <button
+            onClick={async () => { await supabase.auth.signOut(); }}
+            className="w-full inline-flex items-center gap-2 h-11 px-4 rounded-xl border border-destructive/40 text-destructive text-sm font-semibold hover:bg-destructive/10 transition"
+          >
+            <LogOut className="w-4 h-4" />
+            {text.signOut}
+          </button>
+        </div>
       </section>
       {onNav && <CurvedNavBar language={language} active="account" onSelect={onNav} />}
     </main>
