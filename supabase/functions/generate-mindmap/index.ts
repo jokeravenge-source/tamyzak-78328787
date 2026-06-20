@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { topic, context, fileBase64, fileName } = await req.json();
+    const { topic, context, pageImages } = await req.json();
     if (!topic || typeof topic !== "string") {
       return new Response(JSON.stringify({ error: "Missing topic" }), {
         status: 400,
@@ -31,26 +31,22 @@ Deno.serve(async (req) => {
     }
 
     const ctx = typeof context === "string" ? context.slice(0, MAX_CHARS) : "";
-    const hasFile = typeof fileBase64 === "string" && fileBase64.length > 0;
-    if (!ctx.trim() && !hasFile) {
+    const images: string[] = Array.isArray(pageImages)
+      ? pageImages.filter((s: unknown): s is string => typeof s === "string" && s.startsWith("data:image/")).slice(0, 12)
+      : [];
+    if (!ctx.trim() && images.length === 0) {
       return new Response(
         JSON.stringify({ error: "No source material provided. Mind maps must be built only from the uploaded PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    const instructions = `Topic: ${topic}\n\nUse ONLY the source material below (text and/or the attached PDF). Do not add any information not present in it. If a detail is not in the source, omit it.`;
+    const instructions = `Topic: ${topic}\n\nUse ONLY the source material below (text and/or attached page images). Do not add any information not present in it. If a detail is not in the source, omit it.`;
     const userContent: any[] = [{ type: "text", text: instructions }];
     if (ctx.trim()) {
       userContent.push({ type: "text", text: `=== SOURCE TEXT START ===\n${ctx}\n=== SOURCE TEXT END ===` });
     }
-    if (hasFile) {
-      userContent.push({
-        type: "file",
-        file: {
-          filename: typeof fileName === "string" && fileName ? fileName : "source.pdf",
-          file_data: `data:application/pdf;base64,${fileBase64}`,
-        },
-      });
+    for (const img of images) {
+      userContent.push({ type: "image_url", image_url: { url: img } });
     }
 
     const res = await fetch(AI_URL, {
