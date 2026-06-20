@@ -227,7 +227,6 @@ const Basics = ({
   const todos = useTodos();
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
-  const [heroMode, setHeroMode] = useState<"flashcards" | "todo">("flashcards");
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
