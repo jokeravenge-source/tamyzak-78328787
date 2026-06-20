@@ -8,7 +8,7 @@ const AI_MODEL = "google/gemini-2.5-flash";
 const MAX_CHARS = 120000;
 
 const SYSTEM_PROMPT =
-  "You are a master information architect. Analyze the user's topic and structurally decompose it into a clean, logical, hierarchical mind map tree. Generate short, high-impact, scannable labels (2-6 words). For every node that represents a concept, term, definition, formula, date, person, or any item that benefits from explanation, also write a concise `info` field (1-3 short sentences) with the key definition, explanation, or detail. Skip `info` only for purely structural grouping labels with no inherent definition. Every child node must point accurately to its parent node's ID. Return only a raw JSON object matching the requested schema exactly.";
+  "You are a master information architect. Build a hierarchical mind map STRICTLY from the provided source material. Do NOT use any outside knowledge, prior training, assumptions, or invented examples — every label and every `info` field must be directly supported by the source text. If the source is empty or insufficient, return an empty `nodes` array. Generate short, scannable labels (2-6 words) drawn from the source. For each conceptual node, write a concise `info` field (1-3 short sentences) that paraphrases ONLY what the source says about it. Skip `info` for purely structural grouping labels. Every child node must point to its parent node's ID. Return only raw JSON matching the schema.";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -31,9 +31,13 @@ Deno.serve(async (req) => {
     }
 
     const ctx = typeof context === "string" ? context.slice(0, MAX_CHARS) : "";
-    const userPrompt = ctx
-      ? `Topic: ${topic}\n\nSource material to extract the mind map from:\n${ctx}`
-      : `Topic: ${topic}`;
+    if (!ctx.trim()) {
+      return new Response(
+        JSON.stringify({ error: "No source material provided. Mind maps must be built only from the uploaded PDF." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const userPrompt = `Topic: ${topic}\n\nUse ONLY the following source material. Do not add any information that is not present in it. If a detail is not in the source, omit it.\n\n=== SOURCE START ===\n${ctx}\n=== SOURCE END ===`;
 
     const res = await fetch(AI_URL, {
       method: "POST",
