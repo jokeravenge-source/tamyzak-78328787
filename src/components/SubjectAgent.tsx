@@ -94,7 +94,6 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
       setMessages([]);
       setChaptersLoading(false);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, subject]);
 
   const extractPdfText = async (blob: Blob) => {
