@@ -22,18 +22,20 @@ const MAX_FILE_CHARS = 30000;
 const MAX_FILES = 6;
 const MAX_CHAT_MESSAGES = 8;
 
-async function fetchSubjectContext(subject: string): Promise<string> {
+async function fetchSubjectContext(subject: string, chapter?: string): Promise<string> {
   const url = Deno.env.get("SUPABASE_URL")!;
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, key);
 
   // Read pre-indexed text from subject_file_text (extracted by index-subject-file).
-  const { data: rows, error } = await admin
+  let q = admin
     .from("subject_file_text")
-    .select("file_name,text")
+    .select("file_name,text,chapter")
     .eq("subject", subject)
     .order("updated_at", { ascending: false })
     .limit(MAX_FILES);
+  if (chapter) q = q.eq("chapter", chapter);
+  const { data: rows, error } = await q;
 
   if (error || !rows?.length) return "";
 
@@ -43,7 +45,7 @@ async function fetchSubjectContext(subject: string): Promise<string> {
     if (total >= MAX_CONTEXT_CHARS) break;
     const slice = (r.text ?? "").slice(0, MAX_FILE_CHARS);
     if (!slice) continue;
-    parts.push(`### File: ${r.file_name}\n${slice}`);
+    parts.push(`### File: ${r.file_name} (chapter: ${(r as { chapter?: string }).chapter ?? "general"})\n${slice}`);
     total += slice.length;
   }
   return parts.join("\n\n");
@@ -52,7 +54,7 @@ async function fetchSubjectContext(subject: string): Promise<string> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { subject, messages, language } = await req.json();
+    const { subject, chapter, messages, language } = await req.json();
     if (!subject || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "subject and messages required" }), {
         status: 400,
@@ -67,7 +69,7 @@ Deno.serve(async (req) => {
       });
     }
     const label = SUBJECT_LABELS[subject] ?? subject;
-    const context = await fetchSubjectContext(subject);
+    const context = await fetchSubjectContext(subject, chapter);
     const lang = language === "ar" ? "Arabic" : "English";
     const refusal = language === "ar"
       ? "هذا السؤال غير مذكور في الملفات المرفوعة، لذلك لا أستطيع الإجابة عنه."
