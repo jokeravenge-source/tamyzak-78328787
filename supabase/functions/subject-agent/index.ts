@@ -23,7 +23,7 @@ const CANDIDATE_MODELS = [
   "google/gemini-2.5-pro",
 ];
 const JUDGE_MODEL = "google/gemini-2.5-pro";
-const MAX_CONTEXT_CHARS = 60000;
+const MAX_CONTEXT_CHARS = 200000;
 const MAX_FILE_CHARS = 30000;
 const MAX_FILES = 6;
 const MAX_CHAT_MESSAGES = 8;
@@ -151,7 +151,10 @@ async function extractFromBlob(name: string, blob: Blob): Promise<string> {
   }
 }
 
-async function fetchSubjectContext(subject: string, chapter?: string): Promise<SubjectContext> {
+async function fetchSubjectContext(subject: string, chapter?: string, clientContext?: string): Promise<SubjectContext> {
+  const directContext = typeof clientContext === "string" ? clientContext.trim().slice(0, MAX_CONTEXT_CHARS) : "";
+  if (directContext) return { text: directContext, fileRefs: [] };
+
   const url = Deno.env.get("SUPABASE_URL")!;
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(url, key);
@@ -217,7 +220,7 @@ async function fetchSubjectContext(subject: string, chapter?: string): Promise<S
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { subject, chapter, messages, language } = await req.json();
+    const { subject, chapter, messages, language, clientContext } = await req.json();
     if (!subject || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "subject and messages required" }), {
         status: 400,
@@ -232,7 +235,7 @@ Deno.serve(async (req) => {
       });
     }
     const label = SUBJECT_LABELS[subject] ?? subject;
-    const context = await fetchSubjectContext(subject, chapter);
+    const context = await fetchSubjectContext(subject, chapter, clientContext);
     const lang = language === "ar" ? "Arabic" : "English";
     const refusal = language === "ar"
       ? "هذا السؤال غير مذكور في الملفات المرفوعة، لذلك لا أستطيع الإجابة عنه."

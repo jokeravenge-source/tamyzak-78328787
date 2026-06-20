@@ -5,8 +5,16 @@ import GeminiStatus from "@/components/GeminiStatus";
 import ChatBlobBackground from "@/components/ChatBlobBackground";
 import type { AppSubject } from "@/pages/Subjects";
 import type { AppLanguage } from "@/components/LanguageGate";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 type Msg = { role: "user" | "assistant"; content: string };
+type StorageObj = { name: string; id?: string | null };
+
+const MAX_CLIENT_CONTEXT_CHARS = 200_000;
+const MAX_CLIENT_FILES = 4;
 
 const labels = {
   en: {
@@ -53,6 +61,7 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
   const [chapters, setChapters] = useState<string[]>([]);
   const [chapter, setChapter] = useState<string>("");
   const [chaptersLoading, setChaptersLoading] = useState(false);
+  const contextCache = useRef(new Map<string, string>());
   const endRef = useRef<HTMLDivElement>(null);
   const t = labels[language];
   const sName = subjectName(subject, language);
@@ -86,6 +95,56 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, subject]);
 
+  const extractPdfText = async (blob: Blob) => {
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+    const chunks: string[] = [];
+    let chars = 0;
+    for (let pageNo = 1; pageNo <= pdf.numPages && chars < MAX_CLIENT_CONTEXT_CHARS; pageNo++) {
+      const page = await pdf.getPage(pageNo);
+      const content = await page.getTextContent();
+      const text = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
+      chunks.push(text);
+      chars += text.length;
+      page.cleanup();
+    }
+    await pdf.destroy();
+    return chunks.join("\n");
+  };
+
+  const buildChapterContext = async (selectedChapter: string) => {
+    const key = `${subject}/${selectedChapter}`;
+    const cached = contextCache.current.get(key);
+    if (cached) return cached;
+    const folder = selectedChapter === "general" ? subject : `${subject}/${selectedChapter}`;
+    const { data } = await supabase.storage.from("files").list(folder, { limit: 100 });
+    const files = ((data ?? []) as StorageObj[])
+      .filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep" && o.id !== null)
+      .slice(0, MAX_CLIENT_FILES);
+    const parts: string[] = [];
+    let total = 0;
+    for (const file of files) {
+      if (total >= MAX_CLIENT_CONTEXT_CHARS) break;
+      const path = `${folder}/${file.name}`;
+      const { data: blob } = await supabase.storage.from("files").download(path);
+      if (!blob) continue;
+      let text = "";
+      try {
+        text = file.name.toLowerCase().endsWith(".pdf") || blob.type === "application/pdf"
+          ? await extractPdfText(blob)
+          : await blob.text();
+      } catch {
+        text = "";
+      }
+      const slice = text.trim().slice(0, MAX_CLIENT_CONTEXT_CHARS - total);
+      if (!slice) continue;
+      parts.push(`### File: ${file.name} (chapter: ${selectedChapter})\n${slice}`);
+      total += slice.length;
+    }
+    const context = parts.join("\n\n").slice(0, MAX_CLIENT_CONTEXT_CHARS);
+    if (context) contextCache.current.set(key, context);
+    return context;
+  };
+
   const send = async () => {
     const text = input.trim();
     if (!text || loading || !chapter) return;
@@ -94,8 +153,9 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
     setInput("");
     setLoading(true);
     try {
+      const clientContext = await buildChapterContext(chapter);
       const { data, error } = await supabase.functions.invoke("subject-agent", {
-        body: { subject, chapter, language, messages: next },
+        body: { subject, chapter, language, messages: next, clientContext },
       });
       if (error) throw error;
       const reply = (data as { reply?: string })?.reply ?? "";
