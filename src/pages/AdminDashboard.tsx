@@ -3,6 +3,10 @@ import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Laye
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 type Row = {
   id: string;
@@ -333,7 +337,27 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
   const indexOne = async (name: string) => {
     setAiBusy(name);
-    const { data, error } = await supabase.functions.invoke("index-subject-file", { body: { subject: aiSubject, chapter: aiChapter, file_name: name } });
+    let body: Record<string, unknown> = { subject: aiSubject, chapter: aiChapter, file_name: name };
+    if (name.toLowerCase().endsWith(".pdf")) {
+      try {
+        const path = aiChapter === "general" ? `${aiSubject}/${name}` : `${aiSubject}/${aiChapter}/${name}`;
+        const { data: blob } = await supabase.storage.from("files").download(path);
+        if (blob) {
+          const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+          const chunks: string[] = [];
+          let chars = 0;
+          for (let pageNo = 1; pageNo <= pdf.numPages && chars < 200_000; pageNo++) {
+            const page = await pdf.getPage(pageNo);
+            const content = await page.getTextContent();
+            const text = content.items.map((item) => ("str" in item ? item.str : "")).join(" ");
+            chunks.push(text);
+            chars += text.length;
+          }
+          body = { ...body, text: chunks.join("\n").slice(0, 200_000) };
+        }
+      } catch { /* fall back to server-side indexing */ }
+    }
+    const { data, error } = await supabase.functions.invoke("index-subject-file", { body });
     setAiBusy(null);
     if (error) return toast.error(error.message);
     const r = (data as { results?: Array<{ ok: boolean; chars?: number; error?: string }> })?.results?.[0];
