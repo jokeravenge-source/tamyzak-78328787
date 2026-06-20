@@ -477,6 +477,11 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const [iconPickerFor, setIconPickerFor] = useState<string | null>(null);
   const [focusBlockId, setFocusBlockId] = useState<string | null>(null);
 
+  // Drag-and-drop state
+  const dragRef = useRef<{ type: "notebook" | "page"; id: string } | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const clearDrag = () => { dragRef.current = null; setDragOverId(null); };
+
   // Load notes
   useEffect(() => {
     (async () => {
