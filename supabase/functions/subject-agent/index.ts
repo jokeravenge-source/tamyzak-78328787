@@ -266,7 +266,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({ contents }),
       });
       if (!r.ok) {
-        console.warn("gemini_direct_generate_failed", { status: r.status });
+        console.warn("gemini_direct_generate_failed", { status: r.status, body: (await r.text()).slice(0, 500) });
         return null;
       }
       const data = await r.json();
