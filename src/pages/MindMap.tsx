@@ -21,7 +21,7 @@ import { ArrowLeft, Loader2, Sparkles, Upload, ZoomIn, ZoomOut, Maximize2, Wand2
 import { toPng } from "html-to-image";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
-import { extractTextFromFile } from "@/lib/fileText";
+import { extractStudyMaterial } from "@/lib/fileText";
 import { toast } from "sonner";
 
 type MindNode = {
@@ -238,32 +238,21 @@ const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
     setLoading(true);
     try {
       let context = "";
+      let pageImages: string[] | undefined;
       try {
-        context = await extractTextFromFile(file);
+        const material = await extractStudyMaterial(file);
+        context = material.text || "";
+        pageImages = material.pageImages;
       } catch {
         context = "";
       }
-      let fileBase64: string | undefined;
-      let fileName: string | undefined;
-      const isPdf = file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
-      if (!context.trim() && isPdf) {
-        // Scanned/image PDF: send the file directly so the backend can read it.
-        const buf = await file.arrayBuffer();
-        let binary = "";
-        const bytes = new Uint8Array(buf);
-        const chunk = 0x8000;
-        for (let i = 0; i < bytes.length; i += chunk) {
-          binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
-        }
-        fileBase64 = btoa(binary);
-        fileName = file.name;
-      } else if (!context.trim()) {
-        toast.error(language === "ar" ? "لم يتم استخراج نص من الملف" : "No text extracted from the file");
+      if (!context.trim() && !(pageImages && pageImages.length)) {
+        toast.error(language === "ar" ? "لم يتم استخراج محتوى من الملف" : "No content extracted from the file");
         setLoading(false);
         return;
       }
       const { data, error } = await supabase.functions.invoke("generate-mindmap", {
-        body: { topic: topic.trim(), context, fileBase64, fileName },
+        body: { topic: topic.trim(), context, pageImages: context.trim() ? undefined : pageImages },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
