@@ -160,6 +160,20 @@ async function fetchSubjectContext(subject: string, chapter?: string): Promise<S
   const ch = chapter && chapter.length ? chapter : "general";
   const folder = ch === "general" ? subject : `${subject}/${ch}`;
 
+  const { data: indexedRows } = await admin
+    .from("subject_file_text")
+    .select("file_name,text")
+    .eq("subject", subject)
+    .eq("chapter", ch)
+    .order("updated_at", { ascending: false })
+    .limit(MAX_FILES);
+  const indexedParts = ((indexedRows ?? []) as Array<{ file_name: string; text: string }>)
+    .filter((row) => row.text?.trim())
+    .map((row) => `### File: ${row.file_name} (chapter: ${ch})\n${row.text.slice(0, MAX_FILE_CHARS)}`);
+  if (indexedParts.length > 0) {
+    return { text: indexedParts.join("\n\n").slice(0, MAX_CONTEXT_CHARS), fileRefs: [] };
+  }
+
   const { data: objects, error: listErr } = await admin.storage.from("files").list(folder, { limit: 100 });
   if (listErr || !objects?.length) return { text: "", fileRefs: [] };
 
@@ -279,6 +293,12 @@ Deno.serve(async (req) => {
       const directReply = await geminiDirect();
       if (directReply) {
         return new Response(JSON.stringify({ reply: directReply, sources: context.fileRefs.map((f) => f.name) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (!context.text) {
+        const uploadedButUnreadable = language === "ar"
+          ? "وجدت ملفات مرفوعة لهذا الفصل، لكن لا أستطيع قراءتها الآن. اطلب من المسؤول الضغط على Index للملفات مرة واحدة."
+          : "I found uploaded files for this chapter, but I can't read them right now. Ask an admin to click Index for the files once.";
+        return new Response(JSON.stringify({ reply: uploadedButUnreadable, temporary: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 
