@@ -30,7 +30,7 @@ const MAX_CHAT_MESSAGES = 8;
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const GEMINI_FILE_CACHE_TTL_MS = 45 * 60 * 1000;
-const GEMINI_GENERATE_MODEL = "gemini-2.0-flash";
+const GEMINI_GENERATE_MODEL = "gemini-2.5-flash";
 
 type CacheEntry = { at: number; text: string };
 type GeminiFileRef = { uri: string; mimeType: string; name: string; resourceName?: string };
