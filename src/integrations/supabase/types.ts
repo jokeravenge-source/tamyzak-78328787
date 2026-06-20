@@ -910,6 +910,13 @@ export type Database = {
         Returns: boolean
       }
       increment_site_visits: { Args: never; Returns: number }
+      list_subject_chapters: {
+        Args: { _subject: string }
+        Returns: {
+          chapter: string
+          has_files: boolean
+        }[]
+      }
       set_site_visits: { Args: { _count: number }; Returns: number }
     }
     Enums: {

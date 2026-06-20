@@ -288,19 +288,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     if (tab !== "aifiles") return;
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase.storage.from("files").list(aiSubject, { limit: 200 });
+      const { data, error } = await supabase.rpc("list_subject_chapters", { _subject: aiSubject });
       if (cancelled || error) return;
-      const entries = data ?? [];
-      const subfolders = entries
-        .filter((e: { name: string; id?: string | null }) => e.id === null && e.name && !e.name.startsWith("."))
-        .map((e) => e.name);
-      const hasRootFiles = entries.some(
-        (e: { name: string; id?: string | null }) =>
-          e.id !== null && e.name && !e.name.startsWith(".") && e.name !== ".lovkeep",
-      );
-      const discovered = [...subfolders];
-      if (hasRootFiles) discovered.push("general");
-      const ordered = Array.from(new Set(discovered)).sort();
+      const ordered = ((data ?? []) as Array<{ chapter: string }>)
+        .map((r) => r.chapter)
+        .filter(Boolean)
+        .sort();
       setAiSubjectChapters(ordered);
       if (ordered.length > 0 && !ordered.includes(aiChapter)) {
         setAiChapter(ordered[0]);
