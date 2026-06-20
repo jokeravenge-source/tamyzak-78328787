@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     if (!subject || !chapter) {
       return new Response(JSON.stringify({ error: "subject and chapter required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const folder = `${subject}/${chapter}`;
+    const folder = chapter === "general" ? subject : `${subject}/${chapter}`;
 
     // Direct-text mode: client extracted the text (handles huge PDFs without storage limits).
     if (directText && file_name) {

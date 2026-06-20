@@ -260,11 +260,17 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [aiUploading, setAiUploading] = useState(false);
   const loadAi = async () => {
     setAiLoading(true);
+    const folder = aiChapter === "general" ? aiSubject : `${aiSubject}/${aiChapter}`;
     const [filesRes, idxRes] = await Promise.all([
-      supabase.storage.from("files").list(`${aiSubject}/${aiChapter}`, { limit: 100 }),
+      supabase.storage.from("files").list(folder, { limit: 200 }),
       supabase.from("subject_file_text").select("file_name,char_count,updated_at,chapter").eq("subject", aiSubject),
     ]);
-    setAiFiles((filesRes.data ?? []).filter((o) => o.name && !o.name.startsWith(".") && o.name !== ".lovkeep"));
+    setAiFiles(
+      (filesRes.data ?? []).filter(
+        (o: { name: string; id?: string | null }) =>
+          o.name && !o.name.startsWith(".") && o.name !== ".lovkeep" && o.id !== null,
+      ),
+    );
     const all = (idxRes.data ?? []) as IndexedRow[];
     setAiIndexed(all.filter((r) => r.chapter === aiChapter));
     const chs = Array.from(new Set(all.map((r) => r.chapter).filter(Boolean))).sort();
@@ -274,7 +280,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   useEffect(() => { if (tab === "aifiles") loadAi(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, aiSubject, aiChapter]);
   const uploadAi = async (file: File) => {
     setAiUploading(true);
-    const path = `${aiSubject}/${aiChapter}/${file.name}`;
+    const path = aiChapter === "general" ? `${aiSubject}/${file.name}` : `${aiSubject}/${aiChapter}/${file.name}`;
     const { error } = await supabase.storage.from("files").upload(path, file, { upsert: true });
     setAiUploading(false);
     if (error) return toast.error(error.message);
@@ -301,7 +307,8 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
   const deleteAi = async (name: string) => {
     if (!confirm(`Delete ${name} from storage and index?`)) return;
-    await supabase.storage.from("files").remove([`${aiSubject}/${aiChapter}/${name}`]).catch(() => {});
+    const delPath = aiChapter === "general" ? `${aiSubject}/${name}` : `${aiSubject}/${aiChapter}/${name}`;
+    await supabase.storage.from("files").remove([delPath]).catch(() => {});
     await supabase.from("subject_file_text").delete().eq("subject", aiSubject).eq("chapter", aiChapter).eq("file_name", name);
     toast.success("Deleted");
     loadAi();
