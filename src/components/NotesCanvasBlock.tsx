@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Pencil, Eraser, Square, Circle as CircleIcon, Minus as LineIcon,
   MoveUpRight, Tag, MousePointer2, Trash2, Maximize2,
+  PanelLeftClose, PanelLeft,
 } from "lucide-react";
 
 export type CanvasStroke = {
@@ -61,6 +62,7 @@ const NotesCanvasBlock = ({
   const [color, setColor] = useState<string>(PALETTE[0]);
   const [size, setSize] = useState<number>(3);
   const [labelBg, setLabelBg] = useState<string>(LABEL_BGS[0]);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [draft, setDraft] = useState<CanvasItem | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
@@ -243,79 +245,128 @@ const NotesCanvasBlock = ({
   const cursorFor = tool === "select" ? "default" : tool === "eraser" ? "cell" : tool === "label" ? "text" : "crosshair";
 
   return (
-    <div className="my-3 rounded-xl border border-border bg-card overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-2 border-b border-border bg-secondary/40">
-        {tools.map(({ id, icon: Icon, label }) => (
+    <div className="my-3 rounded-xl border border-border bg-card overflow-hidden flex" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Sidebar */}
+      <aside
+        className={`shrink-0 border-${isRTL ? "l" : "r"} border-border bg-secondary/40 flex flex-col transition-[width] duration-200 ${
+          sidebarOpen ? "w-44" : "w-12"
+        }`}
+      >
+        <div className="flex items-center justify-between p-2 border-b border-border">
+          {sidebarOpen && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+              {isRTL ? "الأدوات" : "Tools"}
+            </span>
+          )}
           <button
-            key={id}
-            onClick={() => { setTool(id); setEditingLabel(null); }}
-            title={label}
-            className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
-              tool === id ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground/80"
-            }`}
+            onClick={() => setSidebarOpen(v => !v)}
+            className="w-8 h-8 rounded-md hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground ml-auto"
+            title={sidebarOpen ? (isRTL ? "طي" : "Collapse") : (isRTL ? "فتح" : "Expand")}
           >
-            <Icon className="w-4 h-4" />
+            {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
           </button>
-        ))}
-        <span className="w-px h-6 bg-border mx-1" />
-        {/* Color palette */}
-        <div className="flex items-center gap-1">
-          {PALETTE.map(c => (
-            <button
-              key={c}
-              onClick={() => setColor(c)}
-              title={c}
-              className={`w-5 h-5 rounded-full border ${color === c ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "border-border"}`}
-              style={{ background: c }}
-            />
-          ))}
         </div>
-        <span className="w-px h-6 bg-border mx-1" />
-        {/* Size */}
-        <input
-          type="range" min={1} max={16} value={size}
-          onChange={(e) => setSize(Number(e.target.value))}
-          className="w-20 accent-primary"
-          title={isRTL ? "السمك" : "Thickness"}
-        />
-        {tool === "label" && (
-          <>
-            <span className="w-px h-6 bg-border mx-1" />
-            <div className="flex items-center gap-1">
-              {LABEL_BGS.map(c => (
+
+        <div className="flex-1 overflow-y-auto p-2 space-y-3">
+          {/* Tool buttons */}
+          <div className={sidebarOpen ? "grid grid-cols-2 gap-1" : "flex flex-col gap-1"}>
+            {tools.map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                onClick={() => { setTool(id); setEditingLabel(null); }}
+                title={label}
+                className={`h-9 rounded-md flex items-center ${sidebarOpen ? "justify-start gap-2 px-2" : "justify-center"} transition-colors ${
+                  tool === id ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground/80"
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span className="text-xs truncate">{label}</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* Colors */}
+          <div className="space-y-1.5">
+            {sidebarOpen && (
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                {isRTL ? "اللون" : "Color"}
+              </p>
+            )}
+            <div className={sidebarOpen ? "grid grid-cols-4 gap-1.5 px-1" : "flex flex-col items-center gap-1.5"}>
+              {PALETTE.map(c => (
                 <button
                   key={c}
-                  onClick={() => setLabelBg(c)}
+                  onClick={() => setColor(c)}
                   title={c}
-                  className={`w-5 h-5 rounded border ${labelBg === c ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "border-border"}`}
+                  className={`w-6 h-6 rounded-full border ${color === c ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "border-border"}`}
                   style={{ background: c }}
                 />
               ))}
             </div>
-          </>
-        )}
-        <div className="ml-auto flex items-center gap-1">
+          </div>
+
+          {/* Thickness */}
+          {sidebarOpen && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                {isRTL ? "السمك" : "Thickness"} <span className="text-foreground/60">({size})</span>
+              </p>
+              <input
+                type="range" min={1} max={16} value={size}
+                onChange={(e) => setSize(Number(e.target.value))}
+                className="w-full accent-primary"
+              />
+            </div>
+          )}
+
+          {/* Label bg */}
+          {tool === "label" && (
+            <div className="space-y-1.5">
+              {sidebarOpen && (
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                  {isRTL ? "خلفية الملصق" : "Label bg"}
+                </p>
+              )}
+              <div className={sidebarOpen ? "grid grid-cols-3 gap-1.5 px-1" : "flex flex-col items-center gap-1.5"}>
+                {LABEL_BGS.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setLabelBg(c)}
+                    title={c}
+                    className={`w-6 h-6 rounded border ${labelBg === c ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "border-border"}`}
+                    style={{ background: c }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="p-2 border-t border-border space-y-1">
           {selectedId && (
             <button
               onClick={() => { setItems(arr => arr.filter(i => i.id !== selectedId)); setSelectedId(null); setEditingLabel(null); }}
-              className="px-2 h-8 rounded-md text-xs inline-flex items-center gap-1 hover:bg-destructive/10 text-destructive"
+              className={`w-full h-8 rounded-md text-xs inline-flex items-center ${sidebarOpen ? "justify-start gap-2 px-2" : "justify-center"} hover:bg-destructive/10 text-destructive`}
               title={isRTL ? "حذف العنصر" : "Delete item"}
             >
-              <Trash2 className="w-3.5 h-3.5" /> {isRTL ? "حذف" : "Delete"}
+              <Trash2 className="w-3.5 h-3.5 shrink-0" />
+              {sidebarOpen && <span>{isRTL ? "حذف" : "Delete"}</span>}
             </button>
           )}
           <button
             onClick={() => { if (confirm(isRTL ? "مسح اللوحة؟" : "Clear canvas?")) setItems(() => []); }}
-            className="px-2 h-8 rounded-md text-xs hover:bg-secondary text-muted-foreground"
+            className={`w-full h-8 rounded-md text-xs inline-flex items-center ${sidebarOpen ? "justify-start gap-2 px-2" : "justify-center"} hover:bg-secondary text-muted-foreground`}
+            title={isRTL ? "مسح الكل" : "Clear all"}
           >
-            {isRTL ? "مسح الكل" : "Clear"}
+            <Eraser className="w-3.5 h-3.5 shrink-0" />
+            {sidebarOpen && <span>{isRTL ? "مسح الكل" : "Clear all"}</span>}
           </button>
         </div>
-      </div>
+      </aside>
 
       {/* Drawing area */}
-      <div className="relative bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]">
+      <div className="relative flex-1 min-w-0 bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]">
         <svg
           ref={svgRef}
           width="100%"
