@@ -500,6 +500,9 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const savedHideTimer = useRef<number | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [pdfSize, setPdfSize] = useState<"a4" | "letter" | "legal" | "a3" | "a5">("a4");
+  const [pdfOrientation, setPdfOrientation] = useState<"portrait" | "landscape">("portrait");
 
   // Drag-and-drop state
   const dragRef = useRef<{ type: "notebook" | "page"; id: string } | null>(null);
