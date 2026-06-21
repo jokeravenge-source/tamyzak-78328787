@@ -327,6 +327,11 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
 
           </>
         )}
+
+        {/* Excellence Companion (only on report screen) */}
+        <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
+          <ExcellenceCompanion language={language} embedded />
+        </div>
       </section>
     </main>
   );
