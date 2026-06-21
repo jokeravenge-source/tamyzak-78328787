@@ -525,6 +525,45 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
 
   const active = useMemo(() => notes.find((n) => n.id === activeId) || null, [notes, activeId]);
 
+  const exportPdf = useCallback(async () => {
+    if (!active || !exportRef.current) return;
+    setExporting(true);
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const node = exportRef.current;
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const pdf = new jsPDF({ unit: "pt", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 24;
+      const imgW = pageW - margin * 2;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      const sliceH = pageH - margin * 2;
+      let remaining = imgH;
+      let offset = 0;
+      while (remaining > 0) {
+        pdf.addImage(imgData, "JPEG", margin, margin - offset, imgW, imgH, undefined, "FAST");
+        remaining -= sliceH;
+        if (remaining > 0) { pdf.addPage(); offset += sliceH; }
+      }
+      const safeTitle = (active.title || "note").replace(/[^\p{L}\p{N}\-_ ]+/gu, "").trim() || "note";
+      pdf.save(`${safeTitle}.pdf`);
+      toast.success(language === "ar" ? "تم تصدير الملف" : "PDF exported");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  }, [active, language]);
+
   // Debounced autosave per note, with pending snapshot so we can flush on
   // navigation / unmount / page hide and never lose canvas edits.
   const saveTimers = useRef<Map<string, number>>(new Map());
