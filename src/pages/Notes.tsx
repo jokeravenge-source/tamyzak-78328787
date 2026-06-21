@@ -1273,15 +1273,74 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                   <span>{notebooks.find((n) => n.id === active.notebook_id)?.name ?? t.noNotebook}</span>
                   <ChevronDown className="w-3 h-3" />
                 </button>
-                <button
-                  onClick={exportPdf}
-                  disabled={exporting}
-                  className="ml-auto inline-flex items-center gap-2 h-8 px-3 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors disabled:opacity-60"
-                  title={language === "ar" ? "تصدير PDF" : "Export PDF"}
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>{exporting ? (language === "ar" ? "جارٍ التصدير…" : "Exporting…") : (language === "ar" ? "تصدير PDF" : "Export PDF")}</span>
-                </button>
+                <div className="ml-auto relative">
+                  <button
+                    onClick={() => setExportOpen((v) => !v)}
+                    disabled={exporting}
+                    className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors disabled:opacity-60"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{exporting ? (language === "ar" ? "جارٍ التصدير…" : "Exporting…") : (language === "ar" ? "تصدير PDF" : "Export PDF")}</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  {exportOpen && (
+                    <div className="absolute z-40 mt-1 end-0 right-0 w-64 rounded-xl bg-popover border border-border shadow-lg p-3 space-y-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                          {language === "ar" ? "حجم الصفحة" : "Page size"}
+                        </p>
+                        <select
+                          value={pdfSize}
+                          onChange={(e) => setPdfSize(e.target.value as any)}
+                          className="w-full h-9 px-2 rounded-md bg-card border border-border text-sm outline-none focus:border-primary/40"
+                        >
+                          <option value="a4">A4 (210 × 297 mm)</option>
+                          <option value="letter">Letter (8.5 × 11 in)</option>
+                          <option value="legal">Legal (8.5 × 14 in)</option>
+                          <option value="a3">A3 (297 × 420 mm)</option>
+                          <option value="a5">A5 (148 × 210 mm)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                          {language === "ar" ? "الاتجاه" : "Orientation"}
+                        </p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(["portrait", "landscape"] as const).map((o) => (
+                            <button
+                              key={o}
+                              onClick={() => setPdfOrientation(o)}
+                              className={`h-9 rounded-md text-xs border transition-colors ${
+                                pdfOrientation === o
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-card border-border hover:bg-secondary text-foreground/80"
+                              }`}
+                            >
+                              {o === "portrait"
+                                ? (language === "ar" ? "عمودي" : "Portrait")
+                                : (language === "ar" ? "أفقي" : "Landscape")}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1 border-t border-border">
+                        <button
+                          onClick={() => setExportOpen(false)}
+                          className="flex-1 h-9 rounded-md text-xs border border-border hover:bg-secondary"
+                        >
+                          {language === "ar" ? "إلغاء" : "Cancel"}
+                        </button>
+                        <button
+                          onClick={async () => { setExportOpen(false); await exportPdf(); }}
+                          disabled={exporting}
+                          className="flex-1 h-9 rounded-md text-xs bg-primary text-primary-foreground font-semibold hover:opacity-95 disabled:opacity-60"
+                        >
+                          {language === "ar" ? "تنزيل" : "Download"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {moveMenuFor === active.id && (
                   <div className="absolute z-40 mt-1 w-64 max-h-72 overflow-y-auto rounded-xl bg-popover border border-border shadow-lg p-1">
                     <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t.moveTo}</p>
