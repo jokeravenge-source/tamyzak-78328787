@@ -32,14 +32,12 @@ const AppSidebar = ({
     { key: "more",        icon: MoreHorizontal, labelEn: "More",     labelAr: "المزيد" },
   ];
 
-  const sideClass = isRTL ? "right-2" : "left-2";
-
   return (
     <aside
-      className={`fixed top-1/2 -translate-y-1/2 ${sideClass} z-40 hidden md:flex flex-col rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-lg transition-[width] duration-200 ${
+      className={`fixed top-1/2 -translate-y-1/2 left-2 z-40 hidden md:flex flex-col rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-lg transition-[width] duration-200 ${
         open ? "w-44" : "w-12"
       }`}
-      dir={isRTL ? "rtl" : "ltr"}
+      dir="ltr"
     >
       <button
         onClick={() => setOpen(v => !v)}
