@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Clock, Target, Trophy, CalendarDays, GraduationCap, Brain, ListChecks, CheckCircle2, Circle } from "lucide-react";
+import { Clock, Target, Trophy, CalendarDays, GraduationCap, Brain, ListChecks, CheckCircle2, Circle, Lock, Wrench, Hourglass } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 
@@ -14,27 +14,62 @@ type Snapshot = {
   last_report: any;
   todays_todos?: Array<{ id: string; text: string; done: boolean; day?: string }>;
   channel?: string;
+  today_minutes?: number;
+  today_seconds?: number;
+  today_per_subject?: Record<string, { minutes: number; sessions: number; missions: number }>;
+  tools_used_today?: Array<{ feature: string; count: number }>;
+  questions_solved_today?: number;
+};
+
+const TOOL_LABELS: Record<string, string> = {
+  mcq: "MCQ practice",
+  "generate-mcq": "MCQ generator",
+  agent: "Subject AI agent",
+  video: "Video notes",
+  "video-notes": "Video notes",
+  "essay-coach": "Essay coach",
+  essay: "Essay",
+  english_essay: "English essay check",
+  "hadith-verify": "Hadith verify",
+  "poem-verify": "Poem verify",
+  "surah-verify": "Surah verify",
 };
 
 export default function ParentFollow({ token }: { token: string }) {
   const [data, setData] = useState<Snapshot | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [code, setCode] = useState<string>(() => sessionStorage.getItem(`pf_code_${token}`) ?? "");
+  const [unlocked, setUnlocked] = useState<boolean>(() => !!sessionStorage.getItem(`pf_code_${token}`));
+  const [submitting, setSubmitting] = useState(false);
 
-  const fetchSnapshot = async () => {
-    const { data: d, error } = await supabase.functions.invoke("parent-follow-view", { body: { token } });
+  const fetchSnapshot = async (codeArg?: string) => {
+    const c = codeArg ?? code;
+    const { data: d, error } = await supabase.functions.invoke("parent-follow-view", { body: { token, code: c } });
     if (error) { setErr(error.message); return null; }
-    if ((d as any)?.error) { setErr((d as any).error); return null; }
+    if ((d as any)?.error) {
+      if ((d as any).error === "code_required") {
+        sessionStorage.removeItem(`pf_code_${token}`);
+        setUnlocked(false);
+        setErr("Incorrect access code. Ask the student for the 6-digit code shown in their app.");
+        return null;
+      }
+      setErr((d as any).error);
+      return null;
+    }
     setData(d as Snapshot);
+    setErr(null);
     return d as Snapshot;
   };
 
   useEffect(() => {
+    if (!unlocked) return;
     (async () => {
+      setLoading(true);
       await fetchSnapshot();
       setLoading(false);
     })();
-  }, [token]);
+  }, [token, unlocked]);
 
   // Live updates: subscribe to the student's broadcast channel and refetch on changes.
   useEffect(() => {
@@ -46,6 +81,48 @@ export default function ParentFollow({ token }: { token: string }) {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [data?.channel]);
+
+  const submitCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = code.trim();
+    if (clean.length < 4) { setErr("Enter the access code"); return; }
+    setSubmitting(true);
+    const res = await fetchSnapshot(clean);
+    setSubmitting(false);
+    if (res) {
+      sessionStorage.setItem(`pf_code_${token}`, clean);
+      setUnlocked(true);
+    }
+  };
+
+  if (!unlocked) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <form onSubmit={submitCode} className="w-full max-w-sm rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-8 space-y-5 text-center">
+          <div className="inline-flex w-14 h-14 rounded-2xl bg-primary/15 items-center justify-center mx-auto">
+            <Lock className="w-7 h-7 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Parent access</h1>
+            <p className="text-sm text-muted-foreground mt-1">Enter the 6-digit access code your student gave you.</p>
+          </div>
+          <input
+            inputMode="numeric"
+            autoFocus
+            maxLength={8}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            placeholder="••••••"
+            className="w-full h-14 text-center text-2xl tracking-[0.6em] rounded-xl border border-white/10 bg-background/60 outline-none focus:border-primary/60"
+          />
+          {err && <p className="text-sm text-red-400">{err}</p>}
+          <button type="submit" disabled={submitting} className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50">
+            {submitting ? "Checking…" : "Unlock"}
+          </button>
+        </form>
+      </main>
+    );
+  }
 
   if (loading) return <main className="min-h-screen flex items-center justify-center"><div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /></main>;
   if (err || !data) return (
@@ -59,6 +136,10 @@ export default function ParentFollow({ token }: { token: string }) {
 
   const max = Math.max(1, ...data.last_7_days.map((d) => d.minutes));
   const r = data.last_report;
+  const todayHours = ((data.today_seconds ?? 0) / 3600);
+  const perSubject = Object.entries(data.today_per_subject ?? {}).sort((a, b) => b[1].minutes - a[1].minutes);
+  const tools = data.tools_used_today ?? [];
+  const totalToolUses = tools.reduce((a, t) => a + t.count, 0);
 
   return (
     <main className="min-h-screen px-4 py-10 relative overflow-hidden">
@@ -75,10 +156,50 @@ export default function ParentFollow({ token }: { token: string }) {
         </header>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card icon={Clock} label="Focused today" value={`${r?.focused_minutes ?? 0} min`} />
+          <Card icon={Hourglass} label="Studied today" value={todayHours >= 1 ? `${todayHours.toFixed(1)} h` : `${data.today_minutes ?? 0} min`} />
           <Card icon={Trophy} label="Total points" value={`${data.total_points}`} />
           <Card icon={Target} label="Target grade" value={data.target_grade != null ? `${data.target_grade}%` : "—"} />
           <Card icon={CalendarDays} label="Days to exam" value={data.days_to_exam != null ? `${data.days_to_exam}` : "—"} />
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
+          <div className="flex items-center gap-2 mb-3"><Wrench className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">Today's activity</span></div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <Mini label="Study time" value={todayHours >= 1 ? `${todayHours.toFixed(1)} h` : `${data.today_minutes ?? 0} min`} />
+            <Mini label="Sessions" value={`${r?.sessions_count ?? 0}`} />
+            <Mini label="Tools used" value={`${tools.length}`} />
+            <Mini label="Questions solved" value={`${data.questions_solved_today ?? 0}`} />
+          </div>
+
+          {perSubject.length > 0 && (
+            <>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">By subject</div>
+              <ul className="space-y-1.5 mb-4">
+                {perSubject.map(([subj, v]) => (
+                  <li key={subj} className="flex justify-between text-sm">
+                    <span className="capitalize">{subj}</span>
+                    <span className="text-muted-foreground tabular-nums">{v.minutes} min · {v.sessions} sess · {v.missions} ✓</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {tools.length > 0 ? (
+            <>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Tools & AI features used ({totalToolUses} total)</div>
+              <ul className="space-y-1.5">
+                {tools.map((t) => (
+                  <li key={t.feature} className="flex justify-between text-sm">
+                    <span>{TOOL_LABELS[t.feature] ?? t.feature}</span>
+                    <span className="text-primary tabular-nums">× {t.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">No AI tools used yet today.</p>
+          )}
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
@@ -129,6 +250,14 @@ function Card({ icon: Icon, label, value }: { icon: any; label: string; value: s
     <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Icon className="w-3.5 h-3.5 text-primary" />{label}</div>
       <div className="text-2xl font-bold tabular-nums">{value}</div>
+    </div>
+  );
+}
+function Mini({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-background/40 p-3">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-lg font-bold tabular-nums">{value}</div>
     </div>
   );
 }

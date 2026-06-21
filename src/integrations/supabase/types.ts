@@ -396,6 +396,7 @@ export type Database = {
       }
       parent_follow_links: {
         Row: {
+          access_code: string
           created_at: string
           enabled: boolean
           id: string
@@ -405,6 +406,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          access_code?: string
           created_at?: string
           enabled?: boolean
           id?: string
@@ -414,6 +416,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          access_code?: string
           created_at?: string
           enabled?: boolean
           id?: string
