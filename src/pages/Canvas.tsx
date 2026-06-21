@@ -62,7 +62,13 @@ const Canvas = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [listOpen, setListOpen] = useState<boolean>(() => {
-    try { return localStorage.getItem("app_canvas_list_open") !== "0"; } catch { return true; }
+    try {
+      const v = localStorage.getItem("app_canvas_list_open");
+      if (v === "0") return false;
+      if (v === "1") return true;
+    } catch { /* ignore */ }
+    if (typeof window !== "undefined") return window.innerWidth >= 768;
+    return true;
   });
   useEffect(() => {
     try { localStorage.setItem("app_canvas_list_open", listOpen ? "1" : "0"); } catch { /* ignore */ }
@@ -212,8 +218,8 @@ const Canvas = ({
       </header>
 
       <div
-        className={`max-w-6xl mx-auto px-3 md:px-6 py-4 grid grid-cols-1 gap-4 ${
-          listOpen ? "md:grid-cols-[220px_1fr]" : "md:grid-cols-[40px_1fr]"
+        className={`max-w-6xl mx-auto px-2 sm:px-3 md:px-6 py-3 md:py-4 grid grid-cols-1 gap-3 md:gap-4 ${
+          listOpen ? "sm:grid-cols-[200px_1fr] md:grid-cols-[220px_1fr]" : "sm:grid-cols-[40px_1fr] md:grid-cols-[40px_1fr]"
         }`}
       >
         {/* Canvas list */}

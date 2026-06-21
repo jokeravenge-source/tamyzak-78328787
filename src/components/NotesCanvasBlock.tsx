@@ -63,7 +63,10 @@ const NotesCanvasBlock = ({
   const [color, setColor] = useState<string>(PALETTE[0]);
   const [size, setSize] = useState<number>(3);
   const [labelBg, setLabelBg] = useState<string>(LABEL_BGS[0]);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth >= 768;
+  });
   const [draft, setDraft] = useState<CanvasItem | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
@@ -277,11 +280,11 @@ const NotesCanvasBlock = ({
   }, []);
 
   return (
-    <div className="my-3 rounded-xl border border-border bg-card overflow-hidden flex" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="my-3 rounded-xl border border-border bg-card overflow-hidden flex max-w-full" dir={isRTL ? "rtl" : "ltr"}>
       {/* Sidebar */}
       <aside
         className={`shrink-0 border-${isRTL ? "l" : "r"} border-border bg-secondary/40 flex flex-col transition-[width] duration-200 ${
-          sidebarOpen ? "w-44" : "w-12"
+          sidebarOpen ? "w-36 sm:w-44" : "w-11"
         }`}
       >
         <div className="flex items-center justify-between p-2 border-b border-border">
