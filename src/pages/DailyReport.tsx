@@ -302,6 +302,24 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
                       {t.revoke}
                     </button>
                   </div>
+                  {accessCode && (
+                    <div className="mt-3 rounded-xl border border-primary/40 bg-primary/5 p-3">
+                      <div className="text-[11px] uppercase tracking-wider text-primary font-semibold mb-1">{t.accessCode}</div>
+                      <p className="text-[11px] text-muted-foreground mb-2">{t.accessCodeDesc}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 text-center text-2xl font-bold tabular-nums tracking-[0.4em] py-2 rounded-lg bg-background/60 border border-white/10">
+                          {accessCode}
+                        </div>
+                        <button onClick={copyCode} className="h-10 px-3 rounded-xl border border-primary/40 text-primary text-xs font-semibold inline-flex items-center gap-1">
+                          {codeCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                          {codeCopied ? t.copied : t.copy}
+                        </button>
+                      </div>
+                      <button onClick={regenerateCode} className="mt-2 text-[11px] text-muted-foreground hover:text-primary underline">
+                        {t.regenCode}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
