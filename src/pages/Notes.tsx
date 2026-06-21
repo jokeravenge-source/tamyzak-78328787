@@ -3,7 +3,7 @@ import {
   ArrowLeft, Plus, ChevronRight, ChevronDown, Trash2, FileText, Search,
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
   Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
-  BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download,
+  BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download, FileType2, Upload,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +14,7 @@ import NotesCanvasBlock, { type CanvasData } from "@/components/NotesCanvasBlock
 type BlockType =
   | "text" | "h1" | "h2" | "h3"
   | "bullet" | "numbered" | "todo"
-  | "toggle" | "quote" | "code" | "divider" | "canvas";
+  | "toggle" | "quote" | "code" | "divider" | "canvas" | "pdf";
 
 type Block = {
   id: string;
@@ -24,6 +24,9 @@ type Block = {
   collapsed?: boolean;
   indent?: number;
   canvas?: CanvasData;
+  pdfUrl?: string;
+  pdfName?: string;
+  pdfHeight?: number;
 };
 
 type Note = {
@@ -60,6 +63,7 @@ const SLASH_OPTIONS: { type: BlockType; labelEn: string; labelAr: string; Icon: 
   { type: "code",     labelEn: "Code",          labelAr: "كود",           Icon: Code,        descEn: "Code snippet",            descAr: "مقتطف كود" },
   { type: "divider",  labelEn: "Divider",       labelAr: "فاصل",          Icon: Minus,       descEn: "Visual separator",        descAr: "خط فاصل" },
   { type: "canvas",   labelEn: "Drawing canvas",labelAr: "لوحة رسم",      Icon: Palette,     descEn: "Pen, shapes, labels",     descAr: "قلم، أشكال، ملصقات" },
+  { type: "pdf",      labelEn: "PDF",           labelAr: "ملف PDF",       Icon: FileType2,   descEn: "Embed a PDF file",        descAr: "إدراج ملف PDF" },
 ];
 
 const ICONS = ["📄","📝","📚","📒","📓","📕","📗","📘","📙","🧠","💡","⭐","🎯","🔥","🚀","🌱","🌟","✨","🧪","🧬","🔬","📊","📈","💻","🎨","🎵","⚽","🏆","💎","🦄","🐱","🐶","🌈","☕","🍎","🍕"];
