@@ -490,52 +490,6 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const exportRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
 
-  const exportPdf = useCallback(async () => {
-    if (!active || !exportRef.current) return;
-    setExporting(true);
-    try {
-      // Make sure any pending edits are flushed first
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf"),
-      ]);
-      const node = exportRef.current;
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
-        useCORS: true,
-      });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      const pdf = new jsPDF({ unit: "pt", format: "a4" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 24;
-      const imgW = pageW - margin * 2;
-      const imgH = (canvas.height * imgW) / canvas.width;
-      let y = margin;
-      let remaining = imgH;
-      // Multi-page slicing: redraw the same image with vertical offset
-      let offset = 0;
-      const sliceH = pageH - margin * 2;
-      while (remaining > 0) {
-        pdf.addImage(imgData, "JPEG", margin, y - offset, imgW, imgH, undefined, "FAST");
-        remaining -= sliceH;
-        if (remaining > 0) {
-          pdf.addPage();
-          offset += sliceH;
-          y = margin;
-        }
-      }
-      const safeTitle = (active.title || "note").replace(/[^\p{L}\p{N}\-_ ]+/gu, "").trim() || "note";
-      pdf.save(`${safeTitle}.pdf`);
-      toast.success(language === "ar" ? "تم تصدير الملف" : "PDF exported");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Export failed");
-    } finally {
-      setExporting(false);
-    }
-  }, [active, language]);
-
   // Drag-and-drop state
   const dragRef = useRef<{ type: "notebook" | "page"; id: string } | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
