@@ -1173,6 +1173,19 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
               ))
             )}
           </div>
+          {saveState !== "idle" && (
+            <span
+              className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
+                saveState === "saving"
+                  ? "text-muted-foreground border-border bg-secondary/60"
+                  : "text-primary border-primary/30 bg-primary/10"
+              }`}
+            >
+              {saveState === "saving"
+                ? (isRTL ? "جارٍ الحفظ…" : "Saving…")
+                : (isRTL ? "تم الحفظ" : "Saved")}
+            </span>
+          )}
         </div>
 
         {/* Content */}
