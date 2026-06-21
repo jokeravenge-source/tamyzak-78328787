@@ -19,6 +19,40 @@ function dateNDaysAgo(n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+const DAY_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DAY_AR = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+function todayNames(dateIso: string): { en: string; ar: string } {
+  const d = new Date(`${dateIso}T00:00:00Z`);
+  const i = d.getUTCDay();
+  return { en: DAY_EN[i], ar: DAY_AR[i] };
+}
+function normalizeDay(s?: string): string {
+  return (s || "").trim().toLowerCase();
+}
+
+async function loadTodayTodos(admin: any, userId: string, dateIso: string) {
+  try {
+    const { data } = await admin
+      .from("student_todos").select("items").eq("user_id", userId).maybeSingle();
+    const items: Array<{ id: string; text: string; done: boolean; day?: string }> =
+      Array.isArray(data?.items) ? data.items : [];
+    const names = todayNames(dateIso);
+    const matches = (d?: string) => {
+      if (!d) return true;
+      const n = normalizeDay(d);
+      return n === normalizeDay(names.en) || n === normalizeDay(names.ar);
+    };
+    const today = items.filter((i) => matches(i.day));
+    const total = today.length;
+    const done = today.filter((i) => i.done).length;
+    const pending = today.filter((i) => !i.done).map((i) => i.text).slice(0, 10);
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    return { total, done, pending, pct, items_today: today };
+  } catch {
+    return { total: 0, done: 0, pending: [], pct: 0, items_today: [] };
+  }
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders });
 }
@@ -47,7 +81,22 @@ Deno.serve(async (req) => {
       const { data: cached } = await admin
         .from("daily_reports").select("*")
         .eq("user_id", userId).eq("report_date", date).eq("language", language).maybeSingle();
-      if (cached && cached.ai_summary) return json({ report: cached, cached: true });
+      if (cached && cached.ai_summary) {
+        const todoSnap = await loadTodayTodos(admin, userId, date);
+        const { data: prof0 } = await admin
+          .from("student_profile").select("exam_date, weekly_goal_hours").eq("user_id", userId).maybeSingle();
+        let dte: number | null = null;
+        if (prof0?.exam_date) {
+          const dx = (new Date(prof0.exam_date).getTime() - new Date(date).getTime()) / 86400000;
+          dte = Math.max(0, Math.round(dx));
+        }
+        const dtm = prof0?.weekly_goal_hours ? Math.round((prof0.weekly_goal_hours * 60) / 7) : 120;
+        return json({
+          report: { ...cached, todo_today: todoSnap },
+          meta: { days_to_exam: dte, daily_target_minutes: dtm },
+          cached: true,
+        });
+      }
     }
 
     // Pull today's sessions
@@ -93,6 +142,9 @@ Deno.serve(async (req) => {
     }
     const dailyTargetMin = profile?.weekly_goal_hours ? Math.round((profile.weekly_goal_hours * 60) / 7) : 120;
 
+    // Today's to-do list snapshot
+    const todoSnap = await loadTodayTodos(admin, userId, date);
+
     // AI call
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     let aiSummary = "";
@@ -103,10 +155,14 @@ Deno.serve(async (req) => {
     if (apiKey) {
       const ar = language === "ar";
       const system = ar
-        ? `أنت مدرّب دراسي شخصي. أعطِ ملاحظات قصيرة وعملية باللغة العربية فقط. أعد JSON صالحاً فقط بالشكل: {"summary":"...","strengths":["..."],"weaknesses":["..."],"plan":["..."]}. كل عنصر جملة قصيرة. الخطة 3 مهام محددة لغد.`
-        : `You are a personal study coach. Give short, practical feedback in English only. Return ONLY valid JSON like: {"summary":"...","strengths":["..."],"weaknesses":["..."],"plan":["..."]}. Each item is a short sentence. Plan = 3 concrete tasks for tomorrow.`;
+        ? `أنت مدرّب دراسي شخصي. ركّز ملاحظاتك على قائمة المهام اليومية وكم اقترب الطالب من هدفه (نسبة الإنجاز وأيام الامتحان). أعد JSON صالحاً فقط بالشكل: {"summary":"...","strengths":["..."],"weaknesses":["..."],"plan":["..."]}. الملخص جملة أو اثنتان تذكر فيهما تقدّم اليوم في القائمة والقرب من الهدف. نقاط الضعف = المهام المتبقية اليوم. الخطة = 3 خطوات لإنهاء مهام اليوم.`
+        : `You are a personal study coach. Center your feedback on the student's TODAY to-do list and how close they are to their goal (completion % and days to exam). Return ONLY valid JSON: {"summary":"...","strengths":["..."],"weaknesses":["..."],"plan":["..."]}. Summary = 1–2 sentences naming today's progress on the list and proximity to the goal. Weaknesses = remaining tasks for today. Plan = 3 concrete steps to finish today's tasks before the day ends.`;
       const userPayload = {
         date,
+        todo_today_total: todoSnap.total,
+        todo_today_done: todoSnap.done,
+        todo_today_completion_pct: todoSnap.pct,
+        todo_today_pending: todoSnap.pending,
         focused_minutes_today: focusedMinutes,
         daily_target_minutes: dailyTargetMin,
         missions_completed_today: missionsCompleted,
@@ -169,7 +225,7 @@ Deno.serve(async (req) => {
     if (error) return json({ error: error.message }, 500);
 
     return json({
-      report: saved,
+      report: { ...saved, todo_today: todoSnap },
       meta: { days_to_exam: daysToExam, daily_target_minutes: dailyTargetMin, last_7_days_minutes: last7Minutes },
     });
   } catch (e) {
