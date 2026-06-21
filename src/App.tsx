@@ -178,16 +178,6 @@ const App = () => {
           .eq("role", "admin")
           .maybeSingle()
           .then(({ data: r }) => setIsAdmin(!!r));
-        supabase
-          .from("student_profile")
-          .select("onboarded, exam_date")
-          .eq("user_id", data.session.user.id)
-          .maybeSingle()
-          .then(({ data: p }) => {
-            const today = new Date().toISOString().slice(0, 10);
-            const examPassed = !!p?.exam_date && p.exam_date <= today;
-            setNeedsOnboarding(!p?.onboarded || examPassed);
-          });
       }
       setAuthLoading(false);
     });
@@ -269,13 +259,13 @@ const App = () => {
       <PointsAwardOverlay language={language ?? "en"} />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
-      {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
+      {authed && language && authRole !== "admin" && tgVerified && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
+      {authed && language && authRole !== "admin" && tgVerified && (
         <ExcellenceCompanion language={language} />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
+      {authed && language && authRole !== "admin" && tgVerified && (
         <CompanionWelcomeTrigger />
       )}
       {!authRole ? (
@@ -294,8 +284,6 @@ const App = () => {
         <TelegramGate onUnlock={() => setTgVerified(true)} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
-      ) : needsOnboarding ? (
-        <Onboarding language={language} onDone={() => setNeedsOnboarding(false)} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
           language={language}
