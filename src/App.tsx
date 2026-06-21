@@ -46,7 +46,7 @@ import EnglishEssays from "./pages/EnglishEssays";
 import EnglishIsqat from "./pages/EnglishIsqat";
 import DailyReport from "./pages/DailyReport";
 import Notes from "./pages/Notes";
-import Onboarding from "./pages/Onboarding";
+// Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
@@ -92,7 +92,6 @@ const App = () => {
   const [authed, setAuthed] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [tgVerified, setTgVerified] = useState<boolean>(
     () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1",
   );
@@ -159,19 +158,8 @@ const App = () => {
           .eq("role", "admin")
           .maybeSingle()
           .then(({ data }) => setIsAdmin(!!data));
-        supabase
-          .from("student_profile")
-          .select("onboarded, exam_date")
-          .eq("user_id", session.user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            const today = new Date().toISOString().slice(0, 10);
-            const examPassed = !!data?.exam_date && data.exam_date <= today;
-            setNeedsOnboarding(!data?.onboarded || examPassed);
-          });
       } else {
         setIsAdmin(false);
-        setNeedsOnboarding(false);
       }
     });
     supabase.auth.getSession().then(({ data, error }) => {
@@ -190,16 +178,6 @@ const App = () => {
           .eq("role", "admin")
           .maybeSingle()
           .then(({ data: r }) => setIsAdmin(!!r));
-        supabase
-          .from("student_profile")
-          .select("onboarded, exam_date")
-          .eq("user_id", data.session.user.id)
-          .maybeSingle()
-          .then(({ data: p }) => {
-            const today = new Date().toISOString().slice(0, 10);
-            const examPassed = !!p?.exam_date && p.exam_date <= today;
-            setNeedsOnboarding(!p?.onboarded || examPassed);
-          });
       }
       setAuthLoading(false);
     });
@@ -281,13 +259,13 @@ const App = () => {
       <PointsAwardOverlay language={language ?? "en"} />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
-      {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
+      {authed && language && authRole !== "admin" && tgVerified && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
+      {authed && language && authRole !== "admin" && tgVerified && (
         <ExcellenceCompanion language={language} />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
+      {authed && language && authRole !== "admin" && tgVerified && (
         <CompanionWelcomeTrigger />
       )}
       {!authRole ? (
@@ -306,8 +284,6 @@ const App = () => {
         <TelegramGate onUnlock={() => setTgVerified(true)} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
-      ) : needsOnboarding ? (
-        <Onboarding language={language} onDone={() => setNeedsOnboarding(false)} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
           language={language}
