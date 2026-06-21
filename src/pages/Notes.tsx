@@ -1228,6 +1228,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                     onSlash={(rect) => setSlash({ blockId: b.id, x: rect.left, y: rect.bottom + window.scrollY })}
                     onToggleCheck={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, checked: !x.checked } : x))}
                     onToggleCollapse={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, collapsed: !x.collapsed } : x))}
+                    onCanvasChange={(data) => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, canvas: data } : x))}
                   />
                 ))}
 
