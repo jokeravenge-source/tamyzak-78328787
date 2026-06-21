@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, PartyPopper } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, PartyPopper, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { pushTodos, pullTodos } from "@/lib/todosSync";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 type Todo = { id: string; text: string; done: boolean; day?: string };
 
@@ -33,6 +35,11 @@ const t = {
     congratsBody: "You completed every task on your list. Take a deep breath — you earned it.",
     close: "Awesome",
     clear: "Clear all",
+    sendTelegram: "Send today's tasks to Telegram",
+    sending: "Sending…",
+    sentOk: "Sent to your Telegram ✓",
+    notLinked: "Link your Telegram first (Account → Telegram).",
+    sendFail: "Could not send to Telegram.",
   },
   ar: {
     title: "قائمة المهام",
@@ -46,6 +53,11 @@ const t = {
     congratsBody: "لقد أنجزت كل المهام في قائمتك. خذ نفسًا عميقًا — أنت تستحق ذلك.",
     close: "ممتاز",
     clear: "مسح الكل",
+    sendTelegram: "أرسل مهام اليوم إلى تيليجرام",
+    sending: "جاري الإرسال…",
+    sentOk: "تم الإرسال إلى تيليجرام ✓",
+    notLinked: "اربط تيليجرام أولاً من إعدادات الحساب.",
+    sendFail: "تعذّر الإرسال إلى تيليجرام.",
   },
 } as const;
 
@@ -56,6 +68,30 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   });
   const [input, setInput] = useState("");
   const [showCongrats, setShowCongrats] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const sendToTelegram = async () => {
+    if (sending) return;
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("todo-telegram-reminder", {
+        body: { language },
+      });
+      const err = (error as { message?: string } | null)?.message
+        || (data as { error?: string } | null)?.error;
+      if (err === "telegram_not_linked") {
+        toast({ title: text.notLinked, variant: "destructive" });
+      } else if (err) {
+        toast({ title: text.sendFail, description: err, variant: "destructive" });
+      } else {
+        toast({ title: text.sentOk });
+      }
+    } catch (e) {
+      toast({ title: text.sendFail, description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
 
   useEffect(() => {
     const onChange = () => {
@@ -143,6 +179,15 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             <Plus className="w-4 h-4" />{text.add}
           </button>
         </form>
+
+        <button
+          onClick={sendToTelegram}
+          disabled={sending}
+          className="w-full mb-4 h-11 rounded-2xl bg-secondary/60 border border-white/10 hover:border-primary/40 text-sm font-semibold inline-flex items-center justify-center gap-2 transition disabled:opacity-60"
+        >
+          <Send className="w-4 h-4" />
+          {sending ? text.sending : text.sendTelegram}
+        </button>
 
         {todos.length > 0 && (
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-3 px-1">
