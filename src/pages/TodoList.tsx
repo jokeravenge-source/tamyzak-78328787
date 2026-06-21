@@ -2,22 +2,12 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, PartyPopper } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
-import { pushTodos } from "@/lib/todosSync";
+import { pushTodos, pullTodos } from "@/lib/todosSync";
 
 type Todo = { id: string; text: string; done: boolean; day?: string };
 
 const STORAGE_KEY = "app_todos_v1";
 const CELEBRATED_KEY = "app_todos_celebrated_v1";
-const WEEK_KEY = "app_todos_week_v1";
-
-function getISOWeek(d = new Date()): string {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const day = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return `${date.getUTCFullYear()}-W${weekNo}`;
-}
 
 const DAY_ORDER_EN = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 const DAY_ORDER_AR = ["السبت", "الأحد", "الإثنين", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
@@ -62,14 +52,6 @@ const t = {
 const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const text = t[language];
   const [todos, setTodos] = useState<Todo[]>(() => {
-    const currentWeek = getISOWeek();
-    const storedWeek = localStorage.getItem(WEEK_KEY);
-    if (storedWeek !== currentWeek) {
-      localStorage.setItem(WEEK_KEY, currentWeek);
-      localStorage.setItem(STORAGE_KEY, "[]");
-      localStorage.removeItem(CELEBRATED_KEY);
-      return [];
-    }
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
   });
   const [input, setInput] = useState("");
@@ -81,6 +63,23 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     };
     window.addEventListener("app:todos-changed", onChange);
     return () => window.removeEventListener("app:todos-changed", onChange);
+  }, []);
+
+  // Restore todos saved to the user's account on first load (so they persist
+  // across browsers/devices and don't disappear after closing the site).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const remote = await pullTodos();
+      if (cancelled || !remote) return;
+      const localRaw = localStorage.getItem(STORAGE_KEY);
+      const local: Todo[] = (() => { try { return JSON.parse(localRaw || "[]"); } catch { return []; } })();
+      // Merge: keep all remote items, append any local items not present remotely (by id).
+      const seen = new Set(remote.map((r) => r.id));
+      const merged = [...remote, ...local.filter((l) => !seen.has(l.id))] as Todo[];
+      setTodos(merged);
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {

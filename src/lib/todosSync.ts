@@ -28,3 +28,20 @@ export async function pushTodos(items: SyncedTodo[]) {
     } catch { /* noop */ }
   } catch { /* noop */ }
 }
+
+export async function pullTodos(): Promise<SyncedTodo[] | null> {
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return null;
+    const { data, error } = await supabase
+      .from("student_todos")
+      .select("items")
+      .eq("user_id", u.user.id)
+      .maybeSingle();
+    if (error || !data) return null;
+    const items = (data as { items: unknown }).items;
+    return Array.isArray(items) ? (items as SyncedTodo[]) : null;
+  } catch {
+    return null;
+  }
+}
