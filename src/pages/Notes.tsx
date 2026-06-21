@@ -3,18 +3,19 @@ import {
   ArrowLeft, Plus, ChevronRight, ChevronDown, Trash2, FileText, Search,
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
   Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
-  BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download,
+  BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download, FileType2, Upload,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import NotesCanvasBlock, { type CanvasData } from "@/components/NotesCanvasBlock";
+import NotesPdfBlock from "@/components/NotesPdfBlock";
 
 type BlockType =
   | "text" | "h1" | "h2" | "h3"
   | "bullet" | "numbered" | "todo"
-  | "toggle" | "quote" | "code" | "divider" | "canvas";
+  | "toggle" | "quote" | "code" | "divider" | "canvas" | "pdf";
 
 type Block = {
   id: string;
@@ -24,6 +25,9 @@ type Block = {
   collapsed?: boolean;
   indent?: number;
   canvas?: CanvasData;
+  pdfUrl?: string;
+  pdfName?: string;
+  pdfHeight?: number;
 };
 
 type Note = {
@@ -60,6 +64,7 @@ const SLASH_OPTIONS: { type: BlockType; labelEn: string; labelAr: string; Icon: 
   { type: "code",     labelEn: "Code",          labelAr: "كود",           Icon: Code,        descEn: "Code snippet",            descAr: "مقتطف كود" },
   { type: "divider",  labelEn: "Divider",       labelAr: "فاصل",          Icon: Minus,       descEn: "Visual separator",        descAr: "خط فاصل" },
   { type: "canvas",   labelEn: "Drawing canvas",labelAr: "لوحة رسم",      Icon: Palette,     descEn: "Pen, shapes, labels",     descAr: "قلم، أشكال، ملصقات" },
+  { type: "pdf",      labelEn: "PDF",           labelAr: "ملف PDF",       Icon: FileType2,   descEn: "Embed a PDF file",        descAr: "إدراج ملف PDF" },
 ];
 
 const ICONS = ["📄","📝","📚","📒","📓","📕","📗","📘","📙","🧠","💡","⭐","🎯","🔥","🚀","🌱","🌟","✨","🧪","🧬","🔬","📊","📈","💻","🎨","🎵","⚽","🏆","💎","🦄","🐱","🐶","🌈","☕","🍎","🍕"];
@@ -140,7 +145,7 @@ const copy = {
 // ---------- Block row ----------
 const BlockRow = ({
   block, language, onChange, onEnter, onBackspaceEmpty, onIndent, onOutdent, onSlash,
-  onToggleCheck, onToggleCollapse, onCanvasChange, autoFocus,
+  onToggleCheck, onToggleCollapse, onCanvasChange, onPdfChange, onRemove, autoFocus,
 }: {
   block: Block;
   language: AppLanguage;
@@ -153,6 +158,8 @@ const BlockRow = ({
   onToggleCheck: () => void;
   onToggleCollapse: () => void;
   onCanvasChange: (data: CanvasData) => void;
+  onPdfChange: (patch: { pdfUrl?: string; pdfName?: string; pdfHeight?: number }) => void;
+  onRemove: () => void;
   autoFocus?: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -160,7 +167,7 @@ const BlockRow = ({
 
   // Set initial text once per id/type change
   useEffect(() => {
-    if (block.type === "canvas") return;
+    if (block.type === "canvas" || block.type === "pdf") return;
     if (!ref.current) return;
     if (ref.current.innerText !== block.text) {
       ref.current.innerText = block.text;
@@ -168,7 +175,7 @@ const BlockRow = ({
   }, [block.id, block.type]);
 
   useEffect(() => {
-    if (autoFocus && ref.current && block.type !== "canvas") {
+    if (autoFocus && ref.current && block.type !== "canvas" && block.type !== "pdf") {
       ref.current.focus();
       // place caret end
       const sel = window.getSelection();
@@ -182,6 +189,10 @@ const BlockRow = ({
 
   if (block.type === "canvas") {
     return <NotesCanvasBlock data={block.canvas} onChange={onCanvasChange} language={language} />;
+  }
+
+  if (block.type === "pdf") {
+    return <NotesPdfBlock block={block} language={language} onChange={onPdfChange} onRemove={onRemove} />;
   }
 
   if (block.type === "divider") {
@@ -489,6 +500,9 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const savedHideTimer = useRef<number | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [pdfSize, setPdfSize] = useState<"a4" | "letter" | "legal" | "a3" | "a5">("a4");
+  const [pdfOrientation, setPdfOrientation] = useState<"portrait" | "landscape">("portrait");
 
   // Drag-and-drop state
   const dragRef = useRef<{ type: "notebook" | "page"; id: string } | null>(null);
@@ -540,7 +554,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
         useCORS: true,
       });
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      const pdf = new jsPDF({ unit: "pt", format: "a4" });
+      const pdf = new jsPDF({ unit: "pt", format: pdfSize, orientation: pdfOrientation });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
       const margin = 24;
@@ -562,7 +576,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
     } finally {
       setExporting(false);
     }
-  }, [active, language]);
+  }, [active, language, pdfSize, pdfOrientation]);
 
   // Debounced autosave per note, with pending snapshot so we can flush on
   // navigation / unmount / page hide and never lose canvas edits.
@@ -1259,15 +1273,74 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                   <span>{notebooks.find((n) => n.id === active.notebook_id)?.name ?? t.noNotebook}</span>
                   <ChevronDown className="w-3 h-3" />
                 </button>
-                <button
-                  onClick={exportPdf}
-                  disabled={exporting}
-                  className="ml-auto inline-flex items-center gap-2 h-8 px-3 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors disabled:opacity-60"
-                  title={language === "ar" ? "تصدير PDF" : "Export PDF"}
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>{exporting ? (language === "ar" ? "جارٍ التصدير…" : "Exporting…") : (language === "ar" ? "تصدير PDF" : "Export PDF")}</span>
-                </button>
+                <div className="ml-auto relative">
+                  <button
+                    onClick={() => setExportOpen((v) => !v)}
+                    disabled={exporting}
+                    className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors disabled:opacity-60"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{exporting ? (language === "ar" ? "جارٍ التصدير…" : "Exporting…") : (language === "ar" ? "تصدير PDF" : "Export PDF")}</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  {exportOpen && (
+                    <div className="absolute z-40 mt-1 end-0 right-0 w-64 rounded-xl bg-popover border border-border shadow-lg p-3 space-y-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                          {language === "ar" ? "حجم الصفحة" : "Page size"}
+                        </p>
+                        <select
+                          value={pdfSize}
+                          onChange={(e) => setPdfSize(e.target.value as any)}
+                          className="w-full h-9 px-2 rounded-md bg-card border border-border text-sm outline-none focus:border-primary/40"
+                        >
+                          <option value="a4">A4 (210 × 297 mm)</option>
+                          <option value="letter">Letter (8.5 × 11 in)</option>
+                          <option value="legal">Legal (8.5 × 14 in)</option>
+                          <option value="a3">A3 (297 × 420 mm)</option>
+                          <option value="a5">A5 (148 × 210 mm)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                          {language === "ar" ? "الاتجاه" : "Orientation"}
+                        </p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(["portrait", "landscape"] as const).map((o) => (
+                            <button
+                              key={o}
+                              onClick={() => setPdfOrientation(o)}
+                              className={`h-9 rounded-md text-xs border transition-colors ${
+                                pdfOrientation === o
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-card border-border hover:bg-secondary text-foreground/80"
+                              }`}
+                            >
+                              {o === "portrait"
+                                ? (language === "ar" ? "عمودي" : "Portrait")
+                                : (language === "ar" ? "أفقي" : "Landscape")}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1 border-t border-border">
+                        <button
+                          onClick={() => setExportOpen(false)}
+                          className="flex-1 h-9 rounded-md text-xs border border-border hover:bg-secondary"
+                        >
+                          {language === "ar" ? "إلغاء" : "Cancel"}
+                        </button>
+                        <button
+                          onClick={async () => { setExportOpen(false); await exportPdf(); }}
+                          disabled={exporting}
+                          className="flex-1 h-9 rounded-md text-xs bg-primary text-primary-foreground font-semibold hover:opacity-95 disabled:opacity-60"
+                        >
+                          {language === "ar" ? "تنزيل" : "Download"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {moveMenuFor === active.id && (
                   <div className="absolute z-40 mt-1 w-64 max-h-72 overflow-y-auto rounded-xl bg-popover border border-border shadow-lg p-1">
                     <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t.moveTo}</p>
@@ -1351,6 +1424,11 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                     onToggleCheck={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, checked: !x.checked } : x))}
                     onToggleCollapse={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, collapsed: !x.collapsed } : x))}
                     onCanvasChange={(data) => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, canvas: data } : x))}
+                    onPdfChange={(patch) => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, ...patch } : x))}
+                    onRemove={() => setBlocks((blocks) => {
+                      const next = blocks.filter((x) => x.id !== b.id);
+                      return next.length ? next : [blankBlock()];
+                    })}
                   />
                 ))}
 
