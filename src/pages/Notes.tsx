@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import NotesCanvasBlock, { type CanvasData } from "@/components/NotesCanvasBlock";
+import NotesPdfBlock from "@/components/NotesPdfBlock";
 
 type BlockType =
   | "text" | "h1" | "h2" | "h3"
