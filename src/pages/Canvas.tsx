@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Pencil, Check, X, FileInput, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Check, X, FileInput, FileText, PanelLeftClose, PanelLeft } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import NotesCanvasBlock, { type CanvasData } from "@/components/NotesCanvasBlock";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +61,12 @@ const Canvas = ({
   const [userId, setUserId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
+  const [listOpen, setListOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem("app_canvas_list_open") !== "0"; } catch { return true; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("app_canvas_list_open", listOpen ? "1" : "0"); } catch { /* ignore */ }
+  }, [listOpen]);
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [notes, setNotes] = useState<NoteLite[]>([]);
@@ -205,9 +211,30 @@ const Canvas = ({
         <span className="ml-auto text-[11px] text-muted-foreground">{t.autosaved}</span>
       </header>
 
-      <div className="max-w-6xl mx-auto px-3 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4">
+      <div
+        className={`max-w-6xl mx-auto px-3 md:px-6 py-4 grid grid-cols-1 gap-4 ${
+          listOpen ? "md:grid-cols-[220px_1fr]" : "md:grid-cols-[40px_1fr]"
+        }`}
+      >
         {/* Canvas list */}
         <aside className="rounded-xl border border-border bg-card/60 p-2 h-fit">
+          <div className="flex items-center gap-1 mb-2">
+            <button
+              onClick={() => setListOpen(v => !v)}
+              className="w-7 h-7 rounded-md hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0"
+              aria-label={listOpen ? (isRTL ? "طي" : "Collapse") : (isRTL ? "فتح" : "Expand")}
+              title={listOpen ? (isRTL ? "طي" : "Collapse") : (isRTL ? "فتح" : "Expand")}
+            >
+              {listOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+            </button>
+            {listOpen && (
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground truncate">
+                {t.title}
+              </span>
+            )}
+          </div>
+          {listOpen ? (
+          <>
           <button
             onClick={createCanvas}
             className="w-full h-9 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1 hover:opacity-90"
@@ -281,6 +308,17 @@ const Canvas = ({
               );
             })}
           </div>
+          </>
+          ) : (
+            <button
+              onClick={createCanvas}
+              className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center mx-auto hover:opacity-90"
+              aria-label={t.newCanvas}
+              title={t.newCanvas}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
         </aside>
 
         {/* Editor */}
