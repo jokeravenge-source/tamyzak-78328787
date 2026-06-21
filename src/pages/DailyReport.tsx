@@ -16,6 +16,8 @@ const T = {
     exam: "Days to exam", noCoach: "Press refresh to get personalised AI feedback.",
     parent: "Parent follow-up", parentDesc: "Share this link so a parent can view your progress (read-only).",
     enable: "Enable parent link", revoke: "Revoke link", copy: "Copy link", copied: "Copied!",
+    accessCode: "Parent access code", accessCodeDesc: "Give your parent this 6-digit code. They'll need it after opening the link.",
+    regenCode: "Generate new code",
     min: "min",
     companion: "Excellence Companion", companionDesc: "Plan your week or work through a problem with AI.",
     todoToday: "Today's to-do list", todoDone: "done", todoOf: "of",
@@ -34,6 +36,8 @@ const T = {
     exam: "أيام للامتحان", noCoach: "اضغط على تحديث للحصول على ملاحظات بالذكاء الاصطناعي.",
     parent: "متابعة ولي الأمر", parentDesc: "شارك هذا الرابط ليتابع ولي الأمر تقدمك (للقراءة فقط).",
     enable: "تفعيل رابط ولي الأمر", revoke: "إلغاء الرابط", copy: "نسخ الرابط", copied: "تم النسخ!",
+    accessCode: "رمز دخول ولي الأمر", accessCodeDesc: "أعطِ ولي أمرك هذا الرمز المكوّن من 6 أرقام. سيحتاجه بعد فتح الرابط.",
+    regenCode: "توليد رمز جديد",
     min: "د",
     companion: "رفيق التميز", companionDesc: "نظّم أسبوعك أو حل مشكلتك مع الذكاء الاصطناعي.",
     todoToday: "قائمة مهام اليوم", todoDone: "مُنجز", todoOf: "من",
@@ -60,6 +64,8 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [accessCode, setAccessCode] = useState<string | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const load = async (force = false) => {
@@ -77,9 +83,10 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
   const loadToken = async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
-    const { data } = await supabase.from("parent_follow_links").select("token, enabled, revoked_at")
+    const { data } = await supabase.from("parent_follow_links").select("token, enabled, revoked_at, access_code")
       .eq("user_id", u.user.id).is("revoked_at", null).eq("enabled", true).maybeSingle();
     setToken(data?.token ?? null);
+    setAccessCode((data as any)?.access_code ?? null);
   };
 
   useEffect(() => { load(false); loadToken(); }, []);
@@ -88,10 +95,27 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     const newToken = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, "").slice(0, 32);
-    const { error } = await supabase.from("parent_follow_links").insert({ user_id: u.user.id, token: newToken });
+    const newCode = String(Math.floor(100000 + Math.random() * 900000));
+    const { data: ins, error } = await supabase
+      .from("parent_follow_links")
+      .insert({ user_id: u.user.id, token: newToken, access_code: newCode })
+      .select("access_code")
+      .single();
     if (error) { toast.error(error.message); return; }
     setToken(newToken);
+    setAccessCode((ins as any)?.access_code ?? newCode);
     toast.success(ar ? "تم التفعيل" : "Enabled");
+  };
+  const regenerateCode = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user || !token) return;
+    const newCode = String(Math.floor(100000 + Math.random() * 900000));
+    const { error } = await supabase.from("parent_follow_links")
+      .update({ access_code: newCode })
+      .eq("user_id", u.user.id).eq("token", token);
+    if (error) { toast.error(error.message); return; }
+    setAccessCode(newCode);
+    toast.success(ar ? "تم توليد رمز جديد" : "New code generated");
   };
   const revoke = async () => {
     if (!token) return;
@@ -99,6 +123,7 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
     if (!u.user) return;
     await supabase.from("parent_follow_links").update({ enabled: false, revoked_at: new Date().toISOString() }).eq("user_id", u.user.id).eq("token", token);
     setToken(null);
+    setAccessCode(null);
     toast.success(ar ? "تم الإلغاء" : "Revoked");
   };
   const copyLink = async () => {
@@ -107,6 +132,12 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
     await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+  const copyCode = async () => {
+    if (!accessCode) return;
+    await navigator.clipboard.writeText(accessCode);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 1500);
   };
 
   const focusedPct = meta && meta.daily_target_minutes

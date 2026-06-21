@@ -10,15 +10,18 @@ const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { token } = await req.json().catch(() => ({}));
+    const { token, code } = await req.json().catch(() => ({}));
     if (!token || typeof token !== "string") return json({ error: "missing_token" }, 400);
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const { data: link } = await admin.from("parent_follow_links")
-      .select("user_id, enabled, parent_name, revoked_at")
+      .select("user_id, enabled, parent_name, revoked_at, access_code")
       .eq("token", token).maybeSingle();
     if (!link || !link.enabled || link.revoked_at) return json({ error: "invalid_or_revoked" }, 404);
+    if (!code || typeof code !== "string" || String(code).trim() !== String(link.access_code ?? "").trim()) {
+      return json({ error: "code_required" }, 401);
+    }
 
     const userId = link.user_id;
     const [{ data: profile }, { data: studentProfile }, { data: report }, { data: todosRow }] = await Promise.all([
@@ -31,7 +34,7 @@ Deno.serve(async (req) => {
     // 7-day study sessions for chart
     const start = new Date(); start.setUTCDate(start.getUTCDate() - 6);
     const { data: sessions7 } = await admin.from("study_sessions")
-      .select("duration_seconds, created_at")
+      .select("duration_seconds, created_at, subject, mission, mission_completed, points")
       .eq("user_id", userId).gte("created_at", start.toISOString());
     const byDay: Record<string, number> = {};
     for (let i = 0; i < 7; i++) {
@@ -42,6 +45,30 @@ Deno.serve(async (req) => {
       const k = String(s.created_at).slice(0, 10);
       if (k in byDay) byDay[k] += Math.round((s.duration_seconds || 0) / 60);
     }
+
+    // Today's activity: study time + per-subject minutes + tools used (feature_usage)
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todaySessions = (sessions7 ?? []).filter((s: any) => String(s.created_at).slice(0, 10) === todayStr);
+    const todaySeconds = todaySessions.reduce((a: number, s: any) => a + (s.duration_seconds || 0), 0);
+    const todayPerSubject: Record<string, { minutes: number; sessions: number; missions: number }> = {};
+    for (const s of todaySessions as any[]) {
+      const subj = s.subject || "other";
+      if (!todayPerSubject[subj]) todayPerSubject[subj] = { minutes: 0, sessions: 0, missions: 0 };
+      todayPerSubject[subj].minutes += Math.round((s.duration_seconds || 0) / 60);
+      todayPerSubject[subj].sessions += 1;
+      if (s.mission_completed) todayPerSubject[subj].missions += 1;
+    }
+
+    const { data: usageRows } = await admin.from("feature_usage")
+      .select("feature").eq("user_id", userId).eq("used_on", todayStr);
+    const toolCounts: Record<string, number> = {};
+    for (const r of (usageRows ?? []) as any[]) {
+      toolCounts[r.feature] = (toolCounts[r.feature] || 0) + 1;
+    }
+    const tools_used_today = Object.entries(toolCounts)
+      .map(([feature, count]) => ({ feature, count }))
+      .sort((a, b) => b.count - a.count);
+    const questions_solved_today = (toolCounts["mcq"] || 0) + (toolCounts["generate-mcq"] || 0);
 
     // points total
     const { data: pts } = await admin.from("user_points").select("points").eq("user_id", userId);
@@ -78,6 +105,11 @@ Deno.serve(async (req) => {
       last_report: report ?? null,
       todays_todos: todaysTodos,
       all_todos: allItems,
+      today_seconds: todaySeconds,
+      today_minutes: Math.round(todaySeconds / 60),
+      today_per_subject: todayPerSubject,
+      tools_used_today,
+      questions_solved_today,
       channel: `todos:${userId}`,
     });
   } catch (e) {
