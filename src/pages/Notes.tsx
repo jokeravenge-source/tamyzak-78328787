@@ -1362,6 +1362,11 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                     onToggleCheck={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, checked: !x.checked } : x))}
                     onToggleCollapse={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, collapsed: !x.collapsed } : x))}
                     onCanvasChange={(data) => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, canvas: data } : x))}
+                    onPdfChange={(patch) => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, ...patch } : x))}
+                    onRemove={() => setBlocks((blocks) => {
+                      const next = blocks.filter((x) => x.id !== b.id);
+                      return next.length ? next : [blankBlock()];
+                    })}
                   />
                 ))}
 
