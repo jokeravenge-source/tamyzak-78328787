@@ -3,7 +3,7 @@ import {
   ArrowLeft, Plus, ChevronRight, ChevronDown, Trash2, FileText, Search,
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
   Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
-  BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette,
+  BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
