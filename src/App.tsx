@@ -262,9 +262,6 @@ const App = () => {
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
       {authed && language && authRole !== "admin" && tgVerified && (
-        <ExcellenceCompanion language={language} />
-      )}
-      {authed && language && authRole !== "admin" && tgVerified && (
         <CompanionWelcomeTrigger />
       )}
       {authed && language && authRole !== "admin" && tgVerified && (
