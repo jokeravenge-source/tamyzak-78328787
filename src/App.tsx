@@ -267,6 +267,13 @@ const App = () => {
       {authed && language && authRole !== "admin" && tgVerified && (
         <CompanionWelcomeTrigger />
       )}
+      {authed && language && authRole !== "admin" && tgVerified && (
+        <AppSidebar
+          language={language}
+          active={(menuChoice as SidebarKey | null) ?? "basics"}
+          onSelect={(k) => chooseMenu(k as MenuChoice)}
+        />
+      )}
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authLoading ? (
