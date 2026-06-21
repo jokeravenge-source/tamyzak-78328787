@@ -62,6 +62,7 @@ const NotesCanvasBlock = ({
   const [color, setColor] = useState<string>(PALETTE[0]);
   const [size, setSize] = useState<number>(3);
   const [labelBg, setLabelBg] = useState<string>(LABEL_BGS[0]);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [draft, setDraft] = useState<CanvasItem | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
