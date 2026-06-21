@@ -23,7 +23,6 @@ import Sessions from "./pages/Sessions";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
-import { TelegramGate, TELEGRAM_GATE_STORAGE_KEY } from "./components/TelegramGate";
 import AccountCenter from "./pages/AccountCenter";
 import Essay from "./pages/Essay";
 import VideoNotes from "./pages/VideoNotes";
@@ -92,9 +91,7 @@ const App = () => {
   const [authed, setAuthed] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [tgVerified, setTgVerified] = useState<boolean>(
-    () => typeof window !== "undefined" && localStorage.getItem(TELEGRAM_GATE_STORAGE_KEY) === "1",
-  );
+  const tgVerified = true;
   const [authRole, setAuthRole] = useState<AuthRole | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null) : null)
   );
@@ -280,8 +277,6 @@ const App = () => {
         <AdminDashboard onLogout={adminLogout} />
       ) : !authed ? (
         <Auth onAuthed={() => setAuthed(true)} onGoAdmin={() => chooseRole("admin")} />
-      ) : !tgVerified ? (
-        <TelegramGate onUnlock={() => setTgVerified(true)} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
       ) : !menuChoice || menuChoice === "basics" ? (

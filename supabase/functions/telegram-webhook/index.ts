@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
-const CHANNELS = ["@a6th_DHS", "@sad6ths", "@sadsworld"];
 
 async function deriveSecret(apiKey: string): Promise<string> {
   const data = new TextEncoder().encode(`telegram-webhook:${apiKey}`);
@@ -31,21 +30,6 @@ async function tg(method: string, body: unknown) {
   });
   const data = await res.json();
   return { ok: res.ok && data.ok, data, status: res.status };
-}
-
-async function checkAllChannels(tgUserId: number): Promise<{ ok: boolean; missing: string[]; error?: string }> {
-  const missing: string[] = [];
-  for (const ch of CHANNELS) {
-    const r = await tg("getChatMember", { chat_id: ch, user_id: tgUserId });
-    if (!r.ok) {
-      return { ok: false, missing, error: `Could not check ${ch}: ${JSON.stringify(r.data)}` };
-    }
-    const status = r.data?.result?.status;
-    if (!status || status === "left" || status === "kicked") {
-      missing.push(ch);
-    }
-  }
-  return { ok: missing.length === 0, missing };
 }
 
 Deno.serve(async (req) => {
@@ -105,38 +89,21 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: true }));
   }
 
-  const check = await checkAllChannels(fromId);
-  // On transient errors (e.g. bot not yet admin in a channel, Telegram throttling)
-  // preserve the user's existing verified state instead of flipping it to false.
-  const updatePayload: Record<string, unknown> = {
-    telegram_user_id: fromId,
-    telegram_username: username,
-    last_checked_at: new Date().toISOString(),
-    last_error: check.error ?? null,
-  };
-  if (!check.error) {
-    updatePayload.verified = check.ok;
-  }
   await supabase
     .from("telegram_verifications")
-    .update(updatePayload)
+    .update({
+      telegram_user_id: fromId,
+      telegram_username: username,
+      last_checked_at: new Date().toISOString(),
+      last_error: null,
+      verified: true,
+    })
     .eq("user_id", row.user_id);
 
-  if (check.ok) {
-    await tg("sendMessage", {
-      chat_id: chatId,
-      text: "✅ Verified! You're subscribed to all required channels. You can return to the app now.",
-    });
-  } else if (check.error) {
-    // Silent on transient errors — don't spam users with scary messages.
-    // The next /start or re-check will resolve it.
-    console.warn("checkAllChannels error for", fromId, check.error);
-  } else {
-    await tg("sendMessage", {
-      chat_id: chatId,
-      text: `❌ You're not yet subscribed to:\n${check.missing.join("\n")}\n\nJoin them, then send /start again here to re-check.`,
-    });
-  }
+  await tg("sendMessage", {
+    chat_id: chatId,
+    text: "✅ Linked! You can return to the app now.",
+  });
 
   return new Response(JSON.stringify({ ok: true }));
 });

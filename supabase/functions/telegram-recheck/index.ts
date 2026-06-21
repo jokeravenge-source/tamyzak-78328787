@@ -1,23 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
-const CHANNELS = ["@a6th_DHS", "@sad6ths", "@sadsworld"];
-
-async function tg(method: string, body: unknown) {
-  const res = await fetch(`${GATEWAY_URL}/${method}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
-      "X-Connection-Api-Key": Deno.env.get("TELEGRAM_API_KEY")!,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  return { ok: res.ok && data.ok, data };
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -49,19 +32,8 @@ Deno.serve(async (req) => {
       });
     }
 
+    const verified = true;
     const missing: string[] = [];
-    for (const ch of CHANNELS) {
-      const r = await tg("getChatMember", { chat_id: ch, user_id: row.telegram_user_id });
-      const status = r.data?.result?.status;
-      if (!r.ok) {
-        return new Response(JSON.stringify({ ok: false, linked: true, error: `Could not check ${ch}` }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (!status || status === "left" || status === "kicked") missing.push(ch);
-    }
-
-    const verified = missing.length === 0;
     await admin
       .from("telegram_verifications")
       .update({
