@@ -1367,6 +1367,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                   {language === "ar" ? "إضافة كتلة" : "Add block"}
                 </button>
               </div>
+              </div>
             </div>
           </div>
         )}
