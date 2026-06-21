@@ -144,7 +144,7 @@ const copy = {
 // ---------- Block row ----------
 const BlockRow = ({
   block, language, onChange, onEnter, onBackspaceEmpty, onIndent, onOutdent, onSlash,
-  onToggleCheck, onToggleCollapse, onCanvasChange, autoFocus,
+  onToggleCheck, onToggleCollapse, onCanvasChange, onPdfChange, onRemove, autoFocus,
 }: {
   block: Block;
   language: AppLanguage;
@@ -157,6 +157,8 @@ const BlockRow = ({
   onToggleCheck: () => void;
   onToggleCollapse: () => void;
   onCanvasChange: (data: CanvasData) => void;
+  onPdfChange: (patch: { pdfUrl?: string; pdfName?: string; pdfHeight?: number }) => void;
+  onRemove: () => void;
   autoFocus?: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -164,7 +166,7 @@ const BlockRow = ({
 
   // Set initial text once per id/type change
   useEffect(() => {
-    if (block.type === "canvas") return;
+    if (block.type === "canvas" || block.type === "pdf") return;
     if (!ref.current) return;
     if (ref.current.innerText !== block.text) {
       ref.current.innerText = block.text;
@@ -172,7 +174,7 @@ const BlockRow = ({
   }, [block.id, block.type]);
 
   useEffect(() => {
-    if (autoFocus && ref.current && block.type !== "canvas") {
+    if (autoFocus && ref.current && block.type !== "canvas" && block.type !== "pdf") {
       ref.current.focus();
       // place caret end
       const sel = window.getSelection();
@@ -186,6 +188,10 @@ const BlockRow = ({
 
   if (block.type === "canvas") {
     return <NotesCanvasBlock data={block.canvas} onChange={onCanvasChange} language={language} />;
+  }
+
+  if (block.type === "pdf") {
+    return <NotesPdfBlock block={block} language={language} onChange={onPdfChange} onRemove={onRemove} />;
   }
 
   if (block.type === "divider") {
