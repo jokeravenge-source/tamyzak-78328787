@@ -1,13 +1,10 @@
 import { useState } from "react";
 import {
-  Home, BookOpen, Palette, Target, ListChecks, FileText, User,
-  MoreHorizontal, ChevronLeft, ChevronRight, Trophy, Newspaper,
+  Home, BookOpen, Palette, Video, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 
-export type SidebarKey =
-  | "basics" | "notes" | "canvas" | "missions" | "todo"
-  | "report" | "leaderboard" | "news" | "account" | "more";
+export type SidebarKey = "basics" | "notes" | "canvas" | "videoNotes";
 
 const AppSidebar = ({
   language, active, onSelect,
@@ -20,16 +17,10 @@ const AppSidebar = ({
   const isRTL = language === "ar";
 
   const items: { key: SidebarKey; icon: any; labelEn: string; labelAr: string }[] = [
-    { key: "basics",      icon: Home,        labelEn: "Home",        labelAr: "الرئيسية" },
-    { key: "notes",       icon: BookOpen,    labelEn: "Notes",       labelAr: "ملاحظاتي" },
-    { key: "canvas",      icon: Palette,     labelEn: "Canvas",      labelAr: "اللوحة" },
-    { key: "missions",    icon: Target,      labelEn: "Missions",    labelAr: "المهام" },
-    { key: "todo",        icon: ListChecks,  labelEn: "To-do",       labelAr: "المهام اليومية" },
-    { key: "report",      icon: FileText,    labelEn: "Report",      labelAr: "التقرير" },
-    { key: "leaderboard", icon: Trophy,      labelEn: "Leaderboard", labelAr: "المتصدرين" },
-    { key: "news",        icon: Newspaper,   labelEn: "News",        labelAr: "الأخبار" },
-    { key: "account",     icon: User,        labelEn: "Account",     labelAr: "الحساب" },
-    { key: "more",        icon: MoreHorizontal, labelEn: "More",     labelAr: "المزيد" },
+    { key: "basics",     icon: Home,     labelEn: "Home",            labelAr: "الرئيسية" },
+    { key: "notes",      icon: BookOpen, labelEn: "Notes",           labelAr: "ملاحظاتي" },
+    { key: "canvas",     icon: Palette,  labelEn: "Canvas",          labelAr: "اللوحة" },
+    { key: "videoNotes", icon: Video,    labelEn: "Video to Notes",  labelAr: "من الفيديو إلى ملاحظات" },
   ];
 
   return (

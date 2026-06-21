@@ -3,7 +3,7 @@ import {
   ArrowLeft, Plus, ChevronRight, ChevronDown, Trash2, FileText, Search,
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
   Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
-  BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette,
+  BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -487,6 +487,8 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const [focusBlockId, setFocusBlockId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const savedHideTimer = useRef<number | null>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
 
   // Drag-and-drop state
   const dragRef = useRef<{ type: "notebook" | "page"; id: string } | null>(null);
@@ -522,6 +524,45 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   }, []);
 
   const active = useMemo(() => notes.find((n) => n.id === activeId) || null, [notes, activeId]);
+
+  const exportPdf = useCallback(async () => {
+    if (!active || !exportRef.current) return;
+    setExporting(true);
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const node = exportRef.current;
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const pdf = new jsPDF({ unit: "pt", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 24;
+      const imgW = pageW - margin * 2;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      const sliceH = pageH - margin * 2;
+      let remaining = imgH;
+      let offset = 0;
+      while (remaining > 0) {
+        pdf.addImage(imgData, "JPEG", margin, margin - offset, imgW, imgH, undefined, "FAST");
+        remaining -= sliceH;
+        if (remaining > 0) { pdf.addPage(); offset += sliceH; }
+      }
+      const safeTitle = (active.title || "note").replace(/[^\p{L}\p{N}\-_ ]+/gu, "").trim() || "note";
+      pdf.save(`${safeTitle}.pdf`);
+      toast.success(language === "ar" ? "تم تصدير الملف" : "PDF exported");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  }, [active, language]);
 
   // Debounced autosave per note, with pending snapshot so we can flush on
   // navigation / unmount / page hide and never lose canvas edits.
@@ -1208,8 +1249,8 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
         ) : (
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-3xl mx-auto px-4 md:px-12 py-12 pb-40">
-              {/* Notebook selector */}
-              <div className="mb-4 relative">
+              {/* Notebook selector + Export */}
+              <div className="mb-4 relative flex items-center gap-2">
                 <button
                   onClick={() => setMoveMenuFor(moveMenuFor === active.id ? null : active.id)}
                   className="inline-flex items-center gap-2 h-8 px-3 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
@@ -1217,6 +1258,15 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                   <BookOpen className="w-3.5 h-3.5" />
                   <span>{notebooks.find((n) => n.id === active.notebook_id)?.name ?? t.noNotebook}</span>
                   <ChevronDown className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={exportPdf}
+                  disabled={exporting}
+                  className="ml-auto inline-flex items-center gap-2 h-8 px-3 rounded-full border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors disabled:opacity-60"
+                  title={language === "ar" ? "تصدير PDF" : "Export PDF"}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>{exporting ? (language === "ar" ? "جارٍ التصدير…" : "Exporting…") : (language === "ar" ? "تصدير PDF" : "Export PDF")}</span>
                 </button>
                 {moveMenuFor === active.id && (
                   <div className="absolute z-40 mt-1 w-64 max-h-72 overflow-y-auto rounded-xl bg-popover border border-border shadow-lg p-1">
@@ -1251,6 +1301,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                 )}
               </div>
 
+              <div ref={exportRef}>
               {/* Icon */}
               <div className="relative inline-block mb-3">
                 <button
@@ -1315,6 +1366,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                   <Plus className="w-3.5 h-3.5" />
                   {language === "ar" ? "إضافة كتلة" : "Add block"}
                 </button>
+              </div>
               </div>
             </div>
           </div>
