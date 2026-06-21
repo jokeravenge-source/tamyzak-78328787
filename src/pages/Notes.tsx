@@ -140,7 +140,7 @@ const copy = {
 // ---------- Block row ----------
 const BlockRow = ({
   block, language, onChange, onEnter, onBackspaceEmpty, onIndent, onOutdent, onSlash,
-  onToggleCheck, onToggleCollapse, autoFocus,
+  onToggleCheck, onToggleCollapse, onCanvasChange, autoFocus,
 }: {
   block: Block;
   language: AppLanguage;
@@ -152,6 +152,7 @@ const BlockRow = ({
   onSlash: (rect: DOMRect, ref: HTMLDivElement) => void;
   onToggleCheck: () => void;
   onToggleCollapse: () => void;
+  onCanvasChange: (data: CanvasData) => void;
   autoFocus?: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -159,6 +160,7 @@ const BlockRow = ({
 
   // Set initial text once per id/type change
   useEffect(() => {
+    if (block.type === "canvas") return;
     if (!ref.current) return;
     if (ref.current.innerText !== block.text) {
       ref.current.innerText = block.text;
@@ -166,7 +168,7 @@ const BlockRow = ({
   }, [block.id, block.type]);
 
   useEffect(() => {
-    if (autoFocus && ref.current) {
+    if (autoFocus && ref.current && block.type !== "canvas") {
       ref.current.focus();
       // place caret end
       const sel = window.getSelection();
@@ -177,6 +179,10 @@ const BlockRow = ({
       sel?.addRange(range);
     }
   }, [autoFocus]);
+
+  if (block.type === "canvas") {
+    return <NotesCanvasBlock data={block.canvas} onChange={onCanvasChange} language={language} />;
+  }
 
   if (block.type === "divider") {
     return (
