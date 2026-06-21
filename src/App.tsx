@@ -273,6 +273,9 @@ const App = () => {
       {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
         <ExcellenceCompanion language={language} />
       )}
+      {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
+        <CompanionWelcomeTrigger />
+      )}
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authLoading ? (
