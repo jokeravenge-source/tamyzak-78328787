@@ -554,7 +554,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
         useCORS: true,
       });
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      const pdf = new jsPDF({ unit: "pt", format: "a4" });
+      const pdf = new jsPDF({ unit: "pt", format: pdfSize, orientation: pdfOrientation });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
       const margin = 24;
@@ -576,7 +576,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
     } finally {
       setExporting(false);
     }
-  }, [active, language]);
+  }, [active, language, pdfSize, pdfOrientation]);
 
   // Debounced autosave per note, with pending snapshot so we can flush on
   // navigation / unmount / page hide and never lose canvas edits.
