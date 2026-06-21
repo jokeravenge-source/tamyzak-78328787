@@ -485,6 +485,8 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const [slash, setSlash] = useState<{ blockId: string; x: number; y: number } | null>(null);
   const [iconPickerFor, setIconPickerFor] = useState<string | null>(null);
   const [focusBlockId, setFocusBlockId] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const savedHideTimer = useRef<number | null>(null);
 
   // Drag-and-drop state
   const dragRef = useRef<{ type: "notebook" | "page"; id: string } | null>(null);
@@ -521,27 +523,83 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
 
   const active = useMemo(() => notes.find((n) => n.id === activeId) || null, [notes, activeId]);
 
-  // Debounced save per note
+  // Debounced autosave per note, with pending snapshot so we can flush on
+  // navigation / unmount / page hide and never lose canvas edits.
   const saveTimers = useRef<Map<string, number>>(new Map());
+  const pendingNotes = useRef<Map<string, Note>>(new Map());
+
+  const persistNote = useCallback(async (note: Note) => {
+    setSaveState("saving");
+    const { error } = await supabase
+      .from("notes")
+      .update({
+        title: note.title,
+        icon: note.icon,
+        content: note.content as any,
+        position: note.position,
+        parent_id: note.parent_id,
+        notebook_id: note.notebook_id,
+      })
+      .eq("id", note.id);
+    if (error) {
+      setSaveState("idle");
+      toast.error(error.message);
+      return;
+    }
+    pendingNotes.current.delete(note.id);
+    setSaveState("saved");
+    if (savedHideTimer.current) window.clearTimeout(savedHideTimer.current);
+    savedHideTimer.current = window.setTimeout(() => setSaveState("idle"), 1200);
+  }, []);
+
+  const flushSaves = useCallback(async (ids?: string[]) => {
+    const targets = ids ?? Array.from(pendingNotes.current.keys());
+    await Promise.all(
+      targets.map((id) => {
+        const t = saveTimers.current.get(id);
+        if (t) { window.clearTimeout(t); saveTimers.current.delete(id); }
+        const snap = pendingNotes.current.get(id);
+        return snap ? persistNote(snap) : Promise.resolve();
+      }),
+    );
+  }, [persistNote]);
+
   const scheduleSave = useCallback((note: Note) => {
+    pendingNotes.current.set(note.id, note);
+    setSaveState("saving");
     const map = saveTimers.current;
     const prev = map.get(note.id);
     if (prev) window.clearTimeout(prev);
-    const id = window.setTimeout(async () => {
-      await supabase
-        .from("notes")
-        .update({
-          title: note.title,
-          icon: note.icon,
-          content: note.content as any,
-          position: note.position,
-          parent_id: note.parent_id,
-          notebook_id: note.notebook_id,
-        })
-        .eq("id", note.id);
+    const id = window.setTimeout(() => {
+      const snap = pendingNotes.current.get(note.id);
+      if (snap) persistNote(snap);
     }, 600);
     map.set(note.id, id);
-  }, []);
+  }, [persistNote]);
+
+  // Flush pending writes when the tab is hidden, unloaded, or the page unmounts
+  useEffect(() => {
+    const onHide = () => { flushSaves(); };
+    window.addEventListener("beforeunload", onHide);
+    window.addEventListener("pagehide", onHide);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") flushSaves();
+    });
+    return () => {
+      window.removeEventListener("beforeunload", onHide);
+      window.removeEventListener("pagehide", onHide);
+      flushSaves();
+    };
+  }, [flushSaves]);
+
+  // Flush whenever the active note changes so canvas edits commit before switching
+  const prevActiveId = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevActiveId.current && prevActiveId.current !== activeId) {
+      flushSaves([prevActiveId.current]);
+    }
+    prevActiveId.current = activeId;
+  }, [activeId, flushSaves]);
 
   const updateNote = useCallback((id: string, patch: Partial<Note>) => {
     setNotes((prev) => {
@@ -916,7 +974,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
             <div className="w-[280px] flex flex-col h-full">
               <div className="p-3 border-b border-border flex items-center gap-2">
                 <button
-                  onClick={onBack}
+                  onClick={async () => { await flushSaves(); onBack(); }}
                   className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
                   aria-label={t.back}
                 >
@@ -1115,6 +1173,19 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
               ))
             )}
           </div>
+          {saveState !== "idle" && (
+            <span
+              className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
+                saveState === "saving"
+                  ? "text-muted-foreground border-border bg-secondary/60"
+                  : "text-primary border-primary/30 bg-primary/10"
+              }`}
+            >
+              {saveState === "saving"
+                ? (isRTL ? "جارٍ الحفظ…" : "Saving…")
+                : (isRTL ? "تم الحفظ" : "Saved")}
+            </span>
+          )}
         </div>
 
         {/* Content */}
