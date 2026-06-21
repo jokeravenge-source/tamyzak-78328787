@@ -54,6 +54,20 @@ import SearchFAB from "./components/SearchFAB";
 import ExcellenceCompanion from "./components/ExcellenceCompanion";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
+const COMPANION_INTRO_KEY = "app_companion_intro_v1";
+
+const CompanionWelcomeTrigger = () => {
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(COMPANION_INTRO_KEY) === "1") return;
+    } catch { /* ignore */ }
+    const id = window.setTimeout(() => {
+      window.dispatchEvent(new Event("app:welcome-excellence-companion"));
+    }, 400);
+    return () => window.clearTimeout(id);
+  }, []);
+  return null;
+};
 
 const queryClient = new QueryClient();
 
@@ -272,6 +286,9 @@ const App = () => {
       )}
       {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
         <ExcellenceCompanion language={language} />
+      )}
+      {authed && language && authRole !== "admin" && tgVerified && !needsOnboarding && (
+        <CompanionWelcomeTrigger />
       )}
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />

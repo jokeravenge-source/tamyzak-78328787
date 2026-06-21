@@ -29,6 +29,11 @@ const labels = {
     approved: "Plan added to your weekly to-do list ✓",
     back: "Back",
     error: "Something went wrong. Please try again.",
+    introTitle: "Welcome to Tamyzak 👋",
+    introBody: "Tamyzak is your AI study companion for the Iraqi 6th-grade ministerial exams. You'll find flashcards, MCQs, summaries, mind maps, ministerial banks, daily missions, an essay & poem checker, and more — all tailored to your subjects. I can build a personal weekly study plan and add it straight to your to-do list, so you always know what to do next.",
+    introGenerate: "Generate my study plan",
+    introSkip: "Skip — just explore the website",
+    continueToApp: "Continue to the app",
   },
   ar: {
     fab: "رفيق التميز",
@@ -45,6 +50,11 @@ const labels = {
     approved: "تمت إضافة الخطة لقائمة مهامك الأسبوعية ✓",
     back: "رجوع",
     error: "حدث خطأ. حاول مرة أخرى.",
+    introTitle: "أهلاً بك في تميزك 👋",
+    introBody: "تميزك هو رفيقك الذكي للاستعداد للامتحانات الوزارية للسادس. ستجد بطاقات تعليمية، أسئلة اختيار من متعدد، ملخصات، خرائط ذهنية، بنوك وزارية، مهام يومية، مدقق المقالات والقصائد، والمزيد — كلها مخصصة لموادك. أستطيع بناء خطة دراسية أسبوعية لك وإضافتها مباشرة إلى قائمة مهامك حتى تعرف دائماً ماذا تفعل بعد.",
+    introGenerate: "أنشئ خطتي الدراسية",
+    introSkip: "تخطّي — استكشف الموقع فقط",
+    continueToApp: "متابعة إلى التطبيق",
   },
 };
 
@@ -80,9 +90,12 @@ function stripPlanBlock(text: string): string {
   return text.replace(/```json\s*[\s\S]*?```/gi, "").trim();
 }
 
+const INTRO_DONE_KEY = "app_companion_intro_v1";
+
 const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLanguage; embedded?: boolean }) => {
   const [open, setOpen] = useState(embedded);
   const [mode, setMode] = useState<Mode | null>(null);
+  const [intro, setIntro] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -91,8 +104,19 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
   useEffect(() => {
     if (embedded) return;
     const onOpen = () => setOpen(true);
+    const onWelcome = () => {
+      setIntro(true);
+      setMode(null);
+      setMessages([]);
+      setApproved(false);
+      setOpen(true);
+    };
     window.addEventListener("app:open-excellence-companion", onOpen);
-    return () => window.removeEventListener("app:open-excellence-companion", onOpen);
+    window.addEventListener("app:welcome-excellence-companion", onWelcome);
+    return () => {
+      window.removeEventListener("app:open-excellence-companion", onOpen);
+      window.removeEventListener("app:welcome-excellence-companion", onWelcome);
+    };
   }, [embedded]);
   const endRef = useRef<HTMLDivElement>(null);
   const t = labels[language];
@@ -104,6 +128,13 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
     setMessages([]);
     setInput("");
     setApproved(false);
+  };
+
+  const finishIntro = () => {
+    try { localStorage.setItem(INTRO_DONE_KEY, "1"); } catch { /* ignore */ }
+    setIntro(false);
+    setOpen(false);
+    reset();
   };
 
   const pickMode = (m: Mode) => {
@@ -175,6 +206,7 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
     window.dispatchEvent(new Event("app:todos-changed"));
     pushTodos(merged);
     setApproved(true);
+    try { localStorage.setItem(INTRO_DONE_KEY, "1"); } catch { /* ignore */ }
   };
 
   const panel = (
@@ -193,21 +225,38 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
                 <Sparkles className="w-5 h-5 text-primary" />
                 <div>
                   <div className="font-semibold text-sm">{t.title}</div>
-                  {mode && (
+                  {mode && !intro && (
                     <button onClick={reset} className="text-xs text-muted-foreground hover:text-foreground">
                       ← {t.back}
                     </button>
                   )}
                 </div>
               </div>
-              {!embedded && (
+              {!embedded && !intro && (
                 <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground p-1">
                   <X className="w-5 h-5" />
                 </button>
               )}
             </div>
 
-            {!mode ? (
+            {intro && !mode ? (
+              <div className="relative z-10 flex-1 overflow-y-auto p-6 flex flex-col gap-4 justify-center">
+                <h2 className="text-xl font-bold text-center">{t.introTitle}</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed text-center">{t.introBody}</p>
+                <button
+                  onClick={() => pickMode("schedule")}
+                  className="mt-2 inline-flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition"
+                >
+                  <CalendarDays className="w-4 h-4" /> {t.introGenerate}
+                </button>
+                <button
+                  onClick={finishIntro}
+                  className="inline-flex items-center justify-center h-11 rounded-xl border border-border bg-secondary/40 text-sm font-medium hover:border-primary transition"
+                >
+                  {t.introSkip}
+                </button>
+              </div>
+            ) : !mode ? (
               <div className="relative z-10 flex-1 overflow-y-auto p-6 flex flex-col gap-4 justify-center">
                 <p className="text-center text-sm text-muted-foreground mb-2">{t.subtitle}</p>
                 <button
@@ -269,6 +318,14 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
                       {t.approved}
                     </div>
                   )}
+                  {approved && intro && (
+                    <button
+                      onClick={finishIntro}
+                      className="w-full mt-2 inline-flex items-center justify-center h-11 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition"
+                    >
+                      {t.continueToApp}
+                    </button>
+                  )}
                   <div ref={endRef} />
                 </div>
 
@@ -315,7 +372,7 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
       {open && (
         <div
           className="fixed inset-0 z-[80] bg-background/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-          onClick={() => setOpen(false)}
+          onClick={intro ? undefined : () => setOpen(false)}
         >
           {panel}
         </div>
