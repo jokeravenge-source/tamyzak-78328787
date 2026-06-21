@@ -4,6 +4,7 @@ import {
   MoveUpRight, Tag, MousePointer2, Trash2, Maximize2,
   PanelLeftClose, PanelLeft,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type CanvasStroke = {
   id: string; kind: "stroke"; color: string; size: number;
@@ -231,16 +232,30 @@ const NotesCanvasBlock = ({
     return null;
   };
 
-  const tools: { id: Tool; icon: any; label: string }[] = [
-    { id: "select", icon: MousePointer2, label: isRTL ? "تحديد" : "Select" },
-    { id: "pen", icon: Pencil, label: isRTL ? "قلم" : "Pen" },
-    { id: "eraser", icon: Eraser, label: isRTL ? "ممحاة" : "Eraser" },
-    { id: "rect", icon: Square, label: isRTL ? "مربع" : "Rect" },
-    { id: "ellipse", icon: CircleIcon, label: isRTL ? "دائرة" : "Ellipse" },
-    { id: "line", icon: LineIcon, label: isRTL ? "خط" : "Line" },
-    { id: "arrow", icon: MoveUpRight, label: isRTL ? "سهم" : "Arrow" },
-    { id: "label", icon: Tag, label: isRTL ? "ملصق" : "Label" },
+  const tools: { id: Tool; icon: any; label: string; shortcut: string }[] = [
+    { id: "select",  icon: MousePointer2, label: isRTL ? "تحديد" : "Select",   shortcut: "V" },
+    { id: "pen",     icon: Pencil,        label: isRTL ? "قلم" : "Pen",        shortcut: "P" },
+    { id: "eraser",  icon: Eraser,        label: isRTL ? "ممحاة" : "Eraser",   shortcut: "E" },
+    { id: "rect",    icon: Square,        label: isRTL ? "مربع" : "Rect",      shortcut: "R" },
+    { id: "ellipse", icon: CircleIcon,    label: isRTL ? "دائرة" : "Ellipse",  shortcut: "O" },
+    { id: "line",    icon: LineIcon,      label: isRTL ? "خط" : "Line",        shortcut: "L" },
+    { id: "arrow",   icon: MoveUpRight,   label: isRTL ? "سهم" : "Arrow",      shortcut: "A" },
+    { id: "label",   icon: Tag,           label: isRTL ? "ملصق" : "Label",     shortcut: "T" },
   ];
+
+  // Keyboard shortcuts (ignored while editing labels or other inputs)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (editingLabel) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const hit = tools.find(x => x.shortcut.toLowerCase() === e.key.toLowerCase());
+      if (hit) { e.preventDefault(); setTool(hit.id); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [editingLabel, tools]);
 
   const cursorFor = tool === "select" ? "default" : tool === "eraser" ? "cell" : tool === "label" ? "text" : "crosshair";
 
@@ -269,21 +284,37 @@ const NotesCanvasBlock = ({
 
         <div className="flex-1 overflow-y-auto p-2 space-y-3">
           {/* Tool buttons */}
-          <div className={sidebarOpen ? "grid grid-cols-2 gap-1" : "flex flex-col gap-1"}>
-            {tools.map(({ id, icon: Icon, label }) => (
-              <button
-                key={id}
-                onClick={() => { setTool(id); setEditingLabel(null); }}
-                title={label}
-                className={`h-9 rounded-md flex items-center ${sidebarOpen ? "justify-start gap-2 px-2" : "justify-center"} transition-colors ${
-                  tool === id ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground/80"
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {sidebarOpen && <span className="text-xs truncate">{label}</span>}
-              </button>
-            ))}
-          </div>
+          <TooltipProvider delayDuration={200}>
+            <div className={sidebarOpen ? "grid grid-cols-2 gap-1" : "flex flex-col gap-1"}>
+              {tools.map(({ id, icon: Icon, label, shortcut }) => (
+                <Tooltip key={id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => { setTool(id); setEditingLabel(null); }}
+                      aria-label={`${label} (${shortcut})`}
+                      className={`h-9 rounded-md flex items-center ${sidebarOpen ? "justify-between gap-2 px-2" : "justify-center"} transition-colors ${
+                        tool === id ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground/80"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 min-w-0">
+                        <Icon className="w-4 h-4 shrink-0" />
+                        {sidebarOpen && <span className="text-xs truncate">{label}</span>}
+                      </span>
+                      {sidebarOpen && (
+                        <kbd className={`text-[10px] font-mono px-1 rounded ${tool === id ? "bg-primary-foreground/20" : "bg-background/70 border border-border text-muted-foreground"}`}>
+                          {shortcut}
+                        </kbd>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side={isRTL ? "left" : "right"} className="flex items-center gap-2">
+                    <span>{label}</span>
+                    <kbd className="text-[10px] font-mono px-1 rounded bg-background/20 border border-border/40">{shortcut}</kbd>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
 
           {/* Colors */}
           <div className="space-y-1.5">
