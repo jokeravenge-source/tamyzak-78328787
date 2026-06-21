@@ -336,7 +336,7 @@ const App = () => {
       ) : menuChoice === "notes" ? (
         <Notes language={language} onBack={resetMenu} />
       ) : menuChoice === "canvas" ? (
-        <Canvas language={language} onBack={resetMenu} />
+        <Canvas language={language} onBack={resetMenu} onOpenNotes={() => chooseMenu("notes")} />
       ) : menuChoice === "premium" ? (
         <Premium language={language} onBack={resetMenu} />
       ) : menuChoice === "more" ? (
