@@ -3,17 +3,18 @@ import {
   ArrowLeft, Plus, ChevronRight, ChevronDown, Trash2, FileText, Search,
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
   Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
-  BookOpen, FolderPlus, Pencil, Check, X, FolderInput,
+  BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
+import NotesCanvasBlock, { type CanvasData } from "@/components/NotesCanvasBlock";
 
 type BlockType =
   | "text" | "h1" | "h2" | "h3"
   | "bullet" | "numbered" | "todo"
-  | "toggle" | "quote" | "code" | "divider";
+  | "toggle" | "quote" | "code" | "divider" | "canvas";
 
 type Block = {
   id: string;
@@ -22,6 +23,7 @@ type Block = {
   checked?: boolean;
   collapsed?: boolean;
   indent?: number;
+  canvas?: CanvasData;
 };
 
 type Note = {
@@ -57,6 +59,7 @@ const SLASH_OPTIONS: { type: BlockType; labelEn: string; labelAr: string; Icon: 
   { type: "quote",    labelEn: "Quote",         labelAr: "اقتباس",        Icon: Quote,       descEn: "Quote block",             descAr: "اقتباس" },
   { type: "code",     labelEn: "Code",          labelAr: "كود",           Icon: Code,        descEn: "Code snippet",            descAr: "مقتطف كود" },
   { type: "divider",  labelEn: "Divider",       labelAr: "فاصل",          Icon: Minus,       descEn: "Visual separator",        descAr: "خط فاصل" },
+  { type: "canvas",   labelEn: "Drawing canvas",labelAr: "لوحة رسم",      Icon: Palette,     descEn: "Pen, shapes, labels",     descAr: "قلم، أشكال، ملصقات" },
 ];
 
 const ICONS = ["📄","📝","📚","📒","📓","📕","📗","📘","📙","🧠","💡","⭐","🎯","🔥","🚀","🌱","🌟","✨","🧪","🧬","🔬","📊","📈","💻","🎨","🎵","⚽","🏆","💎","🦄","🐱","🐶","🌈","☕","🍎","🍕"];
@@ -137,7 +140,7 @@ const copy = {
 // ---------- Block row ----------
 const BlockRow = ({
   block, language, onChange, onEnter, onBackspaceEmpty, onIndent, onOutdent, onSlash,
-  onToggleCheck, onToggleCollapse, autoFocus,
+  onToggleCheck, onToggleCollapse, onCanvasChange, autoFocus,
 }: {
   block: Block;
   language: AppLanguage;
@@ -149,6 +152,7 @@ const BlockRow = ({
   onSlash: (rect: DOMRect, ref: HTMLDivElement) => void;
   onToggleCheck: () => void;
   onToggleCollapse: () => void;
+  onCanvasChange: (data: CanvasData) => void;
   autoFocus?: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -156,6 +160,7 @@ const BlockRow = ({
 
   // Set initial text once per id/type change
   useEffect(() => {
+    if (block.type === "canvas") return;
     if (!ref.current) return;
     if (ref.current.innerText !== block.text) {
       ref.current.innerText = block.text;
@@ -163,7 +168,7 @@ const BlockRow = ({
   }, [block.id, block.type]);
 
   useEffect(() => {
-    if (autoFocus && ref.current) {
+    if (autoFocus && ref.current && block.type !== "canvas") {
       ref.current.focus();
       // place caret end
       const sel = window.getSelection();
@@ -174,6 +179,10 @@ const BlockRow = ({
       sel?.addRange(range);
     }
   }, [autoFocus]);
+
+  if (block.type === "canvas") {
+    return <NotesCanvasBlock data={block.canvas} onChange={onCanvasChange} language={language} />;
+  }
 
   if (block.type === "divider") {
     return (
@@ -1219,6 +1228,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                     onSlash={(rect) => setSlash({ blockId: b.id, x: rect.left, y: rect.bottom + window.scrollY })}
                     onToggleCheck={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, checked: !x.checked } : x))}
                     onToggleCollapse={() => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, collapsed: !x.collapsed } : x))}
+                    onCanvasChange={(data) => setBlocks((blocks) => blocks.map((x) => x.id === b.id ? { ...x, canvas: data } : x))}
                   />
                 ))}
 
