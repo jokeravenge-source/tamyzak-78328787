@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Sparkles, RefreshCw, Share2, Trophy, Clock, Target, Brain, Copy, Check, Link2 } from "lucide-react";
+import { ArrowLeft, Sparkles, RefreshCw, Share2, Trophy, Clock, Target, Brain, Copy, Check, Link2, ListChecks, Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -18,6 +18,11 @@ const T = {
     enable: "Enable parent link", revoke: "Revoke link", copy: "Copy link", copied: "Copied!",
     min: "min",
     companion: "Excellence Companion", companionDesc: "Plan your week or work through a problem with AI.",
+    todoToday: "Today's to-do list", todoDone: "done", todoOf: "of",
+    todoRemaining: "Remaining today", todoEmpty: "No tasks scheduled for today.",
+    todoAllDone: "All today's tasks are done. 🎉",
+    goal: "Closeness to your goal", goalDesc: "Today's completion + days left to your exam.",
+    complete: "complete",
   },
   ar: {
     title: "تقريري اليومي", back: "رجوع",
@@ -31,6 +36,11 @@ const T = {
     enable: "تفعيل رابط ولي الأمر", revoke: "إلغاء الرابط", copy: "نسخ الرابط", copied: "تم النسخ!",
     min: "د",
     companion: "رفيق التميز", companionDesc: "نظّم أسبوعك أو حل مشكلتك مع الذكاء الاصطناعي.",
+    todoToday: "قائمة مهام اليوم", todoDone: "مُنجز", todoOf: "من",
+    todoRemaining: "المتبقي اليوم", todoEmpty: "لا توجد مهام مجدوَلة لليوم.",
+    todoAllDone: "أنهيت كل مهام اليوم. 🎉",
+    goal: "قربك من هدفك", goalDesc: "نسبة إنجاز اليوم + الأيام المتبقية للامتحان.",
+    complete: "مكتمل",
   },
 } as const;
 
@@ -39,6 +49,7 @@ type Report = {
   subjects_breakdown: Array<{ subject: string; minutes: number; missions: number }>;
   ai_summary: string; ai_strengths: string[]; ai_weaknesses: string[]; ai_plan: string[];
   report_date: string;
+  todo_today?: { total: number; done: number; pending: string[]; pct: number };
 };
 
 export default function DailyReport({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
@@ -102,6 +113,8 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
     ? Math.min(100, Math.round(((report?.focused_minutes ?? 0) / meta.daily_target_minutes) * 100))
     : 0;
 
+  const todo = report?.todo_today ?? { total: 0, done: 0, pending: [], pct: 0 };
+
   return (
     <main className="min-h-screen px-4 py-12 md:py-16 relative overflow-hidden" dir={ar ? "rtl" : "ltr"}>
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
@@ -133,11 +146,60 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
             {/* Stat cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Stat icon={Clock} label={t.minutes} value={`${report?.focused_minutes ?? 0}`} sub={`${focusedPct}% ${t.target}`} />
-              <Stat icon={Sparkles} label={t.sessions} value={`${report?.sessions_count ?? 0}`} />
+              <Stat icon={ListChecks} label={t.todoToday} value={`${todo.done}/${todo.total}`} sub={`${todo.pct}% ${t.complete}`} />
               <Stat icon={Trophy} label={t.missions} value={`${report?.missions_completed ?? 0}`} />
               <Stat icon={Target} label={t.points} value={`${report?.points_earned ?? 0}`}
                 sub={meta?.days_to_exam != null ? `${meta.days_to_exam} ${t.exam}` : undefined} />
             </div>
+
+            {/* Today's to-do list focus */}
+            <div className="rounded-2xl border border-primary/40 bg-primary/5 backdrop-blur p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <ListChecks className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">{t.todoToday}</span>
+              </div>
+              <div className="flex justify-between text-xs mb-2 text-muted-foreground">
+                <span>{todo.done} {t.todoDone} {t.todoOf} {todo.total}</span>
+                <span className="text-primary font-semibold tabular-nums">{todo.pct}%</span>
+              </div>
+              <Progress value={todo.pct} className="h-2" />
+              {todo.total === 0 ? (
+                <p className="text-sm text-muted-foreground mt-3">{t.todoEmpty}</p>
+              ) : todo.pending.length === 0 ? (
+                <p className="text-sm text-emerald-400 mt-3">{t.todoAllDone}</p>
+              ) : (
+                <div className="mt-3">
+                  <div className="text-xs font-semibold text-amber-400 mb-1">{t.todoRemaining}</div>
+                  <ul className="space-y-1 text-sm">
+                    {todo.pending.map((x, i) => (
+                      <li key={i} className="flex gap-2"><span className="text-primary">•</span>{x}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Goal proximity */}
+            {meta?.days_to_exam != null && (
+              <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Flag className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold">{t.goal}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">{t.goalDesc}</p>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-3xl font-bold gradient-text tabular-nums">{todo.pct}%</div>
+                    <div className="text-[11px] text-muted-foreground">{t.complete}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-foreground tabular-nums">{meta.days_to_exam}</div>
+                    <div className="text-[11px] text-muted-foreground">{t.exam}</div>
+                  </div>
+                </div>
+                <div className="mt-3"><Progress value={todo.pct} className="h-2" /></div>
+              </div>
+            )}
 
             {/* Daily target progress */}
             {meta && (
