@@ -84,7 +84,11 @@ const NotesCanvasBlock = ({
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (editingLabel) return;
+    e.preventDefault();
     (e.target as Element).setPointerCapture?.(e.pointerId);
+    // Lock page scroll while drawing so the page doesn't jump around.
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overscrollBehavior = "contain";
     const { x, y } = pointAt(e);
 
     if (tool === "select") {
@@ -117,6 +121,9 @@ const NotesCanvasBlock = ({
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (editingLabel) return;
+    if (draft || dragRef.current || (tool === "eraser" && (e.buttons & 1))) {
+      e.preventDefault();
+    }
     const { x, y } = pointAt(e);
     if (dragRef.current) {
       const d = dragRef.current;
@@ -140,6 +147,8 @@ const NotesCanvasBlock = ({
   };
 
   const onPointerUp = () => {
+    document.body.style.overflow = "";
+    document.documentElement.style.overscrollBehavior = "";
     if (dragRef.current) { dragRef.current = null; return; }
     if (!draft) return;
     if (draft.kind === "stroke" && draft.points.length < 2) { setDraft(null); return; }
@@ -258,6 +267,14 @@ const NotesCanvasBlock = ({
   }, [editingLabel, tools]);
 
   const cursorFor = tool === "select" ? "default" : tool === "eraser" ? "cell" : tool === "label" ? "text" : "crosshair";
+
+  // Safety: always restore scroll when this block unmounts.
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overscrollBehavior = "";
+    };
+  }, []);
 
   return (
     <div className="my-3 rounded-xl border border-border bg-card overflow-hidden flex" dir={isRTL ? "rtl" : "ltr"}>
@@ -397,7 +414,10 @@ const NotesCanvasBlock = ({
       </aside>
 
       {/* Drawing area */}
-      <div className="relative flex-1 min-w-0 bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]">
+      <div
+        className="relative flex-1 min-w-0 bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]"
+        style={{ touchAction: "none", overscrollBehavior: "contain" }}
+      >
         <svg
           ref={svgRef}
           width="100%"
