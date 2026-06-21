@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Pencil, Eraser, Square, Circle as CircleIcon, Minus as LineIcon,
   MoveUpRight, Tag, MousePointer2, Trash2, Maximize2,
+  PanelLeftClose, PanelLeft,
 } from "lucide-react";
 
 export type CanvasStroke = {
