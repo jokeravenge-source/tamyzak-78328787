@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-3-flash-preview",
           messages: [{ role: "system", content: sys }, { role: "user", content: userMsg }],
           tools: [{
             type: "function",
@@ -181,9 +181,9 @@ Deno.serve(async (req) => {
     // then fall back to direct Gemini if available.
     const lovableModels = [
       "google/gemini-3-flash-preview",
+      "google/gemini-3.5-flash",
+      "google/gemini-3.1-flash-lite",
       "google/gemini-2.5-flash",
-      "google/gemini-2.5-flash-lite",
-      "openai/gpt-5-mini",
     ];
     const geminiDirectModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastGeminiError: any = null;
