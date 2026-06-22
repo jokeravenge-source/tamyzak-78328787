@@ -53,6 +53,7 @@ import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 import SearchFAB from "./components/SearchFAB";
 import ExcellenceCompanion from "./components/ExcellenceCompanion";
+import TelegramGate from "./components/TelegramGate";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_INTRO_KEY = "app_companion_intro_v1";
@@ -93,7 +94,8 @@ const App = () => {
   const [authed, setAuthed] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const tgVerified = true;
+  const [tgVerified, setTgVerified] = useState(false);
+  const [tgLoading, setTgLoading] = useState(false);
   const [authRole, setAuthRole] = useState<AuthRole | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null) : null)
   );
@@ -157,8 +159,19 @@ const App = () => {
           .eq("role", "admin")
           .maybeSingle()
           .then(({ data }) => setIsAdmin(!!data));
+        setTgLoading(true);
+        supabase
+          .from("telegram_verifications")
+          .select("telegram_user_id, verified")
+          .eq("user_id", session.user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            setTgVerified(!!data?.telegram_user_id && data?.verified !== false);
+            setTgLoading(false);
+          });
       } else {
         setIsAdmin(false);
+        setTgVerified(false);
       }
     });
     supabase.auth.getSession().then(({ data, error }) => {
@@ -177,6 +190,16 @@ const App = () => {
           .eq("role", "admin")
           .maybeSingle()
           .then(({ data: r }) => setIsAdmin(!!r));
+        setTgLoading(true);
+        supabase
+          .from("telegram_verifications")
+          .select("telegram_user_id, verified")
+          .eq("user_id", data.session.user.id)
+          .maybeSingle()
+          .then(({ data: row }) => {
+            setTgVerified(!!row?.telegram_user_id && row?.verified !== false);
+            setTgLoading(false);
+          });
       }
       setAuthLoading(false);
     });
