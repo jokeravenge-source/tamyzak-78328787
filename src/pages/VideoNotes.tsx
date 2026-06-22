@@ -454,9 +454,9 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
               const isSaved = savedIdx.has(i);
               return (
                 <div key={i} className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-4">
-                  <div className="text-xs uppercase tracking-wider text-primary mb-1">{t.front}</div>
+                  <div className="text-xs uppercase tracking-wider text-primary mb-1">{t.cardFront}</div>
                   <div className="font-medium mb-3">{c.q}</div>
-                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.back}</div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{t.cardBack}</div>
                   <div className="text-sm text-foreground/90 mb-3">{c.a}</div>
                   <Button
                     size="sm"
