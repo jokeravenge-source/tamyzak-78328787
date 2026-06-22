@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee, Settings, Trash2 } from "lucide-react";
+import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee, Settings, Trash2, ListChecks, ChevronDown, CheckCircle2, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,102 @@ import track5 from "@/assets/music/track5.mp3";
 import track6 from "@/assets/music/track6.mp3";
 import quranTrack from "@/assets/music/quran.mp3";
 import StudyRoom from "@/components/StudyRoom";
+import { pushTodos, pullTodos } from "@/lib/todosSync";
+
+type TodoItem = { id: string; text: string; done: boolean; day?: string };
+const TODO_STORAGE_KEY = "app_todos_v1";
+
+const SessionTodos = ({ language }: { language: AppLanguage }) => {
+  const [todos, setTodos] = useState<TodoItem[]>(() => {
+    try { return JSON.parse(localStorage.getItem(TODO_STORAGE_KEY) || "[]"); } catch { return []; }
+  });
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const onChange = () => {
+      try { setTodos(JSON.parse(localStorage.getItem(TODO_STORAGE_KEY) || "[]")); } catch { /* noop */ }
+    };
+    window.addEventListener("app:todos-changed", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("app:todos-changed", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const remote = await pullTodos();
+      if (cancelled || !remote) return;
+      const local: TodoItem[] = (() => {
+        try { return JSON.parse(localStorage.getItem(TODO_STORAGE_KEY) || "[]"); } catch { return []; }
+      })();
+      const seen = new Set(remote.map((r) => r.id));
+      const merged = [...remote, ...local.filter((l) => !seen.has(l.id))] as TodoItem[];
+      setTodos(merged);
+      localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(merged));
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggle = (id: string) => {
+    setTodos((prev) => {
+      const next = prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+      localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(next));
+      pushTodos(next);
+      try { window.dispatchEvent(new Event("app:todos-changed")); } catch { /* noop */ }
+      return next;
+    });
+  };
+
+  const L = language === "ar"
+    ? { title: "قائمة مهامي", empty: "لا توجد مهام. أضفها من صفحة المهام.", done: "منجزة" }
+    : { title: "My To-Do List", empty: "No tasks. Add some from the To-Do page.", done: "done" };
+
+  const completed = todos.filter((t) => t.done).length;
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-secondary/30 backdrop-blur overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition"
+      >
+        <ListChecks className="w-4 h-4 text-primary" />
+        <span className="text-sm font-semibold flex-1 text-start">{L.title}</span>
+        <span className="text-xs text-muted-foreground">{completed}/{todos.length} {L.done}</span>
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="border-t border-white/10 max-h-64 overflow-y-auto">
+          {todos.length === 0 ? (
+            <p className="px-4 py-4 text-sm text-muted-foreground text-center">{L.empty}</p>
+          ) : (
+            <ul className="divide-y divide-white/5">
+              {todos.map((t) => (
+                <li key={t.id} className="flex items-center gap-3 px-4 py-2.5">
+                  <button
+                    type="button"
+                    onClick={() => toggle(t.id)}
+                    className="shrink-0"
+                    aria-label="toggle"
+                  >
+                    {t.done
+                      ? <CheckCircle2 className="w-5 h-5 text-primary" />
+                      : <Circle className="w-5 h-5 text-muted-foreground" />}
+                  </button>
+                  <span className={`text-sm flex-1 ${t.done ? "line-through text-muted-foreground" : ""}`}>{t.text}</span>
+                  {t.day && <span className="text-[10px] text-muted-foreground">{t.day}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const MUSIC_TRACKS = [track1, track2, track3, track4, track5, track6];
 const QURAN_TRACKS = [quranTrack];
@@ -573,6 +669,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             <span className="text-sm text-muted-foreground flex items-center gap-2 mb-2"><Target className="w-4 h-4" /> {L.mission}</span>
             <Input value={mission} onChange={(e) => setMission(e.target.value)} placeholder={L.missionPh} disabled={started} maxLength={200} />
           </label>
+
+          <SessionTodos language={language} />
 
           <div className="flex items-center justify-center gap-2">
             <button
