@@ -39,9 +39,10 @@ const isDailyOrDisabledQuota = (payload: any) => {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { url, language } = await req.json();
+    const { url, language, mode, transcript: providedTranscript, count } = await req.json();
     const lang0 = language === "en" ? "en" : "ar";
-    if (!url || typeof url !== "string") {
+    const runMode: "notes" | "flashcards" = mode === "flashcards" ? "flashcards" : "notes";
+    if ((!url || typeof url !== "string") && !providedTranscript) {
       return jsonResponse({ error: "Missing url" }, 400);
     }
     const ent = await claimFeature(req, "video");
@@ -56,8 +57,8 @@ Deno.serve(async (req) => {
 
     // Step 1: fetch transcript via Supadata (handles long videos without exhausting Gemini token limits).
     const SUPADATA_API_KEY = Deno.env.get("SUPADATA_API_KEY");
-    let transcriptText = "";
-    if (SUPADATA_API_KEY) {
+    let transcriptText = typeof providedTranscript === "string" ? providedTranscript : "";
+    if (!transcriptText && SUPADATA_API_KEY) {
       try {
         const tRes = await fetch(
           `https://api.supadata.ai/v1/youtube/transcript?url=${encodeURIComponent(url.trim())}&text=true`,
@@ -79,6 +80,61 @@ Deno.serve(async (req) => {
 
     // Cap transcript size to stay well under model limits.
     if (transcriptText.length > 120000) transcriptText = transcriptText.slice(0, 120000);
+
+    // ===== Flashcards mode (tool-call structured output) =====
+    if (runMode === "flashcards") {
+      if (!transcriptText) {
+        return jsonResponse({ error: lang0 === "ar" ? "تعذّر تفريغ هذا الفيديو لإنشاء بطاقات." : "Could not transcribe this video for flashcards." });
+      }
+      if (!LOVABLE_API_KEY) {
+        return jsonResponse({ error: "LOVABLE_API_KEY not configured" }, 500);
+      }
+      const n = Math.max(6, Math.min(40, Number(count) || 15));
+      const langName = lang0 === "ar" ? "Arabic" : "English";
+      const sys = `You generate concise study flashcards from a YouTube transcript. Produce exactly ${n} flashcards in ${langName}. Each card: a clear question on the front, and a complete but short answer on the back (1-3 sentences). Cover the most exam-worthy ideas, definitions, formulas, and examples. Use ONLY content present in the transcript. Return via the submit_flashcards tool.`;
+      const userMsg = `TRANSCRIPT:\n${transcriptText}\n\nGenerate ${n} flashcards.`;
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [{ role: "system", content: sys }, { role: "user", content: userMsg }],
+          tools: [{
+            type: "function",
+            function: {
+              name: "submit_flashcards",
+              description: "Submit generated flashcards",
+              parameters: {
+                type: "object",
+                properties: {
+                  cards: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: { q: { type: "string" }, a: { type: "string" } },
+                      required: ["q", "a"], additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["cards"], additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "submit_flashcards" } },
+        }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        if (res.status === 429) return jsonResponse({ error: lang0 === "ar" ? "الذكاء الاصطناعي مشغول. حاول مجدداً." : "AI busy. Try again.", retryable: true }, 429);
+        if (res.status === 402) return jsonResponse({ error: lang0 === "ar" ? "نفدت رصيد الذكاء الاصطناعي." : "AI credits exhausted." }, 402);
+        return jsonResponse({ error: `AI error: ${txt}` }, 500);
+      }
+      const data = await res.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      if (!toolCall) return jsonResponse({ error: "No flashcards generated", retryable: true });
+      const parsed = JSON.parse(toolCall.function.arguments);
+      return jsonResponse({ cards: parsed.cards || [], transcript: transcriptText });
+    }
 
     const systemPrompt = `أنت كاتب ملاحظات دراسية خبير ومتقن. مهمتك تحويل محتوى الفيديو إلى ملاحظات دراسية شاملة ومفصّلة جداً باللغة العربية الفصحى دائماً (تَرجِم إذا لزم الأمر، بغض النظر عن لغة المصدر).
 
@@ -118,7 +174,9 @@ Deno.serve(async (req) => {
 - نقاط الخلاصة.
 - 3–6 أسئلة قصيرة يمكن للطالب اختبار نفسه بها.
 
-لا تكتب أي شيء خارج هذه البنية، ولا تستخدم لغة غير العربية في الشرح (المصطلحات الإنجليزية مسموحة فقط بين قوسين).`;
+لا تكتب أي شيء خارج هذه البنية، ولا تستخدم لغة غير العربية في الشرح (المصطلحات الإنجليزية مسموحة فقط بين قوسين).
+
+تقسيم إجباري: قسّم الفيديو إلى عدة أجزاء متتابعة (4 إلى 8 أجزاء حسب طول المحتوى)، ولكل جزء أعد كامل البنية أعلاه (نظرة عامة، مفاهيم، تعريفات، قوانين، أمثلة، نقاط مهمة، خلاصة) خاصة بذلك الجزء فقط. ابدأ كل جزء بعنوان واضح يصف موضوعه. أعد المخرجات عبر استدعاء الأداة submit_video_notes فقط.`;
     // Try Lovable AI Gateway first (multiple models for fallback on quota/overload),
     // then fall back to direct Gemini if available.
     const lovableModels = [
@@ -129,11 +187,37 @@ Deno.serve(async (req) => {
     ];
     const geminiDirectModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastGeminiError: any = null;
+    let parts: { title: string; notes: string }[] = [];
     let notes = "";
 
     const userPrompt = transcriptText
-      ? `Here is the transcript of a YouTube video. Write the study notes from it.\n\nTRANSCRIPT:\n${transcriptText}`
-      : `Generate study notes for this YouTube video: ${url.trim()}`;
+      ? `Here is the transcript of a YouTube video. Divide it into 4-8 sequential parts and write detailed notes for each part. Call submit_video_notes with the parts array.\n\nTRANSCRIPT:\n${transcriptText}`
+      : `Watch this YouTube video, split it into 4-8 sequential parts, and write detailed notes for each part. Call submit_video_notes.`;
+
+    const partsTool = {
+      type: "function" as const,
+      function: {
+        name: "submit_video_notes",
+        description: "Submit segmented study notes for the video.",
+        parameters: {
+          type: "object",
+          properties: {
+            parts: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string", description: "Short title for this segment" },
+                  notes: { type: "string", description: "Detailed markdown notes for this segment" },
+                },
+                required: ["title", "notes"], additionalProperties: false,
+              },
+            },
+          },
+          required: ["parts"], additionalProperties: false,
+        },
+      },
+    };
 
     // 1) Lovable AI Gateway attempts
     if (LOVABLE_API_KEY && transcriptText) {
@@ -151,6 +235,8 @@ Deno.serve(async (req) => {
                 { role: "system", content: systemPrompt },
                 { role: "user", content: userPrompt },
               ],
+              tools: [partsTool],
+              tool_choice: { type: "function", function: { name: "submit_video_notes" } },
             }),
           });
           const text = await res.text();
@@ -161,9 +247,21 @@ Deno.serve(async (req) => {
             if (res.status === 429 || res.status === 402 || res.status === 503) continue;
             break;
           }
+          const toolCall = payload?.choices?.[0]?.message?.tool_calls?.[0];
+          if (toolCall?.function?.arguments) {
+            try {
+              const args = JSON.parse(toolCall.function.arguments);
+              if (Array.isArray(args?.parts) && args.parts.length) {
+                parts = args.parts.filter((p: any) => p?.title && p?.notes);
+                notes = parts.map((p) => `# ${p.title}\n\n${p.notes}`).join("\n\n---\n\n");
+                break;
+              }
+            } catch (e) { console.error("parse tool args failed", e); }
+          }
           const reply = payload?.choices?.[0]?.message?.content ?? "";
           if (typeof reply === "string" && reply.trim()) {
             notes = reply;
+            parts = [{ title: lang0 === "ar" ? "الملاحظات" : "Notes", notes: reply }];
             break;
           }
           lastGeminiError = { status: 500, payload, text, model: `lovable:${model}` };
@@ -215,7 +313,10 @@ Deno.serve(async (req) => {
       }
 
       notes = payload?.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? "").join("") ?? "";
-      if (notes.trim()) break;
+      if (notes.trim()) {
+        parts = [{ title: lang0 === "ar" ? "الملاحظات" : "Notes", notes }];
+        break;
+      }
       lastGeminiError = { status: 500, payload, text, model };
     }
 
@@ -247,7 +348,7 @@ Deno.serve(async (req) => {
     if (!notes.trim()) {
       return jsonResponse({ error: "Empty response from model", retryable: true });
     }
-    return jsonResponse({ notes });
+    return jsonResponse({ notes, parts, transcript: transcriptText });
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);
   }
