@@ -568,11 +568,11 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               <input value={notifForm.title} onChange={(e) => setNotifForm({ ...notifForm, title: e.target.value })} placeholder="Title" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
               <textarea value={notifForm.body} onChange={(e) => setNotifForm({ ...notifForm, body: e.target.value })} placeholder="Message (optional)" rows={3} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
               <input value={notifForm.link} onChange={(e) => setNotifForm({ ...notifForm, link: e.target.value })} placeholder="Link (optional, https://...)" className="w-full h-10 px-3 rounded-lg bg-background border border-white/10 text-sm" />
-              <div className="space-y-1">
-                <label className="text-xs text-muted-foreground">Photo (optional)</label>
-                <input type="file" accept="image/*" onChange={(e) => setNotifForm({ ...notifForm, file: e.target.files?.[0] ?? null })} className="block w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-primary file:text-primary-foreground hover:file:bg-primary/90" />
-                {notifForm.file && <p className="text-xs text-muted-foreground">Selected: {notifForm.file.name}</p>}
-              </div>
+              <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 bg-background text-sm cursor-pointer hover:border-primary/40">
+                <Upload className="w-4 h-4" />
+                <span>{notifForm.file ? notifForm.file.name : "Choose image (optional)"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setNotifForm({ ...notifForm, file: e.target.files?.[0] ?? null })} />
+              </label>
               <button onClick={sendNotif} disabled={notifBusy} className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
                 {notifBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send
               </button>
