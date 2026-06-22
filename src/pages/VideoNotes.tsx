@@ -375,6 +375,17 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
               <Copy className="w-4 h-4 mr-2" />{t.copy}
             </Button>
           </div>
+          {/* Action row (top, always visible after notes are ready) */}
+          <div className="mb-5 grid sm:grid-cols-2 gap-3">
+            <Button onClick={generateFlashcards} disabled={cardsLoading} className="h-12 bg-gradient-to-r from-primary to-accent text-primary-foreground">
+              {cardsLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              {cardsLoading ? t.generatingCards : t.flashcardsBtn}
+            </Button>
+            <Button onClick={generateMcqs} disabled={mcqLoading} className="h-12 bg-gradient-to-r from-accent to-primary text-primary-foreground">
+              {mcqLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <BrainCircuit className="w-4 h-4 mr-2" />}
+              {mcqLoading ? t.generatingMcq : t.mcqBtn}
+            </Button>
+          </div>
           <div className="space-y-3">
             {parts.map((p, i) => {
               const open = openIdx === i;
