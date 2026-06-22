@@ -308,6 +308,14 @@ const App = () => {
         <Auth onAuthed={() => setAuthed(true)} onGoAdmin={() => chooseRole("admin")} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
+      ) : authRole !== "admin" && !tgVerified ? (
+        tgLoading ? (
+          <main className="min-h-screen flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          </main>
+        ) : (
+          <TelegramGate language={language} onVerified={() => setTgVerified(true)} />
+        )
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
           language={language}
