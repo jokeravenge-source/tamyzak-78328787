@@ -812,15 +812,14 @@ const NotesCanvasBlock = ({
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
-          {zoom !== 1 && (
-            <button
-              onClick={zoomReset}
-              className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
-              title={isRTL ? "إعادة" : "Reset"}
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <button
+            onClick={recenter}
+            className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            title={isRTL ? "إعادة التوسيط" : "Recenter"}
+            aria-label={isRTL ? "إعادة التوسيط" : "Recenter"}
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
         </div>
         {/* Expand / Fullscreen */}
         {(expandable || onToggleFullscreen || fullscreen) && (
