@@ -106,6 +106,36 @@ export type Database = {
         }
         Relationships: []
       }
+      canvases: {
+        Row: {
+          client_id: string
+          created_at: string
+          data: Json
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          data?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_flashcards: {
         Row: {
           answer: string
