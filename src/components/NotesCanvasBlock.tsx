@@ -205,7 +205,7 @@ const NotesCanvasBlock = ({
 
   const renderItem = (it: CanvasItem, isDraft = false) => {
     const selected = selectedId === it.id;
-    const sw = it.kind === "label" ? 0 : it.size;
+    const sw = (it.kind === "stroke" || it.kind === "shape") ? it.size : 0;
     if (it.kind === "stroke") {
       const d = it.points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
       return <path key={it.id} d={d} stroke={it.color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" fill="none" />;
