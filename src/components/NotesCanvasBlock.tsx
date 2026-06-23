@@ -580,6 +580,8 @@ const NotesCanvasBlock = ({
           ref={svgRef}
           width="100%"
           height={drawAreaHeight}
+          viewBox={`${(svgW - svgW / zoom) / 2} ${(drawAreaHeight - drawAreaHeight / zoom) / 2} ${svgW / zoom} ${drawAreaHeight / zoom}`}
+          preserveAspectRatio="none"
           style={{ cursor: cursorFor, touchAction: "none", display: "block" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -588,6 +590,41 @@ const NotesCanvasBlock = ({
         >
           {items.map(it => renderItem(it, draft?.id === it.id))}
         </svg>
+        {/* Zoom controls */}
+        <div className={`absolute bottom-1 ${isRTL ? "right-1" : "left-1"} flex items-center gap-1 bg-secondary/80 backdrop-blur rounded-md px-1 py-0.5 shadow-sm`}>
+          <button
+            onClick={zoomOut}
+            className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            title={isRTL ? "تصغير" : "Zoom out"}
+            aria-label={isRTL ? "تصغير" : "Zoom out"}
+          >
+            <ZoomOut className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={zoomReset}
+            className="text-[10px] font-mono w-9 text-center text-muted-foreground hover:text-foreground"
+            title={isRTL ? "إعادة" : "Reset"}
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            onClick={zoomIn}
+            className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            title={isRTL ? "تكبير" : "Zoom in"}
+            aria-label={isRTL ? "تكبير" : "Zoom in"}
+          >
+            <ZoomIn className="w-3.5 h-3.5" />
+          </button>
+          {zoom !== 1 && (
+            <button
+              onClick={zoomReset}
+              className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+              title={isRTL ? "إعادة" : "Reset"}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
         {/* Expand / Fullscreen */}
         {(expandable || onToggleFullscreen || fullscreen) && (
           <button
