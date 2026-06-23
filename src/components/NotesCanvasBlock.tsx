@@ -269,8 +269,10 @@ const NotesCanvasBlock = ({
       return;
     }
     if (tool === "sticker") {
-      const s = 48;
-      const item: CanvasSticker = { id: rid(), kind: "sticker", x: x - s / 2, y: y - s / 2, w: s, h: s, emoji: sticker };
+      const s = customStickerUrl ? 80 : 48;
+      const item: CanvasSticker = customStickerUrl
+        ? { id: rid(), kind: "sticker", x: x - s / 2, y: y - s / 2, w: s, h: s, url: customStickerUrl }
+        : { id: rid(), kind: "sticker", x: x - s / 2, y: y - s / 2, w: s, h: s, emoji: sticker };
       setItems(arr => [...arr, item]);
       setSelectedId(item.id);
       return;
