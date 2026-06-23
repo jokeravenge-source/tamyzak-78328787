@@ -2,10 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Pencil, Eraser, Square, Circle as CircleIcon, Minus as LineIcon,
   MoveUpRight, Tag, Type, MousePointer2, Trash2, Maximize2, Smile, Expand, Minimize2,
+  Upload, ImagePlus, Loader2, X as XIcon,
   ZoomIn, ZoomOut, RotateCcw,
   PanelLeftClose, PanelLeft,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type CanvasStroke = {
   id: string; kind: "stroke"; color: string; size: number;
@@ -25,7 +28,8 @@ export type CanvasLabel = {
 export type CanvasSticker = {
   id: string; kind: "sticker";
   x: number; y: number; w: number; h: number;
-  emoji: string;
+  emoji?: string;
+  url?: string;
 };
 export type CanvasItem = CanvasStroke | CanvasShape | CanvasLabel | CanvasSticker;
 export type CanvasData = { items: CanvasItem[]; height: number };
@@ -81,6 +85,87 @@ const NotesCanvasBlock = ({
   const [size, setSize] = useState<number>(3);
   const [labelBg, setLabelBg] = useState<string>(LABEL_BGS[0]);
   const [sticker, setSticker] = useState<string>(STICKERS[0]);
+  const [customStickerUrl, setCustomStickerUrl] = useState<string | null>(null);
+  const [userStickers, setUserStickers] = useState<{ name: string; url: string }[]>([]);
+  const [uploadingSticker, setUploadingSticker] = useState(false);
+  const [loadingStickers, setLoadingStickers] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const userIdRef = useRef<string | null>(null);
+
+  const loadUserStickers = async () => {
+    try {
+      setLoadingStickers(true);
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id ?? null;
+      userIdRef.current = uid;
+      if (!uid) { setUserStickers([]); return; }
+      const { data, error } = await supabase.storage.from("stickers").list(uid, {
+        limit: 100, sortBy: { column: "created_at", order: "desc" },
+      });
+      if (error) throw error;
+      const items = (data ?? [])
+        .filter(f => f.name && !f.name.startsWith("."))
+        .map(f => {
+          const path = `${uid}/${f.name}`;
+          const { data: pub } = supabase.storage.from("stickers").getPublicUrl(path);
+          return { name: f.name, url: pub.publicUrl };
+        });
+      setUserStickers(items);
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setLoadingStickers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tool === "sticker" && userStickers.length === 0) loadUserStickers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tool]);
+
+  const uploadSticker = async (file: File) => {
+    try {
+      if (!file.type.startsWith("image/")) {
+        toast.error(isRTL ? "اختر ملف صورة" : "Please pick an image file");
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error(isRTL ? "الحد الأقصى 2 ميغابايت" : "Max size is 2MB");
+        return;
+      }
+      setUploadingSticker(true);
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id;
+      if (!uid) {
+        toast.error(isRTL ? "سجّل الدخول أولاً" : "Please sign in first");
+        return;
+      }
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `${uid}/${Date.now()}-${rid()}.${ext}`;
+      const { error } = await supabase.storage.from("stickers").upload(path, file, {
+        cacheControl: "3600", upsert: false, contentType: file.type,
+      });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("stickers").getPublicUrl(path);
+      setUserStickers(s => [{ name: path.split("/").pop()!, url: pub.publicUrl }, ...s]);
+      setCustomStickerUrl(pub.publicUrl);
+      toast.success(isRTL ? "تمت الإضافة" : "Sticker added");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    } finally {
+      setUploadingSticker(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const deleteUserSticker = async (name: string) => {
+    const uid = userIdRef.current;
+    if (!uid) return;
+    const path = `${uid}/${name}`;
+    const { error } = await supabase.storage.from("stickers").remove([path]);
+    if (error) { toast.error(error.message); return; }
+    setUserStickers(s => s.filter(x => x.name !== name));
+  };
   const [internalFullscreen, setInternalFullscreen] = useState<boolean>(false);
   const fullscreen = fullscreenProp ?? internalFullscreen;
   const toggleFullscreen = () => {
@@ -184,8 +269,10 @@ const NotesCanvasBlock = ({
       return;
     }
     if (tool === "sticker") {
-      const s = 48;
-      const item: CanvasSticker = { id: rid(), kind: "sticker", x: x - s / 2, y: y - s / 2, w: s, h: s, emoji: sticker };
+      const s = customStickerUrl ? 80 : 48;
+      const item: CanvasSticker = customStickerUrl
+        ? { id: rid(), kind: "sticker", x: x - s / 2, y: y - s / 2, w: s, h: s, url: customStickerUrl }
+        : { id: rid(), kind: "sticker", x: x - s / 2, y: y - s / 2, w: s, h: s, emoji: sticker };
       setItems(arr => [...arr, item]);
       setSelectedId(item.id);
       return;
@@ -262,16 +349,25 @@ const NotesCanvasBlock = ({
     if (it.kind === "sticker") {
       return (
         <g key={it.id}>
-          <text
-            x={it.x + it.w / 2}
-            y={it.y + it.h / 2}
-            fontSize={Math.min(it.w, it.h) * 0.9}
-            textAnchor="middle"
-            dominantBaseline="central"
-            style={{ userSelect: "none" }}
-          >
-            {it.emoji}
-          </text>
+          {it.url ? (
+            <image
+              href={it.url}
+              x={it.x} y={it.y} width={it.w} height={it.h}
+              preserveAspectRatio="xMidYMid meet"
+              style={{ pointerEvents: "none" }}
+            />
+          ) : (
+            <text
+              x={it.x + it.w / 2}
+              y={it.y + it.h / 2}
+              fontSize={Math.min(it.w, it.h) * 0.9}
+              textAnchor="middle"
+              dominantBaseline="central"
+              style={{ userSelect: "none" }}
+            >
+              {it.emoji}
+            </text>
+          )}
           {selected && !isDraft && (
             <>
               <rect
@@ -529,9 +625,9 @@ const NotesCanvasBlock = ({
                 {STICKERS.map(em => (
                   <button
                     key={em}
-                    onClick={() => setSticker(em)}
+                    onClick={() => { setSticker(em); setCustomStickerUrl(null); }}
                     className={`w-7 h-7 rounded text-base leading-none flex items-center justify-center hover:bg-secondary ${
-                      sticker === em ? "ring-2 ring-primary bg-secondary" : ""
+                      sticker === em && !customStickerUrl ? "ring-2 ring-primary bg-secondary" : ""
                     }`}
                     title={em}
                   >
@@ -539,9 +635,75 @@ const NotesCanvasBlock = ({
                   </button>
                 ))}
               </div>
+
+              {/* Custom uploads */}
+              {sidebarOpen && (
+                <>
+                  <div className="flex items-center justify-between px-1 pt-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {isRTL ? "ملصقاتي" : "My stickers"}
+                    </p>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingSticker}
+                      className="text-[10px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                      title={isRTL ? "رفع" : "Upload"}
+                    >
+                      {uploadingSticker ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                      {isRTL ? "رفع" : "Upload"}
+                    </button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadSticker(f);
+                    }}
+                  />
+                  <div className="grid grid-cols-3 gap-1 px-1">
+                    {loadingStickers && (
+                      <div className="col-span-3 flex justify-center py-2 text-muted-foreground">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      </div>
+                    )}
+                    {!loadingStickers && userStickers.length === 0 && (
+                      <div className="col-span-3 text-[10px] text-muted-foreground text-center py-2 border border-dashed border-border rounded">
+                        <ImagePlus className="w-4 h-4 mx-auto mb-0.5 opacity-60" />
+                        {isRTL ? "ارفع صورتك الأولى" : "Upload your first"}
+                      </div>
+                    )}
+                    {userStickers.map(s => (
+                      <div key={s.name} className="relative group">
+                        <button
+                          onClick={() => setCustomStickerUrl(s.url)}
+                          className={`w-full aspect-square rounded border bg-background overflow-hidden flex items-center justify-center hover:border-primary ${
+                            customStickerUrl === s.url ? "ring-2 ring-primary border-primary" : "border-border"
+                          }`}
+                          title={isRTL ? "اختر ثم اضغط على اللوحة" : "Select then click canvas"}
+                        >
+                          <img src={s.url} alt="" className="w-full h-full object-contain" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteUserSticker(s.name); if (customStickerUrl === s.url) setCustomStickerUrl(null); }}
+                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                          title={isRTL ? "حذف" : "Delete"}
+                        >
+                          <XIcon className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
               {sidebarOpen && (
                 <p className="text-[10px] text-muted-foreground px-1">
-                  {isRTL ? "اضغط على اللوحة لإضافته" : "Click on canvas to place"}
+                  {customStickerUrl
+                    ? (isRTL ? "اضغط على اللوحة لوضع صورتك" : "Click canvas to place image")
+                    : (isRTL ? "اضغط على اللوحة لإضافته" : "Click on canvas to place")}
                 </p>
               )}
             </div>
