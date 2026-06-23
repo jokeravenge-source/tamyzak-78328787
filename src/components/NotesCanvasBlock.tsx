@@ -75,10 +75,17 @@ const NotesCanvasBlock = ({
   onToggleFullscreen?: () => void;
 }) => {
   const isRTL = language === "ar";
-  const safe: CanvasData = useMemo(
-    () => (data && Array.isArray(data.items) ? { items: data.items, height: data.height || 360 } : { items: [], height: 360 }),
-    [data],
-  );
+  const safe: CanvasData = useMemo(() => {
+    if (!data || !Array.isArray(data.items)) return { items: [], height: 360 };
+    // Sanitize: clamp any stray coords from older runaway-world bugs back into a sane range.
+    const CAP = 6000;
+    const inRange = (n: number) => Number.isFinite(n) && Math.abs(n) <= CAP;
+    const items = data.items.filter(it => {
+      if (it.kind === "stroke") return it.points.every(p => inRange(p.x) && inRange(p.y));
+      return inRange(it.x) && inRange(it.y) && inRange(it.x + it.w) && inRange(it.y + it.h);
+    });
+    return { items, height: data.height || 360 };
+  }, [data]);
   const svgRef = useRef<SVGSVGElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [tool, setTool] = useState<Tool>("pen");
