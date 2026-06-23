@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Pencil, Eraser, Square, Circle as CircleIcon, Minus as LineIcon,
-  MoveUpRight, Tag, MousePointer2, Trash2, Maximize2, Smile, Expand, Minimize2,
+  MoveUpRight, Tag, Type, MousePointer2, Trash2, Maximize2, Smile, Expand, Minimize2,
   PanelLeftClose, PanelLeft,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -29,7 +29,7 @@ export type CanvasSticker = {
 export type CanvasItem = CanvasStroke | CanvasShape | CanvasLabel | CanvasSticker;
 export type CanvasData = { items: CanvasItem[]; height: number };
 
-type Tool = "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "arrow" | "label" | "sticker";
+type Tool = "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "arrow" | "label" | "text" | "sticker";
 
 const PALETTE = ["#0f172a", "#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"];
 const LABEL_BGS = ["#fef3c7", "#dbeafe", "#dcfce7", "#fce7f3", "#e0e7ff", "#f1f5f9"];
@@ -149,6 +149,13 @@ const NotesCanvasBlock = ({
     }
     if (tool === "label") {
       const item: CanvasLabel = { id: rid(), kind: "label", x, y, w: 140, h: 44, text: "", color: "#0f172a", bg: labelBg };
+      setItems(arr => [...arr, item]);
+      setSelectedId(item.id);
+      setEditingLabel(item.id);
+      return;
+    }
+    if (tool === "text") {
+      const item: CanvasLabel = { id: rid(), kind: "label", x, y, w: 160, h: 40, text: "", color, bg: "transparent" };
       setItems(arr => [...arr, item]);
       setSelectedId(item.id);
       setEditingLabel(item.id);
@@ -340,6 +347,7 @@ const NotesCanvasBlock = ({
     { id: "line",    icon: LineIcon,      label: isRTL ? "خط" : "Line",        shortcut: "L" },
     { id: "arrow",   icon: MoveUpRight,   label: isRTL ? "سهم" : "Arrow",      shortcut: "A" },
     { id: "label",   icon: Tag,           label: isRTL ? "ملصق" : "Label",     shortcut: "T" },
+    { id: "text",    icon: Type,          label: isRTL ? "نص" : "Text",        shortcut: "X" },
     { id: "sticker", icon: Smile,         label: isRTL ? "ملصقات" : "Stickers", shortcut: "S" },
   ];
 
