@@ -5,6 +5,7 @@ import {
   Upload, ImagePlus, Loader2, X as XIcon,
   ZoomIn, ZoomOut, RotateCcw,
   PanelLeftClose, PanelLeft,
+  Plus,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
@@ -203,6 +204,32 @@ const NotesCanvasBlock = ({
   const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [zoom, setZoom] = useState<number>(1);
   const [svgW, setSvgW] = useState<number>(800);
+  // Missed-tap pin: when a tap was too small to commit as a stroke/shape,
+  // surface a floating "+" the user can press to add a default item at that spot.
+  const [missedTap, setMissedTap] = useState<{ x: number; y: number; tool: Tool } | null>(null);
+  const missedTimerRef = useRef<number | null>(null);
+  const showMissedTap = (x: number, y: number) => {
+    if (!["pen", "rect", "ellipse", "line", "arrow"].includes(tool)) return;
+    setMissedTap({ x, y, tool });
+    if (missedTimerRef.current) window.clearTimeout(missedTimerRef.current);
+    missedTimerRef.current = window.setTimeout(() => setMissedTap(null), 3500);
+  };
+  const confirmMissedTap = () => {
+    if (!missedTap) return;
+    const { x, y, tool: t } = missedTap;
+    const DEFAULT = 80;
+    const item: CanvasItem =
+      t === "pen"
+        ? { id: rid(), kind: "stroke", color, size, points: [
+            { x, y }, { x: x + 2, y: y + 2 },
+          ] }
+        : { id: rid(), kind: "shape", shape: t as any, color, size,
+            x: x - DEFAULT / 2, y: y - DEFAULT / 2, w: DEFAULT, h: DEFAULT };
+    setItems(arr => [...arr, item]);
+    setMissedTap(null);
+    if (missedTimerRef.current) { window.clearTimeout(missedTimerRef.current); missedTimerRef.current = null; }
+  };
+  useEffect(() => () => { if (missedTimerRef.current) window.clearTimeout(missedTimerRef.current); }, []);
   // Infinite world dimensions (in canvas/world units, before zoom).
   const [worldW, setWorldW] = useState<number>(2400);
   const [worldH, setWorldH] = useState<number>(1600);
@@ -352,8 +379,15 @@ const NotesCanvasBlock = ({
     document.documentElement.style.overscrollBehavior = "";
     if (dragRef.current) { dragRef.current = null; return; }
     if (!draft) return;
-    if (draft.kind === "stroke" && draft.points.length < 2) { setDraft(null); return; }
-    if (draft.kind === "shape" && Math.abs(draft.w) < 4 && Math.abs(draft.h) < 4) { setDraft(null); return; }
+    if (draft.kind === "stroke" && draft.points.length < 2) {
+      const p = draft.points[0];
+      if (p) showMissedTap(p.x, p.y);
+      setDraft(null); return;
+    }
+    if (draft.kind === "shape" && Math.abs(draft.w) < 4 && Math.abs(draft.h) < 4) {
+      showMissedTap(draft.x, draft.y);
+      setDraft(null); return;
+    }
     setItems(arr => [...arr, draft]);
     setDraft(null);
   };
@@ -798,6 +832,21 @@ const NotesCanvasBlock = ({
         >
           {items.map(it => renderItem(it, draft?.id === it.id))}
         </svg>
+          {/* Missed-tap floating add — appears when a tap was too small to commit */}
+          {missedTap && (
+            <button
+              onClick={confirmMissedTap}
+              className="absolute z-20 w-9 h-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-110 transition-transform animate-in fade-in zoom-in"
+              style={{
+                left: missedTap.x * zoom - 18,
+                top: missedTap.y * zoom - 18,
+              }}
+              title={isRTL ? "إضافة هنا" : "Add here"}
+              aria-label={isRTL ? "إضافة هنا" : "Add here"}
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          )}
         </div>
         {/* Zoom controls */}
         <div className={`absolute bottom-1 ${isRTL ? "right-1" : "left-1"} flex items-center gap-1 bg-secondary/80 backdrop-blur rounded-md px-1 py-0.5 shadow-sm z-10`}>
