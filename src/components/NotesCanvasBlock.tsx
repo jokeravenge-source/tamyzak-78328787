@@ -762,13 +762,14 @@ const NotesCanvasBlock = ({
       </aside>
 
       {/* Drawing area (infinite scrollable paper) */}
-      <div
-        ref={scrollRef}
-        onScroll={onScroll}
-        className="relative flex-1 min-w-0 overflow-auto bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]"
-        style={{ height: drawAreaHeight, touchAction: "none", overscrollBehavior: "contain" }}
-      >
-        <svg
+      <div className="relative flex-1 min-w-0" style={{ height: drawAreaHeight }}>
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className="absolute inset-0 overflow-auto bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]"
+          style={{ touchAction: "none", overscrollBehavior: "contain" }}
+        >
+          <svg
           ref={svgRef}
           width={worldW * zoom}
           height={worldH * zoom}
@@ -782,8 +783,9 @@ const NotesCanvasBlock = ({
         >
           {items.map(it => renderItem(it, draft?.id === it.id))}
         </svg>
+        </div>
         {/* Zoom controls */}
-        <div className={`sticky bottom-1 ${isRTL ? "float-right mr-1" : "float-left ml-1"} -mt-9 inline-flex items-center gap-1 bg-secondary/80 backdrop-blur rounded-md px-1 py-0.5 shadow-sm z-10`}>
+        <div className={`absolute bottom-1 ${isRTL ? "right-1" : "left-1"} flex items-center gap-1 bg-secondary/80 backdrop-blur rounded-md px-1 py-0.5 shadow-sm z-10`}>
           <button
             onClick={zoomOut}
             className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
