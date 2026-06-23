@@ -832,6 +832,21 @@ const NotesCanvasBlock = ({
         >
           {items.map(it => renderItem(it, draft?.id === it.id))}
         </svg>
+          {/* Missed-tap floating add — appears when a tap was too small to commit */}
+          {missedTap && (
+            <button
+              onClick={confirmMissedTap}
+              className="absolute z-20 w-9 h-9 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-110 transition-transform animate-in fade-in zoom-in"
+              style={{
+                left: missedTap.x * zoom - 18,
+                top: missedTap.y * zoom - 18,
+              }}
+              title={isRTL ? "إضافة هنا" : "Add here"}
+              aria-label={isRTL ? "إضافة هنا" : "Add here"}
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          )}
         </div>
         {/* Zoom controls */}
         <div className={`absolute bottom-1 ${isRTL ? "right-1" : "left-1"} flex items-center gap-1 bg-secondary/80 backdrop-blur rounded-md px-1 py-0.5 shadow-sm z-10`}>
