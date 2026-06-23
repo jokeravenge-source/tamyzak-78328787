@@ -762,7 +762,6 @@ const NotesCanvasBlock = ({
       <div className="relative flex-1 min-w-0" style={{ height: drawAreaHeight }}>
         <div
           ref={scrollRef}
-          onScroll={onScroll}
           className="absolute inset-0 overflow-auto bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]"
           style={{ touchAction: "none", overscrollBehavior: "contain" }}
         >
