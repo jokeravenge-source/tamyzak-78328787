@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Pencil, Eraser, Square, Circle as CircleIcon, Minus as LineIcon,
   MoveUpRight, Tag, Type, MousePointer2, Trash2, Maximize2, Smile, Expand, Minimize2,
+  ZoomIn, ZoomOut, RotateCcw,
   PanelLeftClose, PanelLeft,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -107,6 +108,19 @@ const NotesCanvasBlock = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
   const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const [zoom, setZoom] = useState<number>(1);
+  const [svgW, setSvgW] = useState<number>(800);
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const el = svgRef.current;
+    const update = () => setSvgW(el.getBoundingClientRect().width || 800);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const baseH = drawAreaHeightRef();
+  function drawAreaHeightRef() { return 0; }
 
   const items = draft ? [...safe.items, draft] : safe.items;
 
@@ -118,7 +132,14 @@ const NotesCanvasBlock = ({
 
   const pointAt = (e: React.PointerEvent) => {
     const r = svgRef.current!.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    // Map screen px to viewBox coords (accounts for zoom + centered origin).
+    const vbW = svgW / zoom;
+    const vbH = (r.height || safe.height) / zoom;
+    const offX = (svgW - vbW) / 2;
+    const offY = ((r.height || safe.height) - vbH) / 2;
+    const sx = (e.clientX - r.left) / (r.width || svgW);
+    const sy = (e.clientY - r.top) / (r.height || safe.height);
+    return { x: offX + sx * vbW, y: offY + sy * vbH };
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
