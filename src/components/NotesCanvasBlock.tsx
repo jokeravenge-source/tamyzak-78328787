@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Pencil, Eraser, Square, Circle as CircleIcon, Minus as LineIcon,
   MoveUpRight, Tag, Type, MousePointer2, Trash2, Maximize2, Smile, Expand, Minimize2,
+  ZoomIn, ZoomOut, RotateCcw,
   PanelLeftClose, PanelLeft,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -107,6 +108,20 @@ const NotesCanvasBlock = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
   const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const [zoom, setZoom] = useState<number>(1);
+  const [svgW, setSvgW] = useState<number>(800);
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const el = svgRef.current;
+    const update = () => setSvgW(el.getBoundingClientRect().width || 800);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const zoomIn = () => setZoom(z => Math.min(4, +(z + 0.25).toFixed(2)));
+  const zoomOut = () => setZoom(z => Math.max(0.25, +(z - 0.25).toFixed(2)));
+  const zoomReset = () => setZoom(1);
 
   const items = draft ? [...safe.items, draft] : safe.items;
 
@@ -118,7 +133,14 @@ const NotesCanvasBlock = ({
 
   const pointAt = (e: React.PointerEvent) => {
     const r = svgRef.current!.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    // Map screen px to viewBox coords (accounts for zoom + centered origin).
+    const vbW = svgW / zoom;
+    const vbH = (r.height || safe.height) / zoom;
+    const offX = (svgW - vbW) / 2;
+    const offY = ((r.height || safe.height) - vbH) / 2;
+    const sx = (e.clientX - r.left) / (r.width || svgW);
+    const sy = (e.clientY - r.top) / (r.height || safe.height);
+    return { x: offX + sx * vbW, y: offY + sy * vbH };
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -558,6 +580,8 @@ const NotesCanvasBlock = ({
           ref={svgRef}
           width="100%"
           height={drawAreaHeight}
+          viewBox={`${(svgW - svgW / zoom) / 2} ${(drawAreaHeight - drawAreaHeight / zoom) / 2} ${svgW / zoom} ${drawAreaHeight / zoom}`}
+          preserveAspectRatio="none"
           style={{ cursor: cursorFor, touchAction: "none", display: "block" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -566,6 +590,41 @@ const NotesCanvasBlock = ({
         >
           {items.map(it => renderItem(it, draft?.id === it.id))}
         </svg>
+        {/* Zoom controls */}
+        <div className={`absolute bottom-1 ${isRTL ? "right-1" : "left-1"} flex items-center gap-1 bg-secondary/80 backdrop-blur rounded-md px-1 py-0.5 shadow-sm`}>
+          <button
+            onClick={zoomOut}
+            className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            title={isRTL ? "تصغير" : "Zoom out"}
+            aria-label={isRTL ? "تصغير" : "Zoom out"}
+          >
+            <ZoomOut className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={zoomReset}
+            className="text-[10px] font-mono w-9 text-center text-muted-foreground hover:text-foreground"
+            title={isRTL ? "إعادة" : "Reset"}
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            onClick={zoomIn}
+            className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            title={isRTL ? "تكبير" : "Zoom in"}
+            aria-label={isRTL ? "تكبير" : "Zoom in"}
+          >
+            <ZoomIn className="w-3.5 h-3.5" />
+          </button>
+          {zoom !== 1 && (
+            <button
+              onClick={zoomReset}
+              className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+              title={isRTL ? "إعادة" : "Reset"}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
         {/* Expand / Fullscreen */}
         {(expandable || onToggleFullscreen || fullscreen) && (
           <button
