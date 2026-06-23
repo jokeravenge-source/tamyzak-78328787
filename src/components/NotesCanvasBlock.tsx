@@ -119,8 +119,9 @@ const NotesCanvasBlock = ({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const baseH = drawAreaHeightRef();
-  function drawAreaHeightRef() { return 0; }
+  const zoomIn = () => setZoom(z => Math.min(4, +(z + 0.25).toFixed(2)));
+  const zoomOut = () => setZoom(z => Math.max(0.25, +(z - 0.25).toFixed(2)));
+  const zoomReset = () => setZoom(1);
 
   const items = draft ? [...safe.items, draft] : safe.items;
 
