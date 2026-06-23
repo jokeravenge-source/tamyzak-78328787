@@ -244,8 +244,15 @@ const NotesCanvasBlock = ({
 
   const items = draft ? [...safe.items, draft] : safe.items;
 
+  // Track the latest items in a ref so rapid sequential updates (fast drawing,
+  // drag-resize during autosave re-renders) always chain off the freshest array
+  // instead of a stale render-captured copy.
+  const itemsRef = useRef<CanvasItem[]>(safe.items);
+  useEffect(() => { itemsRef.current = safe.items; }, [safe.items]);
   const setItems = (updater: (arr: CanvasItem[]) => CanvasItem[]) => {
-    onChange({ ...safe, items: updater(safe.items) });
+    const next = updater(itemsRef.current);
+    itemsRef.current = next;
+    onChange({ ...safe, items: next });
   };
 
   const setHeight = (h: number) => onChange({ ...safe, height: Math.max(180, Math.min(1200, h)) });
