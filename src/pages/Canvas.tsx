@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Pencil, Check, X, FileInput, FileText, PanelLeftClose, PanelLeft } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Check, X, FileInput, FileText, PanelLeftClose, PanelLeft, Cloud, CloudOff, Loader2 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import NotesCanvasBlock, { type CanvasData } from "@/components/NotesCanvasBlock";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +40,9 @@ const Canvas = ({
     title: isRTL ? "اللوحات" : "Canvases",
     back: isRTL ? "رجوع" : "Back",
     autosaved: isRTL ? "الحفظ تلقائي" : "Autosaved",
+    saving: isRTL ? "جارٍ الحفظ…" : "Saving…",
+    saved: isRTL ? "تم الحفظ" : "Saved",
+    offline: isRTL ? "محلي فقط" : "Local only",
     newCanvas: isRTL ? "لوحة جديدة" : "New canvas",
     untitled: isRTL ? "بدون عنوان" : "Untitled",
     delete: isRTL ? "حذف" : "Delete",
@@ -59,6 +62,7 @@ const Canvas = ({
   const [stored, setStored] = useState<Stored>({ canvases: [], activeId: null });
   const [loaded, setLoaded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [listOpen, setListOpen] = useState<boolean>(() => {
@@ -78,7 +82,7 @@ const Canvas = ({
   const [notes, setNotes] = useState<NoteLite[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(false);
 
-  // Load
+  // Load (local first, then merge with cloud)
   useEffect(() => {
     (async () => {
       try {
@@ -87,44 +91,72 @@ const Canvas = ({
         setUserId(uid);
         const key = uid ? `${STORAGE_KEY}:${uid}` : STORAGE_KEY;
         const raw = localStorage.getItem(key);
+        let local: Stored | null = null;
         if (raw) {
           const parsed = JSON.parse(raw) as Stored;
           if (parsed && Array.isArray(parsed.canvases)) {
-            setStored({
+            local = {
               canvases: parsed.canvases,
               activeId: parsed.activeId ?? parsed.canvases[0]?.id ?? null,
-            });
-            setLoaded(true);
-            return;
+            };
+            setStored(local);
           }
         }
-        // Migrate legacy single-canvas key
-        const legacyKey = uid ? `${LEGACY_SINGLE_KEY}:${uid}` : LEGACY_SINGLE_KEY;
-        const legacyRaw = localStorage.getItem(legacyKey);
-        let initial: StoredCanvas[] = [];
-        if (legacyRaw) {
-          try {
-            const parsed = JSON.parse(legacyRaw);
-            if (parsed && Array.isArray(parsed.items)) {
-              initial = [{
-                id: rid(),
-                name: isRTL ? "لوحتي" : "My canvas",
-                data: { items: parsed.items, height: parsed.height || 720 },
-                updated_at: Date.now(),
-              }];
+        // Cloud fetch (signed-in users) — merge by client_id, newest wins.
+        if (uid) {
+          const { data: cloud } = await supabase
+            .from("canvases")
+            .select("client_id,name,data,updated_at")
+            .order("updated_at", { ascending: false });
+          if (cloud && cloud.length > 0) {
+            const byId = new Map<string, StoredCanvas>();
+            for (const c of (local?.canvases ?? [])) byId.set(c.id, c);
+            for (const row of cloud) {
+              const remoteTs = new Date(row.updated_at as string).getTime();
+              const existing = byId.get(row.client_id as string);
+              if (!existing || remoteTs > existing.updated_at) {
+                byId.set(row.client_id as string, {
+                  id: row.client_id as string,
+                  name: (row.name as string) || (isRTL ? "بدون عنوان" : "Untitled"),
+                  data: row.data as CanvasData,
+                  updated_at: remoteTs,
+                });
+              }
             }
-          } catch { /* ignore */ }
+            const merged = Array.from(byId.values()).sort((a, b) => b.updated_at - a.updated_at);
+            local = { canvases: merged, activeId: local?.activeId ?? merged[0]?.id ?? null };
+            setStored(local);
+          }
         }
-        if (initial.length === 0) {
-          initial = [newCanvas(isRTL ? "لوحة 1" : "Canvas 1")];
+        if (!local || local.canvases.length === 0) {
+          // Migrate legacy single-canvas key
+          const legacyKey = uid ? `${LEGACY_SINGLE_KEY}:${uid}` : LEGACY_SINGLE_KEY;
+          const legacyRaw = localStorage.getItem(legacyKey);
+          let initial: StoredCanvas[] = [];
+          if (legacyRaw) {
+            try {
+              const parsed = JSON.parse(legacyRaw);
+              if (parsed && Array.isArray(parsed.items)) {
+                initial = [{
+                  id: rid(),
+                  name: isRTL ? "لوحتي" : "My canvas",
+                  data: { items: parsed.items, height: parsed.height || 720 },
+                  updated_at: Date.now(),
+                }];
+              }
+            } catch { /* ignore */ }
+          }
+          if (initial.length === 0) {
+            initial = [newCanvas(isRTL ? "لوحة 1" : "Canvas 1")];
+          }
+          setStored({ canvases: initial, activeId: initial[0].id });
         }
-        setStored({ canvases: initial, activeId: initial[0].id });
       } catch { /* ignore */ }
       setLoaded(true);
     })();
   }, [isRTL]);
 
-  // Autosave
+  // Autosave to localStorage (instant)
   useEffect(() => {
     if (!loaded) return;
     try {
@@ -132,6 +164,36 @@ const Canvas = ({
       localStorage.setItem(key, JSON.stringify(stored));
     } catch { /* ignore */ }
   }, [stored, loaded, userId]);
+
+  // Autosave to cloud (debounced) — only what changed since last save.
+  const lastSavedRef = useMemo(() => ({ current: new Map<string, number>() }), []);
+  useEffect(() => {
+    if (!loaded || !userId) return;
+    const dirty = stored.canvases.filter(c => (lastSavedRef.current.get(c.id) ?? 0) < c.updated_at);
+    if (dirty.length === 0) return;
+    const handle = setTimeout(async () => {
+      setSaveState("saving");
+      try {
+        const rows = dirty.map(c => ({
+          user_id: userId,
+          client_id: c.id,
+          name: c.name,
+          data: c.data as any,
+          updated_at: new Date(c.updated_at).toISOString(),
+        }));
+        const { error } = await supabase
+          .from("canvases")
+          .upsert(rows, { onConflict: "user_id,client_id" });
+        if (error) throw error;
+        for (const c of dirty) lastSavedRef.current.set(c.id, c.updated_at);
+        setSaveState("saved");
+      } catch (e) {
+        console.error("[canvas autosave]", e);
+        setSaveState("error");
+      }
+    }, 800);
+    return () => clearTimeout(handle);
+  }, [stored.canvases, loaded, userId, lastSavedRef]);
 
   const active = useMemo(
     () => stored.canvases.find((c) => c.id === stored.activeId) ?? null,
@@ -147,6 +209,11 @@ const Canvas = ({
 
   const deleteCanvas = (id: string) => {
     if (!confirm(t.deleteConfirm)) return;
+    if (userId) {
+      supabase.from("canvases").delete().eq("user_id", userId).eq("client_id", id).then(({ error }) => {
+        if (error) console.error("[canvas delete]", error);
+      });
+    }
     setStored((s) => {
       const next = s.canvases.filter((c) => c.id !== id);
       const activeId = s.activeId === id ? (next[0]?.id ?? null) : s.activeId;
@@ -214,7 +281,17 @@ const Canvas = ({
           <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
         </button>
         <h1 className="text-sm font-bold">{t.title}</h1>
-        <span className="ml-auto text-[11px] text-muted-foreground">{t.autosaved}</span>
+        <span className="ml-auto text-[11px] text-muted-foreground inline-flex items-center gap-1">
+          {!userId ? (
+            <><CloudOff className="w-3 h-3" /> {t.offline}</>
+          ) : saveState === "saving" ? (
+            <><Loader2 className="w-3 h-3 animate-spin" /> {t.saving}</>
+          ) : saveState === "error" ? (
+            <><CloudOff className="w-3 h-3 text-destructive" /> {t.autosaved}</>
+          ) : (
+            <><Cloud className="w-3 h-3" /> {t.saved}</>
+          )}
+        </span>
       </header>
 
       <div
