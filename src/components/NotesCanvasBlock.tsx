@@ -5,6 +5,7 @@ import {
   Upload, ImagePlus, Loader2, X as XIcon,
   ZoomIn, ZoomOut, RotateCcw,
   PanelLeftClose, PanelLeft,
+  Plus,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
@@ -352,8 +353,15 @@ const NotesCanvasBlock = ({
     document.documentElement.style.overscrollBehavior = "";
     if (dragRef.current) { dragRef.current = null; return; }
     if (!draft) return;
-    if (draft.kind === "stroke" && draft.points.length < 2) { setDraft(null); return; }
-    if (draft.kind === "shape" && Math.abs(draft.w) < 4 && Math.abs(draft.h) < 4) { setDraft(null); return; }
+    if (draft.kind === "stroke" && draft.points.length < 2) {
+      const p = draft.points[0];
+      if (p) showMissedTap(p.x, p.y);
+      setDraft(null); return;
+    }
+    if (draft.kind === "shape" && Math.abs(draft.w) < 4 && Math.abs(draft.h) < 4) {
+      showMissedTap(draft.x, draft.y);
+      setDraft(null); return;
+    }
     setItems(arr => [...arr, draft]);
     setDraft(null);
   };
