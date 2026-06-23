@@ -75,10 +75,17 @@ const NotesCanvasBlock = ({
   onToggleFullscreen?: () => void;
 }) => {
   const isRTL = language === "ar";
-  const safe: CanvasData = useMemo(
-    () => (data && Array.isArray(data.items) ? { items: data.items, height: data.height || 360 } : { items: [], height: 360 }),
-    [data],
-  );
+  const safe: CanvasData = useMemo(() => {
+    if (!data || !Array.isArray(data.items)) return { items: [], height: 360 };
+    // Sanitize: clamp any stray coords from older runaway-world bugs back into a sane range.
+    const CAP = 6000;
+    const inRange = (n: number) => Number.isFinite(n) && Math.abs(n) <= CAP;
+    const items = data.items.filter(it => {
+      if (it.kind === "stroke") return it.points.every(p => inRange(p.x) && inRange(p.y));
+      return inRange(it.x) && inRange(it.y) && inRange(it.x + it.w) && inRange(it.y + it.h);
+    });
+    return { items, height: data.height || 360 };
+  }, [data]);
   const svgRef = useRef<SVGSVGElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [tool, setTool] = useState<Tool>("pen");
@@ -208,7 +215,10 @@ const NotesCanvasBlock = ({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  // Grow the world so it always extends well past the furthest item.
+  // World caps — keep things bounded so a runaway feedback loop can't blow up coords.
+  const MAX_WORLD_W = 6000;
+  const MAX_WORLD_H = 6000;
+  // Grow the world so it extends past the furthest item, but never above the cap.
   useEffect(() => {
     let maxX = 0, maxY = 0;
     for (const it of safe.items) {
@@ -217,25 +227,19 @@ const NotesCanvasBlock = ({
       if (ex > maxX) maxX = ex;
       if (ey > maxY) maxY = ey;
     }
-    const PAD = 800;
-    if (maxX + PAD > worldW) setWorldW(maxX + PAD);
-    if (maxY + PAD > worldH) setWorldH(maxY + PAD);
+    const PAD = 400;
+    const nextW = Math.min(MAX_WORLD_W, Math.max(worldW, maxX + PAD));
+    const nextH = Math.min(MAX_WORLD_H, Math.max(worldH, maxY + PAD));
+    if (nextW !== worldW) setWorldW(nextW);
+    if (nextH !== worldH) setWorldH(nextH);
   }, [safe.items, worldW, worldH]);
   const zoomIn = () => setZoom(z => Math.min(4, +(z + 0.25).toFixed(2)));
   const zoomOut = () => setZoom(z => Math.max(0.25, +(z - 0.25).toFixed(2)));
   const zoomReset = () => setZoom(1);
-
-  // Grow world when user scrolls close to an edge — gives the feeling of infinite paper.
-  const onScroll = () => {
+  // Scroll back to the top-left so the user can find their work.
+  const recenter = () => {
     const el = scrollRef.current;
-    if (!el) return;
-    const threshold = 300;
-    if (el.scrollLeft + el.clientWidth > worldW * zoom - threshold) {
-      setWorldW(w => w + 1200);
-    }
-    if (el.scrollTop + el.clientHeight > worldH * zoom - threshold) {
-      setWorldH(h => h + 1200);
-    }
+    if (el) el.scrollTo({ left: 0, top: 0, behavior: "smooth" });
   };
 
   const items = draft ? [...safe.items, draft] : safe.items;
@@ -765,7 +769,6 @@ const NotesCanvasBlock = ({
       <div className="relative flex-1 min-w-0" style={{ height: drawAreaHeight }}>
         <div
           ref={scrollRef}
-          onScroll={onScroll}
           className="absolute inset-0 overflow-auto bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]"
           style={{ touchAction: "none", overscrollBehavior: "contain" }}
         >
@@ -809,15 +812,14 @@ const NotesCanvasBlock = ({
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
-          {zoom !== 1 && (
-            <button
-              onClick={zoomReset}
-              className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
-              title={isRTL ? "إعادة" : "Reset"}
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <button
+            onClick={recenter}
+            className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            title={isRTL ? "إعادة التوسيط" : "Recenter"}
+            aria-label={isRTL ? "إعادة التوسيط" : "Recenter"}
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
         </div>
         {/* Expand / Fullscreen */}
         {(expandable || onToggleFullscreen || fullscreen) && (
