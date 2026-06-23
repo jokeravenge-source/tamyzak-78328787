@@ -340,7 +340,7 @@ const Canvas = ({
                   <FileInput className="w-3.5 h-3.5" /> {t.addToNote}
                 </button>
               </div>
-              <NotesCanvasBlock data={active.data} onChange={updateActiveData} language={language} />
+              <NotesCanvasBlock data={active.data} onChange={updateActiveData} language={language} expandable />
             </>
           ) : (
             <div className="text-sm text-muted-foreground p-6 text-center border border-dashed border-border rounded-xl">
