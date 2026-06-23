@@ -349,16 +349,25 @@ const NotesCanvasBlock = ({
     if (it.kind === "sticker") {
       return (
         <g key={it.id}>
-          <text
-            x={it.x + it.w / 2}
-            y={it.y + it.h / 2}
-            fontSize={Math.min(it.w, it.h) * 0.9}
-            textAnchor="middle"
-            dominantBaseline="central"
-            style={{ userSelect: "none" }}
-          >
-            {it.emoji}
-          </text>
+          {it.url ? (
+            <image
+              href={it.url}
+              x={it.x} y={it.y} width={it.w} height={it.h}
+              preserveAspectRatio="xMidYMid meet"
+              style={{ pointerEvents: "none" }}
+            />
+          ) : (
+            <text
+              x={it.x + it.w / 2}
+              y={it.y + it.h / 2}
+              fontSize={Math.min(it.w, it.h) * 0.9}
+              textAnchor="middle"
+              dominantBaseline="central"
+              style={{ userSelect: "none" }}
+            >
+              {it.emoji}
+            </text>
+          )}
           {selected && !isDraft && (
             <>
               <rect
