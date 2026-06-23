@@ -208,7 +208,10 @@ const NotesCanvasBlock = ({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  // Grow the world so it always extends well past the furthest item.
+  // World caps — keep things bounded so a runaway feedback loop can't blow up coords.
+  const MAX_WORLD_W = 6000;
+  const MAX_WORLD_H = 6000;
+  // Grow the world so it extends past the furthest item, but never above the cap.
   useEffect(() => {
     let maxX = 0, maxY = 0;
     for (const it of safe.items) {
@@ -217,25 +220,19 @@ const NotesCanvasBlock = ({
       if (ex > maxX) maxX = ex;
       if (ey > maxY) maxY = ey;
     }
-    const PAD = 800;
-    if (maxX + PAD > worldW) setWorldW(maxX + PAD);
-    if (maxY + PAD > worldH) setWorldH(maxY + PAD);
+    const PAD = 400;
+    const nextW = Math.min(MAX_WORLD_W, Math.max(worldW, maxX + PAD));
+    const nextH = Math.min(MAX_WORLD_H, Math.max(worldH, maxY + PAD));
+    if (nextW !== worldW) setWorldW(nextW);
+    if (nextH !== worldH) setWorldH(nextH);
   }, [safe.items, worldW, worldH]);
   const zoomIn = () => setZoom(z => Math.min(4, +(z + 0.25).toFixed(2)));
   const zoomOut = () => setZoom(z => Math.max(0.25, +(z - 0.25).toFixed(2)));
   const zoomReset = () => setZoom(1);
-
-  // Grow world when user scrolls close to an edge — gives the feeling of infinite paper.
-  const onScroll = () => {
+  // Scroll back to the top-left so the user can find their work.
+  const recenter = () => {
     const el = scrollRef.current;
-    if (!el) return;
-    const threshold = 300;
-    if (el.scrollLeft + el.clientWidth > worldW * zoom - threshold) {
-      setWorldW(w => w + 1200);
-    }
-    if (el.scrollTop + el.clientHeight > worldH * zoom - threshold) {
-      setWorldH(h => h + 1200);
-    }
+    if (el) el.scrollTo({ left: 0, top: 0, behavior: "smooth" });
   };
 
   const items = draft ? [...safe.items, draft] : safe.items;
