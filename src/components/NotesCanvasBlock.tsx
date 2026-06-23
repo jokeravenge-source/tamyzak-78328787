@@ -80,6 +80,7 @@ const NotesCanvasBlock = ({
     [data],
   );
   const svgRef = useRef<SVGSVGElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [tool, setTool] = useState<Tool>("pen");
   const [color, setColor] = useState<string>(PALETTE[0]);
   const [size, setSize] = useState<number>(3);
@@ -195,6 +196,9 @@ const NotesCanvasBlock = ({
   const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [zoom, setZoom] = useState<number>(1);
   const [svgW, setSvgW] = useState<number>(800);
+  // Infinite world dimensions (in canvas/world units, before zoom).
+  const [worldW, setWorldW] = useState<number>(2400);
+  const [worldH, setWorldH] = useState<number>(1600);
   useEffect(() => {
     if (!svgRef.current) return;
     const el = svgRef.current;
@@ -204,9 +208,35 @@ const NotesCanvasBlock = ({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+  // Grow the world so it always extends well past the furthest item.
+  useEffect(() => {
+    let maxX = 0, maxY = 0;
+    for (const it of safe.items) {
+      const b = bboxOf(it);
+      const ex = b.x + b.w, ey = b.y + b.h;
+      if (ex > maxX) maxX = ex;
+      if (ey > maxY) maxY = ey;
+    }
+    const PAD = 800;
+    if (maxX + PAD > worldW) setWorldW(maxX + PAD);
+    if (maxY + PAD > worldH) setWorldH(maxY + PAD);
+  }, [safe.items, worldW, worldH]);
   const zoomIn = () => setZoom(z => Math.min(4, +(z + 0.25).toFixed(2)));
   const zoomOut = () => setZoom(z => Math.max(0.25, +(z - 0.25).toFixed(2)));
   const zoomReset = () => setZoom(1);
+
+  // Grow world when user scrolls close to an edge — gives the feeling of infinite paper.
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const threshold = 300;
+    if (el.scrollLeft + el.clientWidth > worldW * zoom - threshold) {
+      setWorldW(w => w + 1200);
+    }
+    if (el.scrollTop + el.clientHeight > worldH * zoom - threshold) {
+      setWorldH(h => h + 1200);
+    }
+  };
 
   const items = draft ? [...safe.items, draft] : safe.items;
 
@@ -218,14 +248,12 @@ const NotesCanvasBlock = ({
 
   const pointAt = (e: React.PointerEvent) => {
     const r = svgRef.current!.getBoundingClientRect();
-    // Map screen px to viewBox coords (accounts for zoom + centered origin).
-    const vbW = svgW / zoom;
-    const vbH = (r.height || safe.height) / zoom;
-    const offX = (svgW - vbW) / 2;
-    const offY = ((r.height || safe.height) - vbH) / 2;
-    const sx = (e.clientX - r.left) / (r.width || svgW);
-    const sy = (e.clientY - r.top) / (r.height || safe.height);
-    return { x: offX + sx * vbW, y: offY + sy * vbH };
+    // SVG is sized worldW*zoom x worldH*zoom inside a scroll container,
+    // with viewBox 0 0 worldW worldH, so screen→world is a simple divide by zoom.
+    return {
+      x: (e.clientX - r.left) / zoom,
+      y: (e.clientY - r.top) / zoom,
+    };
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -733,17 +761,19 @@ const NotesCanvasBlock = ({
         </div>
       </aside>
 
-      {/* Drawing area */}
+      {/* Drawing area (infinite scrollable paper) */}
       <div
-        className="relative flex-1 min-w-0 bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]"
-        style={{ touchAction: "none", overscrollBehavior: "contain" }}
+        ref={scrollRef}
+        onScroll={onScroll}
+        className="relative flex-1 min-w-0 overflow-auto bg-[radial-gradient(circle,_rgba(0,0,0,0.06)_1px,_transparent_1px)] [background-size:18px_18px]"
+        style={{ height: drawAreaHeight, touchAction: "none", overscrollBehavior: "contain" }}
       >
         <svg
           ref={svgRef}
-          width="100%"
-          height={drawAreaHeight}
-          viewBox={`${(svgW - svgW / zoom) / 2} ${(drawAreaHeight - drawAreaHeight / zoom) / 2} ${svgW / zoom} ${drawAreaHeight / zoom}`}
-          preserveAspectRatio="none"
+          width={worldW * zoom}
+          height={worldH * zoom}
+          viewBox={`0 0 ${worldW} ${worldH}`}
+          preserveAspectRatio="xMinYMin meet"
           style={{ cursor: cursorFor, touchAction: "none", display: "block" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -753,7 +783,7 @@ const NotesCanvasBlock = ({
           {items.map(it => renderItem(it, draft?.id === it.id))}
         </svg>
         {/* Zoom controls */}
-        <div className={`absolute bottom-1 ${isRTL ? "right-1" : "left-1"} flex items-center gap-1 bg-secondary/80 backdrop-blur rounded-md px-1 py-0.5 shadow-sm`}>
+        <div className={`sticky bottom-1 ${isRTL ? "float-right mr-1" : "float-left ml-1"} -mt-9 inline-flex items-center gap-1 bg-secondary/80 backdrop-blur rounded-md px-1 py-0.5 shadow-sm z-10`}>
           <button
             onClick={zoomOut}
             className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
