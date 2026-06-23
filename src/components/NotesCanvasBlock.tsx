@@ -2,10 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Pencil, Eraser, Square, Circle as CircleIcon, Minus as LineIcon,
   MoveUpRight, Tag, Type, MousePointer2, Trash2, Maximize2, Smile, Expand, Minimize2,
+  Upload, ImagePlus, Loader2, X as XIcon,
   ZoomIn, ZoomOut, RotateCcw,
   PanelLeftClose, PanelLeft,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type CanvasStroke = {
   id: string; kind: "stroke"; color: string; size: number;
@@ -25,7 +28,8 @@ export type CanvasLabel = {
 export type CanvasSticker = {
   id: string; kind: "sticker";
   x: number; y: number; w: number; h: number;
-  emoji: string;
+  emoji?: string;
+  url?: string;
 };
 export type CanvasItem = CanvasStroke | CanvasShape | CanvasLabel | CanvasSticker;
 export type CanvasData = { items: CanvasItem[]; height: number };
@@ -81,6 +85,87 @@ const NotesCanvasBlock = ({
   const [size, setSize] = useState<number>(3);
   const [labelBg, setLabelBg] = useState<string>(LABEL_BGS[0]);
   const [sticker, setSticker] = useState<string>(STICKERS[0]);
+  const [customStickerUrl, setCustomStickerUrl] = useState<string | null>(null);
+  const [userStickers, setUserStickers] = useState<{ name: string; url: string }[]>([]);
+  const [uploadingSticker, setUploadingSticker] = useState(false);
+  const [loadingStickers, setLoadingStickers] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const userIdRef = useRef<string | null>(null);
+
+  const loadUserStickers = async () => {
+    try {
+      setLoadingStickers(true);
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id ?? null;
+      userIdRef.current = uid;
+      if (!uid) { setUserStickers([]); return; }
+      const { data, error } = await supabase.storage.from("stickers").list(uid, {
+        limit: 100, sortBy: { column: "created_at", order: "desc" },
+      });
+      if (error) throw error;
+      const items = (data ?? [])
+        .filter(f => f.name && !f.name.startsWith("."))
+        .map(f => {
+          const path = `${uid}/${f.name}`;
+          const { data: pub } = supabase.storage.from("stickers").getPublicUrl(path);
+          return { name: f.name, url: pub.publicUrl };
+        });
+      setUserStickers(items);
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setLoadingStickers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tool === "sticker" && userStickers.length === 0) loadUserStickers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tool]);
+
+  const uploadSticker = async (file: File) => {
+    try {
+      if (!file.type.startsWith("image/")) {
+        toast.error(isRTL ? "اختر ملف صورة" : "Please pick an image file");
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error(isRTL ? "الحد الأقصى 2 ميغابايت" : "Max size is 2MB");
+        return;
+      }
+      setUploadingSticker(true);
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id;
+      if (!uid) {
+        toast.error(isRTL ? "سجّل الدخول أولاً" : "Please sign in first");
+        return;
+      }
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `${uid}/${Date.now()}-${rid()}.${ext}`;
+      const { error } = await supabase.storage.from("stickers").upload(path, file, {
+        cacheControl: "3600", upsert: false, contentType: file.type,
+      });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("stickers").getPublicUrl(path);
+      setUserStickers(s => [{ name: path.split("/").pop()!, url: pub.publicUrl }, ...s]);
+      setCustomStickerUrl(pub.publicUrl);
+      toast.success(isRTL ? "تمت الإضافة" : "Sticker added");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    } finally {
+      setUploadingSticker(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const deleteUserSticker = async (name: string) => {
+    const uid = userIdRef.current;
+    if (!uid) return;
+    const path = `${uid}/${name}`;
+    const { error } = await supabase.storage.from("stickers").remove([path]);
+    if (error) { toast.error(error.message); return; }
+    setUserStickers(s => s.filter(x => x.name !== name));
+  };
   const [internalFullscreen, setInternalFullscreen] = useState<boolean>(false);
   const fullscreen = fullscreenProp ?? internalFullscreen;
   const toggleFullscreen = () => {
