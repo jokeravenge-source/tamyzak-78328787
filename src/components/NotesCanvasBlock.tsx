@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Pencil, Eraser, Square, Circle as CircleIcon, Minus as LineIcon,
-  MoveUpRight, Tag, MousePointer2, Trash2, Maximize2,
+  MoveUpRight, Tag, MousePointer2, Trash2, Maximize2, Smile, Expand, Minimize2,
   PanelLeftClose, PanelLeft,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -21,13 +21,25 @@ export type CanvasLabel = {
   x: number; y: number; w: number; h: number;
   text: string; color: string; bg: string;
 };
-export type CanvasItem = CanvasStroke | CanvasShape | CanvasLabel;
+export type CanvasSticker = {
+  id: string; kind: "sticker";
+  x: number; y: number; w: number; h: number;
+  emoji: string;
+};
+export type CanvasItem = CanvasStroke | CanvasShape | CanvasLabel | CanvasSticker;
 export type CanvasData = { items: CanvasItem[]; height: number };
 
-type Tool = "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "arrow" | "label";
+type Tool = "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "arrow" | "label" | "sticker";
 
 const PALETTE = ["#0f172a", "#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"];
 const LABEL_BGS = ["#fef3c7", "#dbeafe", "#dcfce7", "#fce7f3", "#e0e7ff", "#f1f5f9"];
+const STICKERS = [
+  "⭐", "❤️", "🔥", "✅", "❌", "❓", "❗", "💡",
+  "📌", "📍", "🎯", "🏆", "👍", "👎", "🙌", "👏",
+  "😀", "😎", "🤔", "😢", "😡", "🥳", "🤩", "😴",
+  "📚", "✏️", "📝", "🧠", "🔬", "🧪", "🧮", "🌍",
+  "🚀", "⚡", "💎", "🎨", "🎵", "☕", "🍕", "🌸",
+];
 const rid = () => Math.random().toString(36).slice(2, 10);
 
 function bboxOf(it: CanvasItem) {
@@ -47,11 +59,15 @@ function hits(it: CanvasItem, px: number, py: number, r = 8) {
 }
 
 const NotesCanvasBlock = ({
-  data, onChange, language,
+  data, onChange, language, expandable = false, fullscreen: fullscreenProp,
+  onToggleFullscreen,
 }: {
   data: CanvasData | undefined;
   onChange: (next: CanvasData) => void;
   language: "en" | "ar";
+  expandable?: boolean;
+  fullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }) => {
   const isRTL = language === "ar";
   const safe: CanvasData = useMemo(
@@ -63,6 +79,26 @@ const NotesCanvasBlock = ({
   const [color, setColor] = useState<string>(PALETTE[0]);
   const [size, setSize] = useState<number>(3);
   const [labelBg, setLabelBg] = useState<string>(LABEL_BGS[0]);
+  const [sticker, setSticker] = useState<string>(STICKERS[0]);
+  const [internalFullscreen, setInternalFullscreen] = useState<boolean>(false);
+  const fullscreen = fullscreenProp ?? internalFullscreen;
+  const toggleFullscreen = () => {
+    if (onToggleFullscreen) onToggleFullscreen();
+    else setInternalFullscreen(v => !v);
+  };
+  const [vh, setVh] = useState<number>(() => (typeof window !== "undefined" ? window.innerHeight : 720));
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onResize = () => setVh(window.innerHeight);
+    onResize();
+    window.addEventListener("resize", onResize);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("resize", onResize);
+      document.body.style.overflow = prev;
+    };
+  }, [fullscreen]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
     return window.innerWidth >= 768;
@@ -116,6 +152,13 @@ const NotesCanvasBlock = ({
       setItems(arr => [...arr, item]);
       setSelectedId(item.id);
       setEditingLabel(item.id);
+      return;
+    }
+    if (tool === "sticker") {
+      const s = 48;
+      const item: CanvasSticker = { id: rid(), kind: "sticker", x: x - s / 2, y: y - s / 2, w: s, h: s, emoji: sticker };
+      setItems(arr => [...arr, item]);
+      setSelectedId(item.id);
       return;
     }
     // shapes
@@ -187,6 +230,50 @@ const NotesCanvasBlock = ({
         );
       }
     }
+    if (it.kind === "sticker") {
+      return (
+        <g key={it.id}>
+          <text
+            x={it.x + it.w / 2}
+            y={it.y + it.h / 2}
+            fontSize={Math.min(it.w, it.h) * 0.9}
+            textAnchor="middle"
+            dominantBaseline="central"
+            style={{ userSelect: "none" }}
+          >
+            {it.emoji}
+          </text>
+          {selected && !isDraft && (
+            <>
+              <rect
+                x={it.x} y={it.y} width={it.w} height={it.h}
+                fill="none" stroke="#3b82f6" strokeDasharray="3 3" strokeWidth={1}
+              />
+              <rect
+                x={it.x + it.w - 10} y={it.y + it.h - 10} width={14} height={14} rx={3}
+                fill="#3b82f6"
+                style={{ cursor: "nwse-resize" }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  (e.target as Element).setPointerCapture?.(e.pointerId);
+                  const startX = e.clientX, startY = e.clientY;
+                  const ow = it.w, oh = it.h;
+                  const move = (ev: PointerEvent) => {
+                    const d = Math.max(ev.clientX - startX, ev.clientY - startY);
+                    const nw = Math.max(20, ow + d);
+                    const nh = Math.max(20, oh + d);
+                    setItems(arr => arr.map(x => x.id === it.id ? { ...x, w: nw, h: nh } as CanvasSticker : x));
+                  };
+                  const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+                  window.addEventListener("pointermove", move);
+                  window.addEventListener("pointerup", up);
+                }}
+              />
+            </>
+          )}
+        </g>
+      );
+    }
     if (it.kind === "label") {
       return (
         <g key={it.id}>
@@ -253,6 +340,7 @@ const NotesCanvasBlock = ({
     { id: "line",    icon: LineIcon,      label: isRTL ? "خط" : "Line",        shortcut: "L" },
     { id: "arrow",   icon: MoveUpRight,   label: isRTL ? "سهم" : "Arrow",      shortcut: "A" },
     { id: "label",   icon: Tag,           label: isRTL ? "ملصق" : "Label",     shortcut: "T" },
+    { id: "sticker", icon: Smile,         label: isRTL ? "ملصقات" : "Stickers", shortcut: "S" },
   ];
 
   // Keyboard shortcuts (ignored while editing labels or other inputs)
@@ -279,8 +367,13 @@ const NotesCanvasBlock = ({
     };
   }, []);
 
+  const wrapperCls = fullscreen
+    ? "fixed inset-0 z-50 bg-background flex max-w-none"
+    : "my-3 rounded-xl border border-border bg-card overflow-hidden flex max-w-full";
+  const drawAreaHeight = fullscreen ? vh - 8 : safe.height;
+
   return (
-    <div className="my-3 rounded-xl border border-border bg-card overflow-hidden flex max-w-full" dir={isRTL ? "rtl" : "ltr"}>
+    <div className={wrapperCls} dir={isRTL ? "rtl" : "ltr"}>
       {/* Sidebar */}
       <aside
         className={`shrink-0 border-${isRTL ? "l" : "r"} border-border bg-secondary/40 flex flex-col transition-[width] duration-200 ${
@@ -391,6 +484,36 @@ const NotesCanvasBlock = ({
               </div>
             </div>
           )}
+
+          {/* Stickers picker */}
+          {tool === "sticker" && (
+            <div className="space-y-1.5">
+              {sidebarOpen && (
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                  {isRTL ? "اختر ملصق" : "Pick sticker"}
+                </p>
+              )}
+              <div className={sidebarOpen ? "grid grid-cols-4 gap-1 px-1" : "flex flex-col items-center gap-1"}>
+                {STICKERS.map(em => (
+                  <button
+                    key={em}
+                    onClick={() => setSticker(em)}
+                    className={`w-7 h-7 rounded text-base leading-none flex items-center justify-center hover:bg-secondary ${
+                      sticker === em ? "ring-2 ring-primary bg-secondary" : ""
+                    }`}
+                    title={em}
+                  >
+                    <span style={{ fontSize: 16 }}>{em}</span>
+                  </button>
+                ))}
+              </div>
+              {sidebarOpen && (
+                <p className="text-[10px] text-muted-foreground px-1">
+                  {isRTL ? "اضغط على اللوحة لإضافته" : "Click on canvas to place"}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -424,7 +547,7 @@ const NotesCanvasBlock = ({
         <svg
           ref={svgRef}
           width="100%"
-          height={safe.height}
+          height={drawAreaHeight}
           style={{ cursor: cursorFor, touchAction: "none", display: "block" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -433,23 +556,35 @@ const NotesCanvasBlock = ({
         >
           {items.map(it => renderItem(it, draft?.id === it.id))}
         </svg>
-        {/* Resize handle */}
-        <button
-          onPointerDown={(e) => {
-            e.preventDefault();
-            (e.target as Element).setPointerCapture?.(e.pointerId);
-            const startY = e.clientY;
-            const startH = safe.height;
-            const move = (ev: PointerEvent) => setHeight(startH + (ev.clientY - startY));
-            const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
-            window.addEventListener("pointermove", move);
-            window.addEventListener("pointerup", up);
-          }}
-          className="absolute bottom-1 right-1 w-6 h-6 rounded bg-secondary/70 hover:bg-secondary flex items-center justify-center text-muted-foreground"
-          title={isRTL ? "تغيير الارتفاع" : "Resize"}
-        >
-          <Maximize2 className="w-3 h-3" />
-        </button>
+        {/* Expand / Fullscreen */}
+        {(expandable || onToggleFullscreen || fullscreen) && (
+          <button
+            onClick={toggleFullscreen}
+            className="absolute top-1 right-1 w-8 h-8 rounded-md bg-secondary/80 hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground shadow-sm"
+            title={fullscreen ? (isRTL ? "إغلاق ملء الشاشة" : "Exit fullscreen") : (isRTL ? "ملء الشاشة" : "Fullscreen")}
+          >
+            {fullscreen ? <Minimize2 className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
+          </button>
+        )}
+        {/* Resize handle (hidden in fullscreen) */}
+        {!fullscreen && (
+          <button
+            onPointerDown={(e) => {
+              e.preventDefault();
+              (e.target as Element).setPointerCapture?.(e.pointerId);
+              const startY = e.clientY;
+              const startH = safe.height;
+              const move = (ev: PointerEvent) => setHeight(startH + (ev.clientY - startY));
+              const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+              window.addEventListener("pointermove", move);
+              window.addEventListener("pointerup", up);
+            }}
+            className="absolute bottom-1 right-1 w-6 h-6 rounded bg-secondary/70 hover:bg-secondary flex items-center justify-center text-muted-foreground"
+            title={isRTL ? "تغيير الارتفاع" : "Resize"}
+          >
+            <Maximize2 className="w-3 h-3" />
+          </button>
+        )}
       </div>
     </div>
   );
