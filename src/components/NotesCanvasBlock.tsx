@@ -282,13 +282,15 @@ const NotesCanvasBlock = ({
       );
     }
     if (it.kind === "label") {
+      const transparent = it.bg === "transparent";
       return (
         <g key={it.id}>
           <rect
             x={it.x} y={it.y} width={it.w} height={it.h} rx={8}
-            fill={it.bg}
-            stroke={selected ? "#3b82f6" : "rgba(0,0,0,0.12)"}
+            fill={transparent ? "transparent" : it.bg}
+            stroke={selected ? "#3b82f6" : (transparent ? "transparent" : "rgba(0,0,0,0.12)")}
             strokeWidth={selected ? 1.5 : 1}
+            strokeDasharray={transparent && selected ? "3 3" : undefined}
           />
           <foreignObject x={it.x} y={it.y} width={it.w} height={it.h}>
             {editingLabel === it.id ? (
