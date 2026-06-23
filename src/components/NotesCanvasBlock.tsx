@@ -563,7 +563,12 @@ const NotesCanvasBlock = ({
                 <Tooltip key={id}>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => { setTool(id); setEditingLabel(null); }}
+                      onClick={() => {
+                        setTool(id);
+                        setEditingLabel(null);
+                        // Auto-expand the sidebar for tools that have a picker panel.
+                        if ((id === "sticker" || id === "label") && !sidebarOpen) setSidebarOpen(true);
+                      }}
                       aria-label={`${label} (${shortcut})`}
                       className={`h-9 rounded-md flex items-center ${sidebarOpen ? "justify-between gap-2 px-2" : "justify-center"} transition-colors ${
                         tool === id ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground/80"
