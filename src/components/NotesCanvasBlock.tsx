@@ -625,9 +625,9 @@ const NotesCanvasBlock = ({
                 {STICKERS.map(em => (
                   <button
                     key={em}
-                    onClick={() => setSticker(em)}
+                    onClick={() => { setSticker(em); setCustomStickerUrl(null); }}
                     className={`w-7 h-7 rounded text-base leading-none flex items-center justify-center hover:bg-secondary ${
-                      sticker === em ? "ring-2 ring-primary bg-secondary" : ""
+                      sticker === em && !customStickerUrl ? "ring-2 ring-primary bg-secondary" : ""
                     }`}
                     title={em}
                   >
@@ -635,9 +635,75 @@ const NotesCanvasBlock = ({
                   </button>
                 ))}
               </div>
+
+              {/* Custom uploads */}
+              {sidebarOpen && (
+                <>
+                  <div className="flex items-center justify-between px-1 pt-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {isRTL ? "ملصقاتي" : "My stickers"}
+                    </p>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingSticker}
+                      className="text-[10px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                      title={isRTL ? "رفع" : "Upload"}
+                    >
+                      {uploadingSticker ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                      {isRTL ? "رفع" : "Upload"}
+                    </button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadSticker(f);
+                    }}
+                  />
+                  <div className="grid grid-cols-3 gap-1 px-1">
+                    {loadingStickers && (
+                      <div className="col-span-3 flex justify-center py-2 text-muted-foreground">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      </div>
+                    )}
+                    {!loadingStickers && userStickers.length === 0 && (
+                      <div className="col-span-3 text-[10px] text-muted-foreground text-center py-2 border border-dashed border-border rounded">
+                        <ImagePlus className="w-4 h-4 mx-auto mb-0.5 opacity-60" />
+                        {isRTL ? "ارفع صورتك الأولى" : "Upload your first"}
+                      </div>
+                    )}
+                    {userStickers.map(s => (
+                      <div key={s.name} className="relative group">
+                        <button
+                          onClick={() => setCustomStickerUrl(s.url)}
+                          className={`w-full aspect-square rounded border bg-background overflow-hidden flex items-center justify-center hover:border-primary ${
+                            customStickerUrl === s.url ? "ring-2 ring-primary border-primary" : "border-border"
+                          }`}
+                          title={isRTL ? "اختر ثم اضغط على اللوحة" : "Select then click canvas"}
+                        >
+                          <img src={s.url} alt="" className="w-full h-full object-contain" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteUserSticker(s.name); if (customStickerUrl === s.url) setCustomStickerUrl(null); }}
+                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                          title={isRTL ? "حذف" : "Delete"}
+                        >
+                          <XIcon className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
               {sidebarOpen && (
                 <p className="text-[10px] text-muted-foreground px-1">
-                  {isRTL ? "اضغط على اللوحة لإضافته" : "Click on canvas to place"}
+                  {customStickerUrl
+                    ? (isRTL ? "اضغط على اللوحة لوضع صورتك" : "Click canvas to place image")
+                    : (isRTL ? "اضغط على اللوحة لإضافته" : "Click on canvas to place")}
                 </p>
               )}
             </div>
