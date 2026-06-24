@@ -119,7 +119,7 @@ const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLangua
   };
 
   return (
-    <main className="min-h-screen px-4 py-12 md:py-20 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
+    <main className="min-h-screen px-4 py-12 md:py-20 pb-48 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
       {/* Ambient blobs */}
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute top-1/3 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
