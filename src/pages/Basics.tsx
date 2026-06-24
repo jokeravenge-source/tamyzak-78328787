@@ -780,29 +780,9 @@ const Basics = ({
             </div>
           )}
 
-          {/* Daily Report CTA */}
+          {/* Streak tree + day streak card */}
           <section className="mb-10">
-            <div className="relative overflow-hidden rounded-2xl border border-primary bg-primary/5 p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
-              <div className="relative z-10 flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shrink-0">
-                  <Sparkles className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <h4 className="text-lg font-bold mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                    {language === "ar" ? "تقريرك اليومي" : "Your Daily Report"}
-                  </h4>
-                  <p className="text-sm text-muted-foreground max-w-md">
-                    {language === "ar" ? "راجع تحليلاتك الذكية، تقدمك، وشارك ولي الأمر نتائجك." : "Review your AI insights, progress, and share results with a parent."}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => navigate("report")}
-                className="shrink-0 px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl shadow-sm hover:opacity-95 transition-all active:scale-95"
-              >
-                {language === "ar" ? "عرض التقرير" : "Open Report"}
-              </button>
-            </div>
+            <StreakTree language={language} />
           </section>
 
           {/* Study Tools grid */}
