@@ -539,7 +539,7 @@ const Basics = ({
       </div>
 
       {/* Content */}
-      <main className="px-5 md:px-10 py-8 md:py-12 pb-36">
+      <main className="px-5 md:px-10 py-8 md:py-12 pb-48">
         <AnimatePresence mode="wait">
         {showAllTools ? (
           <motion.div
