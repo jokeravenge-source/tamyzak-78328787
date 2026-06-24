@@ -952,11 +952,23 @@ const NotesCanvasBlock = ({
             </button>
           )}
           <button
-            onClick={() => { if (confirm(isRTL ? "مسح اللوحة؟" : "Clear canvas?")) setItems(() => []); }}
-            className={`w-full h-8 rounded-md text-xs inline-flex items-center ${sidebarOpen ? "justify-start gap-2 px-2" : "justify-center"} hover:bg-secondary text-muted-foreground`}
+            onClick={() => {
+              if (itemsRef.current.length === 0) {
+                toast.info(isRTL ? "اللوحة فارغة" : "Canvas is already empty");
+                return;
+              }
+              setDraft(null);
+              setSelectedId(null);
+              setEditingLabel(null);
+              setItems(() => []);
+              toast.success(
+                isRTL ? "تم مسح اللوحة (تراجع للاستعادة)" : "Canvas cleared (undo to restore)"
+              );
+            }}
+            className={`w-full h-8 rounded-md text-xs inline-flex items-center ${sidebarOpen ? "justify-start gap-2 px-2" : "justify-center"} hover:bg-destructive/10 text-destructive`}
             title={isRTL ? "مسح الكل" : "Clear all"}
           >
-            <Eraser className="w-3.5 h-3.5 shrink-0" />
+            <Trash2 className="w-3.5 h-3.5 shrink-0" />
             {sidebarOpen && <span>{isRTL ? "مسح الكل" : "Clear all"}</span>}
           </button>
         </div>
