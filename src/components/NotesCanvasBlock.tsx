@@ -5,7 +5,7 @@ import {
   Upload, ImagePlus, Loader2, X as XIcon,
   ZoomIn, ZoomOut, RotateCcw,
   PanelLeftClose, PanelLeft,
-  Plus,
+  Plus, Hand,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +35,7 @@ export type CanvasSticker = {
 export type CanvasItem = CanvasStroke | CanvasShape | CanvasLabel | CanvasSticker;
 export type CanvasData = { items: CanvasItem[]; height: number };
 
-type Tool = "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "arrow" | "label" | "text" | "sticker";
+type Tool = "select" | "pan" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "arrow" | "label" | "text" | "sticker";
 
 const PALETTE = ["#0f172a", "#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"];
 const LABEL_BGS = ["#fef3c7", "#dbeafe", "#dcfce7", "#fce7f3", "#e0e7ff", "#f1f5f9"];
@@ -202,6 +202,9 @@ const NotesCanvasBlock = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
   const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
+  // Pan state: when the "pan" tool is active, dragging scrolls the canvas
+  // instead of drawing. We track the starting scroll + screen coords.
+  const panRef = useRef<{ startX: number; startY: number; sl: number; st: number } | null>(null);
   const [zoom, setZoom] = useState<number>(1);
   const [svgW, setSvgW] = useState<number>(800);
   // Missed-tap pin: when a tap was too small to commit as a stroke/shape,
@@ -303,6 +306,13 @@ const NotesCanvasBlock = ({
     document.documentElement.style.overscrollBehavior = "contain";
     const { x, y } = pointAt(e);
 
+    if (tool === "pan") {
+      const el = scrollRef.current;
+      if (el) {
+        panRef.current = { startX: e.clientX, startY: e.clientY, sl: el.scrollLeft, st: el.scrollTop };
+      }
+      return;
+    }
     if (tool === "select") {
       // hit-test top-most
       const hit = [...safe.items].reverse().find(it => hits(it, x, y));
@@ -349,6 +359,15 @@ const NotesCanvasBlock = ({
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (editingLabel) return;
+    if (panRef.current) {
+      e.preventDefault();
+      const el = scrollRef.current;
+      if (el) {
+        el.scrollLeft = panRef.current.sl - (e.clientX - panRef.current.startX);
+        el.scrollTop  = panRef.current.st - (e.clientY - panRef.current.startY);
+      }
+      return;
+    }
     if (draft || dragRef.current || (tool === "eraser" && (e.buttons & 1))) {
       e.preventDefault();
     }
@@ -377,6 +396,7 @@ const NotesCanvasBlock = ({
   const onPointerUp = () => {
     document.body.style.overflow = "";
     document.documentElement.style.overscrollBehavior = "";
+    if (panRef.current) { panRef.current = null; return; }
     if (dragRef.current) { dragRef.current = null; return; }
     if (!draft) return;
     if (draft.kind === "stroke" && draft.points.length < 2) {
@@ -533,6 +553,7 @@ const NotesCanvasBlock = ({
 
   const tools: { id: Tool; icon: any; label: string; shortcut: string }[] = [
     { id: "select",  icon: MousePointer2, label: isRTL ? "تحديد" : "Select",   shortcut: "V" },
+    { id: "pan",     icon: Hand,          label: isRTL ? "تمرير" : "Pan",      shortcut: "H" },
     { id: "pen",     icon: Pencil,        label: isRTL ? "قلم" : "Pen",        shortcut: "P" },
     { id: "eraser",  icon: Eraser,        label: isRTL ? "ممحاة" : "Eraser",   shortcut: "E" },
     { id: "rect",    icon: Square,        label: isRTL ? "مربع" : "Rect",      shortcut: "R" },
@@ -558,7 +579,12 @@ const NotesCanvasBlock = ({
     return () => window.removeEventListener("keydown", onKey);
   }, [editingLabel, tools]);
 
-  const cursorFor = tool === "select" ? "default" : tool === "eraser" ? "cell" : tool === "label" ? "text" : "crosshair";
+  const cursorFor =
+    tool === "select" ? "default"
+    : tool === "pan" ? (panRef.current ? "grabbing" : "grab")
+    : tool === "eraser" ? "cell"
+    : tool === "label" ? "text"
+    : "crosshair";
 
   // Safety: always restore scroll when this block unmounts.
   useEffect(() => {
