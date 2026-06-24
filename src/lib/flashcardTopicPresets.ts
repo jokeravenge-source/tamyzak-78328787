@@ -109,6 +109,12 @@ const P_CH3: TopicDef[] = [
 ];
 
 const P_CH4: TopicDef[] = [
+  { key: "remote-sensing", ar: "الاستشعار عن بُعد", en: "Remote Sensing",
+    kwAr: ["الاستشعار عن بعد", "الاستشعار", "تحسس", "النشط", "السلبي"],
+    kwEn: ["remote sensing", "active sensing", "passive sensing"] },
+  { key: "satellites", ar: "الأقمار الصناعية", en: "Satellites",
+    kwAr: ["القمر الصناعي", "الأقمار الصناعية", "المايكروية", "اتصالات عالمية"],
+    kwEn: ["satellite", "microwave", "global communication"] },
   { key: "radar", ar: "الرادار", en: "Radar",
     kwAr: ["رادار"], kwEn: ["radar"] },
   { key: "propagation", ar: "انتشار الموجات", en: "Propagation",
@@ -288,6 +294,11 @@ const C_CH4: TopicDef[] = [
     kwAr: ["الخلايا التحليلية", "التحليل الكهربائي"], kwEn: ["electrolytic", "electrolysis"] },
   { key: "faraday-law", ar: "قوانين فاراداي", en: "Faraday's Laws",
     kwAr: ["فاراداي"], kwEn: ["faraday's law", "faraday law"] },
+  { key: "nernst", ar: "معادلة نيرنست", en: "Nernst Equation",
+    kwAr: ["نيرنست", "اعتماد جهد الخلية على التركيز"], kwEn: ["nernst"] },
+  { key: "she", ar: "قطب الهيدروجين القياسي", en: "Standard Hydrogen Electrode",
+    kwAr: ["قطب الهيدروجين", "جهود الأقطاب القياسية"],
+    kwEn: ["standard hydrogen electrode", "standard electrode potential"] },
   { key: "galvanic", ar: "الخلايا الجلفانية", en: "Galvanic Cells",
     kwAr: ["الجلفانية", "جلفاني"], kwEn: ["galvanic"] },
   { key: "agents", ar: "العوامل المؤكسدة/المختزلة", en: "Oxidizing & Reducing Agents",
@@ -365,6 +376,9 @@ const B_CH2: TopicDef[] = [
 ];
 
 const B_CH3: TopicDef[] = [
+  { key: "ovarian-cycle", ar: "الدورة المبيضية", en: "Ovarian Cycle",
+    kwAr: ["الدورة المبيضية", "المبيضية", "الإباضة"],
+    kwEn: ["ovarian cycle", "ovulation", "menstrual"] },
   { key: "animals", ar: "التكاثر في الحيوانات", en: "Reproduction in Animals",
     kwAr: ["في الحيوانات", "حيواني"], kwEn: ["in animals", "animal reproduction"] },
   { key: "plants", ar: "التكاثر في النباتات", en: "Reproduction in Plants",
@@ -386,6 +400,18 @@ const B_CH3: TopicDef[] = [
 ];
 
 const B_CH5: TopicDef[] = [
+  { key: "genetic-engineering", ar: "الهندسة الوراثية والتطبيقات", en: "Genetic Engineering & Applications",
+    kwAr: ["الهندسة الوراثية", "التطبيقات الوراثية"],
+    kwEn: ["genetic engineering", "genetic applications", "biotechnology"] },
+  { key: "human-genetics", ar: "الوراثة البشرية", en: "Human Genetics",
+    kwAr: ["الوراثة البشرية", "سجلات النسب", "الجينوم", "الاستشارات الوراثية"],
+    kwEn: ["human genetics", "pedigree", "genome", "genetic counseling"] },
+  { key: "blood-groups", ar: "فصائل الدم (ABO/RH)", en: "Blood Groups (ABO/RH)",
+    kwAr: ["نظام ABO", "RH", "نقل الدم", "فصائل"],
+    kwEn: ["abo", "rh", "blood group", "blood transfusion"] },
+  { key: "mutations", ar: "الطفرات", en: "Mutations",
+    kwAr: ["الطفرات", "طفرة", "الكروموسومية", "الجينية"],
+    kwEn: ["mutation", "chromosomal mutation", "gene mutation"] },
   { key: "molecular", ar: "الأساس الجزيئي للوراثة", en: "Molecular Basis of Genetics",
     kwAr: ["الجزيئي", "DNA", "RNA", "الحمض النووي"],
     kwEn: ["dna", "rna", "molecular", "nucleic acid"] },
