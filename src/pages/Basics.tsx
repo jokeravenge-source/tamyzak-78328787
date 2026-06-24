@@ -13,6 +13,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { missionsData, missionsOrder } from "@/data/missions";
 import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
+import StreakTree from "@/components/StreakTree";
 
 export type BasicsChoice =
   | "flashcards"
