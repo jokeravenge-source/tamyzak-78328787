@@ -776,6 +776,40 @@ const NotesCanvasBlock = ({
             </div>
           )}
 
+          {/* Highlighter options */}
+          {tool === "highlight" && (
+            <div className="space-y-1.5">
+              {sidebarOpen && (
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                  {isRTL ? "لون التظليل" : "Highlight"}
+                </p>
+              )}
+              <div className={sidebarOpen ? "grid grid-cols-3 gap-1.5 px-1" : "flex flex-col items-center gap-1.5"}>
+                {HIGHLIGHT_PALETTE.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setHighlightColor(c)}
+                    title={c}
+                    className={`w-6 h-6 rounded border ${highlightColor === c ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "border-border"}`}
+                    style={{ background: c, opacity: 0.7 }}
+                  />
+                ))}
+              </div>
+              {sidebarOpen && (
+                <>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 pt-1">
+                    {isRTL ? "السمك" : "Thickness"} <span className="text-foreground/60">({highlightSize})</span>
+                  </p>
+                  <input
+                    type="range" min={8} max={40} value={highlightSize}
+                    onChange={(e) => setHighlightSize(Number(e.target.value))}
+                    className="w-full accent-primary"
+                  />
+                </>
+              )}
+            </div>
+          )}
+
           {/* Stickers picker */}
           {tool === "sticker" && (
             <div className="space-y-1.5">
