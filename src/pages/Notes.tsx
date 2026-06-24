@@ -188,7 +188,56 @@ const BlockRow = ({
   }, [autoFocus]);
 
   if (block.type === "canvas") {
-    return <NotesCanvasBlock data={block.canvas} onChange={onCanvasChange} language={language} />;
+    const isCollapsed = block.collapsed !== false; // default collapsed (chip)
+    const name = block.text || (language === "ar" ? "لوحة بدون اسم" : "Untitled canvas");
+    if (isCollapsed) {
+      return (
+        <div className="my-2 group flex items-center gap-2">
+          <button
+            onClick={onToggleCollapse}
+            className="flex-1 min-w-0 inline-flex items-center gap-2.5 px-3 py-2 rounded-lg border border-border bg-card hover:bg-secondary transition-colors text-left"
+            title={language === "ar" ? "فتح اللوحة" : "Open canvas"}
+          >
+            <span className="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Palette className="w-4 h-4" />
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-medium truncate">{name}</span>
+              <span className="block text-[10px] text-muted-foreground">
+                {language === "ar" ? "اضغط لفتح اللوحة" : "Click to open canvas"}
+              </span>
+            </span>
+          </button>
+          <input
+            value={block.text}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={language === "ar" ? "اسم اللوحة" : "Canvas name"}
+            className="hidden sm:block w-36 text-xs px-2 py-1 rounded-md border border-border bg-background outline-none focus:border-primary"
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="my-2">
+        <div className="flex items-center gap-2 mb-1.5 px-1">
+          <Palette className="w-3.5 h-3.5 text-primary shrink-0" />
+          <input
+            value={block.text}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={language === "ar" ? "اسم اللوحة" : "Canvas name"}
+            className="flex-1 text-sm font-medium bg-transparent outline-none border-b border-transparent focus:border-primary"
+          />
+          <button
+            onClick={onToggleCollapse}
+            className="text-[11px] px-2 py-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground"
+            title={language === "ar" ? "طي" : "Collapse"}
+          >
+            {language === "ar" ? "طي" : "Collapse"}
+          </button>
+        </div>
+        <NotesCanvasBlock data={block.canvas} onChange={onCanvasChange} language={language} />
+      </div>
+    );
   }
 
   if (block.type === "pdf") {
