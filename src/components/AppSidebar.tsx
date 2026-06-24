@@ -15,6 +15,8 @@ const AppSidebar = ({
 }) => {
   const [open, setOpen] = useState<boolean>(false);
   const isRTL = language === "ar";
+  // English → menu on the right; Arabic → menu on the left.
+  const side: "left" | "right" = isRTL ? "left" : "right";
 
   const items: { key: SidebarKey; icon: any; labelEn: string; labelAr: string }[] = [
     { key: "basics",     icon: Home,     labelEn: "Home",            labelAr: "الرئيسية" },
@@ -25,19 +27,19 @@ const AppSidebar = ({
 
   return (
     <aside
-      className={`fixed top-1/2 -translate-y-1/2 left-1 sm:left-2 z-40 flex flex-col rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-lg transition-[width] duration-200 ${
+      className={`fixed top-1/2 -translate-y-1/2 ${side === "left" ? "left-1 sm:left-2" : "right-1 sm:right-2"} z-40 flex flex-col rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-lg transition-[width] duration-200 ${
         open ? "w-40 sm:w-44" : "w-11 sm:w-12"
       }`}
       dir="ltr"
     >
       <button
         onClick={() => setOpen(v => !v)}
-        className="self-end m-1 w-8 h-8 rounded-md hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+        className={`${side === "left" ? "self-end" : "self-start"} m-1 w-8 h-8 rounded-md hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground`}
         aria-label={open ? (isRTL ? "طي" : "Collapse") : (isRTL ? "فتح" : "Expand")}
       >
         {open
-          ? (isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />)
-          : (isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
+          ? (side === "left" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)
+          : (side === "left" ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />)}
       </button>
       <nav className="flex flex-col gap-1 p-1.5 pt-0">
         {items.map(({ key, icon: Icon, labelEn, labelAr }) => {
