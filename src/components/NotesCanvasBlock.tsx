@@ -5,7 +5,7 @@ import {
   Upload, ImagePlus, Loader2, X as XIcon,
   ZoomIn, ZoomOut, RotateCcw,
   PanelLeftClose, PanelLeft,
-  Plus, Hand,
+  Plus, Hand, Highlighter, Undo2, Redo2,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 export type CanvasStroke = {
   id: string; kind: "stroke"; color: string; size: number;
   points: { x: number; y: number }[];
+  highlight?: boolean;
 };
 export type CanvasShape = {
   id: string; kind: "shape";
@@ -35,9 +36,10 @@ export type CanvasSticker = {
 export type CanvasItem = CanvasStroke | CanvasShape | CanvasLabel | CanvasSticker;
 export type CanvasData = { items: CanvasItem[]; height: number };
 
-type Tool = "select" | "pan" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "arrow" | "label" | "text" | "sticker";
+type Tool = "select" | "pan" | "pen" | "highlight" | "eraser" | "rect" | "ellipse" | "line" | "arrow" | "label" | "text" | "sticker";
 
 const PALETTE = ["#0f172a", "#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"];
+const HIGHLIGHT_PALETTE = ["#fde047", "#86efac", "#93c5fd", "#fca5a5", "#f0abfc", "#fdba74"];
 const LABEL_BGS = ["#fef3c7", "#dbeafe", "#dcfce7", "#fce7f3", "#e0e7ff", "#f1f5f9"];
 const STICKERS = [
   "⭐", "❤️", "🔥", "✅", "❌", "❓", "❗", "💡",
@@ -92,6 +94,8 @@ const NotesCanvasBlock = ({
   const [tool, setTool] = useState<Tool>("pen");
   const [color, setColor] = useState<string>(PALETTE[0]);
   const [size, setSize] = useState<number>(3);
+  const [highlightColor, setHighlightColor] = useState<string>(HIGHLIGHT_PALETTE[0]);
+  const [highlightSize, setHighlightSize] = useState<number>(18);
   const [labelBg, setLabelBg] = useState<string>(LABEL_BGS[0]);
   const [sticker, setSticker] = useState<string>(STICKERS[0]);
   const [customStickerUrl, setCustomStickerUrl] = useState<string | null>(null);
@@ -281,9 +285,37 @@ const NotesCanvasBlock = ({
   useEffect(() => { itemsRef.current = safe.items; }, [safe.items]);
   const setItems = (updater: (arr: CanvasItem[]) => CanvasItem[]) => {
     const next = updater(itemsRef.current);
+    // push current snapshot onto undo stack before applying change
+    pastRef.current.push(itemsRef.current);
+    if (pastRef.current.length > 100) pastRef.current.shift();
+    futureRef.current = [];
+    setHistoryTick(t => t + 1);
     itemsRef.current = next;
     onChange({ ...safe, items: next });
   };
+
+  // Undo / Redo
+  const pastRef = useRef<CanvasItem[][]>([]);
+  const futureRef = useRef<CanvasItem[][]>([]);
+  const [, setHistoryTick] = useState(0);
+  const undo = () => {
+    const prev = pastRef.current.pop();
+    if (!prev) return;
+    futureRef.current.push(itemsRef.current);
+    itemsRef.current = prev;
+    setHistoryTick(t => t + 1);
+    onChange({ ...safe, items: prev });
+  };
+  const redo = () => {
+    const next = futureRef.current.pop();
+    if (!next) return;
+    pastRef.current.push(itemsRef.current);
+    itemsRef.current = next;
+    setHistoryTick(t => t + 1);
+    onChange({ ...safe, items: next });
+  };
+  const canUndo = pastRef.current.length > 0;
+  const canRedo = futureRef.current.length > 0;
 
   const setHeight = (h: number) => onChange({ ...safe, height: Math.max(180, Math.min(1200, h)) });
 
@@ -328,6 +360,10 @@ const NotesCanvasBlock = ({
     }
     if (tool === "pen") {
       setDraft({ id: rid(), kind: "stroke", color, size, points: [{ x, y }] });
+      return;
+    }
+    if (tool === "highlight") {
+      setDraft({ id: rid(), kind: "stroke", color: highlightColor, size: highlightSize, points: [{ x, y }], highlight: true });
       return;
     }
     if (tool === "label") {
@@ -417,7 +453,19 @@ const NotesCanvasBlock = ({
     const sw = (it.kind === "stroke" || it.kind === "shape") ? it.size : 0;
     if (it.kind === "stroke") {
       const d = it.points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-      return <path key={it.id} d={d} stroke={it.color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" fill="none" />;
+      return (
+        <path
+          key={it.id}
+          d={d}
+          stroke={it.color}
+          strokeWidth={sw}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+          opacity={it.highlight ? 0.38 : 1}
+          style={it.highlight ? { mixBlendMode: "multiply" } : undefined}
+        />
+      );
     }
     if (it.kind === "shape") {
       const x = Math.min(it.x, it.x + it.w), y = Math.min(it.y, it.y + it.h);
@@ -555,6 +603,7 @@ const NotesCanvasBlock = ({
     { id: "select",  icon: MousePointer2, label: isRTL ? "تحديد" : "Select",   shortcut: "V" },
     { id: "pan",     icon: Hand,          label: isRTL ? "تمرير" : "Pan",      shortcut: "H" },
     { id: "pen",     icon: Pencil,        label: isRTL ? "قلم" : "Pen",        shortcut: "P" },
+    { id: "highlight", icon: Highlighter, label: isRTL ? "تظليل" : "Highlight", shortcut: "G" },
     { id: "eraser",  icon: Eraser,        label: isRTL ? "ممحاة" : "Eraser",   shortcut: "E" },
     { id: "rect",    icon: Square,        label: isRTL ? "مربع" : "Rect",      shortcut: "R" },
     { id: "ellipse", icon: CircleIcon,    label: isRTL ? "دائرة" : "Ellipse",  shortcut: "O" },
@@ -571,7 +620,17 @@ const NotesCanvasBlock = ({
       if (editingLabel) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))) return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key.toLowerCase() === "z") {
+          e.preventDefault();
+          if (e.shiftKey) redo(); else undo();
+        } else if (e.key.toLowerCase() === "y") {
+          e.preventDefault();
+          redo();
+        }
+        return;
+      }
+      if (e.altKey) return;
       const hit = tools.find(x => x.shortcut.toLowerCase() === e.key.toLowerCase());
       if (hit) { e.preventDefault(); setTool(hit.id); }
     };
@@ -717,6 +776,40 @@ const NotesCanvasBlock = ({
             </div>
           )}
 
+          {/* Highlighter options */}
+          {tool === "highlight" && (
+            <div className="space-y-1.5">
+              {sidebarOpen && (
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                  {isRTL ? "لون التظليل" : "Highlight"}
+                </p>
+              )}
+              <div className={sidebarOpen ? "grid grid-cols-3 gap-1.5 px-1" : "flex flex-col items-center gap-1.5"}>
+                {HIGHLIGHT_PALETTE.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setHighlightColor(c)}
+                    title={c}
+                    className={`w-6 h-6 rounded border ${highlightColor === c ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "border-border"}`}
+                    style={{ background: c, opacity: 0.7 }}
+                  />
+                ))}
+              </div>
+              {sidebarOpen && (
+                <>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 pt-1">
+                    {isRTL ? "السمك" : "Thickness"} <span className="text-foreground/60">({highlightSize})</span>
+                  </p>
+                  <input
+                    type="range" min={8} max={40} value={highlightSize}
+                    onChange={(e) => setHighlightSize(Number(e.target.value))}
+                    className="w-full accent-primary"
+                  />
+                </>
+              )}
+            </div>
+          )}
+
           {/* Stickers picker */}
           {tool === "sticker" && (
             <div className="space-y-1.5">
@@ -816,6 +909,28 @@ const NotesCanvasBlock = ({
 
         {/* Actions */}
         <div className="p-2 border-t border-border space-y-1">
+          <div className={`flex gap-1 ${sidebarOpen ? "" : "flex-col"}`}>
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              className={`flex-1 h-8 rounded-md text-xs inline-flex items-center ${sidebarOpen ? "justify-center gap-1.5 px-2" : "justify-center"} hover:bg-secondary text-foreground/80 disabled:opacity-40 disabled:hover:bg-transparent`}
+              title={isRTL ? "تراجع" : "Undo"}
+              aria-label={isRTL ? "تراجع" : "Undo"}
+            >
+              <Undo2 className="w-3.5 h-3.5 shrink-0" />
+              {sidebarOpen && <span>{isRTL ? "تراجع" : "Undo"}</span>}
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              className={`flex-1 h-8 rounded-md text-xs inline-flex items-center ${sidebarOpen ? "justify-center gap-1.5 px-2" : "justify-center"} hover:bg-secondary text-foreground/80 disabled:opacity-40 disabled:hover:bg-transparent`}
+              title={isRTL ? "إعادة" : "Redo"}
+              aria-label={isRTL ? "إعادة" : "Redo"}
+            >
+              <Redo2 className="w-3.5 h-3.5 shrink-0" />
+              {sidebarOpen && <span>{isRTL ? "إعادة" : "Redo"}</span>}
+            </button>
+          </div>
           {selectedId && (
             <button
               onClick={() => { setItems(arr => arr.filter(i => i.id !== selectedId)); setSelectedId(null); setEditingLabel(null); }}
