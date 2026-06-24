@@ -5,7 +5,7 @@ import {
   Upload, ImagePlus, Loader2, X as XIcon,
   ZoomIn, ZoomOut, RotateCcw,
   PanelLeftClose, PanelLeft,
-  Plus, Hand, Highlighter, Undo2, Redo2,
+  Plus, Hand, Highlighter, Undo2, Redo2, Droplet,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +36,7 @@ export type CanvasSticker = {
 export type CanvasItem = CanvasStroke | CanvasShape | CanvasLabel | CanvasSticker;
 export type CanvasData = { items: CanvasItem[]; height: number };
 
-type Tool = "select" | "pan" | "pen" | "highlight" | "eraser" | "rect" | "ellipse" | "line" | "arrow" | "label" | "text" | "sticker";
+type Tool = "select" | "pan" | "pen" | "highlight" | "eraser" | "highlightEraser" | "rect" | "ellipse" | "line" | "arrow" | "label" | "text" | "sticker";
 
 const PALETTE = ["#0f172a", "#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#ffffff"];
 const HIGHLIGHT_PALETTE = ["#fde047", "#86efac", "#93c5fd", "#fca5a5", "#f0abfc", "#fdba74"];
@@ -358,6 +358,10 @@ const NotesCanvasBlock = ({
       setItems(arr => arr.filter(it => !hits(it, x, y, 6)));
       return;
     }
+    if (tool === "highlightEraser") {
+      setItems(arr => arr.filter(it => !(it.kind === "stroke" && it.highlight && hits(it, x, y, 8))));
+      return;
+    }
     if (tool === "pen") {
       setDraft({ id: rid(), kind: "stroke", color, size, points: [{ x, y }] });
       return;
@@ -419,6 +423,10 @@ const NotesCanvasBlock = ({
     }
     if (tool === "eraser" && (e.buttons & 1)) {
       setItems(arr => arr.filter(it => !hits(it, x, y, 6)));
+      return;
+    }
+    if (tool === "highlightEraser" && (e.buttons & 1)) {
+      setItems(arr => arr.filter(it => !(it.kind === "stroke" && it.highlight && hits(it, x, y, 8))));
       return;
     }
     if (!draft) return;
@@ -605,6 +613,7 @@ const NotesCanvasBlock = ({
     { id: "pen",     icon: Pencil,        label: isRTL ? "قلم" : "Pen",        shortcut: "P" },
     { id: "highlight", icon: Highlighter, label: isRTL ? "تظليل" : "Highlight", shortcut: "G" },
     { id: "eraser",  icon: Eraser,        label: isRTL ? "ممحاة" : "Eraser",   shortcut: "E" },
+    { id: "highlightEraser", icon: Droplet, label: isRTL ? "ممحاة التظليل" : "Highlight eraser", shortcut: "U" },
     { id: "rect",    icon: Square,        label: isRTL ? "مربع" : "Rect",      shortcut: "R" },
     { id: "ellipse", icon: CircleIcon,    label: isRTL ? "دائرة" : "Ellipse",  shortcut: "O" },
     { id: "line",    icon: LineIcon,      label: isRTL ? "خط" : "Line",        shortcut: "L" },
@@ -642,6 +651,7 @@ const NotesCanvasBlock = ({
     tool === "select" ? "default"
     : tool === "pan" ? (panRef.current ? "grabbing" : "grab")
     : tool === "eraser" ? "cell"
+    : tool === "highlightEraser" ? "cell"
     : tool === "label" ? "text"
     : "crosshair";
 
@@ -942,11 +952,23 @@ const NotesCanvasBlock = ({
             </button>
           )}
           <button
-            onClick={() => { if (confirm(isRTL ? "مسح اللوحة؟" : "Clear canvas?")) setItems(() => []); }}
-            className={`w-full h-8 rounded-md text-xs inline-flex items-center ${sidebarOpen ? "justify-start gap-2 px-2" : "justify-center"} hover:bg-secondary text-muted-foreground`}
+            onClick={() => {
+              if (itemsRef.current.length === 0) {
+                toast.info(isRTL ? "اللوحة فارغة" : "Canvas is already empty");
+                return;
+              }
+              setDraft(null);
+              setSelectedId(null);
+              setEditingLabel(null);
+              setItems(() => []);
+              toast.success(
+                isRTL ? "تم مسح اللوحة (تراجع للاستعادة)" : "Canvas cleared (undo to restore)"
+              );
+            }}
+            className={`w-full h-8 rounded-md text-xs inline-flex items-center ${sidebarOpen ? "justify-start gap-2 px-2" : "justify-center"} hover:bg-destructive/10 text-destructive`}
             title={isRTL ? "مسح الكل" : "Clear all"}
           >
-            <Eraser className="w-3.5 h-3.5 shrink-0" />
+            <Trash2 className="w-3.5 h-3.5 shrink-0" />
             {sidebarOpen && <span>{isRTL ? "مسح الكل" : "Clear all"}</span>}
           </button>
         </div>
