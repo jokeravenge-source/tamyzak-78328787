@@ -201,6 +201,7 @@ const FEATURED_COPY = {
     mcq: { title: "MCQ Generator", subtitle: "Get multiple-choice questions from any file." },
     mindmap: { title: "Mind Map", subtitle: "AI builds a clean map from any topic." },
     youtube: { title: "YouTube Player", subtitle: "Watch any YouTube video inside the app." },
+    liveBattle: { title: "Live Battle", subtitle: "Challenge a friend in a 10-question MCQ duel." },
     leaderboard: { title: "Leaderboard", subtitle: "See where you stand this week." },
   },
   ar: {
@@ -211,6 +212,7 @@ const FEATURED_COPY = {
     mcq: { title: "مولّد الأسئلة", subtitle: "احصل على اختيارات من متعدد من أي ملف." },
     mindmap: { title: "الخريطة الذهنية", subtitle: "خريطة مرتبة بالذكاء الاصطناعي." },
     youtube: { title: "مشغّل يوتيوب", subtitle: "شاهد أي فيديو يوتيوب داخل التطبيق." },
+    liveBattle: { title: "المعركة المباشرة", subtitle: "تحدَّ صديقك في 10 أسئلة." },
     leaderboard: { title: "المتصدرون", subtitle: "اعرف ترتيبك هذا الأسبوع." },
   },
 } as const;
