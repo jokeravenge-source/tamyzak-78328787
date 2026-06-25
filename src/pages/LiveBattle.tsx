@@ -7,33 +7,40 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
 
-type MCQ = { q: string; choices: string[]; answer: number };
+type Subject = "general" | "math" | "science" | "english";
+type MCQ = { q: string; choices: string[]; answer: number; subject: Subject };
 
 const BANK: MCQ[] = [
-  { q: "What is H2O?", choices: ["Salt","Water","Oxygen","Gold"], answer: 1 },
-  { q: "Speed of light (approx, km/s)?", choices: ["3,000","30,000","300,000","3,000,000"], answer: 2 },
-  { q: "Largest planet?", choices: ["Earth","Mars","Jupiter","Venus"], answer: 2 },
-  { q: "2 + 2 × 3 = ?", choices: ["12","8","10","6"], answer: 1 },
-  { q: "Capital of France?", choices: ["Berlin","Paris","Rome","Madrid"], answer: 1 },
-  { q: "Square root of 144?", choices: ["10","11","12","13"], answer: 2 },
-  { q: "Powerhouse of the cell?", choices: ["Nucleus","Ribosome","Mitochondrion","Vacuole"], answer: 2 },
-  { q: "Author of Hamlet?", choices: ["Dickens","Shakespeare","Twain","Poe"], answer: 1 },
-  { q: "Chemical symbol for Gold?", choices: ["Go","Gd","Au","Ag"], answer: 2 },
-  { q: "How many continents?", choices: ["5","6","7","8"], answer: 2 },
-  { q: "Pi to 2 decimals?", choices: ["3.12","3.14","3.16","3.18"], answer: 1 },
-  { q: "Red blood cells carry?", choices: ["CO2 only","Oxygen","Glucose","Hormones"], answer: 1 },
-  { q: "Hottest planet?", choices: ["Mercury","Venus","Mars","Jupiter"], answer: 1 },
-  { q: "Smallest prime number?", choices: ["0","1","2","3"], answer: 2 },
-  { q: "Largest ocean?", choices: ["Atlantic","Indian","Arctic","Pacific"], answer: 3 },
-  { q: "Who painted Mona Lisa?", choices: ["Van Gogh","Da Vinci","Picasso","Monet"], answer: 1 },
-  { q: "Boiling point of water (°C)?", choices: ["50","75","100","120"], answer: 2 },
-  { q: "DNA stands for?", choices: ["Di-Nucleic Acid","Deoxyribo Nucleic Acid","Double Nuclear A.","Diamine N.A."], answer: 1 },
-  { q: "Largest desert?", choices: ["Sahara","Gobi","Antarctic","Arabian"], answer: 2 },
-  { q: "How many bones in adult human?", choices: ["106","206","306","406"], answer: 1 },
+  { q: "What is H2O?", choices: ["Salt","Water","Oxygen","Gold"], answer: 1, subject: "science" },
+  { q: "Speed of light (approx, km/s)?", choices: ["3,000","30,000","300,000","3,000,000"], answer: 2, subject: "science" },
+  { q: "Largest planet?", choices: ["Earth","Mars","Jupiter","Venus"], answer: 2, subject: "science" },
+  { q: "2 + 2 × 3 = ?", choices: ["12","8","10","6"], answer: 1, subject: "math" },
+  { q: "Capital of France?", choices: ["Berlin","Paris","Rome","Madrid"], answer: 1, subject: "general" },
+  { q: "Square root of 144?", choices: ["10","11","12","13"], answer: 2, subject: "math" },
+  { q: "Powerhouse of the cell?", choices: ["Nucleus","Ribosome","Mitochondrion","Vacuole"], answer: 2, subject: "science" },
+  { q: "Author of Hamlet?", choices: ["Dickens","Shakespeare","Twain","Poe"], answer: 1, subject: "english" },
+  { q: "Chemical symbol for Gold?", choices: ["Go","Gd","Au","Ag"], answer: 2, subject: "science" },
+  { q: "How many continents?", choices: ["5","6","7","8"], answer: 2, subject: "general" },
+  { q: "Pi to 2 decimals?", choices: ["3.12","3.14","3.16","3.18"], answer: 1, subject: "math" },
+  { q: "Red blood cells carry?", choices: ["CO2 only","Oxygen","Glucose","Hormones"], answer: 1, subject: "science" },
+  { q: "Hottest planet?", choices: ["Mercury","Venus","Mars","Jupiter"], answer: 1, subject: "science" },
+  { q: "Smallest prime number?", choices: ["0","1","2","3"], answer: 2, subject: "math" },
+  { q: "Largest ocean?", choices: ["Atlantic","Indian","Arctic","Pacific"], answer: 3, subject: "general" },
+  { q: "Who painted Mona Lisa?", choices: ["Van Gogh","Da Vinci","Picasso","Monet"], answer: 1, subject: "general" },
+  { q: "Boiling point of water (°C)?", choices: ["50","75","100","120"], answer: 2, subject: "science" },
+  { q: "DNA stands for?", choices: ["Di-Nucleic Acid","Deoxyribo Nucleic Acid","Double Nuclear A.","Diamine N.A."], answer: 1, subject: "science" },
+  { q: "Largest desert?", choices: ["Sahara","Gobi","Antarctic","Arabian"], answer: 2, subject: "general" },
+  { q: "How many bones in adult human?", choices: ["106","206","306","406"], answer: 1, subject: "science" },
+  { q: "15 × 12 = ?", choices: ["170","180","190","200"], answer: 1, subject: "math" },
+  { q: "Synonym of 'happy'?", choices: ["Sad","Joyful","Angry","Tired"], answer: 1, subject: "english" },
+  { q: "Past tense of 'go'?", choices: ["Goed","Gone","Went","Going"], answer: 2, subject: "english" },
+  { q: "Antonym of 'begin'?", choices: ["Start","End","Open","Run"], answer: 1, subject: "english" },
+  { q: "9² = ?", choices: ["72","81","90","99"], answer: 1, subject: "math" },
 ];
 
-function pickQuestions(n: number, seed: number): MCQ[] {
-  const arr = [...BANK];
+function pickQuestions(n: number, seed: number, subject: Subject = "general"): MCQ[] {
+  const arr = subject === "general" ? [...BANK] : BANK.filter((q) => q.subject === subject);
+  if (arr.length === 0) arr.push(...BANK);
   // seeded shuffle
   let s = seed;
   const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
@@ -41,7 +48,7 @@ function pickQuestions(n: number, seed: number): MCQ[] {
     const j = Math.floor(rand() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  return arr.slice(0, n);
+  return arr.slice(0, Math.min(n, arr.length));
 }
 
 const T = (l: AppLanguage) => ({
@@ -69,9 +76,16 @@ const T = (l: AppLanguage) => ({
   copied: l === "ar" ? "تم النسخ" : "Copied",
   start: l === "ar" ? "ابدأ" : "Start",
   locked: l === "ar" ? "لا يمكنك مغادرة المعركة حتى تنتهي" : "You can't leave until the battle is over",
+  subject: l === "ar" ? "المادة" : "Subject",
+  questionsCount: l === "ar" ? "عدد الأسئلة" : "Number of questions",
+  subjGeneral: l === "ar" ? "عام" : "General",
+  subjMath: l === "ar" ? "رياضيات" : "Math",
+  subjScience: l === "ar" ? "علوم" : "Science",
+  subjEnglish: l === "ar" ? "إنجليزي" : "English",
+  createNow: l === "ar" ? "إنشاء الغرفة" : "Create room",
 });
 
-type Phase = "menu" | "create" | "join" | "lobby" | "countdown" | "playing" | "done";
+type Phase = "menu" | "createSettings" | "join" | "lobby" | "countdown" | "playing" | "done";
 
 export default function LiveBattle({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
   const t = T(language);
@@ -87,9 +101,13 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const [scores, setScores] = useState<Record<string, number>>({});
   const [answered, setAnswered] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(3);
+  const [subject, setSubject] = useState<Subject>("general");
+  const [qCount, setQCount] = useState<number>(10);
 
   const meId = useRef<string>(Math.random().toString(36).slice(2, 10));
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const questionsRef = useRef<MCQ[]>([]);
+  useEffect(() => { questionsRef.current = questions; }, [questions]);
 
   // Lock navigation while a battle is in progress
   const isLocked = phase === "countdown" || phase === "playing";
@@ -204,7 +222,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
 
     ch.on("broadcast", { event: "next" }, ({ payload }) => {
       const { qIdx: nextIdx } = payload;
-      if (nextIdx >= 10) setPhase("done");
+      if (nextIdx >= (questionsRef.current.length || 10)) setPhase("done");
       else setQIdx(nextIdx);
     });
 
@@ -219,14 +237,15 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
 
   const advanceQuestion = () => {
     if (!channelRef.current) return;
+    const tot = questionsRef.current.length || 10;
     setQIdx((cur) => {
       const next = cur + 1;
       hostAnswers.current = {};
       channelRef.current!.send({ type: "broadcast", event: "next", payload: { qIdx: next } });
-      if (next >= 10) {
+      if (next >= tot) {
         setPhase("done");
       }
-      return next >= 10 ? cur : next;
+      return next >= tot ? cur : next;
     });
   };
 
@@ -235,7 +254,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     setCode(c);
     setIsHost(true);
     const seed = Number(c);
-    const qs = pickQuestions(10, seed);
+    const qs = pickQuestions(qCount, seed, subject);
     setupChannel(c, true, qs);
     setPhase("lobby");
   };
@@ -270,7 +289,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     const oppId = players.find((p) => p.id !== meId.current)?.id;
     const oppScore = oppId ? (scores[oppId] || 0) : 0;
     const won = myScore > oppScore;
-    const earned = myScore * 2 + (won ? 10 : 0);
+    const earned = myScore * 2 + (won ? (questionsRef.current.length || 10) : 0);
     (async () => {
       try {
         const { data: u } = await supabase.auth.getUser();
@@ -330,7 +349,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-2" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button onClick={createRoom} className="rounded-2xl p-6 bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-left hover:opacity-90 transition">
+              <button onClick={() => setPhase("createSettings")} className="rounded-2xl p-6 bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-left hover:opacity-90 transition">
                 <Swords className="w-8 h-8 mb-2" />
                 <div className="font-bold text-lg">{t.create}</div>
               </button>
@@ -357,6 +376,52 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setPhase("menu")} className="flex-1">{t.back}</Button>
               <Button onClick={joinRoom} className="flex-1">{t.join}</Button>
+            </div>
+          </div>
+        )}
+
+        {phase === "createSettings" && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.subject}</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: "general", label: t.subjGeneral },
+                  { key: "math", label: t.subjMath },
+                  { key: "science", label: t.subjScience },
+                  { key: "english", label: t.subjEnglish },
+                ] as { key: Subject; label: string }[]).map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setSubject(s.key)}
+                    className={`rounded-xl border p-3 text-sm transition ${
+                      subject === s.key ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.questionsCount}</label>
+              <div className="grid grid-cols-4 gap-2">
+                {[5, 10, 15, 20].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setQCount(n)}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${
+                      qCount === n ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setPhase("menu")} className="flex-1">{t.back}</Button>
+              <Button onClick={createRoom} className="flex-1">{t.createNow}</Button>
             </div>
           </div>
         )}
@@ -412,7 +477,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
             </div>
 
             <div className="flex justify-between items-center text-xs text-muted-foreground">
-              <span>{t.q} {qIdx + 1} {t.of} 10</span>
+              <span>{t.q} {qIdx + 1} {t.of} {questions.length}</span>
               <span className={timeLeft <= 5 ? "text-destructive font-bold" : ""}>{timeLeft}s</span>
             </div>
             <Progress value={(timeLeft / 15) * 100} className="h-2" />
@@ -423,7 +488,6 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
                 {cur.choices.map((c, i) => {
                   const isAnswered = answered !== null;
                   const isMine = answered === i;
-                  const isCorrect = cur.answer === i;
                   return (
                     <button
                       key={i}
@@ -431,11 +495,9 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
                       onClick={() => submitAnswer(i)}
                       className={`rounded-xl border p-3 text-left transition ${
                         isAnswered
-                          ? isCorrect
-                            ? "bg-green-100 border-green-500 text-green-900"
-                            : isMine
-                              ? "bg-red-100 border-red-500 text-red-900"
-                              : "opacity-60"
+                          ? isMine
+                            ? "bg-primary/10 border-primary text-foreground"
+                            : "opacity-60"
                           : "hover:bg-accent"
                       }`}
                     >
@@ -466,7 +528,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               </div>
             </div>
             <div className="text-sm text-muted-foreground">
-              {t.pointsEarned}: <span className="font-bold text-foreground">{myScore * 2 + (myScore > oppScore ? 10 : 0)}</span>
+              {t.pointsEarned}: <span className="font-bold text-foreground">{myScore * 2 + (myScore > oppScore ? questions.length : 0)}</span>
             </div>
             <Button onClick={restart} size="lg">{t.playAgain}</Button>
           </div>
