@@ -68,6 +68,7 @@ const T = (l: AppLanguage) => ({
   invalidCode: l === "ar" ? "أدخل رمزاً صحيحاً" : "Enter a valid 6-digit code",
   copied: l === "ar" ? "تم النسخ" : "Copied",
   start: l === "ar" ? "ابدأ" : "Start",
+  locked: l === "ar" ? "لا يمكنك مغادرة المعركة حتى تنتهي" : "You can't leave until the battle is over",
 });
 
 type Phase = "menu" | "create" | "join" | "lobby" | "countdown" | "playing" | "done";
@@ -89,6 +90,28 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
 
   const meId = useRef<string>(Math.random().toString(36).slice(2, 10));
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // Lock navigation while a battle is in progress
+  const isLocked = phase === "countdown" || phase === "playing";
+  useEffect(() => {
+    (window as any).__battleLocked = isLocked;
+    window.dispatchEvent(new CustomEvent("app:battle-lock", { detail: { locked: isLocked } }));
+    if (!isLocked) return;
+    const beforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", beforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", beforeUnload);
+    };
+  }, [isLocked]);
+  useEffect(() => () => {
+    (window as any).__battleLocked = false;
+    window.dispatchEvent(new CustomEvent("app:battle-lock", { detail: { locked: false } }));
+  }, []);
+
+  const guardedBack = () => {
+    if (isLocked) { toast.error(t.locked); return; }
+    onBack();
+  };
 
   const cleanup = () => {
     if (channelRef.current) {
@@ -287,7 +310,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 pb-24" dir={language === "ar" ? "rtl" : "ltr"}>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-2 mb-4">
-          <Button variant="ghost" size="sm" onClick={onBack}>
+          <Button variant="ghost" size="sm" onClick={guardedBack} disabled={isLocked}>
             <ArrowLeft className="w-4 h-4" /> {t.back}
           </Button>
         </div>
