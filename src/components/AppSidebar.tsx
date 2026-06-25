@@ -1,10 +1,10 @@
 import { useState } from "react";
 import {
-  Home, BookOpen, Palette, Video, ChevronLeft, ChevronRight,
+  Home, BookOpen, Palette, Video, ChevronLeft, ChevronRight, Swords,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 
-export type SidebarKey = "basics" | "notes" | "canvas" | "videoNotes";
+export type SidebarKey = "basics" | "notes" | "canvas" | "videoNotes" | "liveBattle";
 
 const AppSidebar = ({
   language, active, onSelect,
@@ -23,6 +23,7 @@ const AppSidebar = ({
     { key: "notes",      icon: BookOpen, labelEn: "Notes",           labelAr: "ملاحظاتي" },
     { key: "canvas",     icon: Palette,  labelEn: "Canvas",          labelAr: "اللوحة" },
     { key: "videoNotes", icon: Video,    labelEn: "Video to Notes",  labelAr: "من الفيديو إلى ملاحظات" },
+    { key: "liveBattle", icon: Swords,   labelEn: "Live Battle",     labelAr: "المعركة المباشرة" },
   ];
 
   return (
