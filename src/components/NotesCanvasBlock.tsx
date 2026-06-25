@@ -205,6 +205,29 @@ const NotesCanvasBlock = ({
   const [draft, setDraft] = useState<CanvasItem | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
+  // Live pen/highlight stroke is rendered straight to the DOM (bypassing React)
+  // so high-frequency pointermove events don't trigger full SVG re-renders.
+  // We only commit to React state on pointer up.
+  const liveStrokeRef = useRef<CanvasStroke | null>(null);
+  const livePathRef = useRef<SVGPathElement | null>(null);
+  const pointsToD = (pts: { x: number; y: number }[]) => {
+    let d = "";
+    for (let i = 0; i < pts.length; i++) {
+      d += (i === 0 ? "M" : "L") + pts[i].x + " " + pts[i].y + " ";
+    }
+    return d;
+  };
+  const paintLiveStroke = () => {
+    const s = liveStrokeRef.current;
+    const el = livePathRef.current;
+    if (!el) return;
+    if (!s) { el.setAttribute("d", ""); return; }
+    el.setAttribute("d", pointsToD(s.points));
+    el.setAttribute("stroke", s.color);
+    el.setAttribute("stroke-width", String(s.size));
+    el.setAttribute("opacity", s.highlight ? "0.38" : "1");
+    el.style.mixBlendMode = s.highlight ? "multiply" : "";
+  };
   const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   // Pan state: when the "pan" tool is active, dragging scrolls the canvas
   // instead of drawing. We track the starting scroll + screen coords.
