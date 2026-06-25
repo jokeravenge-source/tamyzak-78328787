@@ -398,6 +398,7 @@ const Basics = ({
     Study: Layers,
     Progress: Target,
     Community: Users,
+    Play: Swords,
     Ministerial: ScrollText,
     Account: Settings,
   };
