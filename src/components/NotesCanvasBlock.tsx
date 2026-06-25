@@ -205,6 +205,29 @@ const NotesCanvasBlock = ({
   const [draft, setDraft] = useState<CanvasItem | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
+  // Live pen/highlight stroke is rendered straight to the DOM (bypassing React)
+  // so high-frequency pointermove events don't trigger full SVG re-renders.
+  // We only commit to React state on pointer up.
+  const liveStrokeRef = useRef<CanvasStroke | null>(null);
+  const livePathRef = useRef<SVGPathElement | null>(null);
+  const pointsToD = (pts: { x: number; y: number }[]) => {
+    let d = "";
+    for (let i = 0; i < pts.length; i++) {
+      d += (i === 0 ? "M" : "L") + pts[i].x + " " + pts[i].y + " ";
+    }
+    return d;
+  };
+  const paintLiveStroke = () => {
+    const s = liveStrokeRef.current;
+    const el = livePathRef.current;
+    if (!el) return;
+    if (!s) { el.setAttribute("d", ""); return; }
+    el.setAttribute("d", pointsToD(s.points));
+    el.setAttribute("stroke", s.color);
+    el.setAttribute("stroke-width", String(s.size));
+    el.setAttribute("opacity", s.highlight ? "0.38" : "1");
+    el.style.mixBlendMode = s.highlight ? "multiply" : "";
+  };
   const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   // Pan state: when the "pan" tool is active, dragging scrolls the canvas
   // instead of drawing. We track the starting scroll + screen coords.
@@ -363,11 +386,13 @@ const NotesCanvasBlock = ({
       return;
     }
     if (tool === "pen") {
-      setDraft({ id: rid(), kind: "stroke", color, size, points: [{ x, y }] });
+      liveStrokeRef.current = { id: rid(), kind: "stroke", color, size, points: [{ x, y }] };
+      paintLiveStroke();
       return;
     }
     if (tool === "highlight") {
-      setDraft({ id: rid(), kind: "stroke", color: highlightColor, size: highlightSize, points: [{ x, y }], highlight: true });
+      liveStrokeRef.current = { id: rid(), kind: "stroke", color: highlightColor, size: highlightSize, points: [{ x, y }], highlight: true };
+      paintLiveStroke();
       return;
     }
     if (tool === "label") {
@@ -399,6 +424,25 @@ const NotesCanvasBlock = ({
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (editingLabel) return;
+    // Fast-path: live pen/highlight stroke — append coalesced points and mutate
+    // the dedicated <path> element directly without any React re-render.
+    if (liveStrokeRef.current) {
+      e.preventDefault();
+      const ev = e.nativeEvent as PointerEvent & { getCoalescedEvents?: () => PointerEvent[] };
+      const events = ev.getCoalescedEvents ? ev.getCoalescedEvents() : null;
+      const r = svgRef.current!.getBoundingClientRect();
+      const pts = liveStrokeRef.current.points;
+      if (events && events.length) {
+        for (const ce of events) {
+          pts.push({ x: (ce.clientX - r.left) / zoom, y: (ce.clientY - r.top) / zoom });
+        }
+      } else {
+        pts.push({ x: (e.clientX - r.left) / zoom, y: (e.clientY - r.top) / zoom });
+      }
+      const pathEl = livePathRef.current;
+      if (pathEl) pathEl.setAttribute("d", pointsToD(pts));
+      return;
+    }
     if (panRef.current) {
       e.preventDefault();
       const el = scrollRef.current;
@@ -440,6 +484,19 @@ const NotesCanvasBlock = ({
   const onPointerUp = () => {
     document.body.style.overflow = "";
     document.documentElement.style.overscrollBehavior = "";
+    // Commit a live pen/highlight stroke if one is in progress.
+    if (liveStrokeRef.current) {
+      const s = liveStrokeRef.current;
+      liveStrokeRef.current = null;
+      if (livePathRef.current) livePathRef.current.setAttribute("d", "");
+      if (s.points.length < 2) {
+        const p = s.points[0];
+        if (p) showMissedTap(p.x, p.y);
+      } else {
+        setItems(arr => [...arr, s]);
+      }
+      return;
+    }
     if (panRef.current) { panRef.current = null; return; }
     if (dragRef.current) { dragRef.current = null; return; }
     if (!draft) return;
@@ -994,6 +1051,15 @@ const NotesCanvasBlock = ({
           onPointerLeave={onPointerUp}
         >
           {items.map(it => renderItem(it, draft?.id === it.id))}
+          {/* Live pen/highlight stroke — mutated directly by pointer handlers */}
+          <path
+            ref={livePathRef}
+            d=""
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            pointerEvents="none"
+          />
         </svg>
           {/* Missed-tap floating add — appears when a tap was too small to commit */}
           {missedTap && (
