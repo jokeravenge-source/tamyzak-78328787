@@ -380,6 +380,52 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
           </div>
         )}
 
+        {phase === "createSettings" && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.subject}</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: "general", label: t.subjGeneral },
+                  { key: "math", label: t.subjMath },
+                  { key: "science", label: t.subjScience },
+                  { key: "english", label: t.subjEnglish },
+                ] as { key: Subject; label: string }[]).map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setSubject(s.key)}
+                    className={`rounded-xl border p-3 text-sm transition ${
+                      subject === s.key ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.questionsCount}</label>
+              <div className="grid grid-cols-4 gap-2">
+                {[5, 10, 15, 20].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setQCount(n)}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${
+                      qCount === n ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setPhase("menu")} className="flex-1">{t.back}</Button>
+              <Button onClick={createRoom} className="flex-1">{t.createNow}</Button>
+            </div>
+          </div>
+        )}
+
         {phase === "lobby" && (
           <div className="space-y-4 text-center">
             <div className="rounded-2xl border bg-card p-6">
