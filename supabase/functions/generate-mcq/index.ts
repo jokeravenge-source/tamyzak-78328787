@@ -109,6 +109,20 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "No questions generated" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const parsed = JSON.parse(toolCall.function.arguments);
+    // Shuffle choices per question so the correct answer is not biased to a single position
+    if (parsed && Array.isArray(parsed.questions)) {
+      parsed.questions = parsed.questions.map((q: any) => {
+        if (!q || !Array.isArray(q.choices) || q.choices.length !== 4) return q;
+        const correct = q.choices[q.answer_index];
+        const indices = [0, 1, 2, 3];
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        const shuffled = indices.map((idx) => q.choices[idx]);
+        return { ...q, choices: shuffled, answer_index: shuffled.indexOf(correct) };
+      });
+    }
     return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
