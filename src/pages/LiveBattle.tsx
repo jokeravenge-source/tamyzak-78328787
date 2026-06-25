@@ -76,9 +76,16 @@ const T = (l: AppLanguage) => ({
   copied: l === "ar" ? "تم النسخ" : "Copied",
   start: l === "ar" ? "ابدأ" : "Start",
   locked: l === "ar" ? "لا يمكنك مغادرة المعركة حتى تنتهي" : "You can't leave until the battle is over",
+  subject: l === "ar" ? "المادة" : "Subject",
+  questionsCount: l === "ar" ? "عدد الأسئلة" : "Number of questions",
+  subjGeneral: l === "ar" ? "عام" : "General",
+  subjMath: l === "ar" ? "رياضيات" : "Math",
+  subjScience: l === "ar" ? "علوم" : "Science",
+  subjEnglish: l === "ar" ? "إنجليزي" : "English",
+  createNow: l === "ar" ? "إنشاء الغرفة" : "Create room",
 });
 
-type Phase = "menu" | "create" | "join" | "lobby" | "countdown" | "playing" | "done";
+type Phase = "menu" | "createSettings" | "join" | "lobby" | "countdown" | "playing" | "done";
 
 export default function LiveBattle({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
   const t = T(language);
@@ -94,9 +101,13 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const [scores, setScores] = useState<Record<string, number>>({});
   const [answered, setAnswered] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(3);
+  const [subject, setSubject] = useState<Subject>("general");
+  const [qCount, setQCount] = useState<number>(10);
 
   const meId = useRef<string>(Math.random().toString(36).slice(2, 10));
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const questionsRef = useRef<MCQ[]>([]);
+  useEffect(() => { questionsRef.current = questions; }, [questions]);
 
   // Lock navigation while a battle is in progress
   const isLocked = phase === "countdown" || phase === "playing";
@@ -211,7 +222,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
 
     ch.on("broadcast", { event: "next" }, ({ payload }) => {
       const { qIdx: nextIdx } = payload;
-      if (nextIdx >= 10) setPhase("done");
+      if (nextIdx >= (questionsRef.current.length || 10)) setPhase("done");
       else setQIdx(nextIdx);
     });
 
@@ -226,14 +237,15 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
 
   const advanceQuestion = () => {
     if (!channelRef.current) return;
+    const tot = questionsRef.current.length || 10;
     setQIdx((cur) => {
       const next = cur + 1;
       hostAnswers.current = {};
       channelRef.current!.send({ type: "broadcast", event: "next", payload: { qIdx: next } });
-      if (next >= 10) {
+      if (next >= tot) {
         setPhase("done");
       }
-      return next >= 10 ? cur : next;
+      return next >= tot ? cur : next;
     });
   };
 
@@ -242,7 +254,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     setCode(c);
     setIsHost(true);
     const seed = Number(c);
-    const qs = pickQuestions(10, seed);
+    const qs = pickQuestions(qCount, seed, subject);
     setupChannel(c, true, qs);
     setPhase("lobby");
   };
