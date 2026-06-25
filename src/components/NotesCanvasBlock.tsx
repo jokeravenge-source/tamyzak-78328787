@@ -386,11 +386,13 @@ const NotesCanvasBlock = ({
       return;
     }
     if (tool === "pen") {
-      setDraft({ id: rid(), kind: "stroke", color, size, points: [{ x, y }] });
+      liveStrokeRef.current = { id: rid(), kind: "stroke", color, size, points: [{ x, y }] };
+      paintLiveStroke();
       return;
     }
     if (tool === "highlight") {
-      setDraft({ id: rid(), kind: "stroke", color: highlightColor, size: highlightSize, points: [{ x, y }], highlight: true });
+      liveStrokeRef.current = { id: rid(), kind: "stroke", color: highlightColor, size: highlightSize, points: [{ x, y }], highlight: true };
+      paintLiveStroke();
       return;
     }
     if (tool === "label") {
