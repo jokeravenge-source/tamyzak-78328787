@@ -3,7 +3,7 @@ import {
   ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network, Search,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
-  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen, Youtube, FlaskConical,
+  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen, Youtube, FlaskConical, Swords,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -129,6 +129,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
       { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
       { key: "youtube", labelEn: "YouTube Player", labelAr: "مشغّل يوتيوب", Icon: Youtube },
+      { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
       { key: "organicEquations", labelEn: "Organic Equations", labelAr: "تفاعلات العضوية", Icon: FlaskConical },
       { key: "ministerialBank", labelEn: "Ministerial Bank", labelAr: "بنك الوزاريات", Icon: ScrollText },
       { key: "malazam", labelEn: "Malazam", labelAr: "الملازم", Icon: BookMarked },
@@ -187,6 +188,7 @@ const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: s
   { key: "mcq",             Icon: HelpCircle, tintBg: "bg-rose-50",    tintText: "text-rose-600" },
   { key: "mindmap",         Icon: Network,    tintBg: "bg-cyan-50",    tintText: "text-cyan-600" },
   { key: "youtube",         Icon: Youtube,    tintBg: "bg-red-50",     tintText: "text-red-600" },
+  { key: "liveBattle",      Icon: Swords,     tintBg: "bg-fuchsia-50", tintText: "text-fuchsia-600" },
   { key: "leaderboard",     Icon: Trophy,     tintBg: "bg-emerald-50", tintText: "text-emerald-600" },
 ];
 
@@ -199,6 +201,7 @@ const FEATURED_COPY = {
     mcq: { title: "MCQ Generator", subtitle: "Get multiple-choice questions from any file." },
     mindmap: { title: "Mind Map", subtitle: "AI builds a clean map from any topic." },
     youtube: { title: "YouTube Player", subtitle: "Watch any YouTube video inside the app." },
+    liveBattle: { title: "Live Battle", subtitle: "Challenge a friend in a 10-question MCQ duel." },
     leaderboard: { title: "Leaderboard", subtitle: "See where you stand this week." },
   },
   ar: {
@@ -209,6 +212,7 @@ const FEATURED_COPY = {
     mcq: { title: "مولّد الأسئلة", subtitle: "احصل على اختيارات من متعدد من أي ملف." },
     mindmap: { title: "الخريطة الذهنية", subtitle: "خريطة مرتبة بالذكاء الاصطناعي." },
     youtube: { title: "مشغّل يوتيوب", subtitle: "شاهد أي فيديو يوتيوب داخل التطبيق." },
+    liveBattle: { title: "المعركة المباشرة", subtitle: "تحدَّ صديقك في 10 أسئلة." },
     leaderboard: { title: "المتصدرون", subtitle: "اعرف ترتيبك هذا الأسبوع." },
   },
 } as const;
