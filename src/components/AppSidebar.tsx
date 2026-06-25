@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Home, BookOpen, Palette, Video, ChevronLeft, ChevronRight, Swords,
 } from "lucide-react";
@@ -14,6 +14,17 @@ const AppSidebar = ({
   onSelect: (k: SidebarKey) => void;
 }) => {
   const [open, setOpen] = useState<boolean>(false);
+  const [battleLocked, setBattleLocked] = useState<boolean>(
+    typeof window !== "undefined" && (window as any).__battleLocked === true,
+  );
+  useEffect(() => {
+    const onLock = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { locked?: boolean } | undefined;
+      setBattleLocked(!!detail?.locked);
+    };
+    window.addEventListener("app:battle-lock", onLock);
+    return () => window.removeEventListener("app:battle-lock", onLock);
+  }, []);
   const isRTL = language === "ar";
   // English → menu on the right; Arabic → menu on the left.
   const side: "left" | "right" = isRTL ? "left" : "right";
@@ -46,14 +57,16 @@ const AppSidebar = ({
         {items.map(({ key, icon: Icon, labelEn, labelAr }) => {
           const label = isRTL ? labelAr : labelEn;
           const isActive = active === key;
+          const disabled = battleLocked && key !== "liveBattle";
           return (
             <button
               key={key}
-              onClick={() => onSelect(key)}
-              title={label}
+              onClick={() => { if (!disabled) onSelect(key); }}
+              title={disabled ? (isRTL ? "أنهِ المعركة أولاً" : "Finish the battle first") : label}
+              disabled={disabled}
               className={`h-9 rounded-lg flex items-center ${open ? "justify-start gap-2 px-2" : "justify-center"} transition-colors ${
                 isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground/80"
-              }`}
+              } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
             >
               <Icon className="w-4 h-4 shrink-0" />
               {open && <span className="text-xs truncate">{label}</span>}
