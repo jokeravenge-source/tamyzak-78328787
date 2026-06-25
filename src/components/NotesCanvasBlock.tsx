@@ -424,6 +424,25 @@ const NotesCanvasBlock = ({
 
   const onPointerMove = (e: React.PointerEvent) => {
     if (editingLabel) return;
+    // Fast-path: live pen/highlight stroke — append coalesced points and mutate
+    // the dedicated <path> element directly without any React re-render.
+    if (liveStrokeRef.current) {
+      e.preventDefault();
+      const ev = e.nativeEvent as PointerEvent & { getCoalescedEvents?: () => PointerEvent[] };
+      const events = ev.getCoalescedEvents ? ev.getCoalescedEvents() : null;
+      const r = svgRef.current!.getBoundingClientRect();
+      const pts = liveStrokeRef.current.points;
+      if (events && events.length) {
+        for (const ce of events) {
+          pts.push({ x: (ce.clientX - r.left) / zoom, y: (ce.clientY - r.top) / zoom });
+        }
+      } else {
+        pts.push({ x: (e.clientX - r.left) / zoom, y: (e.clientY - r.top) / zoom });
+      }
+      const pathEl = livePathRef.current;
+      if (pathEl) pathEl.setAttribute("d", pointsToD(pts));
+      return;
+    }
     if (panRef.current) {
       e.preventDefault();
       const el = scrollRef.current;
