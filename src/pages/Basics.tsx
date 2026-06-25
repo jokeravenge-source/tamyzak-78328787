@@ -3,7 +3,7 @@ import {
   ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network, Search,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
-  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen, Youtube,
+  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen, Youtube, FlaskConical,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -129,6 +129,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
       { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
       { key: "youtube", labelEn: "YouTube Player", labelAr: "مشغّل يوتيوب", Icon: Youtube },
+      { key: "organicEquations", labelEn: "Organic Equations", labelAr: "تفاعلات العضوية", Icon: FlaskConical },
       { key: "ministerialBank", labelEn: "Ministerial Bank", labelAr: "بنك الوزاريات", Icon: ScrollText },
       { key: "malazam", labelEn: "Malazam", labelAr: "الملازم", Icon: BookMarked },
       { key: "biologyDrawings", labelEn: "Biology Drawings", labelAr: "رسومات الأحياء", Icon: Microscope },
