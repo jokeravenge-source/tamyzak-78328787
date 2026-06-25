@@ -484,6 +484,19 @@ const NotesCanvasBlock = ({
   const onPointerUp = () => {
     document.body.style.overflow = "";
     document.documentElement.style.overscrollBehavior = "";
+    // Commit a live pen/highlight stroke if one is in progress.
+    if (liveStrokeRef.current) {
+      const s = liveStrokeRef.current;
+      liveStrokeRef.current = null;
+      if (livePathRef.current) livePathRef.current.setAttribute("d", "");
+      if (s.points.length < 2) {
+        const p = s.points[0];
+        if (p) showMissedTap(p.x, p.y);
+      } else {
+        setItems(arr => [...arr, s]);
+      }
+      return;
+    }
     if (panRef.current) { panRef.current = null; return; }
     if (dragRef.current) { dragRef.current = null; return; }
     if (!draft) return;
