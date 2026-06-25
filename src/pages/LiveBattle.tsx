@@ -48,6 +48,10 @@ const T = (l: AppLanguage) => ({
   subjPhysics: l === "ar" ? "فيزياء" : "Physics",
   subjChemistry: l === "ar" ? "كيمياء" : "Chemistry",
   subjBiology: l === "ar" ? "أحياء" : "Biology",
+  subjArabic: l === "ar" ? "عربي" : "Arabic",
+  subjEnglish: l === "ar" ? "إنجليزي" : "English",
+  subjFrench: l === "ar" ? "فرنسي" : "French",
+  subjIslamic: l === "ar" ? "إسلامية" : "Islamic",
   createNow: l === "ar" ? "إنشاء الغرفة" : "Create room",
 });
 
@@ -359,6 +363,10 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
                   { key: "physics", label: t.subjPhysics },
                   { key: "chemistry", label: t.subjChemistry },
                   { key: "biology", label: t.subjBiology },
+                  { key: "arabic", label: t.subjArabic },
+                  { key: "english", label: t.subjEnglish },
+                  { key: "french", label: t.subjFrench },
+                  { key: "islamic", label: t.subjIslamic },
                 ] as { key: Subject; label: string }[]).map((s) => (
                   <button
                     key={s.key}
