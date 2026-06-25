@@ -100,6 +100,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const [timeLeft, setTimeLeft] = useState(15);
   const [scores, setScores] = useState<Record<string, number>>({});
   const [answered, setAnswered] = useState<number | null>(null);
+  const [answeredFor, setAnsweredFor] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(3);
   const [subject, setSubject] = useState<Subject>("general");
   const [qCount, setQCount] = useState<number>(10);
@@ -144,6 +145,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     if (phase !== "playing") return;
     setTimeLeft(15);
     setAnswered(null);
+    setAnsweredFor(null);
     const start = Date.now();
     const iv = setInterval(() => {
       const left = Math.max(0, 15 - Math.floor((Date.now() - start) / 1000));
@@ -271,6 +273,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const submitAnswer = (idx: number) => {
     if (answered !== null || !channelRef.current) return;
     setAnswered(idx);
+    setAnsweredFor(qIdx);
     const correct = questions[qIdx]?.answer === idx;
     if (correct) setScores((prev) => ({ ...prev, [meId.current]: (prev[meId.current] || 0) + 1 }));
     channelRef.current.send({
@@ -486,18 +489,21 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               <div className="text-lg font-medium mb-4">{cur.q}</div>
               <div className="grid gap-2">
                 {cur.choices.map((c, i) => {
-                  const isAnswered = answered !== null;
-                  const isMine = answered === i;
+                  const hasAnswered = answered !== null && answeredFor === qIdx;
+                  const isMine = hasAnswered && answered === i;
+                  const isCorrect = cur.answer === i;
                   return (
                     <button
                       key={i}
-                      disabled={isAnswered}
+                      disabled={hasAnswered}
                       onClick={() => submitAnswer(i)}
                       className={`rounded-xl border p-3 text-left transition ${
-                        isAnswered
-                          ? isMine
-                            ? "bg-primary/10 border-primary text-foreground"
-                            : "opacity-60"
+                        hasAnswered
+                          ? isCorrect
+                            ? "bg-green-100 border-green-500 text-green-900"
+                            : isMine
+                              ? "bg-red-100 border-red-500 text-red-900"
+                              : "opacity-60"
                           : "hover:bg-accent"
                       }`}
                     >
