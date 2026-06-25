@@ -213,7 +213,7 @@ type ReactionDetailProps = {
 };
 
 type Token = { id: number; text: string };
-type Zone = "pool" | "reactants" | "products";
+type ZoneKey = "pool" | "reactants" | "products";
 
 const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }: ReactionDetailProps) => {
   const t = COPY[language];
@@ -222,10 +222,10 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
   const correctReactants = parsed.reactants;
   const correctProducts = parsed.products;
 
-  const buildTokens = (): { tokens: Token[]; placement: Record<number, Zone> } => {
+  const buildTokens = (): { tokens: Token[]; placement: Record<number, ZoneKey> } => {
     const all = [...correctReactants, ...correctProducts];
     const tokens = shuffle(all.map((text, idx) => ({ id: idx, text })));
-    const placement: Record<number, Zone> = {};
+    const placement: Record<number, ZoneKey> = {};
     tokens.forEach((tok) => (placement[tok.id] = "pool"));
     return { tokens, placement };
   };
@@ -243,7 +243,7 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reaction.n, section.id]);
 
-  const placeSelected = (zone: Zone) => {
+  const placeSelected = (zone: ZoneKey) => {
     if (selected == null) return;
     setState((prev) => ({ ...prev, placement: { ...prev.placement, [selected]: zone } }));
     setSelected(null);
@@ -265,7 +265,7 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
     e.dataTransfer.setData("text/plain", String(id));
     e.dataTransfer.effectAllowed = "move";
   };
-  const onDropZone = (e: React.DragEvent, zone: Zone) => {
+  const onDropZone = (e: React.DragEvent, zone: ZoneKey) => {
     e.preventDefault();
     const id = Number(e.dataTransfer.getData("text/plain"));
     if (Number.isNaN(id)) return;
@@ -275,7 +275,7 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
   };
   const allowDrop = (e: React.DragEvent) => e.preventDefault();
 
-  const inZone = (zone: Zone) => tokens.filter((tok) => placement[tok.id] === zone);
+  const inZone = (zone: ZoneKey) => tokens.filter((tok) => placement[tok.id] === zone);
 
   const check = () => {
     const r = inZone("reactants").map((tk) => tk.text).sort();
@@ -298,10 +298,10 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
   };
 
   const revealAnswer = () => {
-    const placementNew: Record<number, Zone> = {};
+    const placementNew: Record<number, ZoneKey> = {};
     // Assign tokens to their correct zone by matching text (first unused match)
     const used = new Set<number>();
-    const assignFor = (texts: string[], zone: Zone) => {
+    const assignFor = (texts: string[], zone: ZoneKey) => {
       for (const txt of texts) {
         const match = tokens.find((tk) => tk.text === txt && !used.has(tk.id));
         if (match) {
@@ -331,7 +331,7 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
     </div>
   );
 
-  const Zone = ({ zone, label }: { zone: Zone; label: string }) => {
+  const Zone = ({ zone, label }: { zone: ZoneKey; label: string }) => {
     const items = inZone(zone);
     const isCorrectSide = revealed || result === "correct";
     return (
