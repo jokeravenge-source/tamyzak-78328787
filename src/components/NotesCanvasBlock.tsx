@@ -1051,6 +1051,15 @@ const NotesCanvasBlock = ({
           onPointerLeave={onPointerUp}
         >
           {items.map(it => renderItem(it, draft?.id === it.id))}
+          {/* Live pen/highlight stroke — mutated directly by pointer handlers */}
+          <path
+            ref={livePathRef}
+            d=""
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            pointerEvents="none"
+          />
         </svg>
           {/* Missed-tap floating add — appears when a tap was too small to commit */}
           {missedTap && (
