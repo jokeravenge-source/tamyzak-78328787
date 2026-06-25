@@ -145,6 +145,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     if (phase !== "playing") return;
     setTimeLeft(15);
     setAnswered(null);
+    setAnsweredFor(null);
     const start = Date.now();
     const iv = setInterval(() => {
       const left = Math.max(0, 15 - Math.floor((Date.now() - start) / 1000));
@@ -272,6 +273,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const submitAnswer = (idx: number) => {
     if (answered !== null || !channelRef.current) return;
     setAnswered(idx);
+    setAnsweredFor(qIdx);
     const correct = questions[qIdx]?.answer === idx;
     if (correct) setScores((prev) => ({ ...prev, [meId.current]: (prev[meId.current] || 0) + 1 }));
     channelRef.current.send({
