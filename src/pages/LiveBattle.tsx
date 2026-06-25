@@ -356,9 +356,9 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               <div className="grid grid-cols-2 gap-2">
                 {([
                   { key: "general", label: t.subjGeneral },
-                  { key: "math", label: t.subjMath },
-                  { key: "science", label: t.subjScience },
-                  { key: "english", label: t.subjEnglish },
+                  { key: "physics", label: t.subjPhysics },
+                  { key: "chemistry", label: t.subjChemistry },
+                  { key: "biology", label: t.subjBiology },
                 ] as { key: Subject; label: string }[]).map((s) => (
                   <button
                     key={s.key}
