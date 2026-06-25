@@ -477,7 +477,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
             </div>
 
             <div className="flex justify-between items-center text-xs text-muted-foreground">
-              <span>{t.q} {qIdx + 1} {t.of} 10</span>
+              <span>{t.q} {qIdx + 1} {t.of} {questions.length}</span>
               <span className={timeLeft <= 5 ? "text-destructive font-bold" : ""}>{timeLeft}s</span>
             </div>
             <Progress value={(timeLeft / 15) * 100} className="h-2" />
@@ -488,7 +488,6 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
                 {cur.choices.map((c, i) => {
                   const isAnswered = answered !== null;
                   const isMine = answered === i;
-                  const isCorrect = cur.answer === i;
                   return (
                     <button
                       key={i}
@@ -496,11 +495,9 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
                       onClick={() => submitAnswer(i)}
                       className={`rounded-xl border p-3 text-left transition ${
                         isAnswered
-                          ? isCorrect
-                            ? "bg-green-100 border-green-500 text-green-900"
-                            : isMine
-                              ? "bg-red-100 border-red-500 text-red-900"
-                              : "opacity-60"
+                          ? isMine
+                            ? "bg-primary/10 border-primary text-foreground"
+                            : "opacity-60"
                           : "hover:bg-accent"
                       }`}
                     >
@@ -531,7 +528,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               </div>
             </div>
             <div className="text-sm text-muted-foreground">
-              {t.pointsEarned}: <span className="font-bold text-foreground">{myScore * 2 + (myScore > oppScore ? 10 : 0)}</span>
+              {t.pointsEarned}: <span className="font-bold text-foreground">{myScore * 2 + (myScore > oppScore ? questions.length : 0)}</span>
             </div>
             <Button onClick={restart} size="lg">{t.playAgain}</Button>
           </div>
