@@ -100,6 +100,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const [timeLeft, setTimeLeft] = useState(15);
   const [scores, setScores] = useState<Record<string, number>>({});
   const [answered, setAnswered] = useState<number | null>(null);
+  const [answeredFor, setAnsweredFor] = useState<number | null>(null);
   const [countdown, setCountdown] = useState(3);
   const [subject, setSubject] = useState<Subject>("general");
   const [qCount, setQCount] = useState<number>(10);
