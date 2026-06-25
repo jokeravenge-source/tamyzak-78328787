@@ -161,6 +161,13 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     ],
   },
   {
+    titleEn: "Play",
+    titleAr: "العب",
+    items: [
+      { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
+    ],
+  },
+  {
     titleEn: "Ministerial",
     titleAr: "الوزاري",
     items: [
@@ -391,6 +398,7 @@ const Basics = ({
     Study: Layers,
     Progress: Target,
     Community: Users,
+    Play: Swords,
     Ministerial: ScrollText,
     Account: Settings,
   };
