@@ -327,7 +327,7 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
           {parsed.conditions.join(" · ")}
         </div>
       )}
-      <div className="text-2xl text-primary font-bold">→</div>
+      <div className="text-2xl text-primary font-bold">{isRTL ? "←" : "→"}</div>
     </div>
   );
 
