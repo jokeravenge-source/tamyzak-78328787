@@ -349,7 +349,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-2" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button onClick={createRoom} className="rounded-2xl p-6 bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-left hover:opacity-90 transition">
+              <button onClick={() => setPhase("createSettings")} className="rounded-2xl p-6 bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-left hover:opacity-90 transition">
                 <Swords className="w-8 h-8 mb-2" />
                 <div className="font-bold text-lg">{t.create}</div>
               </button>
