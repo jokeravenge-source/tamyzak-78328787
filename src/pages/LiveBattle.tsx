@@ -6,49 +6,15 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
+import { buildBattleMcqs, type BattleSubject, type BattleMCQ } from "@/lib/battleMcqBank";
 
-type Subject = "general" | "math" | "science" | "english";
-type MCQ = { q: string; choices: string[]; answer: number; subject: Subject };
-
-const BANK: MCQ[] = [
-  { q: "What is H2O?", choices: ["Salt","Water","Oxygen","Gold"], answer: 1, subject: "science" },
-  { q: "Speed of light (approx, km/s)?", choices: ["3,000","30,000","300,000","3,000,000"], answer: 2, subject: "science" },
-  { q: "Largest planet?", choices: ["Earth","Mars","Jupiter","Venus"], answer: 2, subject: "science" },
-  { q: "2 + 2 × 3 = ?", choices: ["12","8","10","6"], answer: 1, subject: "math" },
-  { q: "Capital of France?", choices: ["Berlin","Paris","Rome","Madrid"], answer: 1, subject: "general" },
-  { q: "Square root of 144?", choices: ["10","11","12","13"], answer: 2, subject: "math" },
-  { q: "Powerhouse of the cell?", choices: ["Nucleus","Ribosome","Mitochondrion","Vacuole"], answer: 2, subject: "science" },
-  { q: "Author of Hamlet?", choices: ["Dickens","Shakespeare","Twain","Poe"], answer: 1, subject: "english" },
-  { q: "Chemical symbol for Gold?", choices: ["Go","Gd","Au","Ag"], answer: 2, subject: "science" },
-  { q: "How many continents?", choices: ["5","6","7","8"], answer: 2, subject: "general" },
-  { q: "Pi to 2 decimals?", choices: ["3.12","3.14","3.16","3.18"], answer: 1, subject: "math" },
-  { q: "Red blood cells carry?", choices: ["CO2 only","Oxygen","Glucose","Hormones"], answer: 1, subject: "science" },
-  { q: "Hottest planet?", choices: ["Mercury","Venus","Mars","Jupiter"], answer: 1, subject: "science" },
-  { q: "Smallest prime number?", choices: ["0","1","2","3"], answer: 2, subject: "math" },
-  { q: "Largest ocean?", choices: ["Atlantic","Indian","Arctic","Pacific"], answer: 3, subject: "general" },
-  { q: "Who painted Mona Lisa?", choices: ["Van Gogh","Da Vinci","Picasso","Monet"], answer: 1, subject: "general" },
-  { q: "Boiling point of water (°C)?", choices: ["50","75","100","120"], answer: 2, subject: "science" },
-  { q: "DNA stands for?", choices: ["Di-Nucleic Acid","Deoxyribo Nucleic Acid","Double Nuclear A.","Diamine N.A."], answer: 1, subject: "science" },
-  { q: "Largest desert?", choices: ["Sahara","Gobi","Antarctic","Arabian"], answer: 2, subject: "general" },
-  { q: "How many bones in adult human?", choices: ["106","206","306","406"], answer: 1, subject: "science" },
-  { q: "15 × 12 = ?", choices: ["170","180","190","200"], answer: 1, subject: "math" },
-  { q: "Synonym of 'happy'?", choices: ["Sad","Joyful","Angry","Tired"], answer: 1, subject: "english" },
-  { q: "Past tense of 'go'?", choices: ["Goed","Gone","Went","Going"], answer: 2, subject: "english" },
-  { q: "Antonym of 'begin'?", choices: ["Start","End","Open","Run"], answer: 1, subject: "english" },
-  { q: "9² = ?", choices: ["72","81","90","99"], answer: 1, subject: "math" },
-];
+type Subject = BattleSubject;
+type MCQ = BattleMCQ;
 
 function pickQuestions(n: number, seed: number, subject: Subject = "general"): MCQ[] {
-  const arr = subject === "general" ? [...BANK] : BANK.filter((q) => q.subject === subject);
-  if (arr.length === 0) arr.push(...BANK);
-  // seeded shuffle
-  let s = seed;
-  const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr.slice(0, Math.min(n, arr.length));
+  // Mix in time-based randomness so each room gets a fresh set even with the same seed range.
+  const mixed = (seed ^ Date.now()) >>> 0;
+  return buildBattleMcqs(subject, n, mixed);
 }
 
 const T = (l: AppLanguage) => ({
@@ -78,10 +44,10 @@ const T = (l: AppLanguage) => ({
   locked: l === "ar" ? "لا يمكنك مغادرة المعركة حتى تنتهي" : "You can't leave until the battle is over",
   subject: l === "ar" ? "المادة" : "Subject",
   questionsCount: l === "ar" ? "عدد الأسئلة" : "Number of questions",
-  subjGeneral: l === "ar" ? "عام" : "General",
-  subjMath: l === "ar" ? "رياضيات" : "Math",
-  subjScience: l === "ar" ? "علوم" : "Science",
-  subjEnglish: l === "ar" ? "إنجليزي" : "English",
+  subjGeneral: l === "ar" ? "مختلط" : "Mixed",
+  subjPhysics: l === "ar" ? "فيزياء" : "Physics",
+  subjChemistry: l === "ar" ? "كيمياء" : "Chemistry",
+  subjBiology: l === "ar" ? "أحياء" : "Biology",
   createNow: l === "ar" ? "إنشاء الغرفة" : "Create room",
 });
 
