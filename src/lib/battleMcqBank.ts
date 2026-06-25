@@ -51,8 +51,38 @@ import { ministerialChemCh4Ar } from "@/data/ministerialChemCh4Ar";
 import { ministerialChemCh5Ar } from "@/data/ministerialChemCh5Ar";
 import { ministerialChemCh6Ar } from "@/data/ministerialChemCh6Ar";
 import { ministerialBioCh1Ar } from "@/data/ministerialBioCh1Ar";
+import { flashcardsArabicIstifhamAr } from "@/data/flashcardsArabicIstifhamAr";
+import { flashcardsArabicLit1Ar } from "@/data/flashcardsArabicLit1Ar";
+import { flashcardsArabicLit1HeritageAr } from "@/data/flashcardsArabicLit1HeritageAr";
+import { flashcardsArabicLit1MeaningsAr } from "@/data/flashcardsArabicLit1MeaningsAr";
+import { flashcardsArabicLit1YearsAr } from "@/data/flashcardsArabicLit1YearsAr";
+import { flashcardsArabicNidaAr } from "@/data/flashcardsArabicNidaAr";
+import { flashcardsArabicTaajjubAr } from "@/data/flashcardsArabicTaajjubAr";
+import { flashcardsArabicTaqdimAr } from "@/data/flashcardsArabicTaqdimAr";
+import { flashcardsArabicTawkeedAr } from "@/data/flashcardsArabicTawkeedAr";
+import { ministerialArabicIstifham } from "@/data/ministerialArabicIstifham";
+import { ministerialArabicMadhDham } from "@/data/ministerialArabicMadhDham";
+import { ministerialArabicNida } from "@/data/ministerialArabicNida";
+import { ministerialArabicTaajjub } from "@/data/ministerialArabicTaajjub";
+import { flashcardsEngGrammar1 } from "@/data/flashcardsEngGrammar1";
+import { flashcardsEngParagraphs } from "@/data/flashcardsEngParagraphs";
+import { flashcardsFrenchAdverbsAr } from "@/data/flashcardsFrenchAdverbsAr";
+import { flashcardsFrenchFeminineAr } from "@/data/flashcardsFrenchFeminineAr";
+import { flashcardsFrenchInterrogationAr } from "@/data/flashcardsFrenchInterrogationAr";
+import { flashcardsFrenchNegationAr } from "@/data/flashcardsFrenchNegationAr";
+import { flashcardsFrenchPluralAr } from "@/data/flashcardsFrenchPluralAr";
+import { flashcardsFrenchRelativePronounsAr } from "@/data/flashcardsFrenchRelativePronounsAr";
+import { flashcardsIslamicMeaningsAr } from "@/data/flashcardsIslamicMeaningsAr";
 
-export type BattleSubject = "general" | "physics" | "chemistry" | "biology";
+export type BattleSubject =
+  | "general"
+  | "physics"
+  | "chemistry"
+  | "biology"
+  | "arabic"
+  | "english"
+  | "french"
+  | "islamic";
 export type BattleMCQ = { q: string; choices: string[]; answer: number; subject: BattleSubject };
 
 type QA = { q: string; a: string };
@@ -84,6 +114,27 @@ const biologyPool: QA[] = [
   ...ministerialBioCh1Ar,
 ];
 
+const arabicPool: QA[] = [
+  ...flashcardsArabicIstifhamAr, ...flashcardsArabicLit1Ar, ...flashcardsArabicLit1HeritageAr,
+  ...flashcardsArabicLit1MeaningsAr, ...flashcardsArabicLit1YearsAr, ...flashcardsArabicNidaAr,
+  ...flashcardsArabicTaajjubAr, ...flashcardsArabicTaqdimAr, ...flashcardsArabicTawkeedAr,
+  ...ministerialArabicIstifham, ...ministerialArabicMadhDham, ...ministerialArabicNida,
+  ...ministerialArabicTaajjub,
+];
+
+const englishPool: QA[] = [
+  ...flashcardsEngGrammar1, ...flashcardsEngParagraphs,
+];
+
+const frenchPool: QA[] = [
+  ...flashcardsFrenchAdverbsAr, ...flashcardsFrenchFeminineAr, ...flashcardsFrenchInterrogationAr,
+  ...flashcardsFrenchNegationAr, ...flashcardsFrenchPluralAr, ...flashcardsFrenchRelativePronounsAr,
+];
+
+const islamicPool: QA[] = [
+  ...flashcardsIslamicMeaningsAr,
+];
+
 const isMcqFriendly = (qa: QA) =>
   !!qa && typeof qa.q === "string" && typeof qa.a === "string"
   && qa.q.length > 0 && qa.q.length <= 220
@@ -94,10 +145,18 @@ const subjectPool = (s: BattleSubject): { pool: QA[]; subject: BattleSubject }[]
   if (s === "physics") return [{ pool: physicsPool.filter(isMcqFriendly), subject: "physics" }];
   if (s === "chemistry") return [{ pool: chemistryPool.filter(isMcqFriendly), subject: "chemistry" }];
   if (s === "biology") return [{ pool: biologyPool.filter(isMcqFriendly), subject: "biology" }];
+  if (s === "arabic") return [{ pool: arabicPool.filter(isMcqFriendly), subject: "arabic" }];
+  if (s === "english") return [{ pool: englishPool.filter(isMcqFriendly), subject: "english" }];
+  if (s === "french") return [{ pool: frenchPool.filter(isMcqFriendly), subject: "french" }];
+  if (s === "islamic") return [{ pool: islamicPool.filter(isMcqFriendly), subject: "islamic" }];
   return [
     { pool: physicsPool.filter(isMcqFriendly), subject: "physics" },
     { pool: chemistryPool.filter(isMcqFriendly), subject: "chemistry" },
     { pool: biologyPool.filter(isMcqFriendly), subject: "biology" },
+    { pool: arabicPool.filter(isMcqFriendly), subject: "arabic" },
+    { pool: englishPool.filter(isMcqFriendly), subject: "english" },
+    { pool: frenchPool.filter(isMcqFriendly), subject: "french" },
+    { pool: islamicPool.filter(isMcqFriendly), subject: "islamic" },
   ];
 };
 
