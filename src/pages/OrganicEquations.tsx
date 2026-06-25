@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, FlaskConical, Search, ChevronRight, ChevronLeft, RotateCcw, Eye, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, FlaskConical, Search, ChevronRight, ChevronLeft, RotateCcw, Eye, CheckCircle2, XCircle, Sparkles, Loader2 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type Reaction = {
   n: number;
@@ -140,6 +142,13 @@ const COPY = {
     conditions: "الظروف",
     none: "لا يحدث تفاعل",
     tapHint: "انقر قطعة من الأسفل ثم انقر المنطقة لإضافتها — أو انقر القطعة المضافة لإرجاعها.",
+    simplify: "بسّط لي التفاعل",
+    simplifying: "جاري التبسيط…",
+    phrase: "عبارة سهلة الحفظ",
+    mnemonic: "حيلة الحفظ",
+    steps: "الخطوات",
+    trick: "نصيحة ذكية",
+    simplifyError: "تعذّر التبسيط، حاول مرّة أخرى",
   },
   en: {
     badge: "Organic Chemistry",
@@ -162,6 +171,13 @@ const COPY = {
     conditions: "Conditions",
     none: "No reaction",
     tapHint: "Tap a piece below then tap a zone to place it — tap a placed piece to return it.",
+    simplify: "Simplify for memorization",
+    simplifying: "Simplifying…",
+    phrase: "Memorable phrase",
+    mnemonic: "Mnemonic",
+    steps: "Steps",
+    trick: "Smart tip",
+    simplifyError: "Could not simplify, please try again",
   },
 } as const;
 
@@ -234,14 +250,33 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [simplifying, setSimplifying] = useState(false);
+  const [simplified, setSimplified] = useState<{ phrase?: string; mnemonic?: string; steps?: string[]; trick?: string } | null>(null);
 
   useEffect(() => {
     setState(buildTokens());
     setSelected(null);
     setResult(null);
     setRevealed(false);
+    setSimplified(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reaction.n, section.id]);
+
+  const handleSimplify = async () => {
+    setSimplifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("simplify-reaction", {
+        body: { equation: reaction.eq, label: reaction.labels ?? "", language },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setSimplified(data as any);
+    } catch (e) {
+      toast.error(t.simplifyError);
+    } finally {
+      setSimplifying(false);
+    }
+  };
 
   const placeSelected = (zone: ZoneKey) => {
     if (selected == null) return;
@@ -490,6 +525,48 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
               )}
             </div>
           </>
+        )}
+
+        <div className="mt-6">
+          <button
+            onClick={handleSimplify}
+            disabled={simplifying}
+            className="w-full md:w-auto inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white text-sm font-semibold shadow hover:opacity-95 disabled:opacity-60"
+          >
+            {simplifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {simplifying ? t.simplifying : t.simplify}
+          </button>
+        </div>
+
+        {simplified && (
+          <div className="mt-4 rounded-2xl border border-violet-300/40 dark:border-violet-800/60 bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-950/30 dark:to-fuchsia-950/20 p-5 space-y-4">
+            {simplified.phrase && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-300 mb-1">{t.phrase}</p>
+                <p className="text-lg md:text-xl font-bold leading-snug">{simplified.phrase}</p>
+              </div>
+            )}
+            {simplified.mnemonic && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-300 mb-1">{t.mnemonic}</p>
+                <p className="text-sm leading-relaxed">{simplified.mnemonic}</p>
+              </div>
+            )}
+            {Array.isArray(simplified.steps) && simplified.steps.length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-300 mb-1">{t.steps}</p>
+                <ol className="list-decimal ms-5 space-y-1 text-sm">
+                  {simplified.steps.map((s, i) => <li key={i}>{s}</li>)}
+                </ol>
+              </div>
+            )}
+            {simplified.trick && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-300 mb-1">{t.trick}</p>
+                <p className="text-sm leading-relaxed">{simplified.trick}</p>
+              </div>
+            )}
+          </div>
         )}
 
         <div className="mt-8 p-4 rounded-xl bg-secondary/40 border border-border">
