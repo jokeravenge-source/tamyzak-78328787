@@ -289,7 +289,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     const oppId = players.find((p) => p.id !== meId.current)?.id;
     const oppScore = oppId ? (scores[oppId] || 0) : 0;
     const won = myScore > oppScore;
-    const earned = myScore * 2 + (won ? 10 : 0);
+    const earned = myScore * 2 + (won ? (questionsRef.current.length || 10) : 0);
     (async () => {
       try {
         const { data: u } = await supabase.auth.getUser();
