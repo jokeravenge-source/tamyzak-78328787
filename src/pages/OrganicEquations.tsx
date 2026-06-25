@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, FlaskConical, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ArrowRight, FlaskConical, Search, ChevronRight, ChevronLeft, RotateCcw, Eye, CheckCircle2, XCircle } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 
 type Reaction = {
@@ -128,6 +128,18 @@ const COPY = {
     noResults: "لا توجد تفاعلات مطابقة للبحث.",
     back: "رجوع",
     total: "إجمالي التفاعلات",
+    open: "افتح التفاعل",
+    reactants: "المتفاعلات",
+    products: "النواتج",
+    pool: "السحب والإفلات — اسحب القطع لمكانها الصحيح",
+    check: "تحقق",
+    reset: "إعادة",
+    showAnswer: "أظهر الحل",
+    correct: "إجابة صحيحة!",
+    incorrect: "حاول مرّة أخرى",
+    conditions: "الظروف",
+    none: "لا يحدث تفاعل",
+    tapHint: "انقر قطعة من الأسفل ثم انقر المنطقة لإضافتها — أو انقر القطعة المضافة لإرجاعها.",
   },
   en: {
     badge: "Organic Chemistry",
@@ -138,8 +150,360 @@ const COPY = {
     noResults: "No reactions match your search.",
     back: "Back",
     total: "Total reactions",
+    open: "Open reaction",
+    reactants: "Reactants",
+    products: "Products",
+    pool: "Drag-and-drop — place each piece in its correct side",
+    check: "Check",
+    reset: "Reset",
+    showAnswer: "Show answer",
+    correct: "Correct!",
+    incorrect: "Try again",
+    conditions: "Conditions",
+    none: "No reaction",
+    tapHint: "Tap a piece below then tap a zone to place it — tap a placed piece to return it.",
   },
 } as const;
+
+// Parse equation into reactants / products / conditions
+function parseReaction(eq: string): { reactants: string[]; products: string[]; conditions: string[]; nr: boolean } {
+  // Normalize arrows: capture conditions inside ──(...)──► or ── ... ──►
+  // Split on arrow markers
+  const cleaned = eq.replace(/\s+/g, " ").trim();
+  // Split on any arrow ("→", "►", "⇌"); keep middle chunks as conditions
+  const parts = cleaned.split(/→|►|⇌/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return { reactants: [], products: [], conditions: [], nr: false };
+  const reactantsStr = parts[0];
+  const productsStr = parts[parts.length - 1];
+  const condStrs = parts.slice(1, -1);
+  // Strip leading/trailing "──" or "(...)" markers from each
+  const strip = (s: string) => s.replace(/^[─\-—\s]+/, "").replace(/[─\-—\s]+$/, "").trim();
+  const conditions = condStrs
+    .map(strip)
+    .map((s) => s.replace(/^\(|\)$/g, "").trim())
+    .filter(Boolean);
+  const splitPlus = (s: string) =>
+    s
+      .split(/\s\+\s/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+  const reactants = splitPlus(strip(reactantsStr));
+  const productsClean = strip(productsStr);
+  const nr = /^N\.?R\.?$/i.test(productsClean);
+  const products = nr ? [] : splitPlus(productsClean);
+  return { reactants, products, conditions, nr };
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+type ReactionDetailProps = {
+  language: AppLanguage;
+  section: Section;
+  reaction: Reaction;
+  onBack: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+};
+
+type Token = { id: number; text: string };
+type Zone = "pool" | "reactants" | "products";
+
+const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }: ReactionDetailProps) => {
+  const t = COPY[language];
+  const isRTL = language === "ar";
+  const parsed = useMemo(() => parseReaction(reaction.eq), [reaction.eq]);
+  const correctReactants = parsed.reactants;
+  const correctProducts = parsed.products;
+
+  const buildTokens = (): { tokens: Token[]; placement: Record<number, Zone> } => {
+    const all = [...correctReactants, ...correctProducts];
+    const tokens = shuffle(all.map((text, idx) => ({ id: idx, text })));
+    const placement: Record<number, Zone> = {};
+    tokens.forEach((tok) => (placement[tok.id] = "pool"));
+    return { tokens, placement };
+  };
+
+  const [{ tokens, placement }, setState] = useState(buildTokens);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    setState(buildTokens());
+    setSelected(null);
+    setResult(null);
+    setRevealed(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reaction.n, section.id]);
+
+  const placeSelected = (zone: Zone) => {
+    if (selected == null) return;
+    setState((prev) => ({ ...prev, placement: { ...prev.placement, [selected]: zone } }));
+    setSelected(null);
+    setResult(null);
+  };
+
+  const onTokenClick = (id: number) => {
+    const where = placement[id];
+    if (where === "pool") {
+      setSelected(selected === id ? null : id);
+    } else {
+      // return to pool
+      setState((prev) => ({ ...prev, placement: { ...prev.placement, [id]: "pool" } }));
+      setResult(null);
+    }
+  };
+
+  const onDragStartTok = (e: React.DragEvent, id: number) => {
+    e.dataTransfer.setData("text/plain", String(id));
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const onDropZone = (e: React.DragEvent, zone: Zone) => {
+    e.preventDefault();
+    const id = Number(e.dataTransfer.getData("text/plain"));
+    if (Number.isNaN(id)) return;
+    setState((prev) => ({ ...prev, placement: { ...prev.placement, [id]: zone } }));
+    setSelected(null);
+    setResult(null);
+  };
+  const allowDrop = (e: React.DragEvent) => e.preventDefault();
+
+  const inZone = (zone: Zone) => tokens.filter((tok) => placement[tok.id] === zone);
+
+  const check = () => {
+    const r = inZone("reactants").map((tk) => tk.text).sort();
+    const p = inZone("products").map((tk) => tk.text).sort();
+    const cr = [...correctReactants].sort();
+    const cp = [...correctProducts].sort();
+    const ok =
+      r.length === cr.length &&
+      p.length === cp.length &&
+      r.every((v, i) => v === cr[i]) &&
+      p.every((v, i) => v === cp[i]);
+    setResult(ok ? "correct" : "incorrect");
+  };
+
+  const reset = () => {
+    setState(buildTokens());
+    setSelected(null);
+    setResult(null);
+    setRevealed(false);
+  };
+
+  const revealAnswer = () => {
+    const placementNew: Record<number, Zone> = {};
+    // Assign tokens to their correct zone by matching text (first unused match)
+    const used = new Set<number>();
+    const assignFor = (texts: string[], zone: Zone) => {
+      for (const txt of texts) {
+        const match = tokens.find((tk) => tk.text === txt && !used.has(tk.id));
+        if (match) {
+          placementNew[match.id] = zone;
+          used.add(match.id);
+        }
+      }
+    };
+    assignFor(correctReactants, "reactants");
+    assignFor(correctProducts, "products");
+    tokens.forEach((tk) => {
+      if (!(tk.id in placementNew)) placementNew[tk.id] = "pool";
+    });
+    setState((prev) => ({ ...prev, placement: placementNew }));
+    setRevealed(true);
+    setResult(null);
+  };
+
+  const Arrow = () => (
+    <div className="flex flex-col items-center justify-center px-2 min-w-[80px]">
+      {parsed.conditions.length > 0 && (
+        <div className="text-[10px] md:text-xs text-muted-foreground text-center font-mono leading-tight mb-1 max-w-[180px]">
+          {parsed.conditions.join(" · ")}
+        </div>
+      )}
+      <div className="text-2xl text-primary font-bold">→</div>
+    </div>
+  );
+
+  const Zone = ({ zone, label }: { zone: Zone; label: string }) => {
+    const items = inZone(zone);
+    const isCorrectSide = revealed || result === "correct";
+    return (
+      <div
+        onDragOver={allowDrop}
+        onDrop={(e) => onDropZone(e, zone)}
+        onClick={() => selected != null && placeSelected(zone)}
+        className={`flex-1 min-h-[120px] rounded-2xl border-2 border-dashed p-3 transition-colors ${
+          selected != null
+            ? "border-primary/70 bg-primary/5 cursor-pointer"
+            : isCorrectSide
+              ? "border-emerald-400/60 bg-emerald-50/40 dark:bg-emerald-950/20"
+              : "border-border bg-card"
+        }`}
+      >
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">{label}</p>
+        <div className="flex flex-wrap gap-2">
+          {items.length === 0 ? (
+            <span className="text-xs text-muted-foreground italic">—</span>
+          ) : (
+            items.map((tk) => (
+              <button
+                key={tk.id}
+                draggable
+                onDragStart={(e) => onDragStartTok(e, tk.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTokenClick(tk.id);
+                }}
+                className="font-mono text-sm px-3 py-1.5 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90"
+                dir="ltr"
+              >
+                {tk.text}
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const poolTokens = inZone("pool");
+  const parseable = correctReactants.length + correctProducts.length > 0;
+
+  return (
+    <div className="min-h-screen w-full bg-background text-foreground" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="sticky top-0 z-30 backdrop-blur-md bg-background/75 border-b border-border">
+        <div className="max-w-4xl mx-auto px-5 md:px-8 h-14 flex items-center justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors"
+          >
+            {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+            {t.back}
+          </button>
+          <p className="font-bold text-sm truncate">
+            {isRTL ? section.titleAr : section.titleEn} · #{reaction.n}
+          </p>
+          <div className="flex items-center gap-1">
+            {onPrev && (
+              <button onClick={onPrev} className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary" aria-label="prev">
+                {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+            )}
+            {onNext && (
+              <button onClick={onNext} className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-border bg-card hover:bg-secondary" aria-label="next">
+                {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <main className="max-w-4xl mx-auto px-5 md:px-8 py-6 pb-24">
+        {reaction.labels && (
+          <p className="text-sm md:text-base text-foreground/80 mb-2">{reaction.labels}</p>
+        )}
+        <p className="text-xs text-muted-foreground mb-5">{t.tapHint}</p>
+
+        {!parseable ? (
+          <div className="p-5 rounded-2xl border border-border bg-card font-mono text-sm" dir="ltr">
+            {reaction.eq}
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col md:flex-row items-stretch gap-3 md:gap-2 mb-5">
+              <Zone zone="reactants" label={t.reactants} />
+              <Arrow />
+              {parsed.nr ? (
+                <div className="flex-1 min-h-[120px] rounded-2xl border-2 border-dashed border-rose-300 dark:border-rose-900 p-3 flex items-center justify-center bg-rose-50/40 dark:bg-rose-950/20">
+                  <span className="text-rose-600 dark:text-rose-300 font-bold text-sm">N.R — {t.none}</span>
+                </div>
+              ) : (
+                <Zone zone="products" label={t.products} />
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-4 mb-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">{t.pool}</p>
+              <div className="flex flex-wrap gap-2 min-h-[44px]">
+                {poolTokens.length === 0 ? (
+                  <span className="text-xs text-muted-foreground italic">—</span>
+                ) : (
+                  poolTokens.map((tk) => (
+                    <button
+                      key={tk.id}
+                      draggable
+                      onDragStart={(e) => onDragStartTok(e, tk.id)}
+                      onClick={() => onTokenClick(tk.id)}
+                      className={`font-mono text-sm px-3 py-1.5 rounded-lg border transition-all ${
+                        selected === tk.id
+                          ? "border-primary bg-primary/10 ring-2 ring-primary/40 scale-105"
+                          : "border-border bg-background hover:bg-secondary"
+                      }`}
+                      dir="ltr"
+                    >
+                      {tk.text}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={check}
+                disabled={parsed.nr}
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-40"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                {t.check}
+              </button>
+              <button
+                onClick={reset}
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {t.reset}
+              </button>
+              <button
+                onClick={revealAnswer}
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary"
+              >
+                <Eye className="w-4 h-4" />
+                {t.showAnswer}
+              </button>
+              {result === "correct" && (
+                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-semibold">
+                  <CheckCircle2 className="w-4 h-4" /> {t.correct}
+                </span>
+              )}
+              {result === "incorrect" && (
+                <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 text-sm font-semibold">
+                  <XCircle className="w-4 h-4" /> {t.incorrect}
+                </span>
+              )}
+            </div>
+          </>
+        )}
+
+        <div className="mt-8 p-4 rounded-xl bg-secondary/40 border border-border">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            {isRTL ? "المعادلة الكاملة" : "Full equation"}
+          </p>
+          <p className="font-mono text-sm whitespace-pre-wrap break-words" dir="ltr">
+            {reaction.eq}
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+};
 
 const OrganicEquations = ({
   language,
@@ -151,6 +515,7 @@ const OrganicEquations = ({
   const t = COPY[language];
   const isRTL = language === "ar";
   const [q, setQ] = useState("");
+  const [selectedKey, setSelectedKey] = useState<{ sec: string; n: number } | null>(null);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -166,6 +531,26 @@ const OrganicEquations = ({
   }, [q]);
 
   const total = SECTIONS.reduce((acc, s) => acc + s.reactions.length, 0);
+
+  if (selectedKey) {
+    const sec = SECTIONS.find((s) => s.id === selectedKey.sec);
+    const rx = sec?.reactions.find((r) => r.n === selectedKey.n);
+    if (sec && rx) {
+      const idx = sec.reactions.indexOf(rx);
+      const prev = idx > 0 ? sec.reactions[idx - 1] : null;
+      const next = idx < sec.reactions.length - 1 ? sec.reactions[idx + 1] : null;
+      return (
+        <ReactionDetail
+          language={language}
+          section={sec}
+          reaction={rx}
+          onBack={() => setSelectedKey(null)}
+          onPrev={prev ? () => setSelectedKey({ sec: sec.id, n: prev.n }) : undefined}
+          onNext={next ? () => setSelectedKey({ sec: sec.id, n: next.n }) : undefined}
+        />
+      );
+    }
+  }
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground" dir={isRTL ? "rtl" : "ltr"}>
@@ -228,8 +613,11 @@ const OrganicEquations = ({
                 </div>
                 <ul className="divide-y divide-border">
                   {s.reactions.map((r) => (
-                    <li key={r.n} className="p-5 hover:bg-secondary/40 transition-colors">
-                      <div className="flex gap-3 items-start">
+                    <li key={r.n}>
+                      <button
+                        onClick={() => setSelectedKey({ sec: s.id, n: r.n })}
+                        className="w-full text-start p-5 hover:bg-secondary/40 transition-colors flex gap-3 items-start"
+                      >
                         <span className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">
                           {r.n}
                         </span>
@@ -245,7 +633,8 @@ const OrganicEquations = ({
                             <p className="text-xs text-muted-foreground mt-2">{r.labels}</p>
                           )}
                         </div>
-                      </div>
+                        <ChevronRight className={`w-4 h-4 text-muted-foreground mt-1 shrink-0 ${isRTL ? "rotate-180" : ""}`} />
+                      </button>
                     </li>
                   ))}
                 </ul>
