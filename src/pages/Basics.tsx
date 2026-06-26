@@ -820,14 +820,18 @@ const Basics = ({
                       whileHover={{ y: -3, scale: 1.015 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => navigate(it.key)}
-                      className="relative overflow-hidden group rounded-2xl p-[1.5px] text-left"
-                      style={{
-                        background:
-                          "conic-gradient(from 0deg, hsl(var(--primary)), #d946ef, #f97316, #ef4444, hsl(var(--primary)))",
-                        animation: "spin 6s linear infinite",
-                      }}
+                      className="relative group rounded-2xl text-left"
                     >
-                      <div className="relative bg-card rounded-[14px] p-5 overflow-hidden" style={{ animation: "spin 6s linear infinite reverse" }}>
+                      <span
+                        aria-hidden
+                        className="absolute -inset-[1.5px] rounded-2xl"
+                        style={{
+                          background:
+                            "conic-gradient(from 0deg, hsl(var(--primary)), #d946ef, #f97316, #ef4444, hsl(var(--primary)))",
+                          animation: "spin 6s linear infinite",
+                        }}
+                      />
+                      <div className="relative bg-card rounded-2xl p-5 overflow-hidden">
                         {/* shimmer sweep */}
                         <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                         {/* live pulse dot */}
