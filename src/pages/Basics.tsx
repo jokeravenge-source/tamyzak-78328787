@@ -14,6 +14,7 @@ import { missionsData, missionsOrder } from "@/data/missions";
 import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
+import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
@@ -252,6 +253,7 @@ const Basics = ({
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
+  const [showCompanion, setShowCompanion] = useState<boolean>(false);
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
@@ -734,11 +736,10 @@ const Basics = ({
               <button
                 onClick={() => {
                   try { sessionStorage.setItem("companion:autoSchedule", "1"); } catch { /* ignore */ }
-                  navigate("report");
+                  setShowCompanion(true);
                   setTimeout(() => {
-                    window.dispatchEvent(new Event("app:open-excellence-companion"));
                     window.dispatchEvent(new Event("app:companion-auto-schedule"));
-                  }, 400);
+                  }, 60);
                 }}
                 className="mt-3 text-xs font-semibold text-primary hover:opacity-80 transition-opacity"
               >
@@ -1044,6 +1045,26 @@ const Basics = ({
           </LayoutGroup>
         </motion.nav>
       </div>
+      {showCompanion && (
+        <div
+          className="fixed inset-0 z-[80] bg-background/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onClick={() => setShowCompanion(false)}
+        >
+          <div
+            className="relative w-full sm:max-w-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowCompanion(false)}
+              className="absolute -top-3 -right-3 z-10 w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center text-foreground hover:bg-background transition"
+              aria-label="close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <ExcellenceCompanion language={language} embedded />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
