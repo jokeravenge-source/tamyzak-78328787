@@ -582,9 +582,19 @@ const Basics = ({
                 <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                 {language === "ar" ? "رجوع" : "Back"}
               </button>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {NAV_GROUPS[0].items.length} {language === "ar" ? "أداة" : "tools"}
-              </p>
+              {(() => {
+                const seen = new Set<string>();
+                const count = NAV_GROUPS.flatMap((g) => g.items).filter((it) => {
+                  if (seen.has(it.key)) return false;
+                  seen.add(it.key);
+                  return true;
+                }).length;
+                return (
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {count} {language === "ar" ? "أداة" : "tools"}
+                  </p>
+                );
+              })()}
             </div>
             <header className="mb-8">
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
@@ -600,7 +610,14 @@ const Basics = ({
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              {NAV_GROUPS[0].items.map((it) => {
+              {(() => {
+                const seen = new Set<string>();
+                return NAV_GROUPS.flatMap((g) => g.items).filter((it) => {
+                  if (seen.has(it.key)) return false;
+                  seen.add(it.key);
+                  return true;
+                });
+              })().map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 return (
