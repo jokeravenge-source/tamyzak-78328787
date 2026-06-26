@@ -874,7 +874,7 @@ const Basics = ({
             <div className="flex items-center justify-between mb-5">
               <h4 className="text-lg font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>{toolsHeader}</h4>
               <button
-                onClick={() => setShowAllTools(true)}
+                onClick={() => onNav("more")}
                 className="text-sm font-semibold text-primary hover:underline inline-flex items-center gap-1"
               >
                 {language === "ar" ? "عرض كل الأدوات" : "See all study tools"}
