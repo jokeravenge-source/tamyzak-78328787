@@ -612,45 +612,104 @@ const Basics = ({
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="max-w-5xl mx-auto"
         >
-          {/* Header row */}
-          <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight inline-flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                <span>{welcome.hi}{username ? `, ${username}` : ""}</span>
-                {isPremium && (
-                  <motion.span
-                    initial={{ scale: 0, rotate: -30 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.2 }}
-                    aria-label="Premium"
-                    title="Premium"
-                    className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-[0_4px_14px_hsl(45_90%_55%/0.45)]"
-                  >
-                    <Crown className="w-4 h-4 text-white" />
-                  </motion.span>
-                )}
-              </h2>
-              <p className="text-muted-foreground mt-1 text-sm md:text-base">{welcome.sub}</p>
+          {/* ====== Bento dashboard ====== */}
+          {/* Row A: hero greeting (8) + daily progress (4) */}
+          <section className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+            <div
+              className="relative md:col-span-8 rounded-[2rem] p-6 md:p-8 overflow-hidden text-primary-foreground shadow-[var(--shadow-card)] min-h-[220px] flex flex-col justify-between"
+              style={{ background: "var(--gradient-primary)" }}
+            >
+              <div aria-hidden className="absolute -top-16 -left-16 w-56 h-56 rounded-full bg-primary-foreground/10 blur-3xl pointer-events-none" />
+              <div aria-hidden className="absolute -bottom-20 -right-10 w-64 h-64 rounded-full bg-accent/20 blur-3xl pointer-events-none" />
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight inline-flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                    <span>{welcome.hi}{username ? `, ${username}` : ""}</span>
+                    {isPremium && (
+                      <motion.span
+                        initial={{ scale: 0, rotate: -30 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.2 }}
+                        aria-label="Premium"
+                        title="Premium"
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-[0_4px_14px_hsl(45_90%_55%/0.45)]"
+                      >
+                        <Crown className="w-4 h-4 text-white" />
+                      </motion.span>
+                    )}
+                  </h2>
+                  <p className="opacity-90 mt-1 text-sm md:text-base">{welcome.sub}</p>
+                </div>
+                <div className="shrink-0 bg-background/15 backdrop-blur-md rounded-2xl px-3 py-2 flex items-center gap-2 ring-1 ring-primary-foreground/20">
+                  <span className="text-xl leading-none">🔥</span>
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-[10px] font-bold opacity-90">{language === "ar" ? "سلسلة" : "Streak"}</span>
+                    <span className="text-sm font-bold tabular-nums">{missionsDone || 0}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="relative mt-6 flex flex-wrap gap-2">
+                <button
+                  onClick={() => onSelect("sessions")}
+                  className="px-5 py-2.5 text-sm font-bold rounded-xl bg-background text-primary shadow-sm hover:opacity-95 transition-all active:scale-95"
+                >
+                  {cta.primary}
+                </button>
+                <button
+                  onClick={() => onNav("missions")}
+                  className="px-4 py-2.5 text-sm font-semibold rounded-xl bg-background/15 hover:bg-background/25 text-primary-foreground ring-1 ring-primary-foreground/25 transition-colors"
+                >
+                  {cta.secondary}
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+
+            <div className="md:col-span-4 rounded-[2rem] p-6 bg-card border border-border shadow-[var(--shadow-card)] flex flex-col items-center justify-center text-center">
+              <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full mb-3">
+                {activeCopy.tag}
+              </span>
+              <div className="relative w-32 h-32">
+                <svg viewBox="0 0 120 120" className="w-32 h-32 -rotate-90">
+                  <circle cx="60" cy="60" r="52" className="fill-none stroke-secondary" strokeWidth="10" />
+                  <motion.circle
+                    cx="60" cy="60" r="52"
+                    className="fill-none stroke-primary"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 52}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 52 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - heroProgressPct / 100) }}
+                    transition={{ duration: 1.1, ease: "easeOut" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold tabular-nums">{heroProgressPct}%</span>
+                  <span className="text-[10px] text-muted-foreground tabular-nums">{heroProgressDone}/{heroProgressTotal}</span>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {todoTotal > 0
+                  ? (language === "ar" ? "تقدم المهام اليومية" : "Daily to-do progress")
+                  : (language === "ar" ? "تقدم المهمات" : "Missions progress")}
+              </p>
               <button
-                onClick={() => onNav("missions")}
-                className="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 rounded-lg hover:bg-primary/15 transition-colors"
+                onClick={() => {
+                  navigate("report");
+                  setTimeout(() => { window.dispatchEvent(new Event("app:open-excellence-companion")); }, 300);
+                }}
+                className="mt-4 text-xs font-semibold text-primary hover:underline"
               >
-                {cta.secondary}
+                {activeCopy.resume}
               </button>
-              <button
-                onClick={() => onSelect("sessions")}
-                className="px-5 py-2 text-sm font-bold text-primary-foreground bg-primary rounded-lg shadow-sm hover:opacity-95 transition-all"
-              >
-                {cta.primary}
-              </button>
+              <div className="mt-2">
+                <VisitCounter inline />
+              </div>
             </div>
-          </header>
+          </section>
 
           {/* Unread notifications — horizontal scroll list */}
           {unread.length > 0 && (
-            <div className="mb-8">
+            <div className="mb-6">
               <div
                 className="flex flex-row flex-nowrap gap-4 overflow-x-auto overflow-y-hidden pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1"
                 style={{ scrollbarWidth: "thin", WebkitOverflowScrolling: "touch" }}
@@ -701,68 +760,9 @@ const Basics = ({
             </div>
           )}
 
-          {/* Recommended next step (hero card) */}
-          <section className="mb-10">
-            <div className="relative overflow-hidden bg-card border border-border rounded-2xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[var(--shadow-card)] hover:shadow-lg transition-shadow">
-              <div className="relative z-10 flex-1">
-                <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full mb-4">
-                  {activeCopy.tag}
-                </span>
-                <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                  {activeCopy.title}
-                </h3>
-                <div className="mb-3">
-                  <VisitCounter inline />
-                </div>
-                <p className="text-muted-foreground max-w-md mb-6 text-sm md:text-base">{activeCopy.body}</p>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => {
-                      navigate("report");
-                      setTimeout(() => {
-                        window.dispatchEvent(new Event("app:open-excellence-companion"));
-                      }, 300);
-                    }}
-                    className="px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl transition-transform active:scale-95"
-                  >
-                    {activeCopy.resume}
-                  </button>
-                </div>
-              </div>
-              <div className="hidden md:flex shrink-0">
-                <div className="relative w-36 h-36">
-                  <svg viewBox="0 0 120 120" className="w-36 h-36 -rotate-90">
-                    <circle cx="60" cy="60" r="52" className="fill-none stroke-secondary" strokeWidth="10" />
-                    <motion.circle
-                      cx="60" cy="60" r="52"
-                      className="fill-none stroke-primary"
-                      strokeWidth="10"
-                      strokeLinecap="round"
-                      strokeDasharray={2 * Math.PI * 52}
-                      initial={{ strokeDashoffset: 2 * Math.PI * 52 }}
-                      animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - heroProgressPct / 100) }}
-                      transition={{ duration: 1.1, ease: "easeOut" }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold tabular-nums">{heroProgressPct}%</span>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {heroProgressDone}/{heroProgressTotal}
-                    </span>
-                  </div>
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-card border border-border shadow-sm rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-                    {todoTotal > 0
-                      ? (language === "ar" ? "تقدم المهام" : "To-Do progress")
-                      : (language === "ar" ? "تقدم المهمات" : "Missions progress")}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* Countdown — quiet inline strip */}
           {showTimer && (
-            <div className="mb-10 rounded-2xl border border-border bg-card px-5 py-4 flex items-center gap-4">
+            <div className="mb-6 rounded-2xl border border-border bg-card px-5 py-4 flex items-center gap-4">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-primary/10 shrink-0">
                 <Timer className="w-4 h-4 text-primary" />
               </div>
@@ -783,12 +783,74 @@ const Basics = ({
             </div>
           )}
 
-          {/* Streak tree + day streak card */}
-          <section className="mb-10">
+          {/* Row B: tools bento (7) + live battle highlight (5) */}
+          <section className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+            <div className="md:col-span-7 grid grid-cols-2 gap-4">
+              {FEATURED.filter((it) => it.key !== "liveBattle").slice(0, 4).map((it) => {
+                const Icon = it.Icon;
+                const meta = (fc as any)[it.key];
+                if (!meta) return null;
+                return (
+                  <motion.button
+                    key={it.key}
+                    whileHover={{ y: -3 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(it.key)}
+                    className={`group bg-card p-5 md:p-6 border ${it.key === "report" ? "border-primary" : "border-border"} rounded-[1.75rem] text-left hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all`}
+                  >
+                    <div className={`w-12 h-12 ${it.tintBg} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                      <Icon className={`w-5 h-5 ${it.tintText}`} />
+                    </div>
+                    <h5 className="font-bold text-base mb-1">{meta.title}</h5>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{meta.subtitle}</p>
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            {(() => {
+              const it = FEATURED.find((x) => x.key === "liveBattle");
+              if (!it) return null;
+              const Icon = it.Icon;
+              const meta = (fc as any).liveBattle;
+              return (
+                <motion.button
+                  whileHover={{ y: -3 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate("liveBattle")}
+                  className="md:col-span-5 relative group rounded-[2rem] text-left overflow-hidden bg-[hsl(222_47%_14%)] text-primary-foreground p-6 md:p-7 shadow-2xl min-h-[240px] flex flex-col"
+                >
+                  <span aria-hidden className="absolute -top-12 -left-12 w-44 h-44 bg-primary/30 rounded-full blur-3xl" />
+                  <span aria-hidden className="absolute -bottom-14 -right-10 w-52 h-52 bg-rose-500/25 rounded-full blur-3xl" />
+                  <span className="relative inline-flex items-center gap-1.5 self-start mb-4">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+                    </span>
+                    <span className="text-[10px] font-extrabold tracking-wider text-rose-400">{language === "ar" ? "مباشر الآن" : "LIVE"}</span>
+                  </span>
+                  <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-gradient-to-br from-fuchsia-500 to-rose-500 shadow-[0_8px_24px_-6px_rgba(244,63,94,0.6)]">
+                    <motion.div animate={{ rotate: [-12, 12, -12] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </motion.div>
+                  </div>
+                  <h3 className="relative text-xl font-bold mb-2 bg-gradient-to-r from-fuchsia-400 to-rose-400 bg-clip-text text-transparent">{meta.title}</h3>
+                  <p className="relative text-sm opacity-80 mb-6 line-clamp-3">{meta.subtitle}</p>
+                  <span className="relative mt-auto inline-flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold transition-all group-hover:bg-primary/90">
+                    {language === "ar" ? "ابدأ المعركة" : "Start battle"}
+                    <ArrowRight className={`w-4 h-4 transition-transform ${isRTL ? "rotate-180 group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
+                  </span>
+                </motion.button>
+              );
+            })()}
+          </section>
+
+          {/* Streak tree */}
+          <section className="mb-6">
             <StreakTree language={language} />
           </section>
 
-          {/* Study Tools grid */}
+          {/* More tools */}
           <section>
             <div className="flex items-center justify-between mb-5">
               <h4 className="text-lg font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>{toolsHeader}</h4>
@@ -807,61 +869,10 @@ const Basics = ({
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
             >
-              {FEATURED.map((it) => {
+              {FEATURED.slice(4).filter((it) => it.key !== "liveBattle").map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 if (!meta) return null;
-                if (it.key === "liveBattle") {
-                  return (
-                    <motion.button
-                      key={it.key}
-                      variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
-                      whileHover={{ y: -3, scale: 1.015 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => navigate(it.key)}
-                      className="relative group rounded-2xl text-left"
-                    >
-                      <span
-                        aria-hidden
-                        className="absolute -inset-[1.5px] rounded-2xl"
-                        style={{
-                          background:
-                            "conic-gradient(from 0deg, hsl(var(--primary)), #d946ef, #f97316, #ef4444, hsl(var(--primary)))",
-                          animation: "spin 6s linear infinite",
-                        }}
-                      />
-                      <div className="relative bg-card rounded-2xl p-5 overflow-hidden">
-                        {/* shimmer sweep */}
-                        <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                        {/* live pulse dot */}
-                        <span className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
-                          <span className="relative flex h-2 w-2">
-                            <span className="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
-                            <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
-                          </span>
-                          <span className="text-[10px] font-extrabold tracking-wider text-rose-500">LIVE</span>
-                        </span>
-                        <div className="relative w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-gradient-to-br from-fuchsia-500 to-rose-500 shadow-[0_8px_24px_-6px_rgba(244,63,94,0.6)]">
-                          <motion.div
-                            animate={{ rotate: [-12, 12, -12] }}
-                            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-                          >
-                            <Icon className="w-5 h-5 text-white" />
-                          </motion.div>
-                        </div>
-                        <h5 className="font-bold text-base mb-1 bg-gradient-to-r from-fuchsia-600 to-rose-500 bg-clip-text text-transparent">
-                          {meta.title}
-                        </h5>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{meta.subtitle}</p>
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-rose-500">
-                          {language === "ar" ? "ابدأ المعركة" : "Start battle"}
-                          <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? "rotate-180 group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
-                        </span>
-                      </div>
-                    </motion.button>
-                  );
-                }
                 return (
                   <motion.button
                     key={it.key}
