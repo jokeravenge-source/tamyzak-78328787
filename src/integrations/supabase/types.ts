@@ -929,6 +929,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_points_safe: {
+        Args: { _points: number; _ref_id?: string; _source: string }
+        Returns: string
+      }
       claim_daily_feature: { Args: { _feature: string }; Returns: boolean }
       feature_usage_today: { Args: { _feature: string }; Returns: number }
       has_active_premium: {
