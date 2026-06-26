@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, FlaskConical, Search, ChevronRight, ChevronLeft, RotateCcw, Eye, CheckCircle2, XCircle, Sparkles, Loader2 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -252,6 +252,9 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
   const [revealed, setRevealed] = useState(false);
   const [simplifying, setSimplifying] = useState(false);
   const [simplified, setSimplified] = useState<{ phrase?: string; mnemonic?: string; steps?: string[]; trick?: string } | null>(null);
+  const ghostRef = useRef<HTMLDivElement | null>(null);
+  const dragIdRef = useRef<number | null>(null);
+  const movedRef = useRef(false);
 
   useEffect(() => {
     setState(buildTokens());
@@ -300,6 +303,66 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
     e.dataTransfer.setData("text/plain", String(id));
     e.dataTransfer.effectAllowed = "move";
   };
+
+  const resolveZone = (x: number, y: number): ZoneKey | null => {
+    const ghost = ghostRef.current;
+    const prev = ghost?.style.display;
+    if (ghost) ghost.style.display = "none";
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    if (ghost && prev !== undefined) ghost.style.display = prev;
+    if (!el) return null;
+    const z = el.closest("[data-drop-zone]") as HTMLElement | null;
+    if (!z) return null;
+    return (z.getAttribute("data-drop-zone") as ZoneKey) ?? null;
+  };
+
+  const startPointerDrag = (id: number, text: string, e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    dragIdRef.current = id;
+    movedRef.current = false;
+    const ghost = document.createElement("div");
+    ghost.textContent = text;
+    ghost.style.cssText =
+      "position:fixed;left:0;top:0;z-index:9999;pointer-events:none;padding:6px 12px;border-radius:10px;" +
+      "font:600 13px ui-monospace,monospace;color:hsl(var(--primary-foreground));" +
+      "background:hsl(var(--primary));box-shadow:0 6px 20px hsl(var(--primary)/0.45);" +
+      "transform:translate(-50%,-50%) scale(1.05);opacity:0.95";
+    document.body.appendChild(ghost);
+    ghostRef.current = ghost;
+    ghost.style.left = `${e.clientX}px`;
+    ghost.style.top = `${e.clientY}px`;
+    const onMove = (ev: PointerEvent) => {
+      if (Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) > 4) movedRef.current = true;
+      if (ghostRef.current) {
+        ghostRef.current.style.left = `${ev.clientX}px`;
+        ghostRef.current.style.top = `${ev.clientY}px`;
+      }
+      ev.preventDefault();
+    };
+    const cleanup = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      if (ghostRef.current) { ghostRef.current.remove(); ghostRef.current = null; }
+    };
+    const onUp = (ev: PointerEvent) => {
+      const zone = resolveZone(ev.clientX, ev.clientY);
+      const did = dragIdRef.current;
+      cleanup();
+      dragIdRef.current = null;
+      if (did == null) return;
+      if (movedRef.current && zone) {
+        setState((prev) => ({ ...prev, placement: { ...prev.placement, [did]: zone } }));
+        setSelected(null);
+        setResult(null);
+      }
+    };
+    const onCancel = () => { cleanup(); dragIdRef.current = null; };
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+  };
+
   const onDropZone = (e: React.DragEvent, zone: ZoneKey) => {
     e.preventDefault();
     const id = Number(e.dataTransfer.getData("text/plain"));
@@ -371,6 +434,7 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
     const isCorrectSide = revealed || result === "correct";
     return (
       <div
+        data-drop-zone={zone}
         onDragOver={allowDrop}
         onDrop={(e) => onDropZone(e, zone)}
         onClick={() => selected != null && placeSelected(zone)}
@@ -392,11 +456,12 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
                 key={tk.id}
                 draggable
                 onDragStart={(e) => onDragStartTok(e, tk.id)}
+                onPointerDown={(e) => startPointerDrag(tk.id, tk.text, e)}
                 onClick={(e) => {
                   e.stopPropagation();
                   onTokenClick(tk.id);
                 }}
-                className="font-mono text-sm px-3 py-1.5 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90"
+                className="font-mono text-sm px-3 py-1.5 rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 touch-none select-none cursor-grab active:cursor-grabbing"
                 dir="ltr"
               >
                 {tk.text}
@@ -464,7 +529,7 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
               )}
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-4 mb-4">
+            <div data-drop-zone="pool" className="rounded-2xl border border-border bg-card p-4 mb-4" onDragOver={allowDrop} onDrop={(e) => onDropZone(e, "pool")}>
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">{t.pool}</p>
               <div className="flex flex-wrap gap-2 min-h-[44px]">
                 {poolTokens.length === 0 ? (
@@ -475,8 +540,9 @@ const ReactionDetail = ({ language, section, reaction, onBack, onPrev, onNext }:
                       key={tk.id}
                       draggable
                       onDragStart={(e) => onDragStartTok(e, tk.id)}
+                      onPointerDown={(e) => startPointerDrag(tk.id, tk.text, e)}
                       onClick={() => onTokenClick(tk.id)}
-                      className={`font-mono text-sm px-3 py-1.5 rounded-lg border transition-all ${
+                      className={`font-mono text-sm px-3 py-1.5 rounded-lg border transition-all touch-none select-none cursor-grab active:cursor-grabbing ${
                         selected === tk.id
                           ? "border-primary bg-primary/10 ring-2 ring-primary/40 scale-105"
                           : "border-border bg-background hover:bg-secondary"
