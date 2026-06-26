@@ -736,11 +736,10 @@ const Basics = ({
               <button
                 onClick={() => {
                   try { sessionStorage.setItem("companion:autoSchedule", "1"); } catch { /* ignore */ }
-                  navigate("report");
+                  setShowCompanion(true);
                   setTimeout(() => {
-                    window.dispatchEvent(new Event("app:open-excellence-companion"));
                     window.dispatchEvent(new Event("app:companion-auto-schedule"));
-                  }, 400);
+                  }, 60);
                 }}
                 className="mt-3 text-xs font-semibold text-primary hover:opacity-80 transition-opacity"
               >
