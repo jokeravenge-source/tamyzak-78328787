@@ -30,17 +30,16 @@ export async function awardPoints(source: PointSource, refId?: string) {
   const points = POINT_VALUES[source];
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return;
-  const row = { user_id: u.user.id, source, points, ref_id: refId ?? null };
-  const { data, error } = await supabase
-    .from("user_points")
-    .insert(row)
-    .select("id")
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("award_points_safe", {
+    _source: source,
+    _points: points,
+    _ref_id: refId ?? null,
+  });
   if (error) {
-    // duplicate (already awarded) — silent
+    // server-side validation failed or duplicate — silent
     return;
   }
-  if (data?.id) markSeen([data.id]);
+  if (data) markSeen([data as string]);
   showAward(source, points);
 }
 
