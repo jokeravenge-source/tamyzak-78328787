@@ -15,6 +15,29 @@ import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
 
+function useStreakDays(): number {
+  const [days, setDays] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem("streak_state_v1");
+      if (raw) return JSON.parse(raw).days ?? 0;
+    } catch {}
+    return 0;
+  });
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = localStorage.getItem("streak_state_v1");
+        if (raw) setDays(JSON.parse(raw).days ?? 0);
+      } catch {}
+    };
+    read();
+    const id = window.setInterval(read, 1500);
+    window.addEventListener("storage", read);
+    return () => { window.clearInterval(id); window.removeEventListener("storage", read); };
+  }, []);
+  return days;
+}
+
 export type BasicsChoice =
   | "flashcards"
   | "malazam"
@@ -227,6 +250,7 @@ const Basics = ({
   const [activeGroup, setActiveGroup] = useState<string>(NAV_GROUPS[0].titleEn);
   const todos = useTodos();
   const [missionsDone, setMissionsDone] = useState<number>(0);
+  const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
 
   // Total missions across all subjects/chapters
@@ -644,7 +668,7 @@ const Basics = ({
                   <span className="text-xl leading-none">🔥</span>
                   <div className="flex flex-col leading-tight">
                     <span className="text-[10px] font-bold opacity-90">{language === "ar" ? "سلسلة" : "Streak"}</span>
-                    <span className="text-sm font-bold tabular-nums">{missionsDone || 0}</span>
+                    <span className="text-sm font-bold tabular-nums">{streakDays || 0}</span>
                   </div>
                 </div>
               </div>
