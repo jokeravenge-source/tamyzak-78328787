@@ -96,7 +96,7 @@ export function CharacterAvatar({
     >
       <img
         src={tinted ?? src}
-        alt={g === "female" ? "Character" : "Character"}
+        alt={g === "female" ? "Female student character avatar" : "Male student character avatar"}
         width={size}
         height={size}
         style={{
