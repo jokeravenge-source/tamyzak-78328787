@@ -24,6 +24,7 @@ export type BasicsChoice =
   | "todo"
   | "news"
   | "ministerialBank"
+  | "subjectsHub"
   | "mindmap";
 
 const MOTIVATIONAL_PHRASES = {
@@ -118,6 +119,13 @@ type NavItem = {
 };
 
 const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
+  {
+    titleEn: "Subjects",
+    titleAr: "المواد",
+    items: [
+      { key: "subjectsHub", labelEn: "All Subjects", labelAr: "كل المواد", Icon: BookOpen },
+    ],
+  },
   {
     titleEn: "Study",
     titleAr: "الدراسة",
