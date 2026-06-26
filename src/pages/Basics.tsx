@@ -845,13 +845,8 @@ const Basics = ({
             })()}
           </section>
 
-          {/* Streak tree */}
-          <section className="mb-6">
-            <StreakTree language={language} />
-          </section>
-
           {/* More tools */}
-          <section>
+          <section className="mb-6">
             <div className="flex items-center justify-between mb-5">
               <h4 className="text-lg font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>{toolsHeader}</h4>
               <button
@@ -896,6 +891,11 @@ const Basics = ({
               })}
             </motion.div>
 
+          </section>
+
+          {/* Streak tree — bottom */}
+          <section>
+            <StreakTree language={language} />
           </section>
 
         </motion.div>
