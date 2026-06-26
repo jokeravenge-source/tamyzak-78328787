@@ -634,100 +634,162 @@ const Basics = ({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="max-w-5xl mx-auto"
+          className="max-w-6xl mx-auto"
+          style={{ fontFamily: "'Plus Jakarta Sans', 'Cairo', sans-serif" }}
         >
-          {/* ====== Bento dashboard ====== */}
-          {/* Row A: hero greeting (8) + daily progress (4) */}
-          <section className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
-            <div
-              className="relative md:col-span-8 rounded-[2rem] p-6 md:p-8 overflow-hidden text-primary-foreground shadow-[var(--shadow-card)] min-h-[220px] flex flex-col justify-between"
-              style={{ background: "var(--gradient-primary)" }}
-            >
-              <div aria-hidden className="absolute -top-16 -left-16 w-56 h-56 rounded-full bg-primary-foreground/10 blur-3xl pointer-events-none" />
-              <div aria-hidden className="absolute -bottom-20 -right-10 w-64 h-64 rounded-full bg-accent/20 blur-3xl pointer-events-none" />
-              <div className="relative flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight inline-flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                    <span>{welcome.hi}{username ? `, ${username}` : ""}</span>
-                    {isPremium && (
-                      <motion.span
-                        initial={{ scale: 0, rotate: -30 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.2 }}
-                        aria-label="Premium"
-                        title="Premium"
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-[0_4px_14px_hsl(45_90%_55%/0.45)]"
-                      >
-                        <Crown className="w-4 h-4 text-white" />
-                      </motion.span>
-                    )}
-                  </h2>
-                  <p className="opacity-90 mt-1 text-sm md:text-base">{welcome.sub}</p>
-                </div>
-                <div className="shrink-0 bg-background/15 backdrop-blur-md rounded-2xl px-3 py-2 flex items-center gap-2 ring-1 ring-primary-foreground/20">
-                  <span className="text-xl leading-none">🔥</span>
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-[10px] font-bold opacity-90">{language === "ar" ? "سلسلة" : "Streak"}</span>
-                    <span className="text-sm font-bold tabular-nums">{streakDays || 0}</span>
-                  </div>
-                </div>
+          {/* ====== Noir & Gold bento dashboard ====== */}
+          {/* Header */}
+          <header className="mb-8 md:mb-10 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+            <div>
+              <h2
+                className="text-3xl md:text-4xl font-bold tracking-tight text-[#f0d78c] inline-flex items-center gap-2"
+                style={{ fontFamily: "'Syne', sans-serif" }}
+              >
+                <span>{welcome.hi}{username ? `, ${username}` : ""}</span>
+                {isPremium && (
+                  <motion.span
+                    initial={{ scale: 0, rotate: -30 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.2 }}
+                    aria-label="Premium"
+                    title="Premium"
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-[#c9a84c] to-[#f0d78c] shadow-[0_4px_14px_rgba(201,168,76,0.45)]"
+                  >
+                    <Crown className="w-4 h-4 text-[#0d0d0d]" />
+                  </motion.span>
+                )}
+              </h2>
+              <p className="text-[#c9a84c]/70 mt-2 text-base md:text-lg">{welcome.sub}</p>
+            </div>
+            <div className="flex items-center gap-4 bg-[#1a1a1a] border border-[#c9a84c]/20 px-5 py-3 rounded-2xl self-start sm:self-auto">
+              <div className={isRTL ? "text-right" : "text-left"}>
+                <span className="block text-[10px] uppercase tracking-widest text-[#c9a84c]/60">
+                  {language === "ar" ? "سلسلة المذاكرة" : "Study streak"}
+                </span>
+                <span className="text-xl font-bold text-[#f0d78c] tabular-nums">
+                  {streakDays || 0} {language === "ar" ? "يوم" : "days"}
+                </span>
               </div>
-              <div className="relative mt-6 flex flex-wrap gap-2">
-                <button
-                  onClick={() => onSelect("sessions")}
-                  className="px-5 py-2.5 text-sm font-bold rounded-xl bg-background text-primary shadow-sm hover:opacity-95 transition-all active:scale-95"
-                >
-                  {cta.primary}
-                </button>
-                <button
-                  onClick={() => onNav("missions")}
-                  className="px-4 py-2.5 text-sm font-semibold rounded-xl bg-background/15 hover:bg-background/25 text-primary-foreground ring-1 ring-primary-foreground/25 transition-colors"
-                >
-                  {cta.secondary}
-                </button>
+              <div className="w-10 h-10 bg-gradient-to-t from-[#c9a84c] to-[#f0d78c] rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(201,168,76,0.4)]">
+                <span className="text-lg leading-none">🔥</span>
               </div>
             </div>
+          </header>
 
-            <div className="md:col-span-4 rounded-[2rem] p-6 bg-card border border-border shadow-[var(--shadow-card)] flex flex-col items-center justify-center text-center">
-              <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full mb-3">
+          {/* Row A: progress ring (4) + core tools bento (8) */}
+          <section className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-5">
+            {/* Progress ring */}
+            <div className="md:col-span-4 bg-[#1a1a1a] rounded-3xl p-6 border border-[#c9a84c]/10 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+              <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(201,168,76,0.08),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <span className="relative inline-block px-3 py-1 bg-[#c9a84c]/10 text-[#f0d78c] text-[10px] font-bold uppercase tracking-wider rounded-full mb-3 border border-[#c9a84c]/20">
                 {activeCopy.tag}
               </span>
-              <div className="relative w-32 h-32">
-                <svg viewBox="0 0 120 120" className="w-32 h-32 -rotate-90">
-                  <circle cx="60" cy="60" r="52" className="fill-none stroke-secondary" strokeWidth="10" />
+              <div className="relative w-40 h-40 mb-4">
+                <svg viewBox="0 0 100 100" className="w-40 h-40 -rotate-90">
+                  <circle cx="50" cy="50" r="45" stroke="#0d0d0d" strokeWidth="8" fill="none" />
                   <motion.circle
-                    cx="60" cy="60" r="52"
-                    className="fill-none stroke-primary"
-                    strokeWidth="10"
+                    cx="50" cy="50" r="45"
+                    stroke="#c9a84c"
+                    strokeWidth="8"
+                    fill="none"
                     strokeLinecap="round"
-                    strokeDasharray={2 * Math.PI * 52}
-                    initial={{ strokeDashoffset: 2 * Math.PI * 52 }}
-                    animate={{ strokeDashoffset: 2 * Math.PI * 52 * (1 - heroProgressPct / 100) }}
+                    strokeDasharray={2 * Math.PI * 45}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 45 * (1 - heroProgressPct / 100) }}
                     transition={{ duration: 1.1, ease: "easeOut" }}
+                    style={{ filter: "drop-shadow(0 0 8px rgba(201,168,76,0.6))" }}
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold tabular-nums">{heroProgressPct}%</span>
-                  <span className="text-[10px] text-muted-foreground tabular-nums">{heroProgressDone}/{heroProgressTotal}</span>
+                  <span className="text-3xl font-bold text-white tabular-nums">{heroProgressPct}%</span>
+                  <span className="text-[10px] text-[#c9a84c]/60 uppercase tracking-tight tabular-nums">
+                    {heroProgressDone}/{heroProgressTotal}
+                  </span>
                 </div>
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">
+              <h3 className="text-white font-semibold">
                 {todoTotal > 0
                   ? (language === "ar" ? "تقدم المهام اليومية" : "Daily to-do progress")
                   : (language === "ar" ? "تقدم المهمات" : "Missions progress")}
-              </p>
+              </h3>
               <button
                 onClick={() => {
                   navigate("report");
                   setTimeout(() => { window.dispatchEvent(new Event("app:open-excellence-companion")); }, 300);
                 }}
-                className="mt-4 text-xs font-semibold text-primary hover:underline"
+                className="mt-3 text-xs font-semibold text-[#c9a84c] hover:text-[#f0d78c] transition-colors"
               >
                 {activeCopy.resume}
               </button>
-              <div className="mt-2">
+              <div className="mt-2 text-[#c9a84c]/60">
                 <VisitCounter inline />
               </div>
+            </div>
+
+            {/* Core tools + Live battle (right of ring) */}
+            <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {FEATURED.filter((it) => it.key !== "liveBattle").slice(0, 2).map((it) => {
+                const Icon = it.Icon;
+                const meta = (fc as any)[it.key];
+                if (!meta) return null;
+                return (
+                  <motion.button
+                    key={it.key}
+                    whileHover={{ y: -3 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(it.key)}
+                    className="group text-right bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#c9a84c]/10 p-6 rounded-3xl hover:border-[#c9a84c]/40 transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-[#c9a84c]/10 flex items-center justify-center text-[#f0d78c] mb-4 group-hover:scale-110 transition-transform">
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-white text-xl font-bold mb-1">{meta.title}</h3>
+                    <p className="text-[#c9a84c]/60 text-sm line-clamp-2">{meta.subtitle}</p>
+                  </motion.button>
+                );
+              })}
+
+              {/* Live battle highlight – spans both cols */}
+              {(() => {
+                const it = FEATURED.find((x) => x.key === "liveBattle");
+                if (!it) return null;
+                const Icon = it.Icon;
+                const meta = (fc as any).liveBattle;
+                return (
+                  <div className="sm:col-span-2 bg-gradient-to-r from-[#c9a84c] to-[#f0d78c] p-[1px] rounded-3xl">
+                    <div className="bg-[#0d0d0d] rounded-[calc(1.5rem-1px)] p-5 flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <motion.div
+                          animate={{ scale: [1, 1.06, 1] }}
+                          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                          className="w-14 h-14 rounded-2xl bg-[#c9a84c] flex items-center justify-center shadow-lg shadow-[#c9a84c]/30 shrink-0"
+                        >
+                          <Icon className="w-7 h-7 text-[#0d0d0d]" />
+                        </motion.div>
+                        <div className={isRTL ? "text-right" : "text-left"}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="relative flex h-2 w-2">
+                              <span className="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
+                              <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+                            </span>
+                            <span className="text-[10px] font-extrabold tracking-wider text-rose-400">
+                              {language === "ar" ? "مباشر" : "LIVE"}
+                            </span>
+                          </div>
+                          <h3 className="text-[#f0d78c] font-bold text-lg leading-tight">{meta.title}</h3>
+                          <p className="text-white/60 text-sm line-clamp-1">{meta.subtitle}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate("liveBattle")}
+                        className="px-6 py-2.5 bg-[#c9a84c] text-[#0d0d0d] font-bold rounded-xl hover:bg-[#f0d78c] transition-all active:scale-95 shrink-0"
+                      >
+                        {language === "ar" ? "انضم الآن" : "Join now"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </section>
 
@@ -807,75 +869,15 @@ const Basics = ({
             </div>
           )}
 
-          {/* Row B: tools bento (7) + live battle highlight (5) */}
-          <section className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
-            <div className="md:col-span-7 grid grid-cols-2 gap-4">
-              {FEATURED.filter((it) => it.key !== "liveBattle").slice(0, 4).map((it) => {
-                const Icon = it.Icon;
-                const meta = (fc as any)[it.key];
-                if (!meta) return null;
-                return (
-                  <motion.button
-                    key={it.key}
-                    whileHover={{ y: -3 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate(it.key)}
-                    className={`group bg-card p-5 md:p-6 border ${it.key === "report" ? "border-primary" : "border-border"} rounded-[1.75rem] text-left hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all`}
-                  >
-                    <div className={`w-12 h-12 ${it.tintBg} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                      <Icon className={`w-5 h-5 ${it.tintText}`} />
-                    </div>
-                    <h5 className="font-bold text-base mb-1">{meta.title}</h5>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{meta.subtitle}</p>
-                  </motion.button>
-                );
-              })}
-            </div>
-
-            {(() => {
-              const it = FEATURED.find((x) => x.key === "liveBattle");
-              if (!it) return null;
-              const Icon = it.Icon;
-              const meta = (fc as any).liveBattle;
-              return (
-                <motion.button
-                  whileHover={{ y: -3 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate("liveBattle")}
-                  className="md:col-span-5 relative group rounded-[2rem] text-left overflow-hidden bg-[hsl(222_47%_14%)] text-primary-foreground p-6 md:p-7 shadow-2xl min-h-[240px] flex flex-col"
-                >
-                  <span aria-hidden className="absolute -top-12 -left-12 w-44 h-44 bg-primary/30 rounded-full blur-3xl" />
-                  <span aria-hidden className="absolute -bottom-14 -right-10 w-52 h-52 bg-rose-500/25 rounded-full blur-3xl" />
-                  <span className="relative inline-flex items-center gap-1.5 self-start mb-4">
-                    <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
-                    </span>
-                    <span className="text-[10px] font-extrabold tracking-wider text-rose-400">{language === "ar" ? "مباشر الآن" : "LIVE"}</span>
-                  </span>
-                  <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center mb-4 bg-gradient-to-br from-fuchsia-500 to-rose-500 shadow-[0_8px_24px_-6px_rgba(244,63,94,0.6)]">
-                    <motion.div animate={{ rotate: [-12, 12, -12] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </motion.div>
-                  </div>
-                  <h3 className="relative text-xl font-bold mb-2 bg-gradient-to-r from-fuchsia-400 to-rose-400 bg-clip-text text-transparent">{meta.title}</h3>
-                  <p className="relative text-sm opacity-80 mb-6 line-clamp-3">{meta.subtitle}</p>
-                  <span className="relative mt-auto inline-flex items-center justify-center gap-1.5 w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold transition-all group-hover:bg-primary/90">
-                    {language === "ar" ? "ابدأ المعركة" : "Start battle"}
-                    <ArrowRight className={`w-4 h-4 transition-transform ${isRTL ? "rotate-180 group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
-                  </span>
-                </motion.button>
-              );
-            })()}
-          </section>
-
           {/* More tools */}
           <section className="mb-6">
             <div className="flex items-center justify-between mb-5">
-              <h4 className="text-lg font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>{toolsHeader}</h4>
+              <h4 className="text-lg font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+                {toolsHeader}
+              </h4>
               <button
                 onClick={() => onNav("more")}
-                className="text-sm font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                className="text-sm font-semibold text-[#c9a84c] hover:text-[#f0d78c] inline-flex items-center gap-1 transition-colors"
               >
                 {language === "ar" ? "عرض كل الأدوات" : "See all study tools"}
                 <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? "rotate-180" : ""}`} />
@@ -885,36 +887,31 @@ const Basics = ({
             <motion.div
               initial="hidden"
               animate="show"
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
             >
-              {FEATURED.slice(4).filter((it) => it.key !== "liveBattle").map((it) => {
+              {FEATURED.filter((it) => it.key !== "liveBattle").slice(2).map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 if (!meta) return null;
                 return (
                   <motion.button
                     key={it.key}
-                    variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                    variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
-                    whileHover={{ y: -2 }}
+                    whileHover={{ y: -3 }}
                     onClick={() => navigate(it.key)}
-                    className={`group bg-card p-5 border ${it.key === "report" ? "border-primary shadow-[var(--shadow-card)]" : "border-border"} rounded-2xl text-left hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all`}
+                    className="group text-right bg-[#1a1a1a] p-5 rounded-2xl border border-[#c9a84c]/10 hover:border-[#c9a84c]/40 hover:bg-[#c9a84c]/5 transition-all"
                   >
-                    <div className={`w-11 h-11 ${it.tintBg} rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform`}>
-                      <Icon className={`w-5 h-5 ${it.tintText}`} />
+                    <div className="w-11 h-11 rounded-xl bg-[#c9a84c]/10 flex items-center justify-center mb-3 text-[#c9a84c] group-hover:scale-110 transition-transform">
+                      <Icon className="w-5 h-5" />
                     </div>
-                    <h5 className="font-bold text-base mb-1">{meta.title}</h5>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{meta.subtitle}</p>
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                      {language === "ar" ? "افتح" : "Open"}
-                      <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? "rotate-180 group-hover:-translate-x-0.5" : "group-hover:translate-x-0.5"}`} />
-                    </span>
+                    <h5 className="font-bold text-sm text-white mb-1 line-clamp-1">{meta.title}</h5>
+                    <p className="text-xs text-[#c9a84c]/60 line-clamp-2">{meta.subtitle}</p>
                   </motion.button>
                 );
               })}
             </motion.div>
-
           </section>
 
           {/* Streak tree — bottom */}
