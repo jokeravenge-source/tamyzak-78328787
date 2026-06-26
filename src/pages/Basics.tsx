@@ -159,15 +159,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     ],
   },
   {
-    titleEn: "Ministerial",
-    titleAr: "الوزاري",
-    items: [
-      { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
-      { key: "ministerialBank", labelEn: "Questions", labelAr: "الأسئلة", Icon: ScrollText },
-      { key: "islamicSurahs", labelEn: "Islamic Surahs", labelAr: "سور إسلامية", Icon: Moon },
-    ],
-  },
-  {
     titleEn: "Account",
     titleAr: "الحساب",
     items: [
