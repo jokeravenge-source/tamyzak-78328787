@@ -294,6 +294,7 @@ const App = () => {
       <Toaster />
       <Sonner />
       <ZombieGuard />
+      <SpotifyAuthCallback />
       <PointsAwardOverlay language={language ?? "en"} />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
