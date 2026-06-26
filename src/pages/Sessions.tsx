@@ -15,12 +15,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
-import track1 from "@/assets/music/track1.mp3";
-import track2 from "@/assets/music/track2.mp3";
-import track3 from "@/assets/music/track3.mp3";
-import track4 from "@/assets/music/track4.mp3";
-import track5 from "@/assets/music/track5.mp3";
-import track6 from "@/assets/music/track6.mp3";
+import track1Asset from "@/assets/music/track1.mp3.asset.json";
+import track2Asset from "@/assets/music/track2.mp3.asset.json";
+import track3Asset from "@/assets/music/track3.mp3.asset.json";
+import track4Asset from "@/assets/music/track4.mp3.asset.json";
+import track5Asset from "@/assets/music/track5.mp3.asset.json";
+import track6Asset from "@/assets/music/track6.mp3.asset.json";
 import quranTrackAsset from "@/assets/music/quran.mp3.asset.json";
 import StudyRoom from "@/components/StudyRoom";
 import { pushTodos, pullTodos } from "@/lib/todosSync";
@@ -120,7 +120,7 @@ const SessionTodos = ({ language }: { language: AppLanguage }) => {
   );
 };
 
-const MUSIC_TRACKS = [track1, track2, track3, track4, track5, track6];
+const MUSIC_TRACKS = [track1Asset.url, track2Asset.url, track3Asset.url, track4Asset.url, track5Asset.url, track6Asset.url];
 const QURAN_TRACKS = [quranTrackAsset.url];
 const MAX_SECONDS = 48 * 3600;
 const PERSIST_KEY = "study_session_state_v1";
