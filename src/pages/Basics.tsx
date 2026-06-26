@@ -732,7 +732,12 @@ const Basics = ({
                 <p className="text-muted-foreground max-w-md mb-6 text-sm md:text-base">{activeCopy.body}</p>
                 <div className="flex flex-wrap gap-3">
                   <button
-                    onClick={() => window.dispatchEvent(new Event("app:open-excellence-companion"))}
+                    onClick={() => {
+                      navigate("report");
+                      setTimeout(() => {
+                        window.dispatchEvent(new Event("app:open-excellence-companion"));
+                      }, 300);
+                    }}
                     className="px-5 py-2.5 bg-primary text-primary-foreground font-semibold rounded-xl transition-transform active:scale-95"
                   >
                     {activeCopy.resume}
