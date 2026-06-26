@@ -398,10 +398,10 @@ html.zombie-mode .gradient-text {
     @apply bg-background text-foreground;
     background: var(--gradient-bg);
     background-attachment: fixed;
-    font-family: 'Plus Jakarta Sans', 'Figtree', 'Inter', system-ui, sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4, h5, h6 { font-family: 'Syne', 'Outfit', 'Space Grotesk', system-ui, sans-serif; letter-spacing: -0.01em; }
+  h1, h2, h3, h4, h5, h6 { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; letter-spacing: -0.01em; }
 }
 
 @layer utilities {
