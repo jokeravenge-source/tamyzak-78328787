@@ -21,7 +21,7 @@ import track3 from "@/assets/music/track3.mp3";
 import track4 from "@/assets/music/track4.mp3";
 import track5 from "@/assets/music/track5.mp3";
 import track6 from "@/assets/music/track6.mp3";
-import quranTrack from "@/assets/music/quran.mp3";
+import quranTrackAsset from "@/assets/music/quran.mp3.asset.json";
 import StudyRoom from "@/components/StudyRoom";
 import { pushTodos, pullTodos } from "@/lib/todosSync";
 
@@ -121,7 +121,7 @@ const SessionTodos = ({ language }: { language: AppLanguage }) => {
 };
 
 const MUSIC_TRACKS = [track1, track2, track3, track4, track5, track6];
-const QURAN_TRACKS = [quranTrack];
+const QURAN_TRACKS = [quranTrackAsset.url];
 const MAX_SECONDS = 48 * 3600;
 const PERSIST_KEY = "study_session_state_v1";
 const POMODORO_KEY = "pomodoro_settings_v1";
