@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Pencil, Check, X, FileInput, FileText, PanelLeftClose, PanelLeft, Cloud, CloudOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Check, X, FileInput, FileText, PanelLeftClose, PanelLeft, Cloud, CloudOff, Loader2, Palette, Sparkles } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import NotesCanvasBlock, { type CanvasData } from "@/components/NotesCanvasBlock";
 import { supabase } from "@/integrations/supabase/client";
@@ -271,25 +271,41 @@ const Canvas = ({
   };
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground" dir={isRTL ? "rtl" : "ltr"}>
-      <header className="sticky top-0 z-30 h-12 backdrop-blur-md bg-background/70 border-b border-border flex items-center px-3 gap-2">
+    <div className="min-h-screen w-full bg-gradient-to-b from-background via-background to-secondary/20 text-foreground" dir={isRTL ? "rtl" : "ltr"}>
+      <header className="sticky top-0 z-30 h-14 backdrop-blur-xl bg-background/70 border-b border-border/60 flex items-center px-3 sm:px-5 gap-3">
         <button
           onClick={onBack}
-          className="w-9 h-9 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+          className="w-9 h-9 rounded-xl hover:bg-secondary/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all hover:scale-105 active:scale-95"
           aria-label={t.back}
         >
           <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
         </button>
-        <h1 className="text-sm font-bold">{t.title}</h1>
-        <span className="ml-auto text-[11px] text-muted-foreground inline-flex items-center gap-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
+            <Palette className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex flex-col leading-tight min-w-0">
+            <h1 className="text-sm font-bold tracking-tight truncate">{t.title}</h1>
+            <span className="text-[10px] text-muted-foreground truncate">
+              {stored.canvases.length} {isRTL ? "لوحة" : stored.canvases.length === 1 ? "canvas" : "canvases"}
+            </span>
+          </div>
+        </div>
+        <span className="ml-auto inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border border-border/60 bg-card/60 backdrop-blur">
           {!userId ? (
-            <><CloudOff className="w-3 h-3" /> {t.offline}</>
+            <><CloudOff className="w-3 h-3 text-muted-foreground" /> <span className="text-muted-foreground">{t.offline}</span></>
           ) : saveState === "saving" ? (
-            <><Loader2 className="w-3 h-3 animate-spin" /> {t.saving}</>
+            <><Loader2 className="w-3 h-3 animate-spin text-primary" /> <span className="text-foreground/80">{t.saving}</span></>
           ) : saveState === "error" ? (
-            <><CloudOff className="w-3 h-3 text-destructive" /> {t.autosaved}</>
+            <><CloudOff className="w-3 h-3 text-destructive" /> <span className="text-destructive">{t.autosaved}</span></>
           ) : (
-            <><Cloud className="w-3 h-3" /> {t.saved}</>
+            <>
+              <span className="relative flex w-2 h-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
+                <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-500" />
+              </span>
+              <span className="text-foreground/80">{t.saved}</span>
+            </>
           )}
         </span>
       </header>
@@ -300,7 +316,7 @@ const Canvas = ({
         }`}
       >
         {/* Canvas list */}
-        <aside className="rounded-xl border border-border bg-card/60 p-2 h-fit">
+        <aside className="rounded-2xl border border-border/60 bg-card/70 backdrop-blur p-2 h-fit shadow-sm">
           <div className="flex items-center gap-1 mb-2">
             <button
               onClick={() => setListOpen(v => !v)}
@@ -320,9 +336,9 @@ const Canvas = ({
           <>
           <button
             onClick={createCanvas}
-            className="w-full h-9 rounded-lg bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1 hover:opacity-90"
+            className="group w-full h-10 rounded-xl bg-gradient-to-br from-primary to-primary/85 text-primary-foreground text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
-            <Plus className="w-4 h-4" /> {t.newCanvas}
+            <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" /> {t.newCanvas}
           </button>
           <div className="mt-2 flex flex-col gap-1">
             {stored.canvases.map((c) => {
@@ -331,11 +347,16 @@ const Canvas = ({
               return (
                 <div
                   key={c.id}
-                  className={`group flex items-center gap-1 rounded-md px-1.5 py-1 cursor-pointer transition-colors ${
-                    isActive ? "bg-primary/10 text-primary" : "hover:bg-secondary text-foreground/80"
+                  className={`group relative flex items-center gap-1.5 rounded-lg px-2 py-1.5 cursor-pointer transition-all overflow-hidden ${
+                    isActive
+                      ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary"
+                      : "hover:bg-secondary/80 text-foreground/80 hover:translate-x-[2px]"
                   }`}
                   onClick={() => !isEditing && setActive(c.id)}
                 >
+                  {isActive && (
+                    <span className={`absolute ${isRTL ? "right-0" : "left-0"} top-1.5 bottom-1.5 w-0.5 rounded-full bg-primary`} />
+                  )}
                   {isEditing ? (
                     <>
                       <input
@@ -395,7 +416,7 @@ const Canvas = ({
           ) : (
             <button
               onClick={createCanvas}
-              className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center mx-auto hover:opacity-90"
+              className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center mx-auto hover:scale-110 transition-transform shadow-sm"
               aria-label={t.newCanvas}
               title={t.newCanvas}
             >
@@ -405,14 +426,17 @@ const Canvas = ({
         </aside>
 
         {/* Editor */}
-        <main className="min-w-0">
+        <main className="min-w-0 animate-fade-in">
           {active ? (
             <>
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span className="text-sm font-semibold truncate">{active.name || t.untitled}</span>
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-base">🎨</span>
+                  <span className="text-sm font-bold tracking-tight truncate">{active.name || t.untitled}</span>
+                </div>
                 <button
                   onClick={openPicker}
-                  className="ml-auto h-8 rounded-lg bg-secondary hover:bg-secondary/80 text-xs font-medium px-2.5 flex items-center gap-1.5"
+                  className="ml-auto h-9 rounded-xl bg-secondary/70 hover:bg-secondary text-xs font-medium px-3 flex items-center gap-1.5 border border-border/60 hover:border-primary/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <FileInput className="w-3.5 h-3.5" /> {t.addToNote}
                 </button>
@@ -420,8 +444,17 @@ const Canvas = ({
               <NotesCanvasBlock data={active.data} onChange={updateActiveData} language={language} expandable />
             </>
           ) : (
-            <div className="text-sm text-muted-foreground p-6 text-center border border-dashed border-border rounded-xl">
-              {t.empty}
+            <div className="flex flex-col items-center justify-center gap-3 p-10 text-center border border-dashed border-border/70 rounded-2xl bg-card/40">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground">{t.empty}</p>
+              <button
+                onClick={createCanvas}
+                className="h-9 rounded-xl bg-primary text-primary-foreground text-xs font-semibold px-4 inline-flex items-center gap-1.5 hover:opacity-90 transition-all hover:scale-[1.02]"
+              >
+                <Plus className="w-4 h-4" /> {t.newCanvas}
+              </button>
             </div>
           )}
         </main>
@@ -430,11 +463,11 @@ const Canvas = ({
       {/* Note picker modal */}
       {pickerOpen && (
         <div
-          className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-background/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setPickerOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl p-3"
+            className="w-full max-w-md rounded-2xl border border-border/60 bg-card shadow-2xl p-4 animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2 mb-2">

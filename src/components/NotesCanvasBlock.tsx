@@ -722,14 +722,14 @@ const NotesCanvasBlock = ({
 
   const wrapperCls = fullscreen
     ? "fixed inset-0 z-50 bg-background flex max-w-none"
-    : "my-3 rounded-xl border border-border bg-card overflow-hidden flex max-w-full";
+    : "my-3 rounded-2xl border border-border/60 bg-card overflow-hidden flex max-w-full shadow-sm";
   const drawAreaHeight = fullscreen ? vh - 8 : safe.height;
 
   return (
     <div className={wrapperCls} dir={isRTL ? "rtl" : "ltr"}>
       {/* Sidebar */}
       <aside
-        className={`shrink-0 border-${isRTL ? "l" : "r"} border-border bg-secondary/40 flex flex-col transition-[width] duration-200 ${
+        className={`shrink-0 border-${isRTL ? "l" : "r"} border-border/60 bg-gradient-to-b from-secondary/50 to-secondary/20 flex flex-col transition-[width] duration-300 ease-out ${
           sidebarOpen ? "w-36 sm:w-44" : "w-11"
         }`}
       >
@@ -763,8 +763,10 @@ const NotesCanvasBlock = ({
                         if ((id === "sticker" || id === "label") && !sidebarOpen) setSidebarOpen(true);
                       }}
                       aria-label={`${label} (${shortcut})`}
-                      className={`h-9 rounded-md flex items-center ${sidebarOpen ? "justify-between gap-2 px-2" : "justify-center"} transition-colors ${
-                        tool === id ? "bg-primary text-primary-foreground" : "hover:bg-secondary text-foreground/80"
+                      className={`h-9 rounded-lg flex items-center ${sidebarOpen ? "justify-between gap-2 px-2" : "justify-center"} transition-all ${
+                        tool === id
+                          ? "bg-gradient-to-br from-primary to-primary/85 text-primary-foreground shadow-sm scale-[1.02]"
+                          : "hover:bg-background/70 hover:scale-[1.03] text-foreground/80"
                       }`}
                     >
                       <span className="flex items-center gap-2 min-w-0">
@@ -1078,10 +1080,10 @@ const NotesCanvasBlock = ({
           )}
         </div>
         {/* Zoom controls */}
-        <div className={`absolute bottom-1 ${isRTL ? "right-1" : "left-1"} flex items-center gap-1 bg-secondary/80 backdrop-blur rounded-md px-1 py-0.5 shadow-sm z-10`}>
+        <div className={`absolute bottom-2 ${isRTL ? "right-2" : "left-2"} flex items-center gap-0.5 bg-card/85 backdrop-blur-md border border-border/60 rounded-full px-1.5 py-1 shadow-lg z-10`}>
           <button
             onClick={zoomOut}
-            className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            className="w-7 h-7 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-all hover:scale-110 active:scale-95"
             title={isRTL ? "تصغير" : "Zoom out"}
             aria-label={isRTL ? "تصغير" : "Zoom out"}
           >
@@ -1089,22 +1091,23 @@ const NotesCanvasBlock = ({
           </button>
           <button
             onClick={zoomReset}
-            className="text-[10px] font-mono w-9 text-center text-muted-foreground hover:text-foreground"
+            className="text-[10px] font-mono w-10 text-center text-foreground/70 hover:text-foreground font-semibold transition-colors"
             title={isRTL ? "إعادة" : "Reset"}
           >
             {Math.round(zoom * 100)}%
           </button>
           <button
             onClick={zoomIn}
-            className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            className="w-7 h-7 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-all hover:scale-110 active:scale-95"
             title={isRTL ? "تكبير" : "Zoom in"}
             aria-label={isRTL ? "تكبير" : "Zoom in"}
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
+          <div className="w-px h-4 bg-border/60 mx-0.5" />
           <button
             onClick={recenter}
-            className="w-6 h-6 rounded hover:bg-background/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            className="w-7 h-7 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-all hover:scale-110 active:scale-95"
             title={isRTL ? "إعادة التوسيط" : "Recenter"}
             aria-label={isRTL ? "إعادة التوسيط" : "Recenter"}
           >
@@ -1115,7 +1118,7 @@ const NotesCanvasBlock = ({
         {(expandable || onToggleFullscreen || fullscreen) && (
           <button
             onClick={toggleFullscreen}
-            className="absolute top-1 right-1 w-8 h-8 rounded-md bg-secondary/80 hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground shadow-sm"
+            className="absolute top-2 right-2 w-9 h-9 rounded-full bg-card/85 backdrop-blur-md border border-border/60 hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground shadow-lg transition-all hover:scale-110 active:scale-95"
             title={fullscreen ? (isRTL ? "إغلاق ملء الشاشة" : "Exit fullscreen") : (isRTL ? "ملء الشاشة" : "Fullscreen")}
           >
             {fullscreen ? <Minimize2 className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
