@@ -122,7 +122,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     titleEn: "Study",
     titleAr: "الدراسة",
     items: [
-      { key: "flashcards", labelEn: "Flashcards", labelAr: "البطاقات", Icon: Layers },
       { key: "notes", labelEn: "Notes", labelAr: "ملاحظاتي", Icon: NotebookPen },
       { key: "summaries", labelEn: "Summaries", labelAr: "الملخصات", Icon: FileText },
       { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
@@ -130,15 +129,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
       { key: "youtube", labelEn: "YouTube Player", labelAr: "مشغّل يوتيوب", Icon: Youtube },
       { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
-      { key: "organicEquations", labelEn: "Organic Equations", labelAr: "تفاعلات العضوية", Icon: FlaskConical },
-      { key: "ministerialBank", labelEn: "Ministerial Bank", labelAr: "بنك الوزاريات", Icon: ScrollText },
-      { key: "malazam", labelEn: "Malazam", labelAr: "الملازم", Icon: BookMarked },
-      { key: "biologyDrawings", labelEn: "Biology Drawings", labelAr: "رسومات الأحياء", Icon: Microscope },
       { key: "essay", labelEn: "Essay Coach", labelAr: "مدرّب المقالات", Icon: BookOpen },
-      { key: "hadithChecker", labelEn: "Hadith Checker", labelAr: "فاحص الأحاديث", Icon: Moon },
-      { key: "poemsChecker", labelEn: "Poems Checker", labelAr: "قصائد الأدب", Icon: ScrollText },
-      { key: "englishEssays", labelEn: "English Compositions", labelAr: "إنشاءات الإنكليزي", Icon: PenLine },
-      { key: "englishIsqat", labelEn: "Word Drops (Isqatat)", labelAr: "الإسقاطات", Icon: MousePointerClick },
     ],
   },
   {
@@ -189,8 +180,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
 // Featured "Study Tools" cards on the dashboard
 const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }>; tintBg: string; tintText: string }[] = [
   { key: "report",          Icon: Sparkles,   tintBg: "bg-primary",     tintText: "text-primary-foreground" },
-  { key: "flashcards",      Icon: Layers,     tintBg: "bg-blue-50",    tintText: "text-blue-600" },
-  { key: "ministerialBank", Icon: ScrollText, tintBg: "bg-amber-50",   tintText: "text-amber-600" },
   { key: "summaries",       Icon: FileText,   tintBg: "bg-violet-50",  tintText: "text-violet-600" },
   { key: "mcq",             Icon: HelpCircle, tintBg: "bg-rose-50",    tintText: "text-rose-600" },
   { key: "mindmap",         Icon: Network,    tintBg: "bg-cyan-50",    tintText: "text-cyan-600" },
@@ -202,8 +191,6 @@ const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: s
 const FEATURED_COPY = {
   en: {
     report: { title: "Daily Report", subtitle: "AI insights + parent follow-up link." },
-    flashcards: { title: "Flashcards", subtitle: "Smart Q&A cards across every subject." },
-    ministerialBank: { title: "Ministerial Bank", subtitle: "Past ministerial questions by chapter." },
     summaries: { title: "Notes & Summaries", subtitle: "Upload and browse approved notes." },
     mcq: { title: "MCQ Generator", subtitle: "Get multiple-choice questions from any file." },
     mindmap: { title: "Mind Map", subtitle: "AI builds a clean map from any topic." },
@@ -213,8 +200,6 @@ const FEATURED_COPY = {
   },
   ar: {
     report: { title: "تقريري اليومي", subtitle: "ملاحظات ذكية ورابط متابعة لولي الأمر." },
-    flashcards: { title: "البطاقات", subtitle: "بطاقات سؤال وجواب لكل المواد." },
-    ministerialBank: { title: "بنك الوزاريات", subtitle: "أسئلة وزارية سابقة حسب الفصل." },
     summaries: { title: "ملخصات", subtitle: "ارفع وتصفّح ملاحظات معتمدة." },
     mcq: { title: "مولّد الأسئلة", subtitle: "احصل على اختيارات من متعدد من أي ملف." },
     mindmap: { title: "الخريطة الذهنية", subtitle: "خريطة مرتبة بالذكاء الاصطناعي." },

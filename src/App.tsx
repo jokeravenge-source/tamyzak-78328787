@@ -49,6 +49,7 @@ import Canvas from "./pages/Canvas";
 import YoutubePlayer from "./pages/YoutubePlayer";
 import OrganicEquations from "./pages/OrganicEquations";
 import LiveBattle from "./pages/LiveBattle";
+import SubjectsHub from "./pages/SubjectsHub";
 import AppSidebar, { type SidebarKey } from "./components/AppSidebar";
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
@@ -217,7 +218,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -374,6 +375,8 @@ const App = () => {
         <OrganicEquations language={language} onBack={resetMenu} />
       ) : menuChoice === "liveBattle" ? (
         <LiveBattle language={language} onBack={resetMenu} />
+      ) : menuChoice === "subjectsHub" ? (
+        <SubjectsHub language={language} onBack={backToBasics} onSelect={chooseMenu} />
       ) : menuChoice === "premium" ? (
         <Premium language={language} onBack={resetMenu} />
       ) : menuChoice === "more" ? (
