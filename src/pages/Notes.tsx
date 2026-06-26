@@ -1076,22 +1076,27 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
             animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-r border-border bg-secondary/30 backdrop-blur-sm flex flex-col h-screen sticky top-0 overflow-hidden"
+            className="border-r border-border bg-gradient-to-b from-secondary/40 via-secondary/20 to-background backdrop-blur-xl flex flex-col h-screen sticky top-0 overflow-hidden"
             style={{ minWidth: 0 }}
           >
             <div className="w-[280px] flex flex-col h-full">
-              <div className="p-3 border-b border-border flex items-center gap-2">
+              <div className="p-3 border-b border-border/60 flex items-center gap-2">
                 <button
                   onClick={async () => { await flushSaves(); onBack(); }}
-                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={t.back}
                 >
                   <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                 </button>
-                <span className="text-sm font-bold flex-1 truncate">{t.title}</span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="w-7 h-7 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                    <NotebookPen className="w-4 h-4" />
+                  </span>
+                  <span className="text-sm font-bold truncate tracking-tight">{t.title}</span>
+                </div>
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                   aria-label="collapse"
                 >
                   <PanelLeftClose className="w-4 h-4" />
@@ -1235,19 +1240,19 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                   </div>
                 )}
               </div>
-              <div className="p-2 border-t border-border space-y-2">
+              <div className="p-2 border-t border-border/60 space-y-2 bg-background/40">
                 <button
                   onClick={createNotebook}
-                  className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-sm font-semibold hover:bg-secondary transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-sm font-semibold hover:bg-secondary hover:border-primary/40 transition-colors"
                 >
                   <FolderPlus className="w-4 h-4" />
                   {t.newNotebook}
                 </button>
                 <button
                   onClick={() => createNote(null)}
-                  className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-95 transition-opacity"
+                  className="group w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold shadow-md shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.99] transition-all"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                   {t.newPage}
                 </button>
               </div>
