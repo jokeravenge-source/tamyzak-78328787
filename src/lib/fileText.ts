@@ -20,6 +20,11 @@ const PDF_IMAGE_PAGES = 20;
 
 let pdfWorkerReady = false;
 
+const PDFJS_VERSION = "5.7.284";
+const PDFJS_CDN_BASE = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}`;
+const PDF_CMAP_URL = `${PDFJS_CDN_BASE}/cmaps/`;
+const PDF_STANDARD_FONTS_URL = `${PDFJS_CDN_BASE}/standard_fonts/`;
+
 const isPdfFile = (file: File) =>
   file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
 
@@ -95,10 +100,12 @@ async function extractPdfMaterial(file: File, options: ExtractOptions = {}): Pro
   const objectUrl = typeof URL !== "undefined" && URL.createObjectURL ? URL.createObjectURL(file) : null;
   const pdfSource = {
     ...(objectUrl ? { url: objectUrl } : { data: new Uint8Array(await file.arrayBuffer()) }),
+    cMapUrl: PDF_CMAP_URL,
     cMapPacked: true,
+    standardFontDataUrl: PDF_STANDARD_FONTS_URL,
     useSystemFonts: true,
     useWorkerFetch: false,
-    disableFontFace: true,
+    disableFontFace: false,
   };
   const loadingTask = pdfjs.getDocument(pdfSource);
 
