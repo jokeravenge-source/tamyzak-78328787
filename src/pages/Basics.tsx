@@ -634,9 +634,13 @@ const Basics = ({
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="max-w-6xl mx-auto"
+          className="relative -mx-5 md:-mx-10 -my-8 md:-my-12 px-5 md:px-10 py-8 md:py-12 bg-[#0d0d0d] text-white min-h-screen"
           style={{ fontFamily: "'Plus Jakarta Sans', 'Cairo', sans-serif" }}
         >
+        <div className="max-w-6xl mx-auto">
+          {/* subtle brass aura */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_-10%,rgba(201,168,76,0.10),transparent_55%),radial-gradient(circle_at_90%_110%,rgba(201,168,76,0.08),transparent_55%)]" />
+          <div className="relative">
           {/* ====== Noir & Gold bento dashboard ====== */}
           {/* Header */}
           <header className="mb-8 md:mb-10 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
@@ -918,7 +922,8 @@ const Basics = ({
           <section>
             <StreakTree language={language} />
           </section>
-
+          </div>
+        </div>
         </motion.div>
         )}
         </AnimatePresence>
