@@ -47,16 +47,34 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [fcForm, setFcForm] = useState({ subject: "physics", chapter: "1", language: "en", question: "", answer: "" });
   const [fcFilter, setFcFilter] = useState<"pending" | "approved" | "all">("all");
   const [fcSubjectFilter, setFcSubjectFilter] = useState<string>("all");
+  const [fcChapterFilter, setFcChapterFilter] = useState<string>("all");
   const loadFcs = async () => {
     setFcLoading(true);
     let q = supabase.from("custom_flashcards").select("*").order("created_at", { ascending: false });
     if (fcFilter !== "all") q = q.eq("approved", fcFilter === "approved");
     if (fcSubjectFilter !== "all") q = q.eq("subject", fcSubjectFilter);
+    if (fcChapterFilter !== "all") q = q.eq("chapter", fcChapterFilter);
     const { data } = await q;
     setFcs((data ?? []) as FC[]);
     setFcLoading(false);
   };
-  useEffect(() => { if (tab === "flashcards") loadFcs(); }, [tab, fcFilter, fcSubjectFilter]);
+  useEffect(() => { if (tab === "flashcards") loadFcs(); }, [tab, fcFilter, fcSubjectFilter, fcChapterFilter]);
+  useEffect(() => { setFcChapterFilter("all"); }, [fcSubjectFilter]);
+  const [fcChapters, setFcChapters] = useState<string[]>([]);
+  useEffect(() => {
+    (async () => {
+      let q = supabase.from("custom_flashcards").select("chapter");
+      if (fcSubjectFilter !== "all") q = q.eq("subject", fcSubjectFilter);
+      const { data } = await q;
+      const chs = Array.from(new Set((data ?? []).map((r: any) => r.chapter).filter(Boolean)))
+        .sort((a: string, b: string) => {
+          const na = Number(a), nb = Number(b);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          return a.localeCompare(b);
+        });
+      setFcChapters(chs as string[]);
+    })();
+  }, [fcSubjectFilter, fcs.length]);
   const addFc = async () => {
     if (!fcForm.question.trim() || !fcForm.answer.trim()) return toast.error("Question and answer required");
     const { data: u } = await supabase.auth.getUser();
