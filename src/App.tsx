@@ -254,6 +254,8 @@ const App = () => {
       chooseMenu("news");
     } else if (c === "ministerialBank") {
       chooseMenu("ministerialBank");
+    } else if (c === "subjectsHub") {
+      chooseMenu("subjectsHub");
     } else if (c === "mindmap") {
       chooseMenu("mindmap");
     } else {
