@@ -554,6 +554,10 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                 <option value="all">All subjects</option>
                 {["physics","chemistry","biology","english","french","arabic","islamic"].map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
+              <select value={fcChapterFilter} onChange={(e) => setFcChapterFilter(e.target.value)} className="h-8 px-3 rounded-full bg-secondary/40 border border-white/10 text-xs">
+                <option value="all">All chapters</option>
+                {fcChapters.map((c) => <option key={c} value={c}>Ch {c}</option>)}
+              </select>
             </div>
             {fcLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
