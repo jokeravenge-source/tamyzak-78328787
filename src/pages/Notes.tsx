@@ -1521,9 +1521,9 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                     setBlocks((blocks) => [...blocks, nb]);
                     setFocusBlockId(nb.id);
                   }}
-                  className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-md px-2 py-1 hover:bg-secondary transition-colors"
+                  className="group mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary rounded-md px-2.5 py-1.5 hover:bg-primary/5 border border-dashed border-transparent hover:border-primary/30 transition-all"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
                   {language === "ar" ? "إضافة كتلة" : "Add block"}
                 </button>
               </div>
@@ -1534,31 +1534,40 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
       </main>
 
       {/* Slash menu */}
-      {slash && (
-        <div
-          className="fixed z-50 w-64 max-h-80 overflow-y-auto rounded-xl bg-popover border border-border shadow-xl p-1"
-          style={{ left: Math.min(slash.x, window.innerWidth - 280), top: slash.y + 4 }}
-        >
-          {SLASH_OPTIONS.map((opt) => {
-            const Icon = opt.Icon;
-            return (
-              <button
-                key={opt.type}
-                onClick={() => applySlashType(opt.type)}
-                className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-secondary text-left transition-colors"
-              >
-                <div className="w-8 h-8 rounded-md bg-card border border-border flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{language === "ar" ? opt.labelAr : opt.labelEn}</p>
-                  <p className="text-xs text-muted-foreground truncate">{language === "ar" ? opt.descAr : opt.descEn}</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <AnimatePresence>
+        {slash && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+            transition={{ duration: 0.15 }}
+            className="fixed z-50 w-72 max-h-80 overflow-y-auto rounded-2xl bg-popover/95 backdrop-blur-xl border border-border shadow-2xl p-1.5"
+            style={{ left: Math.min(slash.x, window.innerWidth - 300), top: slash.y + 4 }}
+          >
+            <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {language === "ar" ? "نوع الكتلة" : "Block type"}
+            </p>
+            {SLASH_OPTIONS.map((opt) => {
+              const Icon = opt.Icon;
+              return (
+                <button
+                  key={opt.type}
+                  onClick={() => applySlashType(opt.type)}
+                  className="group w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-primary/8 text-left transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-card to-secondary/60 border border-border group-hover:border-primary/40 group-hover:from-primary/10 group-hover:to-primary/5 flex items-center justify-center shrink-0 transition-colors">
+                    <Icon className="w-4 h-4 group-hover:text-primary transition-colors" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{language === "ar" ? opt.labelAr : opt.labelEn}</p>
+                    <p className="text-xs text-muted-foreground truncate">{language === "ar" ? opt.descAr : opt.descEn}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
