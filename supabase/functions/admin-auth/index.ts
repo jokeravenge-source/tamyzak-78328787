@@ -4,18 +4,23 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Server-side ONLY. Never expose this map to the client.
-const ADMIN_CREDENTIALS: Record<string, string> = {
-  "majs11@gmail.com": "majs11",
-  "hareer-herself@gmail.com": "Adminhareer123",
-  "mustafa@gmail.com": "adminmustafa123",
-  "abdallah6dhs@gmail.com": "adminabdallah123",
-  "haneenherself@gmail.com": "adminhaneen123",
-  "kszolg0-dwldbx-txxeyzasmamohammed848@gmail.com": "Asmamohammed20102010",
-  "neneworkfordhs@gamil.com": "nene0work0for0DHS",
-  "sx97623@gmail.com": "adminmustafa123",
-  "asmamohammed848@gmail.com": "Asmamohammed20102010",
-};
+// Admin credentials are loaded from the ADMIN_CREDENTIALS_JSON secret.
+// Never hardcode credentials in source. Rotate by updating the secret.
+function loadAdminCredentials(): Record<string, string> {
+  const raw = Deno.env.get("ADMIN_CREDENTIALS_JSON") ?? "";
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      const out: Record<string, string> = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === "string") out[k.trim().toLowerCase()] = v;
+      }
+      return out;
+    }
+  } catch (_e) { /* ignore */ }
+  return {};
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -41,7 +46,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const expected = ADMIN_CREDENTIALS[email];
+    const credentials = loadAdminCredentials();
+    const expected = credentials[email];
     // Constant-time-ish: always do a comparison even if email unknown
     const isMatch = !!expected && expected === password;
     if (!isMatch) {
