@@ -24,6 +24,16 @@ function loadAdmins(): Array<{ email: string; password: string }> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    // Auth guard: require a shared-secret token in the X-Setup-Token header.
+    // Without this, anyone could re-provision admin accounts.
+    const expected = Deno.env.get("SETUP_ADMINS_TOKEN") ?? "";
+    const provided = req.headers.get("x-setup-token") ?? "";
+    if (!expected || provided !== expected) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const results: any[] = [];
