@@ -438,12 +438,15 @@ const TreeItem = ({
         onDrop={(e) => { e.stopPropagation(); onPageDrop(e, node.id); }}
         onDragEnd={onPageDragEnd}
         className={`group flex items-center gap-1 rounded-md px-1 py-1 cursor-pointer transition-colors ${
-          active ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-secondary"
+          active
+            ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary shadow-sm"
+            : "text-foreground/80 hover:bg-secondary hover:translate-x-0.5"
         } ${isDragTarget ? "ring-2 ring-primary/60" : ""}`}
         style={{ paddingInlineStart: `${depth * 0.75 + 0.25}rem` }}
         onClick={() => { if (!editing) onSelect(node.id); }}
         onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
       >
+        {active && <span className="absolute start-0 w-0.5 h-5 rounded-r bg-primary -ml-px" aria-hidden />}
         <button
           onClick={(e) => { e.stopPropagation(); if (hasChildren) onToggle(node.id); }}
           className={`w-4 h-4 flex items-center justify-center shrink-0 rounded hover:bg-foreground/10 ${hasChildren ? "" : "opacity-30 cursor-default"}`}
