@@ -128,7 +128,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
   },
   {
     titleEn: "Study",
-    titleAr: "الدراسة",
+    titleAr: "الأدوات",
     items: [
       { key: "notes", labelEn: "Notes", labelAr: "ملاحظاتي", Icon: NotebookPen },
       { key: "summaries", labelEn: "Summaries", labelAr: "الملخصات", Icon: FileText },
@@ -203,7 +203,7 @@ const FEATURED_COPY = {
     mcq: { title: "مولّد الأسئلة", subtitle: "احصل على اختيارات من متعدد من أي ملف." },
     mindmap: { title: "الخريطة الذهنية", subtitle: "خريطة مرتبة بالذكاء الاصطناعي." },
     youtube: { title: "مشغّل يوتيوب", subtitle: "شاهد أي فيديو يوتيوب داخل التطبيق." },
-    liveBattle: { title: "المعركة المباشرة", subtitle: "تحدَّ صديقك في 10 أسئلة." },
+    liveBattle: { title: "المعركة المباشرة", subtitle: "تحد صديقك" },
     leaderboard: { title: "المتصدرون", subtitle: "اعرف ترتيبك هذا الأسبوع." },
   },
 } as const;
