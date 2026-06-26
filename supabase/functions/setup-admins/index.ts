@@ -3,17 +3,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ADMINS = [
-  { email: "majs11@gmail.com", password: "majs11" },
-  { email: "hareer-herself@gmail.com", password: "Adminhareer123" },
-  { email: "mustafa@gmail.com", password: "adminmustafa123" },
-  { email: "abdallah6dhs@gmail.com", password: "adminabdallah123" },
-  { email: "haneenherself@gmail.com", password: "adminhaneen123" },
-  { email: "kszolg0-dwldbx-txxeyzasmamohammed848@gmail.com", password: "Asmamohammed20102010" },
-  { email: "neneworkfordhs@gamil.com", password: "nene0work0for0DHS" },
-  { email: "sx97623@gmail.com", password: "adminmustafa123" },
-  { email: "asmamohammed848@gmail.com", password: "Asmamohammed20102010" },
-];
+// Admins are loaded from the ADMIN_CREDENTIALS_JSON secret.
+// Never hardcode credentials in source. Rotate by updating the secret.
+function loadAdmins(): Array<{ email: string; password: string }> {
+  const raw = Deno.env.get("ADMIN_CREDENTIALS_JSON") ?? "";
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      const out: Array<{ email: string; password: string }> = [];
+      for (const [email, password] of Object.entries(parsed)) {
+        if (typeof password === "string") out.push({ email, password });
+      }
+      return out;
+    }
+  } catch (_e) { /* ignore */ }
+  return [];
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -21,6 +27,7 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const results: any[] = [];
+    const ADMINS = loadAdmins();
     for (const a of ADMINS) {
       // Create user (idempotent: ignore "already registered" errors)
       const createRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
