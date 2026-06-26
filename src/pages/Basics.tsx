@@ -923,13 +923,13 @@ const Basics = ({
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     whileHover={{ y: -3 }}
                     onClick={() => navigate(it.key)}
-                    className="group text-right bg-[#1a1a1a] p-5 rounded-2xl border border-[#c9a84c]/10 hover:border-[#c9a84c]/40 hover:bg-[#c9a84c]/5 transition-all"
+                    className={`group ${isRTL ? "text-right" : "text-left"} bg-card p-5 rounded-2xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all`}
                   >
-                    <div className="w-11 h-11 rounded-xl bg-[#c9a84c]/10 flex items-center justify-center mb-3 text-[#c9a84c] group-hover:scale-110 transition-transform">
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3 text-primary group-hover:scale-110 transition-transform">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <h5 className="font-bold text-sm text-white mb-1 line-clamp-1">{meta.title}</h5>
-                    <p className="text-xs text-[#c9a84c]/60 line-clamp-2">{meta.subtitle}</p>
+                    <h5 className="font-bold text-sm text-foreground mb-1 line-clamp-1">{meta.title}</h5>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{meta.subtitle}</p>
                   </motion.button>
                 );
               })}
