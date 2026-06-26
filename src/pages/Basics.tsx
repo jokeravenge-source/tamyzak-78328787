@@ -253,6 +253,7 @@ const Basics = ({
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
+  const [showCompanion, setShowCompanion] = useState<boolean>(false);
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
