@@ -1,5 +1,6 @@
 import mammoth from "mammoth";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 
 type ExtractOptions = {
   maxPages?: number;
@@ -11,8 +12,6 @@ type StudyMaterial = {
   pageImages?: string[];
 };
 
-const PDF_WORKER_SRC = "/pdf.worker.mjs";
-const PDF_ASSET_BASE = "/pdfjs";
 const DEFAULT_MAX_CHARS = 180000;
 const DEFAULT_MAX_PDF_PAGES = 450;
 const PDF_FRONT_PAGES = 25;
@@ -31,7 +30,7 @@ const isTextFile = (file: File) =>
 
 const configurePdfWorker = () => {
   if (pdfWorkerReady || typeof window === "undefined") return;
-  pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
   pdfWorkerReady = true;
 };
 
@@ -96,10 +95,7 @@ async function extractPdfMaterial(file: File, options: ExtractOptions = {}): Pro
   const objectUrl = typeof URL !== "undefined" && URL.createObjectURL ? URL.createObjectURL(file) : null;
   const pdfSource = {
     ...(objectUrl ? { url: objectUrl } : { data: new Uint8Array(await file.arrayBuffer()) }),
-    cMapUrl: `${PDF_ASSET_BASE}/cmaps/`,
     cMapPacked: true,
-    standardFontDataUrl: `${PDF_ASSET_BASE}/standard_fonts/`,
-    wasmUrl: `${PDF_ASSET_BASE}/wasm/`,
     useSystemFonts: true,
     useWorkerFetch: false,
     disableFontFace: true,
