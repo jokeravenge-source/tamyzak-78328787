@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Swords, Users, Trophy, Copy, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, Swords, Users, Trophy, Copy, Loader2, Check, X, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -11,6 +11,8 @@ import { buildBattleMcqs, type BattleSubject, type BattleMCQ } from "@/lib/battl
 
 type Subject = BattleSubject;
 type MCQ = BattleMCQ;
+
+const QUESTION_TIME = 25;
 
 function pickQuestions(n: number, seed: number, subject: Subject = "general"): MCQ[] {
   // Mix in time-based randomness so each room gets a fresh set even with the same seed range.
@@ -68,10 +70,11 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const [players, setPlayers] = useState<{ id: string; name: string }[]>([]);
   const [questions, setQuestions] = useState<MCQ[]>([]);
   const [qIdx, setQIdx] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(QUESTION_TIME);
   const [scores, setScores] = useState<Record<string, number>>({});
   const [answered, setAnswered] = useState<number | null>(null);
   const [answeredFor, setAnsweredFor] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<null | "correct" | "wrong">(null);
   const [countdown, setCountdown] = useState(3);
   const [subject, setSubject] = useState<Subject>("general");
   const [qCount, setQCount] = useState<number>(10);
@@ -114,12 +117,13 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   // Question timer
   useEffect(() => {
     if (phase !== "playing") return;
-    setTimeLeft(15);
+    setTimeLeft(QUESTION_TIME);
     setAnswered(null);
     setAnsweredFor(null);
+    setFeedback(null);
     const start = Date.now();
     const iv = setInterval(() => {
-      const left = Math.max(0, 15 - Math.floor((Date.now() - start) / 1000));
+      const left = Math.max(0, QUESTION_TIME - Math.floor((Date.now() - start) / 1000));
       setTimeLeft(left);
       if (left <= 0) {
         clearInterval(iv);
@@ -246,7 +250,23 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     setAnswered(idx);
     setAnsweredFor(qIdx);
     const correct = questions[qIdx]?.answer === idx;
-    if (correct) setScores((prev) => ({ ...prev, [meId.current]: (prev[meId.current] || 0) + 1 }));
+    setFeedback(correct ? "correct" : "wrong");
+    if (correct) {
+      setScores((prev) => ({ ...prev, [meId.current]: (prev[meId.current] || 0) + 1 }));
+      // Award 1 point per correct answer (deduped by ref_id)
+      (async () => {
+        try {
+          const { data: u } = await supabase.auth.getUser();
+          if (u.user) {
+            await supabase.rpc("award_points_safe", {
+              _source: "live_battle",
+              _points: 1,
+              _ref_id: `${code}:${qIdx}`,
+            });
+          }
+        } catch { /* ignore */ }
+      })();
+    }
     channelRef.current.send({
       type: "broadcast",
       event: "answer",
@@ -514,9 +534,32 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               <span>{t.q} {qIdx + 1} {t.of} {questions.length}</span>
               <span className={timeLeft <= 5 ? "text-destructive font-bold" : ""}>{timeLeft}s</span>
             </div>
-            <Progress value={(timeLeft / 15) * 100} className="h-2" />
+            <Progress value={(timeLeft / QUESTION_TIME) * 100} className="h-2" />
 
-            <div className="rounded-2xl border bg-card p-6">
+            <motion.div
+              key={qIdx}
+              animate={feedback === "wrong" ? { x: [0, -10, 10, -8, 8, -4, 4, 0] } : {}}
+              transition={{ duration: 0.5 }}
+              className="relative rounded-2xl border bg-card p-6 overflow-hidden"
+            >
+              <AnimatePresence>
+                {feedback === "correct" && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-br from-green-400/20 via-emerald-300/10 to-transparent"
+                  />
+                )}
+                {feedback === "wrong" && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-br from-red-500/20 via-rose-400/10 to-transparent"
+                  />
+                )}
+              </AnimatePresence>
               <div className="text-lg font-medium mb-4">{cur.q}</div>
               <div className="grid gap-2">
                 {cur.choices.map((c, i) => {
@@ -524,27 +567,81 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
                   const isMine = hasAnswered && answered === i;
                   const isCorrect = cur.answer === i;
                   return (
-                    <button
+                    <motion.button
                       key={i}
                       disabled={hasAnswered}
                       onClick={() => submitAnswer(i)}
-                      className={`rounded-xl border p-3 text-left transition ${
+                      animate={
+                        hasAnswered && isCorrect
+                          ? { scale: [1, 1.04, 1] }
+                          : hasAnswered && isMine && !isCorrect
+                            ? { x: [0, -6, 6, -4, 4, 0] }
+                            : {}
+                      }
+                      transition={{ duration: 0.45 }}
+                      className={`relative rounded-xl border p-3 text-left transition ${
                         hasAnswered
                           ? isCorrect
-                            ? "bg-green-100 border-green-500 text-green-900"
+                            ? "bg-green-100 border-green-500 text-green-900 shadow-[0_0_24px_rgba(34,197,94,0.5)]"
                             : isMine
-                              ? "bg-red-100 border-red-500 text-red-900"
+                              ? "bg-red-100 border-red-500 text-red-900 shadow-[0_0_18px_rgba(239,68,68,0.45)]"
                               : "opacity-60"
                           : "hover:bg-accent"
                       }`}
                     >
                       <span className="font-mono text-xs me-2 opacity-60">{String.fromCharCode(65 + i)}.</span>
                       {c}
-                    </button>
+                      {hasAnswered && isCorrect && (
+                        <Check className="w-5 h-5 text-green-600 absolute top-1/2 -translate-y-1/2 end-3" />
+                      )}
+                      {hasAnswered && isMine && !isCorrect && (
+                        <X className="w-5 h-5 text-red-600 absolute top-1/2 -translate-y-1/2 end-3" />
+                      )}
+                    </motion.button>
                   );
                 })}
               </div>
-            </div>
+            </motion.div>
+
+            <AnimatePresence>
+              {feedback === "correct" && (
+                <motion.div
+                  key={`fb-c-${qIdx}`}
+                  initial={{ scale: 0.4, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ type: "spring", stiffness: 280, damping: 18 }}
+                  className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center"
+                >
+                  <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-white px-6 py-4 shadow-2xl">
+                    <Sparkles className="w-7 h-7" />
+                    <div>
+                      <div className="text-lg font-extrabold leading-none">
+                        {language === "ar" ? "إجابة صحيحة!" : "Correct!"}
+                      </div>
+                      <div className="text-sm opacity-90">+1 {language === "ar" ? "نقطة" : "point"}</div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              {feedback === "wrong" && (
+                <motion.div
+                  key={`fb-w-${qIdx}`}
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1, x: [0, -8, 8, -6, 6, 0] }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ duration: 0.5 }}
+                  className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center"
+                >
+                  <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 text-white px-6 py-4 shadow-2xl">
+                    <X className="w-7 h-7" />
+                    <div className="text-lg font-extrabold">
+                      {language === "ar" ? "خطأ!" : "Wrong!"}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
