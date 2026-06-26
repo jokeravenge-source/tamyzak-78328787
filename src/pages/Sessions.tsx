@@ -557,8 +557,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     }).select("id").single();
     if (error) { savingRef.current = false; toast.error(error.message); return; }
     if (points > 0 && inserted?.id) {
-      await supabase.from("user_points").insert({
-        user_id: userId, source: "session", points, ref_id: inserted.id,
+      await supabase.rpc("award_points_safe", {
+        _source: "session", _points: points, _ref_id: inserted.id,
       });
     }
     toast.success(`${L.saved} (+${points} ${L.points})`);
