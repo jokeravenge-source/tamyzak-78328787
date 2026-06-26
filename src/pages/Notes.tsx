@@ -437,7 +437,7 @@ const TreeItem = ({
         onDragLeave={() => { /* handled at root */ }}
         onDrop={(e) => { e.stopPropagation(); onPageDrop(e, node.id); }}
         onDragEnd={onPageDragEnd}
-        className={`group flex items-center gap-1 rounded-md px-1 py-1 cursor-pointer transition-colors ${
+        className={`group relative flex items-center gap-1 rounded-md px-1 py-1 cursor-pointer transition-all ${
           active
             ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary shadow-sm"
             : "text-foreground/80 hover:bg-secondary hover:translate-x-0.5"
