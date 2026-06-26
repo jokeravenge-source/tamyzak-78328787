@@ -113,30 +113,73 @@ html.zombie-mode .gradient-text {
 @layer base {
   :root,
   .theme-notion-light {
-    /* Noir & Gold — black canvas with brass accents (#0d0d0d / #1a1a1a / #c9a84c / #f0d78c) */
-    --background: 0 0% 5%;              /* #0d0d0d */
-    --foreground: 0 0% 98%;             /* near white */
-    --card: 0 0% 10%;                   /* #1a1a1a */
+    /* Cloud White — clean, calm, classroom-light (default) */
+    --background: 210 20% 98%;
+    --foreground: 215 28% 17%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+    --card-front-fg: 215 28% 17%;
+    --card-back-fg: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 213 94% 68%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 25% 27%;
+    --muted: 213 22% 93%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 213 22% 93%;
+    --input: 213 22% 93%;
+    --ring: 217 91% 60%;
+    --radius: 0.875rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 28% 17%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 215 28% 17%;
+    --sidebar-border: 213 22% 93%;
+    --sidebar-ring: 217 91% 60%;
+
+    --gradient-bg: linear-gradient(180deg, hsl(210 20% 98%), hsl(210 20% 98%));
+    --gradient-card-front: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 20% 98%));
+    --gradient-card-back: linear-gradient(135deg, hsl(217 91% 60%), hsl(213 94% 68%));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --shadow-card: 0 1px 2px hsl(215 28% 17% / 0.04), 0 8px 24px -12px hsl(215 28% 17% / 0.12);
+    --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.2), 0 8px 24px -8px hsl(var(--primary) / 0.25);
+    --transition-flip: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  /* Noir & Gold — opt-in brass + black */
+  .theme-noir-gold {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 10%;
     --card-foreground: 0 0% 98%;
     --card-front-fg: 0 0% 98%;
     --card-back-fg: 0 0% 5%;
     --popover: 0 0% 10%;
     --popover-foreground: 0 0% 98%;
-    --primary: 43 56% 54%;              /* #c9a84c brass */
+    --primary: 43 56% 54%;
     --primary-foreground: 0 0% 5%;
-    --primary-glow: 43 78% 75%;         /* #f0d78c light brass */
+    --primary-glow: 43 78% 75%;
     --secondary: 0 0% 14%;
     --secondary-foreground: 0 0% 92%;
     --muted: 0 0% 14%;
-    --muted-foreground: 43 20% 65%;     /* dim brass text */
+    --muted-foreground: 43 20% 65%;
     --accent: 43 78% 75%;
     --accent-foreground: 0 0% 5%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 43 35% 22%;               /* brass-tinted dark border */
+    --border: 43 35% 22%;
     --input: 0 0% 16%;
     --ring: 43 56% 54%;
-    --radius: 1rem;
 
     --sidebar-background: 0 0% 7%;
     --sidebar-foreground: 0 0% 92%;
@@ -152,10 +195,8 @@ html.zombie-mode .gradient-text {
                    linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 4%));
     --gradient-card-front: linear-gradient(135deg, hsl(0 0% 12%), hsl(0 0% 8%));
     --gradient-card-back: linear-gradient(135deg, hsl(43 56% 54%), hsl(43 78% 75%));
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.6), 0 14px 40px -16px hsl(43 56% 54% / 0.25);
     --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.35), 0 8px 28px -6px hsl(var(--primary) / 0.4);
-    --transition-flip: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
   }
 
   .theme-notion-dark {
