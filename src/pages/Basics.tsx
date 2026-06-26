@@ -903,7 +903,7 @@ const Basics = ({
                 {toolsHeader}
               </h4>
               <button
-                onClick={() => onNav("more")}
+                onClick={() => setShowAllTools(true)}
                 className="text-xs sm:text-sm font-semibold text-primary hover:opacity-80 inline-flex items-center gap-1 transition-opacity shrink-0"
               >
                 {language === "ar" ? "عرض كل الأدوات" : "See all study tools"}
