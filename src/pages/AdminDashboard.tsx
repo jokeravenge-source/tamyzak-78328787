@@ -51,11 +51,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     setFcLoading(true);
     let q = supabase.from("custom_flashcards").select("*").order("created_at", { ascending: false });
     if (fcFilter !== "all") q = q.eq("approved", fcFilter === "approved");
+    if (fcSubjectFilter !== "all") q = q.eq("subject", fcSubjectFilter);
     const { data } = await q;
     setFcs((data ?? []) as FC[]);
     setFcLoading(false);
   };
-  useEffect(() => { if (tab === "flashcards") loadFcs(); }, [tab, fcFilter]);
+  useEffect(() => { if (tab === "flashcards") loadFcs(); }, [tab, fcFilter, fcSubjectFilter]);
   const addFc = async () => {
     if (!fcForm.question.trim() || !fcForm.answer.trim()) return toast.error("Question and answer required");
     const { data: u } = await supabase.auth.getUser();
@@ -538,11 +539,11 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
             </div>
             {fcLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-            ) : (fcSubjectFilter === "all" ? fcs : fcs.filter((f) => f.subject === fcSubjectFilter)).length === 0 ? (
-              <p className="text-center text-muted-foreground py-10">{fcFilter === "pending" ? "No pending submissions." : "No approved flashcards yet."}</p>
+            ) : fcs.length === 0 ? (
+              <p className="text-center text-muted-foreground py-10">{fcFilter === "pending" ? "No pending submissions." : fcSubjectFilter === "all" ? "No flashcards yet." : `No ${fcSubjectFilter} flashcards found.`}</p>
             ) : (
               <div className="grid gap-3">
-                {(fcSubjectFilter === "all" ? fcs : fcs.filter((f) => f.subject === fcSubjectFilter)).map((f) => (
+                {fcs.map((f) => (
                   <article key={f.id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-start gap-4">
                     <div className="flex-1 min-w-[200px]">
                       <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground mb-1">
