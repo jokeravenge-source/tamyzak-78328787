@@ -100,6 +100,8 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [approved, setApproved] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+  const t = labels[language];
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -137,8 +139,6 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
       window.removeEventListener("app:companion-auto-schedule", onAutoSchedule);
     };
   }, [embedded, t]);
-  const endRef = useRef<HTMLDivElement>(null);
-  const t = labels[language];
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
