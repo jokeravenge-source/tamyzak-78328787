@@ -45,15 +45,13 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [fcs, setFcs] = useState<FC[]>([]);
   const [fcLoading, setFcLoading] = useState(false);
   const [fcForm, setFcForm] = useState({ subject: "physics", chapter: "1", language: "en", question: "", answer: "" });
-  const [fcFilter, setFcFilter] = useState<"pending" | "approved">("pending");
+  const [fcFilter, setFcFilter] = useState<"pending" | "approved" | "all">("pending");
   const [fcSubjectFilter, setFcSubjectFilter] = useState<string>("all");
   const loadFcs = async () => {
     setFcLoading(true);
-    const { data } = await supabase
-      .from("custom_flashcards")
-      .select("*")
-      .eq("approved", fcFilter === "approved")
-      .order("created_at", { ascending: false });
+    let q = supabase.from("custom_flashcards").select("*").order("created_at", { ascending: false });
+    if (fcFilter !== "all") q = q.eq("approved", fcFilter === "approved");
+    const { data } = await q;
     setFcs((data ?? []) as FC[]);
     setFcLoading(false);
   };
@@ -529,6 +527,9 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               </button>
               <button onClick={() => setFcFilter("approved")} className={`px-3 py-1.5 rounded-full text-xs border ${fcFilter === "approved" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-secondary/40 text-muted-foreground"}`}>
                 <Check className="w-3 h-3 inline mr-1" /> Approved
+              </button>
+              <button onClick={() => setFcFilter("all")} className={`px-3 py-1.5 rounded-full text-xs border ${fcFilter === "all" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-secondary/40 text-muted-foreground"}`}>
+                <Layers className="w-3 h-3 inline mr-1" /> All
               </button>
               <select value={fcSubjectFilter} onChange={(e) => setFcSubjectFilter(e.target.value)} className="ml-auto h-8 px-3 rounded-full bg-secondary/40 border border-white/10 text-xs">
                 <option value="all">All subjects</option>
