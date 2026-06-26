@@ -668,7 +668,7 @@ const Basics = ({
                   <span className="text-xl leading-none">🔥</span>
                   <div className="flex flex-col leading-tight">
                     <span className="text-[10px] font-bold opacity-90">{language === "ar" ? "سلسلة" : "Streak"}</span>
-                    <span className="text-sm font-bold tabular-nums">{missionsDone || 0}</span>
+                    <span className="text-sm font-bold tabular-nums">{streakDays || 0}</span>
                   </div>
                 </div>
               </div>
