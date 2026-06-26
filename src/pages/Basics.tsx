@@ -14,6 +14,7 @@ import { missionsData, missionsOrder } from "@/data/missions";
 import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
+import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
