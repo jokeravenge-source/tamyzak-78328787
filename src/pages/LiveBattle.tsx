@@ -267,11 +267,10 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
       try {
         const { data: u } = await supabase.auth.getUser();
         if (u.user && earned > 0) {
-          await supabase.from("user_points").insert({
-            user_id: u.user.id,
-            source: "live_battle",
-            points: earned,
-            ref_id: code,
+          await supabase.rpc("award_points_safe", {
+            _source: "live_battle",
+            _points: earned,
+            _ref_id: code,
           });
         }
       } catch { /* ignore */ }
