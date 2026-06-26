@@ -75,6 +75,16 @@ const CompanionWelcomeTrigger = () => {
   return null;
 };
 
+const SpotifyAuthCallback = () => {
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("state") === "spotify" && url.searchParams.get("code")) {
+      import("@/lib/spotifyAuth").then((m) => m.handleRedirectCallback());
+    }
+  }, []);
+  return null;
+};
+
 const queryClient = new QueryClient();
 
 const App = () => {
