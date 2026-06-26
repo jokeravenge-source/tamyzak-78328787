@@ -183,7 +183,13 @@ export function buildBattleMcqs(subject: BattleSubject, n: number, seed: number)
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
 
-  const distractorPoolAll = merged.map((m) => m.qa.a);
+  // Group distractors by subject so each question's wrong choices stay on-topic.
+  const distractorsBySubject = new Map<BattleSubject, string[]>();
+  for (const m of merged) {
+    const arr = distractorsBySubject.get(m.subject) ?? [];
+    arr.push(m.qa.a);
+    distractorsBySubject.set(m.subject, arr);
+  }
 
   const out: BattleMCQ[] = [];
   for (const entry of arr) {
@@ -191,8 +197,9 @@ export function buildBattleMcqs(subject: BattleSubject, n: number, seed: number)
     const correct = entry.qa.a.trim();
     const usedA = new Set<string>([correct.toLowerCase()]);
     const distractors: string[] = [];
-    for (let tries = 0; tries < 80 && distractors.length < 3; tries++) {
-      const candidate = distractorPoolAll[Math.floor(rand() * distractorPoolAll.length)]?.trim();
+    const subjectDistractors = distractorsBySubject.get(entry.subject) ?? [];
+    for (let tries = 0; tries < 120 && distractors.length < 3; tries++) {
+      const candidate = subjectDistractors[Math.floor(rand() * subjectDistractors.length)]?.trim();
       if (!candidate) continue;
       const key = candidate.toLowerCase();
       if (usedA.has(key)) continue;
