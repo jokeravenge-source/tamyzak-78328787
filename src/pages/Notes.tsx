@@ -4,6 +4,7 @@ import {
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
   Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
   BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download, FileType2, Upload,
+  Sparkles, NotebookPen,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -436,13 +437,16 @@ const TreeItem = ({
         onDragLeave={() => { /* handled at root */ }}
         onDrop={(e) => { e.stopPropagation(); onPageDrop(e, node.id); }}
         onDragEnd={onPageDragEnd}
-        className={`group flex items-center gap-1 rounded-md px-1 py-1 cursor-pointer transition-colors ${
-          active ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-secondary"
+        className={`group relative flex items-center gap-1 rounded-md px-1 py-1 cursor-pointer transition-all ${
+          active
+            ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary shadow-sm"
+            : "text-foreground/80 hover:bg-secondary hover:translate-x-0.5"
         } ${isDragTarget ? "ring-2 ring-primary/60" : ""}`}
         style={{ paddingInlineStart: `${depth * 0.75 + 0.25}rem` }}
         onClick={() => { if (!editing) onSelect(node.id); }}
         onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
       >
+        {active && <span className="absolute start-0 w-0.5 h-5 rounded-r bg-primary -ml-px" aria-hidden />}
         <button
           onClick={(e) => { e.stopPropagation(); if (hasChildren) onToggle(node.id); }}
           className={`w-4 h-4 flex items-center justify-center shrink-0 rounded hover:bg-foreground/10 ${hasChildren ? "" : "opacity-30 cursor-default"}`}
@@ -1072,22 +1076,27 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
             animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-r border-border bg-secondary/30 backdrop-blur-sm flex flex-col h-screen sticky top-0 overflow-hidden"
+            className="border-r border-border bg-gradient-to-b from-secondary/40 via-secondary/20 to-background backdrop-blur-xl flex flex-col h-screen sticky top-0 overflow-hidden"
             style={{ minWidth: 0 }}
           >
             <div className="w-[280px] flex flex-col h-full">
-              <div className="p-3 border-b border-border flex items-center gap-2">
+              <div className="p-3 border-b border-border/60 flex items-center gap-2">
                 <button
                   onClick={async () => { await flushSaves(); onBack(); }}
-                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={t.back}
                 >
                   <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                 </button>
-                <span className="text-sm font-bold flex-1 truncate">{t.title}</span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="w-7 h-7 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                    <NotebookPen className="w-4 h-4" />
+                  </span>
+                  <span className="text-sm font-bold truncate tracking-tight">{t.title}</span>
+                </div>
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                   aria-label="collapse"
                 >
                   <PanelLeftClose className="w-4 h-4" />
@@ -1231,19 +1240,19 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                   </div>
                 )}
               </div>
-              <div className="p-2 border-t border-border space-y-2">
+              <div className="p-2 border-t border-border/60 space-y-2 bg-background/40">
                 <button
                   onClick={createNotebook}
-                  className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-sm font-semibold hover:bg-secondary transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-sm font-semibold hover:bg-secondary hover:border-primary/40 transition-colors"
                 >
                   <FolderPlus className="w-4 h-4" />
                   {t.newNotebook}
                 </button>
                 <button
                   onClick={() => createNote(null)}
-                  className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-95 transition-opacity"
+                  className="group w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold shadow-md shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.99] transition-all"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                   {t.newPage}
                 </button>
               </div>
@@ -1255,7 +1264,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
       {/* Main */}
       <main className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
-        <div className="sticky top-0 z-30 backdrop-blur-md bg-background/70 border-b border-border h-12 flex items-center px-3 gap-2">
+        <div className="sticky top-0 z-30 backdrop-blur-xl bg-background/60 border-b border-border/60 h-12 flex items-center px-3 gap-2">
           {!sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(true)}
@@ -1277,37 +1286,61 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
               ))
             )}
           </div>
-          {saveState !== "idle" && (
-            <span
-              className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
-                saveState === "saving"
-                  ? "text-muted-foreground border-border bg-secondary/60"
-                  : "text-primary border-primary/30 bg-primary/10"
-              }`}
-            >
-              {saveState === "saving"
-                ? (isRTL ? "جارٍ الحفظ…" : "Saving…")
-                : (isRTL ? "تم الحفظ" : "Saved")}
-            </span>
-          )}
+          <AnimatePresence>
+            {saveState !== "idle" && (
+              <motion.span
+                initial={{ opacity: 0, y: -4, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.9 }}
+                transition={{ duration: 0.18 }}
+                className={`shrink-0 inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border backdrop-blur-sm ${
+                  saveState === "saving"
+                    ? "text-muted-foreground border-border bg-secondary/60"
+                    : "text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    saveState === "saving"
+                      ? "bg-muted-foreground animate-pulse"
+                      : "bg-emerald-500 animate-pulse"
+                  }`}
+                />
+                {saveState === "saving"
+                  ? (isRTL ? "جارٍ الحفظ…" : "Saving…")
+                  : (isRTL ? "تم الحفظ" : "Saved")}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Content */}
         {!active ? (
           <div className="flex-1 flex items-center justify-center text-center px-6">
-            <div className="max-w-md">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <FileText className="w-8 h-8 text-primary" />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.35 }}
+              className="max-w-md"
+            >
+              <div className="relative w-20 h-20 mx-auto mb-5">
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 blur-xl" />
+                <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-9 h-9 text-primary" />
+                </div>
               </div>
-              <p className="text-muted-foreground mb-5">{t.emptyState}</p>
+              <h2 className="text-2xl font-bold tracking-tight mb-2">
+                {language === "ar" ? "ابدأ بصفحة جديدة" : "Start a new page"}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">{t.emptyState}</p>
               <button
                 onClick={() => createNote(null)}
-                className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-95 transition-opacity"
+                className="group inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.03] active:scale-[0.98] transition-all"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                 {t.newPage}
               </button>
-            </div>
+            </motion.div>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto">
@@ -1488,9 +1521,9 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                     setBlocks((blocks) => [...blocks, nb]);
                     setFocusBlockId(nb.id);
                   }}
-                  className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground rounded-md px-2 py-1 hover:bg-secondary transition-colors"
+                  className="group mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary rounded-md px-2.5 py-1.5 hover:bg-primary/5 border border-dashed border-transparent hover:border-primary/30 transition-all"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
                   {language === "ar" ? "إضافة كتلة" : "Add block"}
                 </button>
               </div>
@@ -1501,31 +1534,40 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
       </main>
 
       {/* Slash menu */}
-      {slash && (
-        <div
-          className="fixed z-50 w-64 max-h-80 overflow-y-auto rounded-xl bg-popover border border-border shadow-xl p-1"
-          style={{ left: Math.min(slash.x, window.innerWidth - 280), top: slash.y + 4 }}
-        >
-          {SLASH_OPTIONS.map((opt) => {
-            const Icon = opt.Icon;
-            return (
-              <button
-                key={opt.type}
-                onClick={() => applySlashType(opt.type)}
-                className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-secondary text-left transition-colors"
-              >
-                <div className="w-8 h-8 rounded-md bg-card border border-border flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{language === "ar" ? opt.labelAr : opt.labelEn}</p>
-                  <p className="text-xs text-muted-foreground truncate">{language === "ar" ? opt.descAr : opt.descEn}</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <AnimatePresence>
+        {slash && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+            transition={{ duration: 0.15 }}
+            className="fixed z-50 w-72 max-h-80 overflow-y-auto rounded-2xl bg-popover/95 backdrop-blur-xl border border-border shadow-2xl p-1.5"
+            style={{ left: Math.min(slash.x, window.innerWidth - 300), top: slash.y + 4 }}
+          >
+            <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {language === "ar" ? "نوع الكتلة" : "Block type"}
+            </p>
+            {SLASH_OPTIONS.map((opt) => {
+              const Icon = opt.Icon;
+              return (
+                <button
+                  key={opt.type}
+                  onClick={() => applySlashType(opt.type)}
+                  className="group w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-primary/8 text-left transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-card to-secondary/60 border border-border group-hover:border-primary/40 group-hover:from-primary/10 group-hover:to-primary/5 flex items-center justify-center shrink-0 transition-colors">
+                    <Icon className="w-4 h-4 group-hover:text-primary transition-colors" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{language === "ar" ? opt.labelAr : opt.labelEn}</p>
+                    <p className="text-xs text-muted-foreground truncate">{language === "ar" ? opt.descAr : opt.descEn}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
