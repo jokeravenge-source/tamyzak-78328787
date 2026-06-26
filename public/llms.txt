@@ -1,0 +1,8 @@
+# Tamayzak
+
+> Study platform for Iraq's Sixth Scientific students — flashcards, curated notes, ministerial questions, and progress tracking across both curricula.
+
+## Pages
+
+- [Home](/): Overview of chapters, subjects, and study tools.
+- [Flashcards](/flashcards): Spaced-repetition flashcards organized by subject and chapter.
