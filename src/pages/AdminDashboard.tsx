@@ -45,7 +45,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [fcs, setFcs] = useState<FC[]>([]);
   const [fcLoading, setFcLoading] = useState(false);
   const [fcForm, setFcForm] = useState({ subject: "physics", chapter: "1", language: "en", question: "", answer: "" });
-  const [fcFilter, setFcFilter] = useState<"pending" | "approved" | "all">("pending");
+  const [fcFilter, setFcFilter] = useState<"pending" | "approved" | "all">("all");
   const [fcSubjectFilter, setFcSubjectFilter] = useState<string>("all");
   const loadFcs = async () => {
     setFcLoading(true);
