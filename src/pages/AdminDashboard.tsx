@@ -45,15 +45,13 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [fcs, setFcs] = useState<FC[]>([]);
   const [fcLoading, setFcLoading] = useState(false);
   const [fcForm, setFcForm] = useState({ subject: "physics", chapter: "1", language: "en", question: "", answer: "" });
-  const [fcFilter, setFcFilter] = useState<"pending" | "approved">("pending");
+  const [fcFilter, setFcFilter] = useState<"pending" | "approved" | "all">("pending");
   const [fcSubjectFilter, setFcSubjectFilter] = useState<string>("all");
   const loadFcs = async () => {
     setFcLoading(true);
-    const { data } = await supabase
-      .from("custom_flashcards")
-      .select("*")
-      .eq("approved", fcFilter === "approved")
-      .order("created_at", { ascending: false });
+    let q = supabase.from("custom_flashcards").select("*").order("created_at", { ascending: false });
+    if (fcFilter !== "all") q = q.eq("approved", fcFilter === "approved");
+    const { data } = await q;
     setFcs((data ?? []) as FC[]);
     setFcLoading(false);
   };
