@@ -307,31 +307,88 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
           </Button>
         </div>
 
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 text-2xl font-bold">
-            <Swords className="w-6 h-6 text-primary" />
-            {t.title}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-center mb-6"
+        >
+          <div className="inline-flex items-center gap-2 text-3xl font-extrabold">
+            <motion.span
+              animate={{ rotate: [-12, 12, -12] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+              className="inline-flex"
+            >
+              <Swords className="w-7 h-7 text-rose-500" />
+            </motion.span>
+            <span className="bg-gradient-to-r from-fuchsia-600 via-rose-500 to-orange-500 bg-clip-text text-transparent">
+              {t.title}
+            </span>
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
+            </span>
           </div>
           <p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p>
-        </div>
+        </motion.div>
 
         {phase === "menu" && (
-          <div className="space-y-4">
+          <motion.div
+            initial="hidden"
+            animate="show"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
+            className="space-y-4"
+          >
             <div className="rounded-2xl border bg-card p-4">
               <label className="text-sm font-medium">{t.name}</label>
               <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-2" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button onClick={() => setPhase("createSettings")} className="rounded-2xl p-6 bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-left hover:opacity-90 transition">
-                <Swords className="w-8 h-8 mb-2" />
-                <div className="font-bold text-lg">{t.create}</div>
-              </button>
-              <button onClick={() => setPhase("join")} className="rounded-2xl p-6 bg-card border text-left hover:bg-accent transition">
-                <Users className="w-8 h-8 mb-2 text-primary" />
+              <motion.button
+                onClick={() => setPhase("createSettings")}
+                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="relative group rounded-2xl text-left overflow-hidden"
+              >
+                <span
+                  aria-hidden
+                  className="absolute -inset-[1.5px] rounded-2xl"
+                  style={{
+                    background:
+                      "conic-gradient(from 0deg, hsl(var(--primary)), #d946ef, #f97316, #ef4444, hsl(var(--primary)))",
+                    animation: "spin 6s linear infinite",
+                  }}
+                />
+                <div className="relative rounded-2xl p-6 bg-gradient-to-br from-fuchsia-600 via-rose-500 to-orange-500 text-white overflow-hidden">
+                  <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                  <motion.div
+                    animate={{ rotate: [-10, 10, -10] }}
+                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Swords className="w-8 h-8 mb-2 drop-shadow" />
+                  </motion.div>
+                  <div className="font-bold text-lg">{t.create}</div>
+                </div>
+              </motion.button>
+              <motion.button
+                onClick={() => setPhase("join")}
+                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="relative group rounded-2xl p-6 bg-card border-2 border-primary/20 text-left hover:border-primary/60 transition overflow-hidden"
+              >
+                <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
+                <motion.div
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Users className="w-8 h-8 mb-2 text-primary" />
+                </motion.div>
                 <div className="font-bold text-lg">{t.join}</div>
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {phase === "join" && (
