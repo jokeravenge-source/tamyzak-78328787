@@ -250,6 +250,7 @@ const Basics = ({
   const [activeGroup, setActiveGroup] = useState<string>(NAV_GROUPS[0].titleEn);
   const todos = useTodos();
   const [missionsDone, setMissionsDone] = useState<number>(0);
+  const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
 
   // Total missions across all subjects/chapters
