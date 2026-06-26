@@ -120,7 +120,7 @@ const Advices = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
 
   return (
     <main className="min-h-screen px-4 py-10 md:py-16" dir={dir}>
-      <button onClick={onBack} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground">
+      <button aria-label="Go back" onClick={onBack} className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground">
         <ArrowLeft className="w-5 h-5" />
       </button>
 
@@ -180,7 +180,7 @@ const Advices = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
                       {tp.body && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{tp.body}</p>}
                     </div>
                     {(isAdmin || tp.user_id === userId) && (
-                      <button onClick={(e) => { e.stopPropagation(); deleteTopic(tp.id); }} className="text-muted-foreground hover:text-destructive p-1">
+                      <button aria-label="Delete topic" onClick={(e) => { e.stopPropagation(); deleteTopic(tp.id); }} className="text-muted-foreground hover:text-destructive p-1">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     )}
@@ -197,7 +197,7 @@ const Advices = ({ language, onBack }: { language: AppLanguage; onBack: () => vo
                           <p className="text-sm whitespace-pre-wrap break-words">{c.body}</p>
                         </div>
                         {(isAdmin || c.user_id === userId) && (
-                          <button onClick={() => deleteComment(tp.id, c.id)} className="text-muted-foreground hover:text-destructive p-1">
+                          <button aria-label="Delete comment" onClick={() => deleteComment(tp.id, c.id)} className="text-muted-foreground hover:text-destructive p-1">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
