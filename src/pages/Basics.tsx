@@ -811,6 +811,57 @@ const Basics = ({
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 if (!meta) return null;
+                if (it.key === "liveBattle") {
+                  return (
+                    <motion.button
+                      key={it.key}
+                      variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      whileHover={{ y: -3, scale: 1.015 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate(it.key)}
+                      className="relative group rounded-2xl text-left"
+                    >
+                      <span
+                        aria-hidden
+                        className="absolute -inset-[1.5px] rounded-2xl"
+                        style={{
+                          background:
+                            "conic-gradient(from 0deg, hsl(var(--primary)), #d946ef, #f97316, #ef4444, hsl(var(--primary)))",
+                          animation: "spin 6s linear infinite",
+                        }}
+                      />
+                      <div className="relative bg-card rounded-2xl p-5 overflow-hidden">
+                        {/* shimmer sweep */}
+                        <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                        {/* live pulse dot */}
+                        <span className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                          <span className="relative flex h-2 w-2">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+                          </span>
+                          <span className="text-[10px] font-extrabold tracking-wider text-rose-500">LIVE</span>
+                        </span>
+                        <div className="relative w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-gradient-to-br from-fuchsia-500 to-rose-500 shadow-[0_8px_24px_-6px_rgba(244,63,94,0.6)]">
+                          <motion.div
+                            animate={{ rotate: [-12, 12, -12] }}
+                            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                          >
+                            <Icon className="w-5 h-5 text-white" />
+                          </motion.div>
+                        </div>
+                        <h5 className="font-bold text-base mb-1 bg-gradient-to-r from-fuchsia-600 to-rose-500 bg-clip-text text-transparent">
+                          {meta.title}
+                        </h5>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{meta.subtitle}</p>
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-rose-500">
+                          {language === "ar" ? "ابدأ المعركة" : "Start battle"}
+                          <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? "rotate-180 group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
+                        </span>
+                      </div>
+                    </motion.button>
+                  );
+                }
                 return (
                   <motion.button
                     key={it.key}
