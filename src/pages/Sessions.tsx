@@ -843,7 +843,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           <audio ref={audioRef} src={TRACKS[trackIdx]} loop preload="none" />
         </div>
 
-        <SpotifyPlaylistBlock language={language} />
+        <SpotifyPlayerBlock language={language} />
 
         <section className="mt-10">
           <h2 className="text-xl font-semibold flex items-center gap-2 mb-4"><Trophy className="w-5 h-5 text-primary" /> {L.leaderboard}</h2>
