@@ -49,6 +49,7 @@ import Canvas from "./pages/Canvas";
 import YoutubePlayer from "./pages/YoutubePlayer";
 import OrganicEquations from "./pages/OrganicEquations";
 import LiveBattle from "./pages/LiveBattle";
+import SubjectsHub from "./pages/SubjectsHub";
 import AppSidebar, { type SidebarKey } from "./components/AppSidebar";
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
