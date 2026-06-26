@@ -102,7 +102,6 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
   const [approved, setApproved] = useState(false);
 
   useEffect(() => {
-    if (embedded) return;
     const onOpen = () => setOpen(true);
     const onWelcome = () => {
       setIntro(true);
@@ -111,13 +110,33 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
       setApproved(false);
       setOpen(true);
     };
-    window.addEventListener("app:open-excellence-companion", onOpen);
-    window.addEventListener("app:welcome-excellence-companion", onWelcome);
-    return () => {
-      window.removeEventListener("app:open-excellence-companion", onOpen);
-      window.removeEventListener("app:welcome-excellence-companion", onWelcome);
+    const onAutoSchedule = () => {
+      setIntro(false);
+      setApproved(false);
+      setOpen(true);
+      setMode("schedule");
+      setMessages([{ role: "assistant", content: t.welcomeSchedule }]);
     };
-  }, [embedded]);
+    if (!embedded) {
+      window.addEventListener("app:open-excellence-companion", onOpen);
+      window.addEventListener("app:welcome-excellence-companion", onWelcome);
+    }
+    window.addEventListener("app:companion-auto-schedule", onAutoSchedule);
+    // If flag was set before mount, trigger immediately
+    try {
+      if (sessionStorage.getItem("companion:autoSchedule") === "1") {
+        sessionStorage.removeItem("companion:autoSchedule");
+        onAutoSchedule();
+      }
+    } catch { /* ignore */ }
+    return () => {
+      if (!embedded) {
+        window.removeEventListener("app:open-excellence-companion", onOpen);
+        window.removeEventListener("app:welcome-excellence-companion", onWelcome);
+      }
+      window.removeEventListener("app:companion-auto-schedule", onAutoSchedule);
+    };
+  }, [embedded, t]);
   const endRef = useRef<HTMLDivElement>(null);
   const t = labels[language];
 
