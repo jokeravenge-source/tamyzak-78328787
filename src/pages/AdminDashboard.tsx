@@ -46,6 +46,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const [fcLoading, setFcLoading] = useState(false);
   const [fcForm, setFcForm] = useState({ subject: "physics", chapter: "1", language: "en", question: "", answer: "" });
   const [fcFilter, setFcFilter] = useState<"pending" | "approved">("pending");
+  const [fcSubjectFilter, setFcSubjectFilter] = useState<string>("all");
   const loadFcs = async () => {
     setFcLoading(true);
     const { data } = await supabase
@@ -529,14 +530,18 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               <button onClick={() => setFcFilter("approved")} className={`px-3 py-1.5 rounded-full text-xs border ${fcFilter === "approved" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-secondary/40 text-muted-foreground"}`}>
                 <Check className="w-3 h-3 inline mr-1" /> Approved
               </button>
+              <select value={fcSubjectFilter} onChange={(e) => setFcSubjectFilter(e.target.value)} className="ml-auto h-8 px-3 rounded-full bg-secondary/40 border border-white/10 text-xs">
+                <option value="all">All subjects</option>
+                {["physics","chemistry","biology","english","french","arabic","islamic"].map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
             {fcLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-            ) : fcs.length === 0 ? (
+            ) : (fcSubjectFilter === "all" ? fcs : fcs.filter((f) => f.subject === fcSubjectFilter)).length === 0 ? (
               <p className="text-center text-muted-foreground py-10">{fcFilter === "pending" ? "No pending submissions." : "No approved flashcards yet."}</p>
             ) : (
               <div className="grid gap-3">
-                {fcs.map((f) => (
+                {(fcSubjectFilter === "all" ? fcs : fcs.filter((f) => f.subject === fcSubjectFilter)).map((f) => (
                   <article key={f.id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-start gap-4">
                     <div className="flex-1 min-w-[200px]">
                       <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground mb-1">
