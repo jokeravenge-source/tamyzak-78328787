@@ -1365,6 +1365,29 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                     <span>{exporting ? (language === "ar" ? "جارٍ التصدير…" : "Exporting…") : (language === "ar" ? "تصدير PDF" : "Export PDF")}</span>
                     <ChevronDown className="w-3 h-3" />
                   </button>
+                  <button
+                    onClick={async () => {
+                      if (!active) return;
+                      const plain = active.content
+                        .map((b) => (b.type === "divider" ? "" : (b.text || "").trim()))
+                        .filter(Boolean)
+                        .join("\n");
+                      if (plain.length < 10) {
+                        toast.error(language === "ar" ? "اكتب المزيد أولاً" : "Write more first");
+                        return;
+                      }
+                      try {
+                        localStorage.setItem("text_to_video_prefill_v1", plain);
+                        localStorage.setItem("app_menu_choice_v1", "textToVideo");
+                      } catch { /* ignore */ }
+                      await flushSaves();
+                      window.location.reload();
+                    }}
+                    className="ms-2 inline-flex items-center gap-2 h-8 px-3 rounded-full border border-primary/30 bg-primary/10 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>{language === "ar" ? "حوّل إلى فيديو" : "Convert to video"}</span>
+                  </button>
                   {exportOpen && (
                     <div className="absolute z-40 mt-1 end-0 right-0 w-64 rounded-xl bg-popover border border-border shadow-lg p-3 space-y-3">
                       <div>
