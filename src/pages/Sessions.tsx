@@ -273,6 +273,16 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   useEffect(() => { secondsRef.current = seconds; }, [seconds]);
   const runningRef = useRef(false);
   useEffect(() => { runningRef.current = running; }, [running]);
+  // Mirror identity/progress fields so the pagehide flush can write the
+  // latest values even after React has begun tearing the component down.
+  const subjectRef = useRef<string | null>(null);
+  const missionRef = useRef("");
+  const completedRef = useRef(false);
+  const startedRef = useRef(false);
+  useEffect(() => { subjectRef.current = subject; }, [subject]);
+  useEffect(() => { missionRef.current = mission; }, [mission]);
+  useEffect(() => { completedRef.current = completed; }, [completed]);
+  useEffect(() => { startedRef.current = started; }, [started]);
 
   // Pomodoro phase switching: work min of studying triggers rest min rest, then back to work.
   useEffect(() => {
