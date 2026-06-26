@@ -1264,7 +1264,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
       {/* Main */}
       <main className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
-        <div className="sticky top-0 z-30 backdrop-blur-md bg-background/70 border-b border-border h-12 flex items-center px-3 gap-2">
+        <div className="sticky top-0 z-30 backdrop-blur-xl bg-background/60 border-b border-border/60 h-12 flex items-center px-3 gap-2">
           {!sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(true)}
@@ -1286,37 +1286,61 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
               ))
             )}
           </div>
-          {saveState !== "idle" && (
-            <span
-              className={`shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full border ${
-                saveState === "saving"
-                  ? "text-muted-foreground border-border bg-secondary/60"
-                  : "text-primary border-primary/30 bg-primary/10"
-              }`}
-            >
-              {saveState === "saving"
-                ? (isRTL ? "جارٍ الحفظ…" : "Saving…")
-                : (isRTL ? "تم الحفظ" : "Saved")}
-            </span>
-          )}
+          <AnimatePresence>
+            {saveState !== "idle" && (
+              <motion.span
+                initial={{ opacity: 0, y: -4, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.9 }}
+                transition={{ duration: 0.18 }}
+                className={`shrink-0 inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border backdrop-blur-sm ${
+                  saveState === "saving"
+                    ? "text-muted-foreground border-border bg-secondary/60"
+                    : "text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    saveState === "saving"
+                      ? "bg-muted-foreground animate-pulse"
+                      : "bg-emerald-500 animate-pulse"
+                  }`}
+                />
+                {saveState === "saving"
+                  ? (isRTL ? "جارٍ الحفظ…" : "Saving…")
+                  : (isRTL ? "تم الحفظ" : "Saved")}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Content */}
         {!active ? (
           <div className="flex-1 flex items-center justify-center text-center px-6">
-            <div className="max-w-md">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 mx-auto flex items-center justify-center mb-4">
-                <FileText className="w-8 h-8 text-primary" />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.35 }}
+              className="max-w-md"
+            >
+              <div className="relative w-20 h-20 mx-auto mb-5">
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 blur-xl" />
+                <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-9 h-9 text-primary" />
+                </div>
               </div>
-              <p className="text-muted-foreground mb-5">{t.emptyState}</p>
+              <h2 className="text-2xl font-bold tracking-tight mb-2">
+                {language === "ar" ? "ابدأ بصفحة جديدة" : "Start a new page"}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">{t.emptyState}</p>
               <button
                 onClick={() => createNote(null)}
-                className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-95 transition-opacity"
+                className="group inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-[1.03] active:scale-[0.98] transition-all"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                 {t.newPage}
               </button>
-            </div>
+            </motion.div>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto">
