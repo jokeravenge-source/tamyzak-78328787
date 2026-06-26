@@ -375,6 +375,8 @@ const App = () => {
         <OrganicEquations language={language} onBack={resetMenu} />
       ) : menuChoice === "liveBattle" ? (
         <LiveBattle language={language} onBack={resetMenu} />
+      ) : menuChoice === "subjectsHub" ? (
+        <SubjectsHub language={language} onBack={backToBasics} onSelect={chooseMenu} />
       ) : menuChoice === "premium" ? (
         <Premium language={language} onBack={resetMenu} />
       ) : menuChoice === "more" ? (
