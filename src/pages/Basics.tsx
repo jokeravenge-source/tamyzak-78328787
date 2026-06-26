@@ -562,7 +562,7 @@ const Basics = ({
       </div>
 
       {/* Content */}
-      <main className="px-5 md:px-10 py-8 md:py-12 pb-48">
+      <main className="px-3 sm:px-5 md:px-10 py-4 sm:py-8 md:py-12 pb-48">
         <h1 className="sr-only">{language === "ar" ? "أدوات الدراسة" : "Study tools"}</h1>
         <AnimatePresence mode="wait">
         {showAllTools ? (
@@ -652,10 +652,10 @@ const Basics = ({
           <div className="relative">
           {/* ====== Noir & Gold bento dashboard ====== */}
           {/* Header */}
-          <header className="mb-8 md:mb-10 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+          <header className="mb-6 md:mb-10 flex flex-row justify-between items-end gap-3">
             <div>
               <h2
-                className="text-3xl md:text-4xl font-bold tracking-tight text-foreground inline-flex items-center gap-2"
+                className="text-xl sm:text-2xl md:text-4xl font-bold tracking-tight text-foreground inline-flex items-center gap-2"
                 style={{ fontFamily: "'Syne', sans-serif" }}
               >
                 <span>{welcome.hi}{username ? `, ${username}` : ""}</span>
@@ -666,37 +666,37 @@ const Basics = ({
                     transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.2 }}
                     aria-label="Premium"
                     title="Premium"
-                    className="inline-flex items-center justify-center w-7 h-7 rounded-full shadow-[var(--shadow-glow)]"
+                    className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full shadow-[var(--shadow-glow)]"
                     style={{ background: "var(--gradient-primary)" }}
                   >
-                    <Crown className="w-4 h-4 text-primary-foreground" />
+                    <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
                   </motion.span>
                 )}
               </h2>
-              <p className="text-muted-foreground mt-2 text-base md:text-lg">{welcome.sub}</p>
+              <p className="text-muted-foreground mt-1.5 text-xs sm:text-base md:text-lg line-clamp-2">{welcome.sub}</p>
             </div>
-            <div className="flex items-center gap-4 bg-card border border-border px-5 py-3 rounded-2xl self-start sm:self-auto shadow-[var(--shadow-card)]">
+            <div className="flex items-center gap-2 sm:gap-4 bg-card border border-border px-3 sm:px-5 py-2 sm:py-3 rounded-2xl shrink-0 shadow-[var(--shadow-card)]">
               <div className={isRTL ? "text-right" : "text-left"}>
-                <span className="block text-[10px] uppercase tracking-widest text-muted-foreground">
+                <span className="hidden sm:block text-[10px] uppercase tracking-widest text-muted-foreground">
                   {language === "ar" ? "سلسلة المذاكرة" : "Study streak"}
                 </span>
-                <span className="text-xl font-bold text-primary tabular-nums">
+                <span className="text-base sm:text-xl font-bold text-primary tabular-nums">
                   {streakDays || 0} {language === "ar" ? "يوم" : "days"}
                 </span>
               </div>
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center shadow-[var(--shadow-glow)]"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-[var(--shadow-glow)]"
                 style={{ background: "var(--gradient-primary)" }}
               >
-                <span className="text-lg leading-none">🔥</span>
+                <span className="text-base sm:text-lg leading-none">🔥</span>
               </div>
             </div>
           </header>
 
           {/* Row A: progress ring (4) + core tools bento (8) */}
-          <section className="mb-6 grid grid-cols-1 md:grid-cols-12 gap-5">
+          <section className="mb-6 grid grid-cols-12 gap-3 sm:gap-5">
             {/* Progress ring */}
-            <div className="md:col-span-4 bg-card rounded-3xl p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
+            <div className="col-span-12 md:col-span-4 bg-card rounded-3xl p-4 sm:p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
               <div
                 aria-hidden
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
@@ -705,8 +705,8 @@ const Basics = ({
               <span className="relative inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full mb-3 border border-primary/20">
                 {activeCopy.tag}
               </span>
-              <div className="relative w-40 h-40 mb-4">
-                <svg viewBox="0 0 100 100" className="w-40 h-40 -rotate-90">
+              <div className="relative w-32 h-32 sm:w-40 sm:h-40 mb-3 sm:mb-4">
+                <svg viewBox="0 0 100 100" className="w-32 h-32 sm:w-40 sm:h-40 -rotate-90">
                   <circle cx="50" cy="50" r="45" stroke="hsl(var(--muted))" strokeWidth="8" fill="none" />
                   <motion.circle
                     cx="50" cy="50" r="45"
@@ -722,13 +722,13 @@ const Basics = ({
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-bold text-foreground tabular-nums">{heroProgressPct}%</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-foreground tabular-nums">{heroProgressPct}%</span>
                   <span className="text-[10px] text-muted-foreground uppercase tracking-tight tabular-nums">
                     {heroProgressDone}/{heroProgressTotal}
                   </span>
                 </div>
               </div>
-              <h3 className="text-foreground font-semibold">
+              <h3 className="text-foreground font-semibold text-sm sm:text-base">
                 {todoTotal > 0
                   ? (language === "ar" ? "تقدم المهام اليومية" : "Daily to-do progress")
                   : (language === "ar" ? "تقدم المهمات" : "Missions progress")}
@@ -751,7 +751,7 @@ const Basics = ({
             </div>
 
             {/* Core tools + Live battle (right of ring) */}
-            <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="col-span-12 md:col-span-8 grid grid-cols-2 gap-3 sm:gap-4">
               {FEATURED.filter((it) => it.key !== "liveBattle").slice(0, 2).map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
@@ -762,13 +762,13 @@ const Basics = ({
                     whileHover={{ y: -3 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate(it.key)}
-                    className={`group ${isRTL ? "text-right" : "text-left"} bg-card border border-border p-6 rounded-3xl hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all`}
+                    className={`group ${isRTL ? "text-right" : "text-left"} bg-card border border-border p-4 sm:p-6 rounded-2xl sm:rounded-3xl hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all`}
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
-                      <Icon className="w-6 h-6" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <h3 className="text-foreground text-xl font-bold mb-1">{meta.title}</h3>
-                    <p className="text-muted-foreground text-sm line-clamp-2">{meta.subtitle}</p>
+                    <h3 className="text-foreground text-base sm:text-xl font-bold mb-1 line-clamp-1">{meta.title}</h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm line-clamp-2">{meta.subtitle}</p>
                   </motion.button>
                 );
               })}
@@ -781,19 +781,19 @@ const Basics = ({
                 const meta = (fc as any).liveBattle;
                 return (
                   <div
-                    className="sm:col-span-2 p-[1px] rounded-3xl"
+                    className="col-span-2 p-[1px] rounded-2xl sm:rounded-3xl"
                     style={{ background: "var(--gradient-primary)" }}
                   >
-                    <div className="bg-card rounded-[calc(1.5rem-1px)] p-5 flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-4">
-                      <div className="flex items-center gap-4">
+                    <div className="bg-card rounded-[calc(1rem-1px)] sm:rounded-[calc(1.5rem-1px)] p-3 sm:p-5 flex flex-row items-center justify-between gap-3 sm:gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                         <motion.div
                           animate={{ scale: [1, 1.06, 1] }}
                           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                          className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-[var(--shadow-glow)] shrink-0"
+                          className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center shadow-[var(--shadow-glow)] shrink-0"
                         >
-                          <Icon className="w-7 h-7 text-primary-foreground" />
+                          <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-primary-foreground" />
                         </motion.div>
-                        <div className={isRTL ? "text-right" : "text-left"}>
+                        <div className={`${isRTL ? "text-right" : "text-left"} min-w-0`}>
                           <div className="flex items-center gap-2 mb-1">
                             <span className="relative flex h-2 w-2">
                               <span className="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
@@ -803,13 +803,13 @@ const Basics = ({
                               {language === "ar" ? "مباشر" : "LIVE"}
                             </span>
                           </div>
-                          <h3 className="text-primary font-bold text-lg leading-tight">{meta.title}</h3>
-                          <p className="text-muted-foreground text-sm line-clamp-1">{meta.subtitle}</p>
+                          <h3 className="text-primary font-bold text-sm sm:text-lg leading-tight line-clamp-1">{meta.title}</h3>
+                          <p className="text-muted-foreground text-xs sm:text-sm line-clamp-1">{meta.subtitle}</p>
                         </div>
                       </div>
                       <button
                         onClick={() => navigate("liveBattle")}
-                        className="px-6 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-all active:scale-95 shrink-0"
+                        className="px-3 sm:px-6 py-2 sm:py-2.5 bg-primary text-primary-foreground text-xs sm:text-base font-bold rounded-lg sm:rounded-xl hover:opacity-90 transition-all active:scale-95 shrink-0"
                       >
                         {language === "ar" ? "انضم الآن" : "Join now"}
                       </button>
@@ -898,13 +898,13 @@ const Basics = ({
 
           {/* More tools */}
           <section className="mb-6">
-            <div className="flex items-center justify-between mb-5">
-              <h4 className="text-lg font-bold text-foreground" style={{ fontFamily: "'Syne', sans-serif" }}>
+            <div className="flex items-center justify-between mb-4 sm:mb-5 gap-2">
+              <h4 className="text-base sm:text-lg font-bold text-foreground" style={{ fontFamily: "'Syne', sans-serif" }}>
                 {toolsHeader}
               </h4>
               <button
                 onClick={() => onNav("more")}
-                className="text-sm font-semibold text-primary hover:opacity-80 inline-flex items-center gap-1 transition-opacity"
+                className="text-xs sm:text-sm font-semibold text-primary hover:opacity-80 inline-flex items-center gap-1 transition-opacity shrink-0"
               >
                 {language === "ar" ? "عرض كل الأدوات" : "See all study tools"}
                 <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? "rotate-180" : ""}`} />
@@ -915,7 +915,7 @@ const Basics = ({
               initial="hidden"
               animate="show"
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
             >
               {FEATURED.filter((it) => it.key !== "liveBattle").slice(2).map((it) => {
                 const Icon = it.Icon;
@@ -928,13 +928,13 @@ const Basics = ({
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     whileHover={{ y: -3 }}
                     onClick={() => navigate(it.key)}
-                    className={`group ${isRTL ? "text-right" : "text-left"} bg-card p-5 rounded-2xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all`}
+                    className={`group ${isRTL ? "text-right" : "text-left"} bg-card p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all`}
                   >
-                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3 text-primary group-hover:scale-110 transition-transform">
-                      <Icon className="w-5 h-5" />
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center mb-2 sm:mb-3 text-primary group-hover:scale-110 transition-transform">
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <h5 className="font-bold text-sm text-foreground mb-1 line-clamp-1">{meta.title}</h5>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{meta.subtitle}</p>
+                    <h5 className="font-bold text-xs sm:text-sm text-foreground mb-1 line-clamp-1">{meta.title}</h5>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">{meta.subtitle}</p>
                   </motion.button>
                 );
               })}
