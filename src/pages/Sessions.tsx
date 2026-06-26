@@ -438,14 +438,53 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   // Persist on relevant state changes
   useEffect(() => {
     if (!started || !subject) return;
+    // Anchor the running timer to its actual resume moment so that backgrounded
+    // tabs (where setInterval is throttled and `seconds` goes stale) still
+    // restore the correct elapsed time on reopen.
     const payload = {
       subject, mission, completed, started: true,
       running,
-      startedAt: running ? Date.now() : null,
-      accumulated: seconds,
+      startedAt: running ? resumeAtRef.current || Date.now() : null,
+      accumulated: running ? accumulatedRef.current : seconds,
     };
     localStorage.setItem(PERSIST_KEY, JSON.stringify(payload));
   }, [started, subject, mission, completed, running, seconds]);
+
+  // Flush the latest session snapshot whenever the page is about to be hidden
+  // or unloaded (tab close, route change, mobile background). Using refs keeps
+  // the write resilient to stale React state from throttled intervals.
+  useEffect(() => {
+    const flush = () => {
+      if (!startedRef.current || !subjectRef.current) return;
+      const isRunning = runningRef.current;
+      const liveSeconds = isRunning && resumeAtRef.current
+        ? Math.min(
+            MAX_SECONDS,
+            accumulatedRef.current + Math.floor((Date.now() - resumeAtRef.current) / 1000),
+          )
+        : secondsRef.current;
+      const payload = {
+        subject: subjectRef.current,
+        mission: missionRef.current,
+        completed: completedRef.current,
+        started: true,
+        running: isRunning,
+        startedAt: isRunning ? (resumeAtRef.current || Date.now()) : null,
+        accumulated: isRunning ? accumulatedRef.current : liveSeconds,
+      };
+      try { localStorage.setItem(PERSIST_KEY, JSON.stringify(payload)); } catch {}
+    };
+    const onHide = () => { if (document.visibilityState === "hidden") flush(); };
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      flush();
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onHide);
+    };
+  }, []);
 
   // Persist pomodoro settings
   useEffect(() => {
