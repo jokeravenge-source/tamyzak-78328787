@@ -15,6 +15,29 @@ import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
 
+function useStreakDays(): number {
+  const [days, setDays] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem("streak_state_v1");
+      if (raw) return JSON.parse(raw).days ?? 0;
+    } catch {}
+    return 0;
+  });
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = localStorage.getItem("streak_state_v1");
+        if (raw) setDays(JSON.parse(raw).days ?? 0);
+      } catch {}
+    };
+    read();
+    const id = window.setInterval(read, 1500);
+    window.addEventListener("storage", read);
+    return () => { window.clearInterval(id); window.removeEventListener("storage", read); };
+  }, []);
+  return days;
+}
+
 export type BasicsChoice =
   | "flashcards"
   | "malazam"
