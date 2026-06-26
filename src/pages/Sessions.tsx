@@ -22,6 +22,7 @@ import track4Asset from "@/assets/music/track4.mp3.asset.json";
 import track5Asset from "@/assets/music/track5.mp3.asset.json";
 import track6Asset from "@/assets/music/track6.mp3.asset.json";
 import quranTrackAsset from "@/assets/music/quran.mp3.asset.json";
+import SpotifyPlaylistBlock from "@/components/SpotifyPlaylistBlock";
 import StudyRoom from "@/components/StudyRoom";
 import { pushTodos, pullTodos } from "@/lib/todosSync";
 
@@ -841,6 +842,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </div>
           <audio ref={audioRef} src={TRACKS[trackIdx]} loop preload="none" />
         </div>
+
+        <SpotifyPlaylistBlock language={language} />
 
         <section className="mt-10">
           <h2 className="text-xl font-semibold flex items-center gap-2 mb-4"><Trophy className="w-5 h-5 text-primary" /> {L.leaderboard}</h2>
