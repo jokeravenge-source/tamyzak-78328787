@@ -4,6 +4,7 @@ import {
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
   Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
   BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download, FileType2, Upload,
+  Sparkles, NotebookPen,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
