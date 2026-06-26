@@ -22,6 +22,7 @@ import track4Asset from "@/assets/music/track4.mp3.asset.json";
 import track5Asset from "@/assets/music/track5.mp3.asset.json";
 import track6Asset from "@/assets/music/track6.mp3.asset.json";
 import quranTrackAsset from "@/assets/music/quran.mp3.asset.json";
+import SpotifyPlaylistBlock from "@/components/SpotifyPlaylistBlock";
 import StudyRoom from "@/components/StudyRoom";
 import { pushTodos, pullTodos } from "@/lib/todosSync";
 
