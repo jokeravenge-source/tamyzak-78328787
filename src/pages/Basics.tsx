@@ -553,6 +553,7 @@ const Basics = ({
 
       {/* Content */}
       <main className="px-5 md:px-10 py-8 md:py-12 pb-48">
+        <h1 className="sr-only">{language === "ar" ? "أدوات الدراسة" : "Study tools"}</h1>
         <AnimatePresence mode="wait">
         {showAllTools ? (
           <motion.div
