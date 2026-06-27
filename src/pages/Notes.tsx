@@ -669,6 +669,55 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
     }
   }, [active, language, pdfSize, pdfOrientation]);
 
+  const generateAiNotes = useCallback(async (topicOverride?: string) => {
+    if (!active) return;
+    const fromPage = active.content
+      .map((b) => (b.type === "divider" || b.type === "image" ? "" : (b.text || "").trim()))
+      .filter(Boolean)
+      .join("\n");
+    const topic = (topicOverride ?? aiPrompt ?? "").trim() || active.title.trim() || fromPage;
+    if (!topic || topic.length < 3) {
+      toast.error(language === "ar" ? "اكتب موضوعاً أولاً" : "Type a topic first");
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-notes-generate", {
+        body: { topic, language },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const blocks = ((data as any).blocks || []) as { type: BlockType; text: string }[];
+      const images = ((data as any).images || []) as { prompt: string; dataUrl: string }[];
+      if (!blocks.length && !images.length) {
+        toast.error(language === "ar" ? "تعذّر توليد الملاحظات" : "Could not generate notes");
+        return;
+      }
+      const newBlocks: Block[] = blocks.map((b) => ({ id: newId(), type: b.type, text: b.text }));
+      // Interleave images: first image after the first h1/h2, second image near the end.
+      images.forEach((img, i) => {
+        const imgBlock: Block = { id: newId(), type: "image", text: "", imageUrl: img.dataUrl, imageAlt: img.prompt };
+        if (i === 0) {
+          const insertAt = Math.max(1, newBlocks.findIndex((b) => b.type === "h2") + 1 || 2);
+          newBlocks.splice(insertAt, 0, imgBlock);
+        } else {
+          newBlocks.splice(Math.floor(newBlocks.length * 0.75), 0, imgBlock);
+        }
+      });
+      setBlocks((existing) => {
+        const trimmed = existing.filter((b, i) => !(i === existing.length - 1 && b.type === "text" && !b.text));
+        return [...trimmed, { id: newId(), type: "divider", text: "" }, ...newBlocks];
+      });
+      setAiOpen(false);
+      setAiPrompt("");
+      toast.success(language === "ar" ? "تمت إضافة الملاحظات" : "Notes added");
+    } catch (e: any) {
+      toast.error(e?.message ?? (language === "ar" ? "فشل التوليد" : "Generation failed"));
+    } finally {
+      setAiLoading(false);
+    }
+  }, [active, aiPrompt, language]);
+
   // Debounced autosave per note, with pending snapshot so we can flush on
   // navigation / unmount / page hide and never lose canvas edits.
   const saveTimers = useRef<Map<string, number>>(new Map());
