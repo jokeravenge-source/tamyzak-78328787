@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Youtube, Play, Search as SearchIcon, X } from "lucide-react";
+import { ArrowLeft, Youtube, Play, Search as SearchIcon, X, ListVideo, Loader2 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "yt_player_recents_v1";
 
 type Recent = { id: string; title: string; url: string; added: number };
+type PlaylistVideo = { id: string; title: string; author: string; thumbnail: string; published: string };
+type PlaylistData = { playlistId: string; title: string; videos: PlaylistVideo[] };
 
 function extractPlaylistId(input: string): string | null {
   const s = input.trim();
@@ -50,6 +53,8 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const [input, setInput] = useState("");
   const [videoId, setVideoId] = useState<string | null>(null);
   const [playlistId, setPlaylistId] = useState<string | null>(null);
+  const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
+  const [loadingPlaylist, setLoadingPlaylist] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recents, setRecents] = useState<Recent[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
@@ -66,7 +71,6 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
 
   const play = (id: string, title?: string, url?: string) => {
     setVideoId(id);
-    setPlaylistId(null);
     setError(null);
     setRecents((prev) => {
       const without = prev.filter((r) => r.id !== id);
@@ -77,14 +81,34 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
     });
   };
 
+  const loadPlaylist = async (pl: string) => {
+    setPlaylistId(pl);
+    setPlaylist(null);
+    setLoadingPlaylist(true);
+    setError(null);
+    try {
+      const client = supabase as unknown as { supabaseUrl: string; supabaseKey: string };
+      const res = await fetch(
+        `${client.supabaseUrl}/functions/v1/youtube-playlist?list=${encodeURIComponent(pl)}`,
+        { headers: { apikey: client.supabaseKey ?? "", Authorization: `Bearer ${client.supabaseKey ?? ""}` } },
+      );
+      if (!res.ok) throw new Error("Failed to load playlist");
+      const json = (await res.json()) as PlaylistData;
+      setPlaylist(json);
+      if (json.videos[0]) play(json.videos[0].id, json.videos[0].title);
+    } catch {
+      setError(isRTL ? "تعذّر تحميل قائمة التشغيل" : "Couldn't load that playlist.");
+    } finally {
+      setLoadingPlaylist(false);
+    }
+  };
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const pl = extractPlaylistId(input);
     if (pl) {
-      setPlaylistId(pl);
-      setVideoId(null);
-      setError(null);
       setInput("");
+      loadPlaylist(pl);
       return;
     }
     const id = extractId(input);
@@ -92,6 +116,8 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
       setError(isRTL ? "رابط يوتيوب أو قائمة تشغيل غير صالح" : "That doesn't look like a YouTube video or playlist link.");
       return;
     }
+    setPlaylistId(null);
+    setPlaylist(null);
     play(id, undefined, input.trim());
     setInput("");
   };
@@ -155,20 +181,10 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
         )}
 
         <div className="rounded-2xl overflow-hidden border border-border bg-black aspect-video mb-8 shadow-lg">
-          {playlistId ? (
-            <iframe
-              key={playlistId}
-              src={`https://www.youtube-nocookie.com/embed/videoseries?list=${playlistId}&rel=0&modestbranding=1`}
-              title="YouTube playlist"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
-              className="w-full h-full"
-            />
-          ) : videoId ? (
+          {videoId ? (
             <iframe
               key={videoId}
-              src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
+              src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1${playlistId ? `&list=${playlistId}` : ""}`}
               title="YouTube player"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
@@ -184,6 +200,64 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
             </div>
           )}
         </div>
+
+        {playlistId && (
+          <section className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <ListVideo className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                {playlist?.title || (isRTL ? "قائمة التشغيل" : "Playlist")}
+              </h2>
+              {playlist && (
+                <span className="text-xs text-muted-foreground">· {playlist.videos.length}</span>
+              )}
+              <button
+                onClick={() => { setPlaylistId(null); setPlaylist(null); }}
+                className="ms-auto text-xs text-muted-foreground hover:text-foreground"
+              >
+                {isRTL ? "إغلاق" : "Close"}
+              </button>
+            </div>
+            {loadingPlaylist ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {isRTL ? "جارٍ تحميل القائمة..." : "Loading playlist..."}
+              </div>
+            ) : playlist && playlist.videos.length > 0 ? (
+              <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
+                {playlist.videos.map((v, idx) => {
+                  const active = v.id === videoId;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => play(v.id, v.title, `https://youtu.be/${v.id}`)}
+                      className={`w-full flex gap-3 items-center text-start rounded-xl border p-2 transition ${active ? "border-primary bg-primary/10" : "border-border bg-secondary/30 hover:border-primary"}`}
+                    >
+                      <span className="text-xs text-muted-foreground w-6 text-center shrink-0">{idx + 1}</span>
+                      <div className="w-32 aspect-video bg-black rounded overflow-hidden shrink-0">
+                        <img src={v.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium line-clamp-2">{v.title}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{v.author}</p>
+                      </div>
+                      {active && <Play className="w-4 h-4 text-primary shrink-0" />}
+                    </button>
+                  );
+                })}
+                {playlist.videos.length >= 15 && (
+                  <p className="text-[11px] text-muted-foreground text-center pt-2">
+                    {isRTL ? "يتم عرض أحدث 15 فيديو من القائمة." : "Showing the most recent 15 videos from the playlist."}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {isRTL ? "لا توجد فيديوهات في هذه القائمة." : "No videos found in this playlist."}
+              </p>
+            )}
+          </section>
+        )}
 
         {recents.length > 0 && (
           <section>
