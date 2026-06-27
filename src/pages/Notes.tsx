@@ -4,7 +4,7 @@ import {
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
   Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
   BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download, FileType2, Upload, Video,
-  Sparkles, NotebookPen,
+  Sparkles, NotebookPen, Wand2, Loader2,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,7 @@ import NotesPdfBlock from "@/components/NotesPdfBlock";
 type BlockType =
   | "text" | "h1" | "h2" | "h3"
   | "bullet" | "numbered" | "todo"
-  | "toggle" | "quote" | "code" | "divider" | "canvas" | "pdf";
+  | "toggle" | "quote" | "code" | "divider" | "canvas" | "pdf" | "image";
 
 type Block = {
   id: string;
@@ -29,6 +29,8 @@ type Block = {
   pdfUrl?: string;
   pdfName?: string;
   pdfHeight?: number;
+  imageUrl?: string;
+  imageAlt?: string;
 };
 
 type Note = {
