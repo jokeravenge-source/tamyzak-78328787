@@ -704,10 +704,9 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
           newBlocks.splice(Math.floor(newBlocks.length * 0.75), 0, imgBlock);
         }
       });
-      setBlocks((existing) => {
-        const trimmed = existing.filter((b, i) => !(i === existing.length - 1 && b.type === "text" && !b.text));
-        return [...trimmed, { id: newId(), type: "divider", text: "" }, ...newBlocks];
-      });
+      const existing = active.content;
+      const trimmed = existing.filter((b, i) => !(i === existing.length - 1 && b.type === "text" && !b.text));
+      updateNote(active.id, { content: [...trimmed, { id: newId(), type: "divider", text: "" }, ...newBlocks] });
       setAiOpen(false);
       setAiPrompt("");
       toast.success(language === "ar" ? "تمت إضافة الملاحظات" : "Notes added");
