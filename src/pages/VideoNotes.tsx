@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2, Youtube, Copy, CheckCircle2, AlertTriangle, RefreshCw, ChevronDown, Layers, BrainCircuit, Sparkles, Check, X, Plus, Save, RotateCw, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,14 +113,31 @@ type Part = { title: string; notes: string };
 type Card = { q: string; a: string };
 type MCQItem = { question: string; choices: string[]; answer_index: number; explanation: string; hint?: string };
 
+const STORAGE_KEY = "video_notes_state_v1";
+type Persisted = {
+  url: string;
+  notes: string;
+  parts: Part[];
+  transcript: string;
+  cards: Card[];
+  mcqs: MCQItem[];
+};
+
 const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const t = copy[language];
-  const [url, setUrl] = useState("");
+  const initial: Persisted = (() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return { url: "", notes: "", parts: [], transcript: "", cards: [], mcqs: [], ...JSON.parse(raw) };
+    } catch { /* */ }
+    return { url: "", notes: "", parts: [], transcript: "", cards: [], mcqs: [] };
+  })();
+  const [url, setUrl] = useState(initial.url);
   const [loading, setLoading] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [parts, setParts] = useState<Part[]>([]);
+  const [notes, setNotes] = useState(initial.notes);
+  const [parts, setParts] = useState<Part[]>(initial.parts);
   const [openIdx, setOpenIdx] = useState<number | null>(0);
-  const [transcript, setTranscript] = useState("");
+  const [transcript, setTranscript] = useState(initial.transcript);
   type Status =
     | { kind: "idle" }
     | { kind: "working"; message: string }
@@ -130,7 +147,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   // Flashcards
-  const [cards, setCards] = useState<Card[]>([]);
+  const [cards, setCards] = useState<Card[]>(initial.cards);
   const [cardsLoading, setCardsLoading] = useState(false);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const [savedIdx, setSavedIdx] = useState<Set<number>>(new Set());
@@ -138,7 +155,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [chapter, setChapter] = useState<string>("");
 
   // MCQ
-  const [mcqs, setMcqs] = useState<MCQItem[]>([]);
+  const [mcqs, setMcqs] = useState<MCQItem[]>(initial.mcqs);
   const [mcqLoading, setMcqLoading] = useState(false);
   const [mcqIdx, setMcqIdx] = useState(0);
   const [mcqSelected, setMcqSelected] = useState<number | null>(null);
@@ -146,6 +163,22 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [mcqScore, setMcqScore] = useState(0);
   const [mcqHint, setMcqHint] = useState(false);
   const [mcqDone, setMcqDone] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ url, notes, parts, transcript, cards, mcqs }),
+      );
+    } catch { /* */ }
+  }, [url, notes, parts, transcript, cards, mcqs]);
+
+  useEffect(() => {
+    if (initial.parts.length > 0 || initial.notes) {
+      setStatus({ kind: "success" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const run = async () => {
     if (!isYouTubeUrl(url)) {
