@@ -87,25 +87,17 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
     setLoadingPlaylist(true);
     setError(null);
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke("youtube-playlist", {
-        method: "GET" as never,
-        // @ts-expect-error supabase-js supports query via URL; fall back to invoke with body
-      });
-      // The supabase client doesn't support GET query well; do a direct fetch instead.
-      throw fnErr || new Error("fallback");
+      const client = supabase as unknown as { supabaseUrl: string; supabaseKey: string };
+      const res = await fetch(
+        `${client.supabaseUrl}/functions/v1/youtube-playlist?list=${encodeURIComponent(pl)}`,
+        { headers: { apikey: client.supabaseKey ?? "", Authorization: `Bearer ${client.supabaseKey ?? ""}` } },
+      );
+      if (!res.ok) throw new Error("Failed to load playlist");
+      const json = (await res.json()) as PlaylistData;
+      setPlaylist(json);
+      if (json.videos[0]) play(json.videos[0].id, json.videos[0].title);
     } catch {
-      try {
-        const projectRef = (supabase as unknown as { supabaseUrl: string }).supabaseUrl;
-        const res = await fetch(`${projectRef}/functions/v1/youtube-playlist?list=${encodeURIComponent(pl)}`, {
-          headers: { apikey: (supabase as unknown as { supabaseKey: string }).supabaseKey ?? "" },
-        });
-        if (!res.ok) throw new Error("Failed to load playlist");
-        const json = (await res.json()) as PlaylistData;
-        setPlaylist(json);
-        if (json.videos[0]) play(json.videos[0].id, json.videos[0].title);
-      } catch (e) {
-        setError(isRTL ? "تعذّر تحميل قائمة التشغيل" : "Couldn't load that playlist.");
-      }
+      setError(isRTL ? "تعذّر تحميل قائمة التشغيل" : "Couldn't load that playlist.");
     } finally {
       setLoadingPlaylist(false);
     }
