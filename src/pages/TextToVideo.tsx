@@ -24,6 +24,7 @@ type Scene = {
   visual?: Visual;
   audioBase64: string;
   mime: string;
+  imageBase64?: string;
 };
 type Script = { title: string; scenes: Scene[] };
 
