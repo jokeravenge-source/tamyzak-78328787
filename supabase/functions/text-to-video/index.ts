@@ -101,6 +101,32 @@ Deno.serve(async (req) => {
     const scenes: { keyword: string; narration: string; bullets: string[] }[] = parsed.scenes ?? [];
     if (!scenes.length) return json({ error: "Empty script", retryable: true }, 500);
 
+    // Image per scene (parallel) — a related illustration to simplify the topic.
+    const imgResults = await Promise.all(scenes.map(async (sc) => {
+      try {
+        const promptParts = [
+          `Minimalist flat vector illustration that visually explains: ${sc.keyword}.`,
+          sc.narration ? `Concept: ${sc.narration}` : "",
+          "Educational infographic style, soft pastel background, clean shapes, no text, no watermark, centered subject, friendly modern look.",
+        ].filter(Boolean).join(" ");
+        const r = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image",
+            messages: [{ role: "user", content: promptParts }],
+            modalities: ["image", "text"],
+          }),
+        });
+        if (!r.ok) return { imageBase64: "" };
+        const j = await r.json();
+        const b64 = j?.data?.[0]?.b64_json ?? "";
+        return { imageBase64: b64 };
+      } catch {
+        return { imageBase64: "" };
+      }
+    }));
+
     // TTS per scene (parallel, capped)
     const chosenVoice = typeof voice === "string" && voice ? voice : "alloy";
     const ttsResults = await Promise.all(scenes.map(async (sc) => {
@@ -127,7 +153,12 @@ Deno.serve(async (req) => {
       }
     }));
 
-    const out = scenes.map((s, i) => ({ ...s, audioBase64: ttsResults[i].audioBase64, mime: ttsResults[i].mime }));
+    const out = scenes.map((s, i) => ({
+      ...s,
+      audioBase64: ttsResults[i].audioBase64,
+      mime: ttsResults[i].mime,
+      imageBase64: imgResults[i].imageBase64,
+    }));
     return json({ title: parsed.title || (lang === "ar" ? "شرح مبسّط" : "Simplified explainer"), scenes: out });
   } catch (e) {
     return json({ error: String(e) }, 500);

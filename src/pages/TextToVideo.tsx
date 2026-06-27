@@ -24,6 +24,7 @@ type Scene = {
   visual?: Visual;
   audioBase64: string;
   mime: string;
+  imageBase64?: string;
 };
 type Script = { title: string; scenes: Scene[] };
 
@@ -52,6 +53,7 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const stopFlagRef = useRef(false);
   const captionsRef = useRef(true);
+  const imageCacheRef = useRef<Map<number, HTMLImageElement>>(new Map());
   useEffect(() => { captionsRef.current = showCaptions; }, [showCaptions]);
 
   useEffect(() => {
@@ -69,6 +71,7 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
     setLoading(true);
     setScript(null);
     setRecordedUrl(null);
+    imageCacheRef.current.clear();
     try {
       const { data, error } = await supabase.functions.invoke("text-to-video", {
         // Don't force the UI language — let the function detect from the text itself.
@@ -100,12 +103,51 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
     ctx.lineWidth = 1;
     for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
     for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+    // Right-side illustration panel (related image)
+    const img = imageCacheRef.current.get(sceneIndex);
+    const hasImg = !!(img && img.complete && img.naturalWidth > 0);
+    const panelW = hasImg ? Math.round(W * 0.36) : 0;
+    const panelPad = 30;
+    const contentRight = hasImg ? W - panelW - panelPad : W - 60;
+    if (hasImg) {
+      const px = W - panelW - panelPad;
+      const py = 80;
+      const ph = H - 180;
+      // soft card behind image
+      ctx.fillStyle = "#ffffff";
+      const radius = 18;
+      ctx.beginPath();
+      ctx.moveTo(px + radius, py);
+      ctx.arcTo(px + panelW, py, px + panelW, py + ph, radius);
+      ctx.arcTo(px + panelW, py + ph, px, py + ph, radius);
+      ctx.arcTo(px, py + ph, px, py, radius);
+      ctx.arcTo(px, py, px + panelW, py, radius);
+      ctx.closePath();
+      ctx.shadowColor = "rgba(15,23,42,0.08)";
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 6;
+      ctx.fill();
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      // contain-fit image with fade-in
+      const ar = img!.naturalWidth / img!.naturalHeight;
+      let iw = panelW - 24, ih = iw / ar;
+      if (ih > ph - 24) { ih = ph - 24; iw = ih * ar; }
+      const ix = px + (panelW - iw) / 2;
+      const iy = py + (ph - ih) / 2;
+      ctx.globalAlpha = Math.min(1, Math.max(0, progress * 2));
+      ctx.drawImage(img!, ix, iy, iw, ih);
+      ctx.globalAlpha = 1;
+    }
+
     // header
     ctx.fillStyle = "#0f172a";
     ctx.font = `bold ${Math.round(H * 0.07)}px Cairo, system-ui, sans-serif`;
     ctx.textAlign = isAr ? "right" : "left";
     ctx.direction = isAr ? "rtl" : "ltr" as any;
-    const titleX = isAr ? W - 60 : 60;
+    const titleX = isAr ? contentRight : 60;
     const keyword = scene.keyword || "";
     // reveal characters
     const revealKw = Math.floor(progress * keyword.length * 1.2);
@@ -113,10 +155,11 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
     // underline
     ctx.strokeStyle = "#f59e0b";
     ctx.lineWidth = 4;
-    const underlineLen = Math.min(1, Math.max(0, (progress - 0.15) * 1.3)) * Math.min(W * 0.55, keyword.length * 28);
+    const maxUnderline = (contentRight - 60);
+    const underlineLen = Math.min(1, Math.max(0, (progress - 0.15) * 1.3)) * Math.min(maxUnderline, keyword.length * 28);
     if (underlineLen > 0) {
       ctx.beginPath();
-      const ux = isAr ? W - 60 - underlineLen : 60;
+      const ux = isAr ? contentRight - underlineLen : 60;
       ctx.moveTo(ux, 120); ctx.lineTo(ux + underlineLen, 120); ctx.stroke();
     }
     // bullets
@@ -133,11 +176,11 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
       // bullet dot
       ctx.fillStyle = "#f59e0b";
       ctx.beginPath();
-      const dx = isAr ? W - 70 : 70;
+      const dx = isAr ? contentRight - 10 : 70;
       ctx.arc(dx, y - 12, 7, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#1f2937";
-      const tx = isAr ? W - 90 : 90;
+      const tx = isAr ? contentRight - 30 : 90;
       ctx.fillText(visible, tx, y);
     });
     // footer scene progress
@@ -228,45 +271,65 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
       for (let i = 0; i < script.scenes.length; i++) {
         if (stopFlagRef.current) break;
         const sc = script.scenes[i];
+        // Preload related image for this scene
+        if (sc.imageBase64 && !imageCacheRef.current.has(i)) {
+          await new Promise<void>((res) => {
+            const im = new Image();
+            im.onload = () => { imageCacheRef.current.set(i, im); res(); };
+            im.onerror = () => res();
+            im.src = `data:image/png;base64,${sc.imageBase64}`;
+          });
+        }
         const audio = new Audio();
         audioElRef.current = audio;
         audio.src = `data:${sc.mime};base64,${sc.audioBase64}`;
         audio.crossOrigin = "anonymous";
+        audio.preload = "auto";
         if (audioCtx && dest) {
           const srcNode = audioCtx.createMediaElementSource(audio);
           srcNode.connect(dest);
           srcNode.connect(audioCtx.destination);
         }
         await new Promise<void>((resolve) => {
-          const onMeta = () => {
-            const dur = Math.max(2, isFinite(audio.duration) ? audio.duration : 4);
-            const start = performance.now();
-            audio.play().catch(() => { /* ignore */ });
+          let resolved = false;
+          const finish = () => { if (!resolved) { resolved = true; resolve(); } };
+          const startTicking = () => {
+            const dur = Math.max(1.2, isFinite(audio.duration) ? audio.duration : 4);
+            // Render frame 0 immediately so the scene is visible the instant audio starts.
+            drawScene(sc, i, script.scenes.length, 0);
             const tick = () => {
-              if (stopFlagRef.current) { audio.pause(); resolve(); return; }
-              const elapsed = (performance.now() - start) / 1000;
-              const p = Math.min(1, elapsed / dur);
+              if (stopFlagRef.current) { try { audio.pause(); } catch { /* ignore */ } finish(); return; }
+              // Drive progress from audio.currentTime — keeps visuals locked to sound.
+              const p = Math.min(1, audio.currentTime / dur);
               drawScene(sc, i, script.scenes.length, p);
-              if (p < 1) requestAnimationFrame(tick);
+              if (audio.ended || p >= 1) return; // ended handler resolves
+              requestAnimationFrame(tick);
             };
             requestAnimationFrame(tick);
-            audio.onended = () => resolve();
           };
-          audio.onloadedmetadata = onMeta;
+          // Only start the visuals once audio truly begins playing.
+          audio.onplaying = () => startTicking();
+          audio.onended = () => {
+            drawScene(sc, i, script.scenes.length, 1);
+            finish();
+          };
+          audio.oncanplaythrough = () => { audio.play().catch(() => { /* ignore */ }); };
+          audio.onloadedmetadata = () => { audio.play().catch(() => { /* ignore */ }); };
           audio.onerror = () => {
-            // fall back: timed scene
+            // Fallback: timed scene if audio fails entirely.
             const dur = 5;
             const start = performance.now();
             const tick = () => {
-              if (stopFlagRef.current) { resolve(); return; }
+              if (stopFlagRef.current) { finish(); return; }
               const elapsed = (performance.now() - start) / 1000;
               const p = Math.min(1, elapsed / dur);
               drawScene(sc, i, script.scenes.length, p);
-              if (p < 1) requestAnimationFrame(tick);
-              else resolve();
+              if (p < 1) requestAnimationFrame(tick); else finish();
             };
             requestAnimationFrame(tick);
           };
+          // Safety net: if nothing fires within 8s, move on
+          setTimeout(() => { if (!resolved && !audio.duration) finish(); }, 8000);
         });
         // small pause between scenes
         await new Promise((r) => setTimeout(r, 300));
