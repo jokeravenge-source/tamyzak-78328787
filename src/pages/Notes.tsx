@@ -4,7 +4,7 @@ import {
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
   Quote, Code, Minus, MoreHorizontal, Smile, PanelLeftClose, PanelLeft,
   BookOpen, FolderPlus, Pencil, Check, X, FolderInput, Palette, Download, FileType2, Upload, Video,
-  Sparkles, NotebookPen,
+  Sparkles, NotebookPen, Wand2, Loader2,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,7 @@ import NotesPdfBlock from "@/components/NotesPdfBlock";
 type BlockType =
   | "text" | "h1" | "h2" | "h3"
   | "bullet" | "numbered" | "todo"
-  | "toggle" | "quote" | "code" | "divider" | "canvas" | "pdf";
+  | "toggle" | "quote" | "code" | "divider" | "canvas" | "pdf" | "image";
 
 type Block = {
   id: string;
@@ -29,6 +29,8 @@ type Block = {
   pdfUrl?: string;
   pdfName?: string;
   pdfHeight?: number;
+  imageUrl?: string;
+  imageAlt?: string;
 };
 
 type Note = {
@@ -243,6 +245,39 @@ const BlockRow = ({
 
   if (block.type === "pdf") {
     return <NotesPdfBlock block={block} language={language} onChange={onPdfChange} onRemove={onRemove} />;
+  }
+
+  if (block.type === "image") {
+    return (
+      <div className="my-3 group">
+        <div className="rounded-xl border border-border overflow-hidden bg-card relative">
+          {block.imageUrl ? (
+            <img
+              src={block.imageUrl}
+              alt={block.imageAlt || ""}
+              className="w-full h-auto block max-h-[480px] object-contain bg-secondary/30"
+            />
+          ) : (
+            <div className="aspect-video bg-secondary/40 flex items-center justify-center text-xs text-muted-foreground">
+              {language === "ar" ? "صورة" : "Image"}
+            </div>
+          )}
+          <button
+            onClick={onRemove}
+            className="absolute top-2 end-2 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-full bg-background/80 backdrop-blur border border-border flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground"
+            aria-label="remove"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <input
+          value={block.text}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={language === "ar" ? "وصف الصورة (اختياري)" : "Caption (optional)"}
+          className="mt-1.5 w-full text-xs text-center bg-transparent outline-none text-muted-foreground placeholder:text-muted-foreground/40"
+        />
+      </div>
+    );
   }
 
   if (block.type === "divider") {
@@ -556,6 +591,9 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const [exportOpen, setExportOpen] = useState(false);
   const [pdfSize, setPdfSize] = useState<"a4" | "letter" | "legal" | "a3" | "a5">("a4");
   const [pdfOrientation, setPdfOrientation] = useState<"portrait" | "landscape">("portrait");
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Drag-and-drop state
   const dragRef = useRef<{ type: "notebook" | "page"; id: string } | null>(null);
@@ -630,6 +668,54 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
       setExporting(false);
     }
   }, [active, language, pdfSize, pdfOrientation]);
+
+  const generateAiNotes = useCallback(async (topicOverride?: string) => {
+    if (!active) return;
+    const fromPage = active.content
+      .map((b) => (b.type === "divider" || b.type === "image" ? "" : (b.text || "").trim()))
+      .filter(Boolean)
+      .join("\n");
+    const topic = (topicOverride ?? aiPrompt ?? "").trim() || active.title.trim() || fromPage;
+    if (!topic || topic.length < 3) {
+      toast.error(language === "ar" ? "اكتب موضوعاً أولاً" : "Type a topic first");
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-notes-generate", {
+        body: { topic, language },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const blocks = ((data as any).blocks || []) as { type: BlockType; text: string }[];
+      const images = ((data as any).images || []) as { prompt: string; dataUrl: string }[];
+      if (!blocks.length && !images.length) {
+        toast.error(language === "ar" ? "تعذّر توليد الملاحظات" : "Could not generate notes");
+        return;
+      }
+      const newBlocks: Block[] = blocks.map((b) => ({ id: newId(), type: b.type, text: b.text }));
+      // Interleave images: first image after the first h1/h2, second image near the end.
+      images.forEach((img, i) => {
+        const imgBlock: Block = { id: newId(), type: "image", text: "", imageUrl: img.dataUrl, imageAlt: img.prompt };
+        if (i === 0) {
+          const insertAt = Math.max(1, newBlocks.findIndex((b) => b.type === "h2") + 1 || 2);
+          newBlocks.splice(insertAt, 0, imgBlock);
+        } else {
+          newBlocks.splice(Math.floor(newBlocks.length * 0.75), 0, imgBlock);
+        }
+      });
+      const existing = active.content;
+      const trimmed = existing.filter((b, i) => !(i === existing.length - 1 && b.type === "text" && !b.text));
+      updateNote(active.id, { content: [...trimmed, { id: newId(), type: "divider", text: "" }, ...newBlocks] });
+      setAiOpen(false);
+      setAiPrompt("");
+      toast.success(language === "ar" ? "تمت إضافة الملاحظات" : "Notes added");
+    } catch (e: any) {
+      toast.error(e?.message ?? (language === "ar" ? "فشل التوليد" : "Generation failed"));
+    } finally {
+      setAiLoading(false);
+    }
+  }, [active, aiPrompt, language]);
 
   // Debounced autosave per note, with pending snapshot so we can flush on
   // navigation / unmount / page hide and never lose canvas edits.
@@ -1388,6 +1474,13 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                     <Video className="w-3.5 h-3.5" />
                     <span>{language === "ar" ? "حوّل إلى فيديو" : "Convert to video"}</span>
                   </button>
+                  <button
+                    onClick={() => { setAiPrompt(active?.title || ""); setAiOpen(true); }}
+                    className="ms-2 inline-flex items-center gap-2 h-8 px-3 rounded-full border border-primary/30 bg-gradient-to-r from-primary/15 to-primary/5 text-xs font-medium text-primary hover:from-primary/20 transition-colors"
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>{language === "ar" ? "ملاحظات بالذكاء" : "AI Notes"}</span>
+                  </button>
                   {exportOpen && (
                     <div className="absolute z-40 mt-1 end-0 right-0 w-64 rounded-xl bg-popover border border-border shadow-lg p-3 space-y-3">
                       <div>
@@ -1558,6 +1651,63 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
 
       {/* Slash menu */}
       <AnimatePresence>
+        {aiOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => !aiLoading && setAiOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              className="w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-5"
+              onClick={(e) => e.stopPropagation()}
+              dir={isRTL ? "rtl" : "ltr"}
+            >
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
+                  <Wand2 className="w-4 h-4 text-primary" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold leading-tight">
+                    {language === "ar" ? "ملاحظات بالذكاء الاصطناعي" : "Generate AI Notes"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {language === "ar" ? "ملاحظات منظّمة + رسوم توضيحية" : "Structured notes + illustrations"}
+                  </p>
+                </div>
+              </div>
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                disabled={aiLoading}
+                placeholder={language === "ar" ? "اكتب الموضوع أو الصق نصّاً…" : "Enter a topic or paste text…"}
+                className="w-full min-h-[120px] rounded-lg border border-border bg-background p-3 text-sm outline-none focus:border-primary/50 resize-none"
+              />
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {language === "ar" ? "اتركه فارغاً لاستخدام محتوى الصفحة الحالية." : "Leave empty to use the current page content."}
+              </p>
+              <div className="flex items-center gap-2 mt-4">
+                <button
+                  onClick={() => setAiOpen(false)}
+                  disabled={aiLoading}
+                  className="flex-1 h-10 rounded-lg border border-border hover:bg-secondary text-sm disabled:opacity-50"
+                >
+                  {language === "ar" ? "إلغاء" : "Cancel"}
+                </button>
+                <button
+                  onClick={() => generateAiNotes()}
+                  disabled={aiLoading}
+                  className="flex-1 h-10 rounded-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold shadow-md hover:shadow-lg disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                >
+                  {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {aiLoading
+                    ? (language === "ar" ? "جاري التوليد…" : "Generating…")
+                    : (language === "ar" ? "توليد" : "Generate")}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
         {slash && (
           <motion.div
             initial={{ opacity: 0, y: -6, scale: 0.96 }}
