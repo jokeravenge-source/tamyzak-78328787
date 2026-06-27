@@ -324,6 +324,14 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
                 >
                   {isAr ? "نص جديد" : "New text"}
                 </button>
+                <button
+                  onClick={() => setShowCaptions((v) => !v)}
+                  title={isAr ? "ترجمة/تسميات توضيحية" : "Captions"}
+                  className={`h-9 px-3 rounded-full border text-xs inline-flex items-center gap-1 ${showCaptions ? "border-primary/40 bg-primary/10 text-primary" : "border-border hover:bg-secondary"}`}
+                >
+                  {showCaptions ? <Captions className="w-3.5 h-3.5" /> : <CaptionsOff className="w-3.5 h-3.5" />}
+                  <span>{isAr ? (showCaptions ? "ترجمة: تشغيل" : "ترجمة: إيقاف") : (showCaptions ? "Captions: On" : "Captions: Off")}</span>
+                </button>
                 {playing ? (
                   <button onClick={stop} className="h-9 px-4 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold">
                     {isAr ? "إيقاف" : "Stop"}
