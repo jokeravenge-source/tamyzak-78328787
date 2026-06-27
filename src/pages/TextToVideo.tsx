@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Sparkles, Play, Download, Loader2, Video } from "lucide-react";
+import { ArrowLeft, Sparkles, Play, Download, Loader2, Video, Captions, CaptionsOff } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,9 +18,12 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
   const [playing, setPlaying] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+  const [showCaptions, setShowCaptions] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const stopFlagRef = useRef(false);
+  const captionsRef = useRef(true);
+  useEffect(() => { captionsRef.current = showCaptions; }, [showCaptions]);
 
   useEffect(() => {
     try {
@@ -119,6 +122,51 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
     ctx.fillStyle = "#f59e0b";
     const overallProgress = (sceneIndex + progress) / total;
     ctx.fillRect(60, H - 70, (W - 120) * overallProgress, 6);
+
+    // captions: render narration text at bottom, auto direction by content
+    if (captionsRef.current && scene.narration) {
+      const isArabicText = /[\u0600-\u06FF]/.test(scene.narration);
+      const fontSize = Math.round(H * 0.038);
+      ctx.font = `600 ${fontSize}px Cairo, system-ui, sans-serif`;
+      ctx.direction = (isArabicText ? "rtl" : "ltr") as CanvasDirection;
+      ctx.textAlign = "center";
+      // word-wrap
+      const maxWidth = W - 160;
+      const words = scene.narration.split(/\s+/);
+      const lines: string[] = [];
+      let cur = "";
+      for (const w of words) {
+        const test = cur ? cur + " " + w : w;
+        if (ctx.measureText(test).width > maxWidth && cur) {
+          lines.push(cur);
+          cur = w;
+        } else cur = test;
+      }
+      if (cur) lines.push(cur);
+      const lineH = fontSize * 1.35;
+      const padY = 14, padX = 24;
+      const boxH = lines.length * lineH + padY * 2;
+      const boxW = Math.min(W - 80, Math.max(...lines.map(l => ctx.measureText(l).width)) + padX * 2);
+      const boxX = (W - boxW) / 2;
+      const boxY = H - 100 - boxH;
+      ctx.fillStyle = "rgba(15,23,42,0.78)";
+      const r = 14;
+      ctx.beginPath();
+      ctx.moveTo(boxX + r, boxY);
+      ctx.arcTo(boxX + boxW, boxY, boxX + boxW, boxY + boxH, r);
+      ctx.arcTo(boxX + boxW, boxY + boxH, boxX, boxY + boxH, r);
+      ctx.arcTo(boxX, boxY + boxH, boxX, boxY, r);
+      ctx.arcTo(boxX, boxY, boxX + boxW, boxY, r);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      lines.forEach((ln, i) => {
+        ctx.fillText(ln, W / 2, boxY + padY + (i + 0.85) * lineH);
+      });
+      // reset
+      ctx.direction = "ltr" as CanvasDirection;
+      ctx.textAlign = "left";
+    }
   };
 
   const playScript = async (record: boolean) => {
@@ -275,6 +323,14 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
                   className="h-9 px-3 rounded-full border border-border text-xs hover:bg-secondary"
                 >
                   {isAr ? "نص جديد" : "New text"}
+                </button>
+                <button
+                  onClick={() => setShowCaptions((v) => !v)}
+                  title={isAr ? "ترجمة/تسميات توضيحية" : "Captions"}
+                  className={`h-9 px-3 rounded-full border text-xs inline-flex items-center gap-1 ${showCaptions ? "border-primary/40 bg-primary/10 text-primary" : "border-border hover:bg-secondary"}`}
+                >
+                  {showCaptions ? <Captions className="w-3.5 h-3.5" /> : <CaptionsOff className="w-3.5 h-3.5" />}
+                  <span>{isAr ? (showCaptions ? "ترجمة: تشغيل" : "ترجمة: إيقاف") : (showCaptions ? "Captions: On" : "Captions: Off")}</span>
                 </button>
                 {playing ? (
                   <button onClick={stop} className="h-9 px-4 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold">
