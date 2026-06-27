@@ -6,6 +6,18 @@ const STORAGE_KEY = "yt_player_recents_v1";
 
 type Recent = { id: string; title: string; url: string; added: number };
 
+function extractPlaylistId(input: string): string | null {
+  const s = input.trim();
+  if (!s) return null;
+  if (/^(PL|UU|LL|FL|RD|OL)[A-Za-z0-9_-]{10,}$/.test(s)) return s;
+  try {
+    const u = new URL(s.startsWith("http") ? s : `https://${s}`);
+    const list = u.searchParams.get("list");
+    if (list && /^[A-Za-z0-9_-]{10,}$/.test(list)) return list;
+  } catch { /* */ }
+  return null;
+}
+
 // Extract a YouTube video ID from any common URL format the user might paste:
 // watch?v=, youtu.be/, /embed/, /shorts/, /live/, or a raw 11-char id.
 function extractId(input: string): string | null {
@@ -37,6 +49,7 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const isRTL = language === "ar";
   const [input, setInput] = useState("");
   const [videoId, setVideoId] = useState<string | null>(null);
+  const [playlistId, setPlaylistId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recents, setRecents] = useState<Recent[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
@@ -53,6 +66,7 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
 
   const play = (id: string, title?: string, url?: string) => {
     setVideoId(id);
+    setPlaylistId(null);
     setError(null);
     setRecents((prev) => {
       const without = prev.filter((r) => r.id !== id);
@@ -65,9 +79,17 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const pl = extractPlaylistId(input);
+    if (pl) {
+      setPlaylistId(pl);
+      setVideoId(null);
+      setError(null);
+      setInput("");
+      return;
+    }
     const id = extractId(input);
     if (!id) {
-      setError(isRTL ? "رابط يوتيوب غير صالح" : "That doesn't look like a YouTube link.");
+      setError(isRTL ? "رابط يوتيوب أو قائمة تشغيل غير صالح" : "That doesn't look like a YouTube video or playlist link.");
       return;
     }
     play(id, undefined, input.trim());
@@ -113,7 +135,7 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
               type="text"
               value={input}
               onChange={(e) => { setInput(e.target.value); if (error) setError(null); }}
-              placeholder={isRTL ? "ألصق رابط يوتيوب..." : "Paste a YouTube URL..."}
+              placeholder={isRTL ? "ألصق رابط فيديو أو قائمة تشغيل..." : "Paste a YouTube video or playlist URL..."}
               className={`w-full h-11 rounded-xl border border-border bg-secondary/40 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} text-sm focus:outline-none focus:border-primary`}
             />
           </div>
@@ -133,7 +155,17 @@ const YoutubePlayer = ({ language, onBack }: { language: AppLanguage; onBack: ()
         )}
 
         <div className="rounded-2xl overflow-hidden border border-border bg-black aspect-video mb-8 shadow-lg">
-          {videoId ? (
+          {playlistId ? (
+            <iframe
+              key={playlistId}
+              src={`https://www.youtube-nocookie.com/embed/videoseries?list=${playlistId}&rel=0&modestbranding=1`}
+              title="YouTube playlist"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              className="w-full h-full"
+            />
+          ) : videoId ? (
             <iframe
               key={videoId}
               src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
