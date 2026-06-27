@@ -1,5 +1,8 @@
 project_id = "mwksmqcthfwgvldgbggy"
 
+[functions.youtube-playlist]
+verify_jwt = false
+
 [functions.generate-mcq]
 verify_jwt = false
 
