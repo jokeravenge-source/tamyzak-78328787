@@ -12,7 +12,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const { text, language, length, voice } = await req.json();
-    const lang = language === "en" ? "en" : "ar";
+    // Auto-detect language from text: if it contains Arabic chars -> ar, else en.
+    // Explicit `language` param still wins when provided as "ar" or "en".
+    const hasArabic = /[\u0600-\u06FF]/.test(typeof text === "string" ? text : "");
+    const lang: "ar" | "en" =
+      language === "ar" || language === "en"
+        ? language
+        : hasArabic ? "ar" : "en";
     const targetCount = length === "long" ? 8 : length === "short" ? 4 : 6;
     if (!text || typeof text !== "string" || text.trim().length < 10) {
       return json({ error: lang === "ar" ? "النص قصير جدًا." : "Text too short." }, 400);
@@ -24,7 +30,7 @@ Deno.serve(async (req) => {
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY not configured" }, 500);
 
     const langName = lang === "ar" ? "Arabic (Modern Standard)" : "English";
-    const sys = `You simplify any text into a friendly whiteboard explainer script in ${langName}. Produce exactly ${targetCount} sequential scenes. Each scene: a 1-2 sentence narration the narrator will speak (clear, simple, conversational), a very short keyword (2-4 words) shown as a heading, and 2-4 ultra-short bullet phrases (max 6 words each). Use ONLY ideas from the source text. Return via the submit_video_script tool.`;
+    const sys = `You simplify any text into a friendly whiteboard explainer script. WRITE EVERYTHING (title, keyword, narration, bullets) IN ${langName} — do not mix languages even if the source text uses other words; translate them. Produce exactly ${targetCount} sequential scenes. Each scene: a 1-2 sentence narration the narrator will speak (clear, simple, conversational), a very short keyword (2-4 words) shown as a heading, and 2-4 ultra-short bullet phrases (max 6 words each). Use ONLY ideas from the source text. Return via the submit_video_script tool.`;
 
     const scriptRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

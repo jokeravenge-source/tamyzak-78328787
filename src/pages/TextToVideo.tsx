@@ -39,7 +39,8 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
     setRecordedUrl(null);
     try {
       const { data, error } = await supabase.functions.invoke("text-to-video", {
-        body: { text, language, length },
+        // Don't force the UI language — let the function detect from the text itself.
+        body: { text, length },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
