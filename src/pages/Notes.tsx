@@ -247,6 +247,39 @@ const BlockRow = ({
     return <NotesPdfBlock block={block} language={language} onChange={onPdfChange} onRemove={onRemove} />;
   }
 
+  if (block.type === "image") {
+    return (
+      <div className="my-3 group">
+        <div className="rounded-xl border border-border overflow-hidden bg-card relative">
+          {block.imageUrl ? (
+            <img
+              src={block.imageUrl}
+              alt={block.imageAlt || ""}
+              className="w-full h-auto block max-h-[480px] object-contain bg-secondary/30"
+            />
+          ) : (
+            <div className="aspect-video bg-secondary/40 flex items-center justify-center text-xs text-muted-foreground">
+              {language === "ar" ? "صورة" : "Image"}
+            </div>
+          )}
+          <button
+            onClick={onRemove}
+            className="absolute top-2 end-2 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-full bg-background/80 backdrop-blur border border-border flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground"
+            aria-label="remove"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <input
+          value={block.text}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={language === "ar" ? "وصف الصورة (اختياري)" : "Caption (optional)"}
+          className="mt-1.5 w-full text-xs text-center bg-transparent outline-none text-muted-foreground placeholder:text-muted-foreground/40"
+        />
+      </div>
+    );
+  }
+
   if (block.type === "divider") {
     return (
       <div className="my-3 px-1">
