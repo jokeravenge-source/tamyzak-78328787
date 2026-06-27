@@ -71,6 +71,7 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
     setLoading(true);
     setScript(null);
     setRecordedUrl(null);
+    imageCacheRef.current.clear();
     try {
       const { data, error } = await supabase.functions.invoke("text-to-video", {
         // Don't force the UI language — let the function detect from the text itself.
