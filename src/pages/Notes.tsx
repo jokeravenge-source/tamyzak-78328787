@@ -1651,6 +1651,63 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
 
       {/* Slash menu */}
       <AnimatePresence>
+        {aiOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => !aiLoading && setAiOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              className="w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-5"
+              onClick={(e) => e.stopPropagation()}
+              dir={isRTL ? "rtl" : "ltr"}
+            >
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
+                  <Wand2 className="w-4 h-4 text-primary" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold leading-tight">
+                    {language === "ar" ? "ملاحظات بالذكاء الاصطناعي" : "Generate AI Notes"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {language === "ar" ? "ملاحظات منظّمة + رسوم توضيحية" : "Structured notes + illustrations"}
+                  </p>
+                </div>
+              </div>
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                disabled={aiLoading}
+                placeholder={language === "ar" ? "اكتب الموضوع أو الصق نصّاً…" : "Enter a topic or paste text…"}
+                className="w-full min-h-[120px] rounded-lg border border-border bg-background p-3 text-sm outline-none focus:border-primary/50 resize-none"
+              />
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {language === "ar" ? "اتركه فارغاً لاستخدام محتوى الصفحة الحالية." : "Leave empty to use the current page content."}
+              </p>
+              <div className="flex items-center gap-2 mt-4">
+                <button
+                  onClick={() => setAiOpen(false)}
+                  disabled={aiLoading}
+                  className="flex-1 h-10 rounded-lg border border-border hover:bg-secondary text-sm disabled:opacity-50"
+                >
+                  {language === "ar" ? "إلغاء" : "Cancel"}
+                </button>
+                <button
+                  onClick={() => generateAiNotes()}
+                  disabled={aiLoading}
+                  className="flex-1 h-10 rounded-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold shadow-md hover:shadow-lg disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                >
+                  {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {aiLoading
+                    ? (language === "ar" ? "جاري التوليد…" : "Generating…")
+                    : (language === "ar" ? "توليد" : "Generate")}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
         {slash && (
           <motion.div
             initial={{ opacity: 0, y: -6, scale: 0.96 }}
