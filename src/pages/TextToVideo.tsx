@@ -4,8 +4,37 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type Scene = { keyword: string; narration: string; bullets: string[]; audioBase64: string; mime: string };
+type VisualType = "stat" | "percent" | "compare" | "process" | "list" | "quote";
+type Visual = {
+  type: VisualType;
+  stat?: { value?: string; unit?: string; label?: string };
+  percent?: { value?: number; label?: string };
+  compare?: { left?: { label?: string; value?: string; icon?: string }; right?: { label?: string; value?: string; icon?: string } };
+  process?: { label?: string; icon?: string }[];
+  list?: { label?: string; icon?: string }[];
+  quote?: { text?: string; author?: string };
+};
+type ColorName = "amber" | "sky" | "emerald" | "rose" | "violet" | "indigo";
+type Scene = {
+  keyword: string;
+  narration: string;
+  bullets: string[];
+  icon?: string;
+  color?: ColorName;
+  visual?: Visual;
+  audioBase64: string;
+  mime: string;
+};
 type Script = { title: string; scenes: Scene[] };
+
+const COLORS: Record<ColorName, { bg: string; bg2: string; accent: string; soft: string; ink: string }> = {
+  amber:   { bg: "#fffbeb", bg2: "#fef3c7", accent: "#f59e0b", soft: "rgba(245,158,11,0.15)", ink: "#78350f" },
+  sky:     { bg: "#f0f9ff", bg2: "#e0f2fe", accent: "#0ea5e9", soft: "rgba(14,165,233,0.15)", ink: "#0c4a6e" },
+  emerald: { bg: "#ecfdf5", bg2: "#d1fae5", accent: "#10b981", soft: "rgba(16,185,129,0.15)", ink: "#064e3b" },
+  rose:    { bg: "#fff1f2", bg2: "#ffe4e6", accent: "#f43f5e", soft: "rgba(244,63,94,0.15)",  ink: "#881337" },
+  violet:  { bg: "#f5f3ff", bg2: "#ede9fe", accent: "#8b5cf6", soft: "rgba(139,92,246,0.15)", ink: "#4c1d95" },
+  indigo:  { bg: "#eef2ff", bg2: "#e0e7ff", accent: "#6366f1", soft: "rgba(99,102,241,0.15)", ink: "#312e81" },
+};
 
 const PREFILL_KEY = "text_to_video_prefill_v1";
 

@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY not configured" }, 500);
 
     const langName = lang === "ar" ? "Arabic (Modern Standard)" : "English";
-    const sys = `You simplify any text into a friendly whiteboard explainer script. WRITE EVERYTHING (title, keyword, narration, bullets) IN ${langName} — do not mix languages even if the source text uses other words; translate them. Produce exactly ${targetCount} sequential scenes. Each scene: a 1-2 sentence narration the narrator will speak (clear, simple, conversational), a very short keyword (2-4 words) shown as a heading, and 2-4 ultra-short bullet phrases (max 6 words each). Use ONLY ideas from the source text. Return via the submit_video_script tool.`;
+    const sys = `You turn any text into a vivid INFOGRAPHIC explainer video script. WRITE EVERYTHING (title, keyword, narration, bullets, labels) IN ${langName} — translate foreign words; never mix languages. Produce exactly ${targetCount} sequential scenes. For each scene pick the BEST visual layout from: "stat" (one big number + label, optional unit), "percent" (a 0-100 percentage with short label, animated ring), "compare" (two items side by side with short labels), "process" (3-5 ordered steps), "list" (2-4 icon bullet points), "quote" (a short impactful sentence). Each scene MUST have: a short keyword heading (2-4 words), a 1-2 sentence narration the narrator will speak (clear, conversational), an emoji icon that fits, an accent color (one of: amber, sky, emerald, rose, violet, indigo), a "visual" object matching the chosen type. Vary the visual types across scenes — do NOT repeat the same type back-to-back. Use ONLY ideas from the source text. Return via submit_video_script.`;
 
     const scriptRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -58,8 +58,23 @@ Deno.serve(async (req) => {
                       keyword: { type: "string" },
                       narration: { type: "string" },
                       bullets: { type: "array", items: { type: "string" } },
+                      icon: { type: "string", description: "A single emoji that represents the scene." },
+                      color: { type: "string", enum: ["amber","sky","emerald","rose","violet","indigo"] },
+                      visual: {
+                        type: "object",
+                        properties: {
+                          type: { type: "string", enum: ["stat","percent","compare","process","list","quote"] },
+                          stat: { type: "object", properties: { value: { type: "string" }, unit: { type: "string" }, label: { type: "string" } } },
+                          percent: { type: "object", properties: { value: { type: "number" }, label: { type: "string" } } },
+                          compare: { type: "object", properties: { left: { type: "object", properties: { label: { type: "string" }, value: { type: "string" }, icon: { type: "string" } } }, right: { type: "object", properties: { label: { type: "string" }, value: { type: "string" }, icon: { type: "string" } } } } },
+                          process: { type: "array", items: { type: "object", properties: { label: { type: "string" }, icon: { type: "string" } } } },
+                          list: { type: "array", items: { type: "object", properties: { label: { type: "string" }, icon: { type: "string" } } } },
+                          quote: { type: "object", properties: { text: { type: "string" }, author: { type: "string" } } },
+                        },
+                        required: ["type"],
+                      },
                     },
-                    required: ["keyword", "narration", "bullets"],
+                    required: ["keyword", "narration", "bullets", "icon", "color", "visual"],
                     additionalProperties: false,
                   },
                 },
