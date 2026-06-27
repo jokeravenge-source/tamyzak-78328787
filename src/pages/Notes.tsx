@@ -1712,6 +1712,18 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
               <p className="mt-2 text-[11px] text-muted-foreground">
                 {language === "ar" ? "اتركه فارغاً لاستخدام محتوى الصفحة الحالية." : "Leave empty to use the current page content."}
               </p>
+              <label className="mt-3 flex items-center gap-2 text-xs cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={aiAsNewPage}
+                  onChange={(e) => setAiAsNewPage(e.target.checked)}
+                  disabled={aiLoading}
+                  className="w-4 h-4 accent-primary"
+                />
+                <span>
+                  {language === "ar" ? "إضافتها كصفحة جديدة منفصلة" : "Add as a separate new page"}
+                </span>
+              </label>
               <div className="flex items-center gap-2 mt-4">
                 <button
                   onClick={() => setAiOpen(false)}
@@ -1721,7 +1733,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                   {language === "ar" ? "إلغاء" : "Cancel"}
                 </button>
                 <button
-                  onClick={() => generateAiNotes()}
+                  onClick={() => generateAiNotes(undefined, aiAsNewPage)}
                   disabled={aiLoading}
                   className="flex-1 h-10 rounded-lg bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-semibold shadow-md hover:shadow-lg disabled:opacity-60 inline-flex items-center justify-center gap-2"
                 >
