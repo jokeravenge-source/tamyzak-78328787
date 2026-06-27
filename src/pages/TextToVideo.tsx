@@ -270,45 +270,65 @@ const TextToVideo = ({ language, onBack }: { language: AppLanguage; onBack: () =
       for (let i = 0; i < script.scenes.length; i++) {
         if (stopFlagRef.current) break;
         const sc = script.scenes[i];
+        // Preload related image for this scene
+        if (sc.imageBase64 && !imageCacheRef.current.has(i)) {
+          await new Promise<void>((res) => {
+            const im = new Image();
+            im.onload = () => { imageCacheRef.current.set(i, im); res(); };
+            im.onerror = () => res();
+            im.src = `data:image/png;base64,${sc.imageBase64}`;
+          });
+        }
         const audio = new Audio();
         audioElRef.current = audio;
         audio.src = `data:${sc.mime};base64,${sc.audioBase64}`;
         audio.crossOrigin = "anonymous";
+        audio.preload = "auto";
         if (audioCtx && dest) {
           const srcNode = audioCtx.createMediaElementSource(audio);
           srcNode.connect(dest);
           srcNode.connect(audioCtx.destination);
         }
         await new Promise<void>((resolve) => {
-          const onMeta = () => {
-            const dur = Math.max(2, isFinite(audio.duration) ? audio.duration : 4);
-            const start = performance.now();
-            audio.play().catch(() => { /* ignore */ });
+          let resolved = false;
+          const finish = () => { if (!resolved) { resolved = true; resolve(); } };
+          const startTicking = () => {
+            const dur = Math.max(1.2, isFinite(audio.duration) ? audio.duration : 4);
+            // Render frame 0 immediately so the scene is visible the instant audio starts.
+            drawScene(sc, i, script.scenes.length, 0);
             const tick = () => {
-              if (stopFlagRef.current) { audio.pause(); resolve(); return; }
-              const elapsed = (performance.now() - start) / 1000;
-              const p = Math.min(1, elapsed / dur);
+              if (stopFlagRef.current) { try { audio.pause(); } catch { /* ignore */ } finish(); return; }
+              // Drive progress from audio.currentTime — keeps visuals locked to sound.
+              const p = Math.min(1, audio.currentTime / dur);
               drawScene(sc, i, script.scenes.length, p);
-              if (p < 1) requestAnimationFrame(tick);
+              if (audio.ended || p >= 1) return; // ended handler resolves
+              requestAnimationFrame(tick);
             };
             requestAnimationFrame(tick);
-            audio.onended = () => resolve();
           };
-          audio.onloadedmetadata = onMeta;
+          // Only start the visuals once audio truly begins playing.
+          audio.onplaying = () => startTicking();
+          audio.onended = () => {
+            drawScene(sc, i, script.scenes.length, 1);
+            finish();
+          };
+          audio.oncanplaythrough = () => { audio.play().catch(() => { /* ignore */ }); };
+          audio.onloadedmetadata = () => { audio.play().catch(() => { /* ignore */ }); };
           audio.onerror = () => {
-            // fall back: timed scene
+            // Fallback: timed scene if audio fails entirely.
             const dur = 5;
             const start = performance.now();
             const tick = () => {
-              if (stopFlagRef.current) { resolve(); return; }
+              if (stopFlagRef.current) { finish(); return; }
               const elapsed = (performance.now() - start) / 1000;
               const p = Math.min(1, elapsed / dur);
               drawScene(sc, i, script.scenes.length, p);
-              if (p < 1) requestAnimationFrame(tick);
-              else resolve();
+              if (p < 1) requestAnimationFrame(tick); else finish();
             };
             requestAnimationFrame(tick);
           };
+          // Safety net: if nothing fires within 8s, move on
+          setTimeout(() => { if (!resolved && !audio.duration) finish(); }, 8000);
         });
         // small pause between scenes
         await new Promise((r) => setTimeout(r, 300));
