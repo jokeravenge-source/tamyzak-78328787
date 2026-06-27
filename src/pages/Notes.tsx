@@ -1474,6 +1474,13 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
                     <Video className="w-3.5 h-3.5" />
                     <span>{language === "ar" ? "حوّل إلى فيديو" : "Convert to video"}</span>
                   </button>
+                  <button
+                    onClick={() => { setAiPrompt(active?.title || ""); setAiOpen(true); }}
+                    className="ms-2 inline-flex items-center gap-2 h-8 px-3 rounded-full border border-primary/30 bg-gradient-to-r from-primary/15 to-primary/5 text-xs font-medium text-primary hover:from-primary/20 transition-colors"
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>{language === "ar" ? "ملاحظات بالذكاء" : "AI Notes"}</span>
+                  </button>
                   {exportOpen && (
                     <div className="absolute z-40 mt-1 end-0 right-0 w-64 rounded-xl bg-popover border border-border shadow-lg p-3 space-y-3">
                       <div>
