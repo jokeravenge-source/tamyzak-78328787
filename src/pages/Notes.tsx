@@ -594,6 +594,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const [aiOpen, setAiOpen] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiAsNewPage, setAiAsNewPage] = useState(false);
 
   // Drag-and-drop state
   const dragRef = useRef<{ type: "notebook" | "page"; id: string } | null>(null);
@@ -669,7 +670,7 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
     }
   }, [active, language, pdfSize, pdfOrientation]);
 
-  const generateAiNotes = useCallback(async (topicOverride?: string) => {
+  const generateAiNotes = useCallback(async (topicOverride?: string, asNewPage?: boolean) => {
     if (!active) return;
     const fromPage = active.content
       .map((b) => (b.type === "divider" || b.type === "image" ? "" : (b.text || "").trim()))
@@ -704,18 +705,43 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
           newBlocks.splice(Math.floor(newBlocks.length * 0.75), 0, imgBlock);
         }
       });
-      const existing = active.content;
-      const trimmed = existing.filter((b, i) => !(i === existing.length - 1 && b.type === "text" && !b.text));
-      updateNote(active.id, { content: [...trimmed, { id: newId(), type: "divider", text: "" }, ...newBlocks] });
+      if (asNewPage) {
+        const { data: u } = await supabase.auth.getUser();
+        if (!u.user) { toast.error("Not signed in"); return; }
+        const position = notes.filter((n) => n.parent_id === (active.parent_id ?? null)).length;
+        const title = topic.split("\n")[0].slice(0, 80);
+        const { data: created, error: insErr } = await supabase
+          .from("notes")
+          .insert({
+            user_id: u.user.id,
+            parent_id: active.parent_id ?? null,
+            notebook_id: active.notebook_id ?? null,
+            title,
+            icon: "✨",
+            content: newBlocks as any,
+            position,
+          })
+          .select()
+          .single();
+        if (insErr) { toast.error(insErr.message); return; }
+        const newNote: Note = { ...(created as any), content: newBlocks };
+        setNotes((prev) => [...prev, newNote]);
+        setActiveId(newNote.id);
+        toast.success(language === "ar" ? "تم إنشاء صفحة جديدة" : "New page created");
+      } else {
+        const existing = active.content;
+        const trimmed = existing.filter((b, i) => !(i === existing.length - 1 && b.type === "text" && !b.text));
+        updateNote(active.id, { content: [...trimmed, { id: newId(), type: "divider", text: "" }, ...newBlocks] });
+        toast.success(language === "ar" ? "تمت إضافة الملاحظات" : "Notes added");
+      }
       setAiOpen(false);
       setAiPrompt("");
-      toast.success(language === "ar" ? "تمت إضافة الملاحظات" : "Notes added");
     } catch (e: any) {
       toast.error(e?.message ?? (language === "ar" ? "فشل التوليد" : "Generation failed"));
     } finally {
       setAiLoading(false);
     }
-  }, [active, aiPrompt, language]);
+  }, [active, aiPrompt, language, notes]);
 
   // Debounced autosave per note, with pending snapshot so we can flush on
   // navigation / unmount / page hide and never lose canvas edits.
