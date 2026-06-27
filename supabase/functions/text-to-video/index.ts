@@ -101,20 +101,63 @@ Deno.serve(async (req) => {
     const scenes: { keyword: string; narration: string; bullets: string[] }[] = parsed.scenes ?? [];
     if (!scenes.length) return json({ error: "Empty script", retryable: true }, 500);
 
-    // Image per scene (parallel) — a related illustration to simplify the topic.
-    const imgResults = await Promise.all(scenes.map(async (sc) => {
+    // Step 1: ask a chat model to translate every scene into a precise English image-generation
+    // prompt grounded in the overall topic + this specific scene. This dramatically improves
+    // visual accuracy vs. asking the image model to interpret a short keyword.
+    const topicSummary = (parsed.title || "").toString().slice(0, 160);
+    const sourceSnippet = text.slice(0, 1200);
+    let imagePrompts: string[] = scenes.map((sc) => `${sc.keyword}. ${sc.narration}`);
+    try {
+      const promptRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: `You write precise English prompts for an AI image generator. Every prompt must depict EXACTLY the concept of one scene, grounded in the overall topic. Be concrete: name the subject, setting, key objects, and any actions/relationships from the scene. Style: clean modern flat vector infographic illustration, soft pastel background, bold simple shapes, subtle depth, friendly educational look. STRICT RULES: no text/letters/numbers/labels/watermark/logos, no UI mockups, no collages, single coherent scene, centered composition. Translate any non-English source terms to clear English. Return via the submit tool.` },
+            { role: "user", content: `Topic title: ${topicSummary}\nSource excerpt:\n${sourceSnippet}\n\nScenes (one prompt per scene, same order):\n${scenes.map((s, i) => `${i + 1}. KEYWORD: ${s.keyword}\n   NARRATION: ${s.narration}\n   BULLETS: ${(s.bullets || []).join(" | ")}`).join("\n")}` },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "submit_image_prompts",
+              description: "Submit one concrete English image prompt per scene, in order.",
+              parameters: {
+                type: "object",
+                properties: {
+                  prompts: { type: "array", items: { type: "string" }, minItems: scenes.length, maxItems: scenes.length },
+                },
+                required: ["prompts"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "submit_image_prompts" } },
+        }),
+      });
+      if (promptRes.ok) {
+        const pj = await promptRes.json();
+        const tc = pj?.choices?.[0]?.message?.tool_calls?.[0];
+        if (tc) {
+          const args = JSON.parse(tc.function.arguments);
+          if (Array.isArray(args?.prompts) && args.prompts.length === scenes.length) {
+            imagePrompts = args.prompts.map((p: unknown) => String(p));
+          }
+        }
+      }
+    } catch { /* fall back to keyword+narration */ }
+
+    // Step 2: generate one image per scene in parallel with the higher-quality Gemini image model.
+    const NEG = "No text, no letters, no numbers, no captions, no labels, no watermark, no logo, no UI mockup, no border.";
+    const imgResults = await Promise.all(scenes.map(async (_sc, idx) => {
+      const fullPrompt = `${imagePrompts[idx]} Style: modern flat vector infographic illustration, soft pastel palette, clean shapes, single centered subject, educational, friendly. ${NEG}`;
       try {
-        const promptParts = [
-          `Minimalist flat vector illustration that visually explains: ${sc.keyword}.`,
-          sc.narration ? `Concept: ${sc.narration}` : "",
-          "Educational infographic style, soft pastel background, clean shapes, no text, no watermark, centered subject, friendly modern look.",
-        ].filter(Boolean).join(" ");
         const r = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image",
-            messages: [{ role: "user", content: promptParts }],
+            model: "google/gemini-3.1-flash-image",
+            messages: [{ role: "user", content: fullPrompt }],
             modalities: ["image", "text"],
           }),
         });
