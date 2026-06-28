@@ -257,6 +257,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [displayName, setDisplayName] = useState("");
   const [pomodoro, setPomodoro] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [hourPauseOpen, setHourPauseOpen] = useState(false);
+  const lastHourPromptRef = useRef(0);
   const [pomodoroWorkMin, setPomodoroWorkMin] = useState(DEFAULT_WORK_MIN);
   const [pomodoroRestMin, setPomodoroRestMin] = useState(DEFAULT_REST_MIN);
   const [phase, setPhase] = useState<"work" | "rest">("work");
