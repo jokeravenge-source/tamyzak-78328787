@@ -599,8 +599,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     savingRef.current = true;
     setRunning(false);
     clearPresence();
-    // 1 point per full studied hour.
-    const points = Math.floor(seconds / 3600);
+    // 5 points per full studied hour.
+    const points = Math.floor(seconds / 3600) * 5;
     const { data: inserted, error } = await supabase.from("study_sessions").insert({
       user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
       mission_completed: completed, points,
