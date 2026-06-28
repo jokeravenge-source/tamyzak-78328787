@@ -313,6 +313,9 @@ const App = () => {
           onSelect={(k) => chooseMenu(k as MenuChoice)}
         />
       )}
+      <PageTransition
+        routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${tgVerified ? "tg" : "notg"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
+      >
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authLoading ? (
@@ -424,6 +427,7 @@ const App = () => {
         </Routes>
       </BrowserRouter>
       )}
+      </PageTransition>
     </TooltipProvider>
   </QueryClientProvider>
   );
