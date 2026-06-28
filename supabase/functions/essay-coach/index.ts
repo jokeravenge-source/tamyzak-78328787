@@ -137,6 +137,81 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (mode === "correct") {
+      const ent = await claimFeature(req, "essay");
+      if (!ent.ok) {
+        return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), { status: ent.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const studentText = String(body.studentText || "").slice(0, MAX_STUDY_CHARS);
+      const keyText = String(body.keyText || "").slice(0, MAX_STUDY_CHARS);
+      const studentImages = Array.isArray(body.studentImages) ? body.studentImages.filter((u) => typeof u === "string" && u.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
+      const keyImages = Array.isArray(body.keyImages) ? body.keyImages.filter((u) => typeof u === "string" && u.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
+      if ((!studentText && !studentImages.length) || (!keyText && !keyImages.length)) {
+        return new Response(JSON.stringify({ error: "Missing files" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const systemPrompt = `You are an expert exam corrector. You receive TWO documents:\n1) The student's handwritten/typed answer sheet (may be images or text). OCR the images and read every answer carefully.\n2) The official answer key (PDF text and/or images).\n\nYour job:\n- Identify each question/item in the answer key.\n- For each item, find the student's matching answer (by number/order/topic).\n- Compare them and assign a score. Default max per item is 10 unless the key indicates a different mark; if so use that.\n- Be fair: give partial credit for partially correct answers; full marks for equivalent wording.\n- Provide a short, helpful feedback line for each item in ${language}.\n- Provide one overall comment in ${language}.\n- If a question has no student answer, score 0 and note it as missing.\n- Respond ONLY via the tool call. Total must equal the sum of item scores; max must equal the sum of item maxes.`;
+      const parts: any[] = [
+        { type: "text", text: `STUDENT ANSWER SHEET (text, may be empty if only images):\n${studentText || "(none)"}\n\nANSWER KEY (text, may be empty if only images):\n${keyText || "(none)"}\n\nImages below are the page scans. Earlier images = student sheet, later images = answer key. Student image count: ${studentImages.length}. Key image count: ${keyImages.length}.` },
+        ...studentImages.map((url) => ({ type: "image_url", image_url: { url } })),
+        ...keyImages.map((url) => ({ type: "image_url", image_url: { url } })),
+      ];
+      const res = await fetch(AI_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: AI_MODEL,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: parts },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "submit_correction",
+              description: "Submit the full correction",
+              parameters: {
+                type: "object",
+                properties: {
+                  items: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        question: { type: "string" },
+                        student_answer: { type: "string" },
+                        correct_answer: { type: "string" },
+                        score: { type: "number" },
+                        max: { type: "number" },
+                        feedback: { type: "string" },
+                      },
+                      required: ["question", "student_answer", "correct_answer", "score", "max", "feedback"],
+                      additionalProperties: false,
+                    },
+                  },
+                  total: { type: "number" },
+                  max: { type: "number" },
+                  overall: { type: "string" },
+                },
+                required: ["items", "total", "max", "overall"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "submit_correction" } },
+        }),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        const status = res.status === 429 || res.status === 402 ? res.status : 500;
+        return new Response(JSON.stringify({ error: errText }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const data = await res.json();
+      const tc = data.choices?.[0]?.message?.tool_calls?.[0];
+      if (!tc) return new Response(JSON.stringify({ error: "No correction" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const parsed = JSON.parse(tc.function.arguments);
+      return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     return new Response(JSON.stringify({ error: "Invalid mode" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
