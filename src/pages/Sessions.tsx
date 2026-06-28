@@ -196,6 +196,9 @@ const T = {
     discardNote: "Your past saved sessions and leaderboard score are not affected. This action cannot be undone.",
     discardCancel: "Keep session",
     discardConfirmBtn: "Yes, discard",
+    hourTitle: "One hour completed!",
+    hourDesc: "Great work — take a quick breath. Click continue when you're ready to keep studying.",
+    hourContinue: "Continue session",
   },
   ar: {
     title: "جلسات الدراسة", desc: "اختر مادة وحدد مهمتك واكسب النقاط.",
@@ -227,6 +230,9 @@ const T = {
     discardNote: "جلساتك المحفوظة سابقاً ونقاطك على لوحة المتصدرين لن تتأثر. لا يمكن التراجع عن هذا الإجراء.",
     discardCancel: "الاحتفاظ بالجلسة",
     discardConfirmBtn: "نعم، احذف",
+    hourTitle: "أتممت ساعة كاملة!",
+    hourDesc: "أحسنت — خذ نفساً سريعاً. اضغط على متابعة عندما تكون جاهزاً لمواصلة الدراسة.",
+    hourContinue: "متابعة الجلسة",
   },
 } as const;
 
