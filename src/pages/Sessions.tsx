@@ -594,6 +594,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     setPhase("work");
     phaseStartRef.current = 0;
     lastPhaseSwitchRef.current = -1;
+    lastHourPromptRef.current = 0;
+    setHourPauseOpen(false);
   };
 
   const stopAndSave = async () => {
