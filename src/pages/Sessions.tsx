@@ -196,6 +196,9 @@ const T = {
     discardNote: "Your past saved sessions and leaderboard score are not affected. This action cannot be undone.",
     discardCancel: "Keep session",
     discardConfirmBtn: "Yes, discard",
+    hourTitle: "One hour completed!",
+    hourDesc: "Great work — take a quick breath. Click continue when you're ready to keep studying.",
+    hourContinue: "Continue session",
   },
   ar: {
     title: "جلسات الدراسة", desc: "اختر مادة وحدد مهمتك واكسب النقاط.",
@@ -227,6 +230,9 @@ const T = {
     discardNote: "جلساتك المحفوظة سابقاً ونقاطك على لوحة المتصدرين لن تتأثر. لا يمكن التراجع عن هذا الإجراء.",
     discardCancel: "الاحتفاظ بالجلسة",
     discardConfirmBtn: "نعم، احذف",
+    hourTitle: "أتممت ساعة كاملة!",
+    hourDesc: "أحسنت — خذ نفساً سريعاً. اضغط على متابعة عندما تكون جاهزاً لمواصلة الدراسة.",
+    hourContinue: "متابعة الجلسة",
   },
 } as const;
 
@@ -251,6 +257,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   const [displayName, setDisplayName] = useState("");
   const [pomodoro, setPomodoro] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [hourPauseOpen, setHourPauseOpen] = useState(false);
+  const lastHourPromptRef = useRef(0);
   const [pomodoroWorkMin, setPomodoroWorkMin] = useState(DEFAULT_WORK_MIN);
   const [pomodoroRestMin, setPomodoroRestMin] = useState(DEFAULT_REST_MIN);
   const [phase, setPhase] = useState<"work" | "rest">("work");
@@ -300,6 +308,18 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       }
     }
   }, [seconds, pomodoro, started, phase, pomodoroWorkMin, L.workDone]);
+
+  // Force a check-in pause after every full hour of studying.
+  useEffect(() => {
+    if (!started || !running) return;
+    const hourMark = Math.floor(seconds / 3600);
+    if (hourMark > 0 && hourMark > lastHourPromptRef.current) {
+      lastHourPromptRef.current = hourMark;
+      setRunning(false);
+      setHourPauseOpen(true);
+      try { playAlarm(); } catch { /* noop */ }
+    }
+  }, [seconds, started, running]);
 
   // Rest timer (separate, real-time)
   const [restRemaining, setRestRemaining] = useState(0);
@@ -586,6 +606,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     setPhase("work");
     phaseStartRef.current = 0;
     lastPhaseSwitchRef.current = -1;
+    lastHourPromptRef.current = 0;
+    setHourPauseOpen(false);
   };
 
   const stopAndSave = async () => {
@@ -637,6 +659,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     lastPhaseSwitchRef.current = -1;
     localStorage.removeItem(PERSIST_KEY);
     setDiscardOpen(false);
+    lastHourPromptRef.current = 0;
+    setHourPauseOpen(false);
     toast.success(L.discarded);
   };
 
@@ -884,6 +908,22 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             <AlertDialogCancel>{L.discardCancel}</AlertDialogCancel>
             <AlertDialogAction onClick={discardSession} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {L.discardConfirmBtn}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={hourPauseOpen} onOpenChange={(o) => { if (!o) return; setHourPauseOpen(o); }}>
+        <AlertDialogContent dir={dir}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{L.hourTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="block text-sm">{L.hourDesc}</span>
+              <span className="block mt-3 text-2xl font-mono text-primary">{fmt(seconds)}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => { setHourPauseOpen(false); setRunning(true); }}>
+              {L.hourContinue}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
