@@ -309,6 +309,18 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     }
   }, [seconds, pomodoro, started, phase, pomodoroWorkMin, L.workDone]);
 
+  // Force a check-in pause after every full hour of studying.
+  useEffect(() => {
+    if (!started || !running) return;
+    const hourMark = Math.floor(seconds / 3600);
+    if (hourMark > 0 && hourMark > lastHourPromptRef.current) {
+      lastHourPromptRef.current = hourMark;
+      setRunning(false);
+      setHourPauseOpen(true);
+      try { playAlarm(); } catch { /* noop */ }
+    }
+  }, [seconds, started, running]);
+
   // Rest timer (separate, real-time)
   const [restRemaining, setRestRemaining] = useState(0);
   useEffect(() => {
