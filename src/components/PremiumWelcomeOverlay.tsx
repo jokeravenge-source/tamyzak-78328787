@@ -10,7 +10,7 @@ const copy = {
     sub: "You've unlocked unlimited AI everywhere, an animated badge next to your name, and exclusive ways to style your character.",
     cta: "Awesome",
     list: [
-      "Unlimited Essay Coach, MCQ, Video Notes & Subject Agent",
+      "Unlimited Al-Musahhih, MCQ, Video Notes & Subject Agent",
       "Animated Premium badge next to your name",
       "New skin tones, hair colors, shirts & royal crown",
     ],
