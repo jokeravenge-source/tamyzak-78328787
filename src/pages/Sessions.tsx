@@ -912,6 +912,22 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={hourPauseOpen} onOpenChange={(o) => { if (!o) return; setHourPauseOpen(o); }}>
+        <AlertDialogContent dir={dir}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{L.hourTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="block text-sm">{L.hourDesc}</span>
+              <span className="block mt-3 text-2xl font-mono text-primary">{fmt(seconds)}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => { setHourPauseOpen(false); setRunning(true); }}>
+              {L.hourContinue}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };
