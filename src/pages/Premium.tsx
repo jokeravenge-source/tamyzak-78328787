@@ -21,7 +21,7 @@ const copy = {
     active: "You're a Premium member",
     activeDesc: "Enjoy unlimited AI and your premium perks.",
     features: [
-      "Unlimited Essay Coach, MCQ Generator & Video to Notes",
+      "Unlimited Al-Musahhih, MCQ Generator & Video to Notes",
       "Animated Premium badge next to your name",
       "Exclusive character styles & royal crown accessory",
       "Cancel anytime",

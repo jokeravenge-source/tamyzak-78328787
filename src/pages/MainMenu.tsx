@@ -24,7 +24,7 @@ const copy = {
       advices: { title: "Advices", subtitle: "Read advice from top students or share your own." },
       videoNotes: { title: "Video to Notes", subtitle: "Paste a YouTube link and get AI-generated study notes." },
       account: { title: "Account Center", subtitle: "Set your username and manage your profile." },
-      essay: { title: "Essay Coach", subtitle: "Upload a file and get essay questions graded 1–10 by AI." },
+      essay: { title: "Al-Musahhih", subtitle: "Upload your answer sheet & the key — AI grades it." },
       report: { title: "Daily Report", subtitle: "AI insights on today's study + share progress with a parent." },
       youtube: { title: "YouTube Player", subtitle: "Watch any YouTube video inside the app without distractions." },
     },
