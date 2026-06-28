@@ -3,8 +3,9 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import Chapters from "./pages/Chapters.tsx";
+import { lazy } from "react";
+const Index = lazy(() => import("./pages/Index.tsx"));
+const Chapters = lazy(() => import("./pages/Chapters.tsx"));
 import NotFound from "./pages/NotFound.tsx";
 import { useState } from "react";
 
@@ -14,43 +15,42 @@ import { applyTheme, getInitialTheme } from "./components/ThemePicker";
 import { useEffect } from "react";
 import Auth from "./pages/Auth";
 import { supabase } from "./integrations/supabase/client";
-import MainMenu from "./pages/MainMenu";
-import Missions from "./pages/Missions";
-import MCQ from "./pages/MCQ";
-import Summaries from "./pages/Summaries";
-import Advices from "./pages/Advices";
-import Sessions from "./pages/Sessions";
-import AdminDashboard from "./pages/AdminDashboard";
+const Missions = lazy(() => import("./pages/Missions"));
+const MCQ = lazy(() => import("./pages/MCQ"));
+const Summaries = lazy(() => import("./pages/Summaries"));
+const Advices = lazy(() => import("./pages/Advices"));
+const Sessions = lazy(() => import("./pages/Sessions"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 import AdminLogin from "./pages/AdminLogin";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
-import AccountCenter from "./pages/AccountCenter";
-import Essay from "./pages/Essay";
-import VideoNotes from "./pages/VideoNotes";
+const AccountCenter = lazy(() => import("./pages/AccountCenter"));
+const Essay = lazy(() => import("./pages/Essay"));
+const VideoNotes = lazy(() => import("./pages/VideoNotes"));
 import ZombieGuard from "./components/ZombieGuard";
 import EnglishCategoryPage, { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "./pages/EnglishCategory";
 import Basics, { type BasicsChoice } from "./pages/Basics";
-import BiologyDrawings from "./pages/BiologyDrawings";
-import More from "./pages/More";
-import Leaderboard from "./pages/Leaderboard";
+const BiologyDrawings = lazy(() => import("./pages/BiologyDrawings"));
+const More = lazy(() => import("./pages/More"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 import PointsAwardOverlay from "./components/PointsAwardOverlay";
-import TodoList from "./pages/TodoList";
-import News from "./pages/News";
-import Premium from "./pages/Premium";
-import MinisterialBank from "./pages/MinisterialBank";
-import MindMap from "./pages/MindMap";
-import IslamicSurahs from "./pages/IslamicSurahs";
-import HadithChecker from "./pages/HadithChecker";
-import PoemsChecker from "./pages/PoemsChecker";
-import EnglishEssays from "./pages/EnglishEssays";
-import EnglishIsqat from "./pages/EnglishIsqat";
-import DailyReport from "./pages/DailyReport";
-import Notes from "./pages/Notes";
-import Canvas from "./pages/Canvas";
-import YoutubePlayer from "./pages/YoutubePlayer";
-import OrganicEquations from "./pages/OrganicEquations";
-import LiveBattle from "./pages/LiveBattle";
-import SubjectsHub from "./pages/SubjectsHub";
-import TextToVideo from "./pages/TextToVideo";
+const TodoList = lazy(() => import("./pages/TodoList"));
+const News = lazy(() => import("./pages/News"));
+const Premium = lazy(() => import("./pages/Premium"));
+const MinisterialBank = lazy(() => import("./pages/MinisterialBank"));
+const MindMap = lazy(() => import("./pages/MindMap"));
+const IslamicSurahs = lazy(() => import("./pages/IslamicSurahs"));
+const HadithChecker = lazy(() => import("./pages/HadithChecker"));
+const PoemsChecker = lazy(() => import("./pages/PoemsChecker"));
+const EnglishEssays = lazy(() => import("./pages/EnglishEssays"));
+const EnglishIsqat = lazy(() => import("./pages/EnglishIsqat"));
+const DailyReport = lazy(() => import("./pages/DailyReport"));
+const Notes = lazy(() => import("./pages/Notes"));
+const Canvas = lazy(() => import("./pages/Canvas"));
+const YoutubePlayer = lazy(() => import("./pages/YoutubePlayer"));
+const OrganicEquations = lazy(() => import("./pages/OrganicEquations"));
+const LiveBattle = lazy(() => import("./pages/LiveBattle"));
+const SubjectsHub = lazy(() => import("./pages/SubjectsHub"));
+const TextToVideo = lazy(() => import("./pages/TextToVideo"));
 import AppSidebar, { type SidebarKey } from "./components/AppSidebar";
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
@@ -59,6 +59,7 @@ import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 import SearchFAB from "./components/SearchFAB";
 import ExcellenceCompanion from "./components/ExcellenceCompanion";
 import TelegramGate from "./components/TelegramGate";
+import PageTransition from "./components/PageTransition";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_INTRO_KEY = "app_companion_intro_v1";
@@ -312,6 +313,9 @@ const App = () => {
           onSelect={(k) => chooseMenu(k as MenuChoice)}
         />
       )}
+      <PageTransition
+        routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${tgVerified ? "tg" : "notg"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
+      >
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
       ) : authLoading ? (
@@ -423,6 +427,7 @@ const App = () => {
         </Routes>
       </BrowserRouter>
       )}
+      </PageTransition>
     </TooltipProvider>
   </QueryClientProvider>
   );
