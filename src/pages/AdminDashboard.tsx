@@ -100,7 +100,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   // Notifications state
   type Notif = { id: string; title: string; body: string; link: string | null; created_at: string };
   const [notifs, setNotifs] = useState<Notif[]>([]);
-  const [notifForm, setNotifForm] = useState<{ title: string; body: string; link: string; file: File | null }>({ title: "", body: "", link: "", file: null });
+  const [notifForm, setNotifForm] = useState<{ title: string; body: string; link: string; file: File | null; video: File | null }>({ title: "", body: "", link: "", file: null, video: null });
   const [notifBusy, setNotifBusy] = useState(false);
   const loadNotifs = async () => {
     const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false });
@@ -115,6 +115,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     try {
       const { data: u } = await supabase.auth.getUser();
       let photo_url: string | null = null;
+      let video_url: string | null = null;
       if (notifForm.file) {
         const ext = notifForm.file.name.split(".").pop() || "jpg";
         const path = `notif/${u.user?.id}/${Date.now()}.${ext}`;
@@ -122,12 +123,19 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
         if (upErr) throw upErr;
         photo_url = supabase.storage.from("news").getPublicUrl(path).data.publicUrl;
       }
+      if (notifForm.video) {
+        const ext = notifForm.video.name.split(".").pop() || "mp4";
+        const path = `notif/${u.user?.id}/${Date.now()}-vid.${ext}`;
+        const { error: upErr } = await supabase.storage.from("news").upload(path, notifForm.video, { contentType: notifForm.video.type || "video/mp4" });
+        if (upErr) throw upErr;
+        video_url = supabase.storage.from("news").getPublicUrl(path).data.publicUrl;
+      }
       const { data: inserted, error } = await supabase.from("notifications").insert({ title: notifForm.title, body: notifForm.body, link: link || null, created_by: u.user?.id }).select("id").single();
       if (error) throw error;
       toast.success("Notification sent to all users");
       try {
         const { data: tg } = await supabase.functions.invoke("telegram-notify", {
-          body: { title: notifForm.title, body: notifForm.body, link: link || null, photo_url, audience: "all", notification_key: `notif:${inserted?.id}` },
+          body: { title: notifForm.title, body: notifForm.body, link: link || null, photo_url, video_url, audience: "all", notification_key: `notif:${inserted?.id}` },
         });
         if (tg && typeof tg === "object" && "sent" in (tg as Record<string, unknown>)) {
           const t = tg as { sent: number; failed: number; total: number };
@@ -136,7 +144,7 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
       } catch (e: any) {
         toast.error(`Telegram push failed: ${e?.message ?? e}`);
       }
-      setNotifForm({ title: "", body: "", link: "", file: null });
+      setNotifForm({ title: "", body: "", link: "", file: null, video: null });
       loadNotifs();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed");
@@ -601,6 +609,11 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                 <Upload className="w-4 h-4" />
                 <span>{notifForm.file ? notifForm.file.name : "Choose image (optional)"}</span>
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => setNotifForm({ ...notifForm, file: e.target.files?.[0] ?? null })} />
+              </label>
+              <label className="inline-flex items-center gap-2 px-3 h-10 rounded-lg border border-white/10 bg-background text-sm cursor-pointer hover:border-primary/40 ml-2">
+                <Upload className="w-4 h-4" />
+                <span>{notifForm.video ? notifForm.video.name : "Choose video (optional)"}</span>
+                <input type="file" accept="video/*" className="hidden" onChange={(e) => setNotifForm({ ...notifForm, video: e.target.files?.[0] ?? null })} />
               </label>
               <button onClick={sendNotif} disabled={notifBusy} className="inline-flex items-center gap-2 px-4 h-10 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
                 {notifBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send
