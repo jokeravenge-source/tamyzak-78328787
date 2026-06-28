@@ -1,7 +1,9 @@
 import { Home, UserCog, Trophy, Crown, BookOpen, Sparkles } from "lucide-react";
 import { motion, LayoutGroup } from "framer-motion";
+import { createPortal } from "react-dom";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
+import { useEffect, useState } from "react";
 
 type TabKey = "basics" | "leaderboard" | "subjectsHub" | "report" | "account" | "premium" | "more";
 
@@ -30,7 +32,12 @@ const CurvedNavBar = ({
   ];
   const ease = [0.22, 1, 0.36, 1] as const;
 
-  return (
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setPortalRoot(document.body);
+  }, []);
+
+  const bar = (
     <div
       className="fixed left-0 right-0 z-[100] flex justify-center pointer-events-none px-3"
       style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + 0.75rem)` }}
@@ -82,6 +89,8 @@ const CurvedNavBar = ({
       </motion.nav>
     </div>
   );
+
+  return portalRoot ? createPortal(bar, portalRoot) : null;
 };
 
 export default CurvedNavBar;

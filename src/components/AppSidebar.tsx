@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Home, BookOpen, Palette, Video, ChevronLeft, ChevronRight, Swords, Heart,
 } from "lucide-react";
@@ -14,9 +15,13 @@ const AppSidebar = ({
   onSelect: (k: SidebarKey) => void;
 }) => {
   const [open, setOpen] = useState<boolean>(false);
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const [battleLocked, setBattleLocked] = useState<boolean>(
     typeof window !== "undefined" && (window as any).__battleLocked === true,
   );
+  useEffect(() => {
+    setPortalRoot(document.body);
+  }, []);
   useEffect(() => {
     const onLock = (e: Event) => {
       const detail = (e as CustomEvent).detail as { locked?: boolean } | undefined;
@@ -38,7 +43,7 @@ const AppSidebar = ({
     { key: "psych",      icon: Heart,    labelEn: "Psych Assistant", labelAr: "المساعد النفسي" },
   ];
 
-  return (
+  const sidebar = (
     <aside
       className={`fixed top-1/2 -translate-y-1/2 ${side === "left" ? "left-1 sm:left-2" : "right-1 sm:right-2"} z-40 flex flex-col rounded-2xl border border-border bg-card/90 backdrop-blur-md shadow-lg transition-[width] duration-200 ${
         open ? "w-40 sm:w-44" : "w-11 sm:w-12"
@@ -77,6 +82,8 @@ const AppSidebar = ({
       </nav>
     </aside>
   );
+
+  return portalRoot ? createPortal(sidebar, portalRoot) : null;
 };
 
 export default AppSidebar;
