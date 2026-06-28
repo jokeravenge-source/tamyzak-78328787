@@ -2,6 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============ Global UX polish ============ */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+/* Honor users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* Refined, consistent focus rings (keyboard only) */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+/* Smoother interactive defaults */
+button, [role="button"], a {
+  transition: transform 200ms ease, opacity 200ms ease,
+    background-color 200ms ease, color 200ms ease, box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+button:active:not(:disabled), [role="button"]:active:not(:disabled) {
+  transform: scale(0.97);
+}
+/* Ensure touch targets on mobile */
+@media (max-width: 768px) {
+  button, [role="button"], a.button, .touch-target {
+    min-height: 40px;
+  }
+}
+/* Custom-styled scrollbars (desktop) */
+@media (pointer: fine) {
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.45);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
+}
+/* Safe-area padding helpers for notched devices */
+.safe-top { padding-top: max(env(safe-area-inset-top), 0px); }
+.safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+
+/* Snappier image rendering */
+img { -webkit-user-drag: none; }
+
+/* Soft entrance for cards/panels */
+.lv-rise {
+  animation: lv-rise 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes lv-rise {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+/* ============ End UX polish ============ */
+
 /* Gemini-style shimmer status text */
 @keyframes gemini-shimmer {
   0% { background-position: 200% 50%; }
