@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = "google/gemini-2.5-flash";
-const MAX_CHAT_MESSAGES = 20;
+const MAX_CHAT_MESSAGES = 10;
 const MAX_CONTINUATIONS = 4;
 
 const SYSTEM_SCHEDULE_AR = `أنت "رفيق التميز" - مساعد ذكي لطالب ثانوي يساعده على تنظيم جدوله الدراسي الأسبوعي.
