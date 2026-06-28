@@ -1,12 +1,30 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Send, Heart, Loader2, Phone } from "lucide-react";
+import { ArrowLeft, Send, Heart, Loader2, Phone, ListPlus, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { Button } from "@/components/ui/button";
+import { pushTodos, pullTodos, type SyncedTodo } from "@/lib/todosSync";
 
 type Msg = { role: "user" | "assistant"; content: string };
+type ParsedPlan = { title?: string; tasks: string[] } | null;
+
+const STORAGE_KEY = "app_todos_v1";
+
+function extractPlan(text: string): { clean: string; plan: ParsedPlan } {
+  const re = /```plan\s*([\s\S]*?)```/i;
+  const m = text.match(re);
+  if (!m) return { clean: text, plan: null };
+  try {
+    const json = JSON.parse(m[1].trim());
+    const tasks = Array.isArray(json?.tasks) ? json.tasks.filter((t: unknown) => typeof t === "string" && t.trim()) : [];
+    if (!tasks.length) return { clean: text.replace(re, "").trim(), plan: null };
+    return { clean: text.replace(re, "").trim(), plan: { title: typeof json.title === "string" ? json.title : undefined, tasks } };
+  } catch {
+    return { clean: text.replace(re, "").trim(), plan: null };
+  }
+}
 
 const copy = {
   ar: {
@@ -20,6 +38,9 @@ const copy = {
     humanDesc: "خط نجدة الصحة النفسية في العراق: 7821 / 119",
     loading: "يفكّر...",
     error: "حدث خطأ، حاول مرة أخرى.",
+    planTitle: "خطة مقترحة",
+    addPlan: "أضِف هذه الخطة إلى قائمة مهامي",
+    planAdded: "تمت إضافة الخطة إلى قائمة المهام",
   },
   en: {
     title: "Psychological Assistant",
@@ -32,6 +53,9 @@ const copy = {
     humanDesc: "Mental health helpline (Iraq): 7821 / 119",
     loading: "Thinking...",
     error: "Something went wrong, try again.",
+    planTitle: "Suggested plan",
+    addPlan: "Add this plan to my to-do list",
+    planAdded: "Plan added to your to-do list",
   },
 } as const;
 
@@ -42,6 +66,7 @@ export default function PsychAssistant({ language, onBack }: { language: AppLang
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [addedPlanKeys, setAddedPlanKeys] = useState<Set<number>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -89,6 +114,34 @@ export default function PsychAssistant({ language, onBack }: { language: AppLang
     }
   };
 
+  const addPlanToTodos = async (idx: number, plan: NonNullable<ParsedPlan>) => {
+    try {
+      // load existing
+      let existing: SyncedTodo[] = [];
+      const remote = await pullTodos();
+      if (remote && Array.isArray(remote)) {
+        existing = remote;
+      } else {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) existing = JSON.parse(raw);
+        } catch { /* ignore */ }
+      }
+      const newOnes: SyncedTodo[] = plan.tasks.map((text) => ({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        text,
+        done: false,
+      }));
+      const merged = [...existing, ...newOnes];
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch { /* ignore */ }
+      await pushTodos(merged);
+      setAddedPlanKeys((s) => new Set(s).add(idx));
+      toast.success(t.planAdded);
+    } catch {
+      toast.error(t.error);
+    }
+  };
+
   return (
     <main className="min-h-screen flex flex-col px-3 sm:px-4 py-4 sm:py-6 max-w-3xl mx-auto" dir={isAr ? "rtl" : "ltr"}>
       <header className="flex items-center justify-between mb-4">
@@ -121,25 +174,55 @@ export default function PsychAssistant({ language, onBack }: { language: AppLang
             {t.intro}
           </motion.div>
         ) : (
-          messages.map((m, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.18 }}
-              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[85%] whitespace-pre-wrap text-sm leading-relaxed rounded-2xl px-3.5 py-2.5 ${
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : "bg-card border border-border text-foreground rounded-bl-sm"
-                }`}
+          messages.map((m, i) => {
+            const { clean, plan } = m.role === "assistant" ? extractPlan(m.content) : { clean: m.content, plan: null as ParsedPlan };
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18 }}
+                className={`flex flex-col gap-2 ${m.role === "user" ? "items-end" : "items-start"}`}
               >
-                {m.content}
-              </div>
-            </motion.div>
-          ))
+                {clean && (
+                  <div
+                    className={`max-w-[85%] whitespace-pre-wrap text-sm leading-relaxed rounded-2xl px-3.5 py-2.5 ${
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground rounded-br-sm"
+                        : "bg-card border border-border text-foreground rounded-bl-sm"
+                    }`}
+                  >
+                    {clean}
+                  </div>
+                )}
+                {plan && (
+                  <div className="max-w-[85%] w-full rounded-2xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+                    <div className="text-xs font-semibold text-primary uppercase tracking-wide">
+                      {plan.title || t.planTitle}
+                    </div>
+                    <ul className="space-y-1.5">
+                      {plan.tasks.map((task, ti) => (
+                        <li key={ti} className="flex items-start gap-2 text-sm text-foreground">
+                          <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary/60 shrink-0" />
+                          <span>{task}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      size="sm"
+                      variant={addedPlanKeys.has(i) ? "secondary" : "default"}
+                      onClick={() => addPlanToTodos(i, plan)}
+                      disabled={addedPlanKeys.has(i)}
+                      className="w-full mt-1 gap-2"
+                    >
+                      <ListPlus className="w-4 h-4" />
+                      {addedPlanKeys.has(i) ? t.planAdded : t.addPlan}
+                    </Button>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })
         )}
         {loading && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
