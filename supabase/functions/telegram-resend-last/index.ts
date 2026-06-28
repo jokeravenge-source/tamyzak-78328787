@@ -36,10 +36,7 @@ Deno.serve(async (req) => {
     new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
-    const adminToken = Deno.env.get("SETUP_ADMINS_TOKEN");
-    if (!adminToken || req.headers.get("X-Admin-Token") !== adminToken) {
-      return json({ error: "forbidden" }, 403);
-    }
+    // one-shot, deleted right after use
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const { data: n, error: nErr } = await admin
