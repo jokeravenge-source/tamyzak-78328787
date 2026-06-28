@@ -659,6 +659,8 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     lastPhaseSwitchRef.current = -1;
     localStorage.removeItem(PERSIST_KEY);
     setDiscardOpen(false);
+    lastHourPromptRef.current = 0;
+    setHourPauseOpen(false);
     toast.success(L.discarded);
   };
 
