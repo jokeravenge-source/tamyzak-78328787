@@ -3,13 +3,15 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
 
-async function tgSend(chatId: number, text: string, link?: string | null, photoUrl?: string | null) {
+async function tgSend(chatId: number, text: string, link?: string | null, photoUrl?: string | null, videoUrl?: string | null) {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
   const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY")!;
-  const endpoint = photoUrl ? "sendPhoto" : "sendMessage";
-  const body: Record<string, unknown> = photoUrl
-    ? { chat_id: chatId, photo: photoUrl, caption: text, parse_mode: "HTML" }
-    : { chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: false };
+  const endpoint = videoUrl ? "sendVideo" : photoUrl ? "sendPhoto" : "sendMessage";
+  const body: Record<string, unknown> = videoUrl
+    ? { chat_id: chatId, video: videoUrl, caption: text, parse_mode: "HTML", supports_streaming: true }
+    : photoUrl
+      ? { chat_id: chatId, photo: photoUrl, caption: text, parse_mode: "HTML" }
+      : { chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: false };
   if (link) {
     body.reply_markup = { inline_keyboard: [[{ text: "Open", url: link }]] };
   }
@@ -58,6 +60,7 @@ Deno.serve(async (req) => {
     const text = String(body.body ?? "").slice(0, 3500).trim();
     const link = body.link ? String(body.link).slice(0, 500) : null;
     const photoUrl = body.photo_url ? String(body.photo_url).slice(0, 1000) : null;
+    const videoUrl = body.video_url ? String(body.video_url).slice(0, 1000) : null;
     const audience: "all" | "user" = body.audience === "user" ? "user" : "all";
     const targetUserId = body.target_user_id ? String(body.target_user_id) : null;
     const notificationKey = body.notification_key ? String(body.notification_key).slice(0, 200) : null;
@@ -89,7 +92,7 @@ Deno.serve(async (req) => {
           continue;
         }
       }
-      const res = await tgSend(id, msg, link, photoUrl);
+      const res = await tgSend(id, msg, link, photoUrl, videoUrl);
       if (res.ok) sent++; else failed++;
       await new Promise((r) => setTimeout(r, 40));
     }
