@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Clock, Target, Trophy, CalendarDays, GraduationCap, Brain, ListChecks, CheckCircle2, Circle, Lock, Wrench, Hourglass } from "lucide-react";
+import { CalendarDays, GraduationCap, Brain, ListChecks, CheckCircle2, Circle, Lock, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Progress } from "@/components/ui/progress";
 
 type Snapshot = {
   student_name: string;
