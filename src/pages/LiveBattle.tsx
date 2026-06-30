@@ -474,28 +474,31 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
         {phase === "createSettings" && (
           <div className="space-y-4">
             <div className="rounded-2xl border bg-card p-4 space-y-3">
-              <label className="text-sm font-medium">{t.subject}</label>
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { key: "general", label: t.subjGeneral },
-                  { key: "physics", label: t.subjPhysics },
-                  { key: "chemistry", label: t.subjChemistry },
-                  { key: "biology", label: t.subjBiology },
-                  { key: "arabic", label: t.subjArabic },
-                  { key: "english", label: t.subjEnglish },
-                  { key: "french", label: t.subjFrench },
-                  { key: "islamic", label: t.subjIslamic },
-                ] as { key: Subject; label: string }[]).map((s) => (
-                  <button
-                    key={s.key}
-                    onClick={() => setSubject(s.key)}
-                    className={`rounded-xl border p-3 text-sm transition ${
-                      subject === s.key ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
+              <label className="text-sm font-medium">{t.uploadFile}</label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="cursor-pointer border-2 border-dashed border-primary/30 hover:border-primary rounded-xl p-6 text-center transition"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.docx,.txt,application/pdf,text/plain"
+                  onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+                />
+                {file ? (
+                  <div className="flex flex-col items-center gap-1">
+                    <FileText className="w-8 h-8 text-primary" />
+                    <p className="font-medium text-sm truncate max-w-full">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <Upload className="w-8 h-8 text-primary" />
+                    <p className="font-medium text-sm">{t.uploadFile}</p>
+                    <p className="text-xs text-muted-foreground">{t.uploadHint}</p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="rounded-2xl border bg-card p-4 space-y-3">
@@ -515,8 +518,10 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setPhase("menu")} className="flex-1">{t.back}</Button>
-              <Button onClick={createRoom} className="flex-1">{t.createNow}</Button>
+              <Button variant="outline" onClick={() => setPhase("menu")} className="flex-1" disabled={creating}>{t.back}</Button>
+              <Button onClick={createRoom} className="flex-1" disabled={creating || !file}>
+                {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> {t.generating}</> : t.createNow}
+              </Button>
             </div>
           </div>
         )}
