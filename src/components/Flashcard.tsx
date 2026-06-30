@@ -137,7 +137,7 @@ export const Flashcard = ({ question, answer, index, total, direction, language 
   const animClass = direction === "right" ? "animate-card-slide-in-right" : "animate-card-slide-in-left";
 
   return (
-    <div key={index} className={`perspective w-full max-w-2xl ${animClass} flex flex-col gap-3`}>
+    <div key={index} className={`perspective w-full max-w-2xl overflow-hidden will-change-transform ${animClass} flex flex-col gap-3`}>
       <button
         onClick={() => setFlipped((f) => !f)}
         aria-label="Flip card"
