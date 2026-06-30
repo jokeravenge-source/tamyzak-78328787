@@ -687,43 +687,36 @@ const Basics = ({
           <div className="relative">
           {/* ====== Noir & Gold bento dashboard ====== */}
           {/* Header */}
-          <header className="mb-6 md:mb-10 flex flex-row justify-between items-end gap-3">
-            <div>
-              <h2
-                className="text-xl sm:text-2xl md:text-4xl font-bold tracking-tight text-foreground inline-flex items-center gap-2"
-                style={{ fontFamily: "'Syne', sans-serif" }}
-              >
-                <span>{welcome.hi}{username ? `, ${username}` : ""}</span>
-                {isPremium && (
-                  <motion.span
-                    initial={{ scale: 0, rotate: -30 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.2 }}
-                    aria-label="Premium"
-                    title="Premium"
-                    className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full shadow-[var(--shadow-glow)]"
-                    style={{ background: "var(--gradient-primary)" }}
-                  >
-                    <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
-                  </motion.span>
-                )}
-              </h2>
-              <p className="text-muted-foreground mt-1.5 text-xs sm:text-base md:text-lg line-clamp-2">{welcome.sub}</p>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4 bg-card border border-border px-3 sm:px-5 py-2 sm:py-3 rounded-2xl shrink-0 shadow-[var(--shadow-card)]">
-              <div className={isRTL ? "text-right" : "text-left"}>
-                <span className="hidden sm:block text-[10px] uppercase tracking-widest text-muted-foreground">
-                  {language === "ar" ? "سلسلة المذاكرة" : "Study streak"}
-                </span>
-                <span className="text-base sm:text-xl font-bold text-primary tabular-nums">
-                  {streakDays || 0} {language === "ar" ? "يوم" : "days"}
-                </span>
-              </div>
-              <div
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-[var(--shadow-glow)]"
-                style={{ background: "var(--gradient-primary)" }}
-              >
-                <span className="text-base sm:text-lg leading-none">🔥</span>
+          {/* === The Facet Stone hero === */}
+          <header className="mb-8 md:mb-12">
+            <div className="flex items-center gap-5 sm:gap-7">
+              <RankStone
+                rank={currentRank}
+                size={104}
+                fillProgress={stoneFill}
+                glow={currentRank === "royal" || currentRank === "diamond"}
+                className="shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-[0.22em] text-ash mb-1">
+                  {language === "ar" ? "رتبتك" : "Your rank"}
+                </p>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-tight">
+                  {rankLabel}
+                  {username && (
+                    <span className="text-ash font-normal text-base sm:text-lg ms-2">· {username}</span>
+                  )}
+                  {isPremium && (
+                    <Crown className="inline-block w-4 h-4 ms-2 text-ember align-middle" />
+                  )}
+                </h2>
+                <p className="mt-2 text-sm text-ash flex items-baseline gap-1.5">
+                  <span className="font-mono text-ember text-lg font-semibold tabular-nums">{streakDays || 0}</span>
+                  <span>{language === "ar" ? (streakDays === 1 ? "يوم متواصل" : "أيام متواصلة") : `day${streakDays === 1 ? "" : "s"} in a row`}</span>
+                  <span className="text-ash/60 mx-2">·</span>
+                  <span className="font-mono text-foreground tabular-nums">{totalPoints}</span>
+                  <span>{language === "ar" ? "نقطة" : "pts"}</span>
+                </p>
               </div>
             </div>
           </header>
