@@ -330,14 +330,14 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
 
   return (
     <main
-      className="min-h-screen bg-[hsl(40_30%_93%)] text-[hsl(230_19%_9%)]"
+      className="min-h-screen bg-background text-foreground"
       dir={language === "ar" ? "rtl" : "ltr"}
     >
       <div className="max-w-3xl mx-auto px-4 md:px-8 py-10 md:py-14">
         {/* Header */}
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] hover:text-[hsl(230_19%_9%)] mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           {t.back}
@@ -346,13 +346,13 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         <div className="mb-8 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 mb-3">
-              <Youtube className="w-3.5 h-3.5 text-[hsl(35_80%_45%)]" />
-              <span className="text-[10px] uppercase tracking-[0.32em] text-[hsl(230_6%_42%)] font-semibold">YouTube</span>
+              <Youtube className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground font-semibold">YouTube</span>
             </div>
             <h1 className="text-3xl md:text-[44px] font-bold tracking-tight leading-[1.05]">
               {t.title}
             </h1>
-            <p className="text-sm md:text-base text-[hsl(230_6%_42%)] mt-2 max-w-xl">
+            <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-xl">
               {t.subtitle}
             </p>
           </div>
@@ -366,12 +366,12 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
               onChange={(e) => setUrl(e.target.value)}
               placeholder={t.placeholder}
               dir="ltr"
-              className="h-11 text-sm bg-transparent border border-[hsl(230_19%_9%/0.18)] rounded-none font-mono focus-visible:ring-0 focus-visible:border-[hsl(230_19%_9%/0.6)]"
+              className="h-11 text-sm bg-transparent border border-border rounded-md font-mono focus-visible:ring-0 focus-visible:border-[hsl(230_19%_9%/0.6)]"
             />
             <button
               onClick={run}
               disabled={loading || !url.trim()}
-              className="w-full h-11 bg-[hsl(230_19%_9%)] text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 clip-facet-badge disabled:opacity-40 hover:opacity-90 transition-opacity"
+              className="w-full h-11 bg-primary text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 rounded-md disabled:opacity-40 hover:opacity-90 transition-opacity"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               {loading ? t.working : t.generate}
@@ -402,33 +402,33 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
               action={
                 <button
                   onClick={() => { navigator.clipboard.writeText(notes); toast.success(t.copied); }}
-                  className="h-8 px-3 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center gap-1.5 clip-facet-badge transition-colors"
+                  className="h-8 px-3 border border-border hover:border-foreground/50 text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center gap-1.5 rounded-md transition-colors"
                 >
                   <Copy className="w-3 h-3" />{t.copy}
                 </button>
               }
             >
-              <div className="divide-y divide-[hsl(230_19%_9%/0.12)] border-y border-[hsl(230_19%_9%/0.12)]">
+              <div className="divide-y divide-border border-y border-border">
                 {parts.map((p, i) => {
                   const open = openIdx === i;
                   return (
                     <div key={i}>
                       <button
                         onClick={() => setOpenIdx(open ? null : i)}
-                        className="w-full flex items-center justify-between py-4 text-left hover:bg-[hsl(230_19%_9%/0.04)] transition-colors px-2 -mx-2"
+                        className="w-full flex items-center justify-between py-4 text-left hover:bg-secondary/60 transition-colors px-2 -mx-2"
                       >
                         <span className="flex items-center gap-3 min-w-0">
-                          <span className="font-mono text-[11px] tabular-nums text-[hsl(230_6%_42%)] w-6 shrink-0">
+                          <span className="font-mono text-[11px] tabular-nums text-muted-foreground w-6 shrink-0">
                             {String(i + 1).padStart(2, "0")}
                           </span>
                           <span className="font-semibold text-sm md:text-base truncate">
                             {p.title}
                           </span>
                         </span>
-                        <ChevronDown className={`w-4 h-4 text-[hsl(230_6%_42%)] transition-transform shrink-0 ${open ? "rotate-180" : ""}`} />
+                        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${open ? "rotate-180" : ""}`} />
                       </button>
                       {open && (
-                        <div className="pb-5 px-2 -mx-2 whitespace-pre-wrap text-[hsl(230_19%_9%)]/90 leading-relaxed text-sm">
+                        <div className="pb-5 px-2 -mx-2 whitespace-pre-wrap text-foreground/90 leading-relaxed text-sm">
                           {p.notes}
                         </div>
                       )}
@@ -446,9 +446,9 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
             <Panel icon={Sparkles} title={t.flashcardsTitle}>
               <div className="grid sm:grid-cols-3 gap-3 mb-5">
                 <div>
-                  <label className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] font-semibold mb-1.5 block">{t.pickSubject}</label>
+                  <label className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-1.5 block">{t.pickSubject}</label>
                   <Select value={subject} onValueChange={(v) => { setSubject(v as BankSubject); setChapter(""); }}>
-                    <SelectTrigger className="rounded-none border-[hsl(230_19%_9%/0.18)] bg-transparent h-10 text-sm"><SelectValue placeholder={t.pickSubject} /></SelectTrigger>
+                    <SelectTrigger className="rounded-md border-border bg-transparent h-10 text-sm"><SelectValue placeholder={t.pickSubject} /></SelectTrigger>
                     <SelectContent>
                       {SUBJECTS_ORDER.map((s) => (
                         <SelectItem key={s.code} value={s.code}>{language === "ar" ? s.ar : s.en}</SelectItem>
@@ -457,9 +457,9 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                   </Select>
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] font-semibold mb-1.5 block">{t.pickChapter}</label>
+                  <label className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-1.5 block">{t.pickChapter}</label>
                   <Select value={chapter} onValueChange={setChapter} disabled={!subject}>
-                    <SelectTrigger className="rounded-none border-[hsl(230_19%_9%/0.18)] bg-transparent h-10 text-sm"><SelectValue placeholder={t.pickChapter} /></SelectTrigger>
+                    <SelectTrigger className="rounded-md border-border bg-transparent h-10 text-sm"><SelectValue placeholder={t.pickChapter} /></SelectTrigger>
                     <SelectContent>
                       {chapters.filter((c) => !c.locked).map((c) => (
                         <SelectItem key={c.n} value={String(c.n)}>{language === "ar" ? c.arTitle : c.title}</SelectItem>
@@ -471,30 +471,30 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                   <button
                     onClick={saveAllCards}
                     disabled={!subject || !chapter}
-                    className="w-full h-10 bg-[hsl(230_19%_9%)] text-[hsl(40_30%_93%)] text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 clip-facet-badge disabled:opacity-30 hover:opacity-90 transition-opacity"
+                    className="w-full h-10 bg-primary text-[hsl(40_30%_93%)] text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 rounded-md disabled:opacity-30 hover:opacity-90 transition-opacity"
                   >
                     <Save className="w-3.5 h-3.5" />{t.addAll}
                   </button>
                 </div>
               </div>
 
-              <div className="divide-y divide-[hsl(230_19%_9%/0.12)] border-y border-[hsl(230_19%_9%/0.12)]">
+              <div className="divide-y divide-border border-y border-border">
                 {cards.map((c, i) => {
                   const isSaved = savedIdx.has(i);
                   return (
                     <div key={i} className="py-4 flex gap-4 items-start">
-                      <span className="font-mono text-[11px] tabular-nums text-[hsl(230_6%_42%)] w-6 shrink-0 pt-0.5">
+                      <span className="font-mono text-[11px] tabular-nums text-muted-foreground w-6 shrink-0 pt-0.5">
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(35_80%_45%)] font-semibold mb-1">{t.cardFront}</div>
+                        <div className="text-[10px] uppercase tracking-[0.22em] text-primary font-semibold mb-1">{t.cardFront}</div>
                         <div className="font-medium text-sm mb-3">{c.q}</div>
-                        <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] font-semibold mb-1">{t.cardBack}</div>
-                        <div className="text-sm text-[hsl(230_19%_9%)]/85 mb-3">{c.a}</div>
+                        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-1">{t.cardBack}</div>
+                        <div className="text-sm text-foreground/85 mb-3">{c.a}</div>
                         <button
                           onClick={() => saveOneCard(i)}
                           disabled={isSaved || savingIdx === i || !subject || !chapter}
-                          className="h-8 px-3 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center gap-1.5 clip-facet-badge disabled:opacity-40 transition-colors"
+                          className="h-8 px-3 border border-border hover:border-foreground/50 text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center gap-1.5 rounded-md disabled:opacity-40 transition-colors"
                         >
                           {isSaved ? <><Check className="w-3 h-3" />{t.saved}</> :
                             savingIdx === i ? <Loader2 className="w-3 h-3 animate-spin" /> :
@@ -517,11 +517,11 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                 const q = mcqs[mcqIdx];
                 return (
                   <div>
-                    <div className="flex items-center justify-between mb-5 pb-3 border-b border-[hsl(230_19%_9%/0.12)]">
-                      <span className="font-mono text-[11px] tabular-nums uppercase tracking-[0.18em] text-[hsl(230_6%_42%)]">
+                    <div className="flex items-center justify-between mb-5 pb-3 border-b border-border">
+                      <span className="font-mono text-[11px] tabular-nums uppercase tracking-[0.18em] text-muted-foreground">
                         {t.question} {String(mcqIdx + 1).padStart(2, "0")} / {String(mcqs.length).padStart(2, "0")}
                       </span>
-                      <span className="font-mono text-sm tabular-nums font-semibold text-[hsl(35_80%_45%)]">
+                      <span className="font-mono text-sm tabular-nums font-semibold text-primary">
                         {mcqScore} ✓
                       </span>
                     </div>
@@ -530,12 +530,12 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                       {q.choices.map((c, i) => {
                         const isCorrect = i === q.answer_index;
                         const isSelected = i === mcqSelected;
-                        let cls = "border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)]";
+                        let cls = "border-border hover:border-foreground/50";
                         if (mcqRevealed) {
                           if (isCorrect) cls = "border-[hsl(140_50%_35%)] bg-[hsl(140_50%_35%/0.08)]";
-                          else if (isSelected) cls = "border-[hsl(0_60%_45%)] bg-[hsl(0_60%_45%/0.08)]";
-                          else cls = "border-[hsl(230_19%_9%/0.1)] opacity-50";
-                        } else if (isSelected) cls = "border-[hsl(230_19%_9%)] bg-[hsl(230_19%_9%/0.06)]";
+                          else if (isSelected) cls = "border-[hsl(0_60%_45%)] bg-destructive/10";
+                          else cls = "border-border opacity-50";
+                        } else if (isSelected) cls = "border-[hsl(230_19%_9%)] bg-primary/10";
                         return (
                           <button
                             key={i}
@@ -544,22 +544,22 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                             className={`w-full text-left border p-3.5 transition-colors flex items-center justify-between gap-3 text-sm ${cls}`}
                           >
                             <span className="flex items-center gap-3 min-w-0">
-                              <span className="font-mono text-[11px] text-[hsl(230_6%_42%)] tabular-nums shrink-0">
+                              <span className="font-mono text-[11px] text-muted-foreground tabular-nums shrink-0">
                                 {String.fromCharCode(65 + i)}
                               </span>
                               <span className="truncate">{c}</span>
                             </span>
                             {mcqRevealed && isCorrect && <Check className="w-4 h-4 text-[hsl(140_50%_35%)] shrink-0" />}
-                            {mcqRevealed && isSelected && !isCorrect && <X className="w-4 h-4 text-[hsl(0_60%_45%)] shrink-0" />}
+                            {mcqRevealed && isSelected && !isCorrect && <X className="w-4 h-4 text-destructive shrink-0" />}
                           </button>
                         );
                       })}
                     </div>
 
                     {mcqRevealed && (
-                      <div className="border-l-2 border-[hsl(35_80%_45%)] bg-[hsl(35_80%_45%/0.06)] p-3 mb-4">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[hsl(35_80%_45%)] mb-1">{t.explanation}</p>
-                        <p className="text-sm text-[hsl(230_19%_9%)]/90">{q.explanation}</p>
+                      <div className="border-l-2 border-[hsl(35_80%_45%)] bg-primary/10 p-3 mb-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary mb-1">{t.explanation}</p>
+                        <p className="text-sm text-foreground/90">{q.explanation}</p>
                       </div>
                     )}
 
@@ -567,13 +567,13 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                       <div className="mb-4">
                         {mcqHint ? (
                           <div className="border-l-2 border-[hsl(230_6%_42%)] bg-[hsl(230_6%_42%/0.06)] p-3 flex gap-3">
-                            <Lightbulb className="w-4 h-4 text-[hsl(230_6%_42%)] shrink-0 mt-0.5" />
-                            <p className="text-sm text-[hsl(230_19%_9%)]/90">{q.hint}</p>
+                            <Lightbulb className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                            <p className="text-sm text-foreground/90">{q.hint}</p>
                           </div>
                         ) : (
                           <button
                             onClick={() => setMcqHint(true)}
-                            className="h-8 px-3 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center gap-1.5 clip-facet-badge transition-colors"
+                            className="h-8 px-3 border border-border hover:border-foreground/50 text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center gap-1.5 rounded-md transition-colors"
                           >
                             <Lightbulb className="w-3 h-3" />{t.showHint}
                           </button>
@@ -585,14 +585,14 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                       <button
                         onClick={submitMcqAnswer}
                         disabled={mcqSelected === null}
-                        className="w-full h-11 bg-[hsl(230_19%_9%)] text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center clip-facet-badge disabled:opacity-30 hover:opacity-90 transition-opacity"
+                        className="w-full h-11 bg-primary text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center rounded-md disabled:opacity-30 hover:opacity-90 transition-opacity"
                       >
                         {t.next}
                       </button>
                     ) : (
                       <button
                         onClick={nextMcq}
-                        className="w-full h-11 bg-[hsl(230_19%_9%)] text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center clip-facet-badge hover:opacity-90 transition-opacity"
+                        className="w-full h-11 bg-primary text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center rounded-md hover:opacity-90 transition-opacity"
                       >
                         {mcqIdx + 1 >= mcqs.length ? t.finish : t.next}
                       </button>
@@ -601,16 +601,16 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                 );
               })() : (
                 <div className="py-6 text-center">
-                  <p className="text-[10px] uppercase tracking-[0.32em] text-[hsl(230_6%_42%)] font-semibold mb-4">{t.yourScore}</p>
-                  <p className="font-mono text-6xl md:text-7xl font-bold tabular-nums text-[hsl(35_80%_45%)] leading-none mb-2">
-                    {mcqScore}<span className="text-[hsl(230_6%_55%)]">/</span>{mcqs.length}
+                  <p className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground font-semibold mb-4">{t.yourScore}</p>
+                  <p className="font-mono text-6xl md:text-7xl font-bold tabular-nums text-primary leading-none mb-2">
+                    {mcqScore}<span className="text-muted-foreground">/</span>{mcqs.length}
                   </p>
-                  <p className="font-mono text-lg text-[hsl(230_6%_42%)] tabular-nums mb-6">
+                  <p className="font-mono text-lg text-muted-foreground tabular-nums mb-6">
                     {Math.round((mcqScore / mcqs.length) * 100)}%
                   </p>
                   <button
                     onClick={restartMcq}
-                    className="h-10 px-5 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center gap-2 clip-facet-badge transition-colors"
+                    className="h-10 px-5 border border-border hover:border-foreground/50 text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center gap-2 rounded-md transition-colors"
                   >
                     <RotateCw className="w-3 h-3" />{t.restartQuiz}
                   </button>
@@ -640,11 +640,11 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border border-[hsl(230_19%_9%/0.14)] bg-[hsl(40_30%_93%)] p-5 md:p-6 clip-facet">
+    <section className="border border-border bg-background p-5 md:p-6 rounded-xl">
       <header className="mb-4 flex items-start justify-between gap-3">
         <div className="inline-flex items-center gap-2">
-          <Icon className="w-3.5 h-3.5 text-[hsl(230_19%_9%)]" />
-          <h2 className="text-[11px] uppercase tracking-[0.22em] font-semibold text-[hsl(230_19%_9%)]">{title}</h2>
+          <Icon className="w-3.5 h-3.5 text-foreground" />
+          <h2 className="text-[11px] uppercase tracking-[0.22em] font-semibold text-foreground">{title}</h2>
         </div>
         {action}
       </header>
@@ -669,10 +669,10 @@ function ActionBtn({
   children: React.ReactNode;
 }) {
   const base =
-    "h-12 inline-flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] clip-facet-badge disabled:opacity-40 transition-colors px-4";
+    "h-12 inline-flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] rounded-md disabled:opacity-40 transition-colors px-4";
   const skin = primary
-    ? "bg-[hsl(230_19%_9%)] text-[hsl(40_30%_93%)] hover:opacity-90"
-    : "border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-[hsl(230_19%_9%)]";
+    ? "bg-primary text-[hsl(40_30%_93%)] hover:opacity-90"
+    : "border border-border hover:border-foreground/50 text-foreground";
   return (
     <button onClick={onClick} disabled={disabled} className={`${base} ${skin}`}>
       <Icon className={`w-4 h-4 ${spin ? "animate-spin" : ""}`} />
@@ -701,10 +701,10 @@ function StatusStrip({
     status.kind === "success"
       ? "border-[hsl(140_50%_35%/0.45)] text-[hsl(140_50%_25%)] bg-[hsl(140_50%_35%/0.06)]"
       : status.kind === "failed"
-      ? "border-[hsl(0_60%_45%/0.45)] text-[hsl(0_60%_30%)] bg-[hsl(0_60%_45%/0.06)]"
+      ? "border-destructive/45 text-destructive bg-destructive/10"
       : status.kind === "retrying"
-      ? "border-[hsl(35_80%_45%/0.45)] text-[hsl(35_80%_30%)] bg-[hsl(35_80%_45%/0.06)]"
-      : "border-[hsl(230_19%_9%/0.2)] text-[hsl(230_19%_9%)] bg-transparent";
+      ? "border-primary/45 text-primary bg-primary/10"
+      : "border-border text-foreground bg-transparent";
   return (
     <div role="status" aria-live="polite" className={`flex items-center gap-3 border px-3 py-2.5 text-xs ${tone}`}>
       {status.kind === "working" && <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />}
@@ -721,7 +721,7 @@ function StatusStrip({
         <button
           onClick={onRetry}
           disabled={loading}
-          className="h-7 px-2.5 border border-current text-[10px] font-semibold uppercase tracking-[0.18em] clip-facet-badge disabled:opacity-40"
+          className="h-7 px-2.5 border border-current text-[10px] font-semibold uppercase tracking-[0.18em] rounded-md disabled:opacity-40"
         >
           {t.status.failed.startsWith("ف") || t.status.failed.startsWith("ال") ? "إعادة" : "Retry"}
         </button>
