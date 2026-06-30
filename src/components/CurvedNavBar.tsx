@@ -47,7 +47,7 @@ const CurvedNavBar = ({
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.45, ease }}
-        className="pointer-events-auto w-full max-w-3xl rounded-2xl border border-border bg-card/85 backdrop-blur-xl shadow-[0_18px_50px_-12px_hsl(var(--primary)/0.25)] p-1.5"
+        className="pointer-events-auto w-full max-w-3xl clip-facet border border-border bg-ink/90 backdrop-blur-xl shadow-[0_18px_50px_-12px_rgba(0,0,0,0.6)] p-1.5"
         dir="ltr"
       >
         <LayoutGroup id="curved-nav">
@@ -62,15 +62,15 @@ const CurvedNavBar = ({
                   whileTap={{ scale: 0.92 }}
                   onClick={() => onSelect(t.key as MainMenuChoice)}
                   aria-current={isActive ? "page" : undefined}
-                  className={`relative flex-1 h-12 inline-flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-semibold select-none transition-colors ${
-                    isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  className={`relative flex-1 h-12 inline-flex flex-col items-center justify-center gap-0.5 text-[11px] font-semibold select-none transition-colors ${
+                    isActive ? "text-ink" : "text-ash hover:text-parchment"
                   }`}
                 >
                   {isActive && (
                     <motion.span
                       layoutId="tabbar-active"
                       transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                      className="absolute inset-0 rounded-xl bg-primary shadow-[0_6px_20px_hsl(var(--primary)/0.4)]"
+                      className="absolute inset-0 clip-facet bg-ember shadow-[0_6px_20px_hsl(35_80%_57%/0.45)]"
                     />
                   )}
                   <motion.span
