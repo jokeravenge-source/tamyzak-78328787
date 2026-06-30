@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRef } from "react";
 import { Mic, Square, Play, Volume2, VolumeX } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FlashcardProps {
   question: string;
@@ -78,20 +79,55 @@ export const Flashcard = ({ question, answer, index, total, direction, language 
     a.play().catch(() => {});
   };
 
-  const speakAnswer = () => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(answer);
-    u.lang = language === "ar" ? "ar-SA" : "en-US";
-    u.rate = 0.95;
-    u.onend = () => setSpeaking(false);
-    u.onerror = () => setSpeaking(false);
+  const ttsAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const speakAnswer = async () => {
+    // Create + unlock the <audio> element synchronously inside the user gesture
+    // so mobile/Safari autoplay policies allow playback after the async fetch.
+    if (ttsAudioRef.current) {
+      try { ttsAudioRef.current.pause(); } catch { /* noop */ }
+      ttsAudioRef.current = null;
+    }
+    const audio = new Audio();
+    audio.preload = "auto";
+    ttsAudioRef.current = audio;
     setSpeaking(true);
     setFlipped(true);
-    window.speechSynthesis.speak(u);
+    audio.onended = () => setSpeaking(false);
+    audio.onerror = () => {
+      setSpeaking(false);
+      // Browser TTS fallback
+      try {
+        if ("speechSynthesis" in window) {
+          const u = new SpeechSynthesisUtterance(answer);
+          u.lang = language === "ar" ? "ar-SA" : "en-US";
+          u.onend = () => setSpeaking(false);
+          u.onerror = () => setSpeaking(false);
+          setSpeaking(true);
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(u);
+        }
+      } catch { /* noop */ }
+    };
+
+    try {
+      const { data, error } = await supabase.functions.invoke("tts-speak", {
+        body: { text: answer, language, voice: language === "ar" ? "shimmer" : "alloy" },
+      });
+      if (error || !data?.audio) throw error || new Error("No audio");
+      audio.src = `data:${data.mime || "audio/mpeg"};base64,${data.audio}`;
+      await audio.play();
+    } catch {
+      // Trigger fallback via onerror path
+      audio.onerror?.(new Event("error"));
+    }
   };
 
   const stopSpeaking = () => {
+    if (ttsAudioRef.current) {
+      try { ttsAudioRef.current.pause(); } catch { /* noop */ }
+      ttsAudioRef.current = null;
+    }
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
