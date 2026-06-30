@@ -656,7 +656,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         </nav>
       )}
 
-      <section className="w-full flex flex-col items-center gap-8 z-10 my-8">
+      <section className="w-full flex flex-col items-center gap-8 z-10 my-8 overflow-hidden">
         <Flashcard
           question={card.q}
           answer={card.a}
