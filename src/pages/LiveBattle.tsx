@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Swords, Users, Trophy, Copy, Loader2, Check, X, Sparkles } from "lucide-react";
+import { ArrowLeft, Swords, Users, Trophy, Copy, Loader2, Check, X, Sparkles, Upload, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { buildBattleMcqs, type BattleSubject, type BattleMCQ } from "@/lib/battleMcqBank";
+import { extractStudyMaterial } from "@/lib/fileText";
 
 type Subject = BattleSubject;
 type MCQ = BattleMCQ;
@@ -22,7 +23,7 @@ function pickQuestions(n: number, seed: number, subject: Subject = "general"): M
 
 const T = (l: AppLanguage) => ({
   title: l === "ar" ? "المعركة المباشرة" : "Live Battle",
-  subtitle: l === "ar" ? "تحدَّ صديقك في 10 أسئلة" : "Challenge a friend in 10 questions",
+  subtitle: l === "ar" ? "ارفع ملفاً وتحدَّ صديقك بأسئلة منه" : "Upload a file and challenge a friend with its questions",
   create: l === "ar" ? "إنشاء غرفة" : "Create Room",
   join: l === "ar" ? "انضمام لغرفة" : "Join Room",
   back: l === "ar" ? "رجوع" : "Back",
@@ -45,17 +46,15 @@ const T = (l: AppLanguage) => ({
   copied: l === "ar" ? "تم النسخ" : "Copied",
   start: l === "ar" ? "ابدأ" : "Start",
   locked: l === "ar" ? "لا يمكنك مغادرة المعركة حتى تنتهي" : "You can't leave until the battle is over",
-  subject: l === "ar" ? "المادة" : "Subject",
   questionsCount: l === "ar" ? "عدد الأسئلة" : "Number of questions",
-  subjGeneral: l === "ar" ? "مختلط" : "Mixed",
-  subjPhysics: l === "ar" ? "فيزياء" : "Physics",
-  subjChemistry: l === "ar" ? "كيمياء" : "Chemistry",
-  subjBiology: l === "ar" ? "أحياء" : "Biology",
-  subjArabic: l === "ar" ? "عربي" : "Arabic",
-  subjEnglish: l === "ar" ? "إنجليزي" : "English",
-  subjFrench: l === "ar" ? "فرنسي" : "French",
-  subjIslamic: l === "ar" ? "إسلامية" : "Islamic",
   createNow: l === "ar" ? "إنشاء الغرفة" : "Create room",
+  uploadFile: l === "ar" ? "ارفع ملف الدراسة" : "Upload study file",
+  uploadHint: l === "ar" ? "PDF أو DOCX أو TXT" : "PDF, DOCX, or TXT",
+  noFile: l === "ar" ? "اختر ملفاً أولاً" : "Pick a file first",
+  generating: l === "ar" ? "جارٍ توليد الأسئلة…" : "Generating questions…",
+  reading: l === "ar" ? "جارٍ قراءة الملف…" : "Reading file…",
+  noText: l === "ar" ? "تعذرت قراءة النص من الملف" : "Could not read text from this file",
+  genFailed: l === "ar" ? "تعذّر توليد الأسئلة" : "Failed to generate questions",
 });
 
 type Phase = "menu" | "createSettings" | "join" | "lobby" | "countdown" | "playing" | "done";
@@ -78,6 +77,9 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const [countdown, setCountdown] = useState(3);
   const [subject, setSubject] = useState<Subject>("general");
   const [qCount, setQCount] = useState<number>(10);
+  const [file, setFile] = useState<File | null>(null);
+  const [creating, setCreating] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const meId = useRef<string>(Math.random().toString(36).slice(2, 10));
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -226,14 +228,53 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     });
   };
 
-  const createRoom = () => {
-    const c = String(Math.floor(100000 + Math.random() * 900000));
-    setCode(c);
-    setIsHost(true);
-    const seed = Number(c);
-    const qs = pickQuestions(qCount, seed, subject);
-    setupChannel(c, true, qs);
-    setPhase("lobby");
+  const onPickFile = (f: File | null) => {
+    if (!f) return;
+    if (f.size > 100 * 1024 * 1024) { toast.error("Max 100MB"); return; }
+    const ok = /\.(pdf|docx|txt)$/i.test(f.name) || f.type === "application/pdf" || f.type.startsWith("text/");
+    if (!ok) { toast.error("PDF / DOCX / TXT only"); return; }
+    setFile(f);
+  };
+
+  const createRoom = async () => {
+    if (!file) { toast.error(t.noFile); return; }
+    setCreating(true);
+    try {
+      toast.loading(t.reading, { id: "battle-ext" });
+      const material = await extractStudyMaterial(file);
+      toast.dismiss("battle-ext");
+      if ((!material.text || material.text.trim().length < 50) && !material.pageImages?.length) {
+        toast.error(t.noText);
+        setCreating(false);
+        return;
+      }
+      toast.loading(t.generating, { id: "battle-gen" });
+      const { data, error } = await supabase.functions.invoke("generate-mcq", {
+        body: { text: material.text, pageImages: material.pageImages, count: qCount, language },
+      });
+      toast.dismiss("battle-gen");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.message || data.error);
+      const raw: any[] = (data?.questions || []).filter((q: any) => q?.choices?.length === 4);
+      if (!raw.length) throw new Error(t.genFailed);
+      const qs: MCQ[] = raw.slice(0, qCount).map((q) => ({
+        q: q.question,
+        choices: q.choices,
+        answer: q.answer_index,
+        subject: "general" as BattleSubject,
+      }));
+
+      const c = String(Math.floor(100000 + Math.random() * 900000));
+      setCode(c);
+      setIsHost(true);
+      setupChannel(c, true, qs);
+      setPhase("lobby");
+    } catch (e: any) {
+      toast.dismiss();
+      toast.error(e?.message || t.genFailed);
+    } finally {
+      setCreating(false);
+    }
   };
 
   const joinRoom = () => {
@@ -433,28 +474,31 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
         {phase === "createSettings" && (
           <div className="space-y-4">
             <div className="rounded-2xl border bg-card p-4 space-y-3">
-              <label className="text-sm font-medium">{t.subject}</label>
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { key: "general", label: t.subjGeneral },
-                  { key: "physics", label: t.subjPhysics },
-                  { key: "chemistry", label: t.subjChemistry },
-                  { key: "biology", label: t.subjBiology },
-                  { key: "arabic", label: t.subjArabic },
-                  { key: "english", label: t.subjEnglish },
-                  { key: "french", label: t.subjFrench },
-                  { key: "islamic", label: t.subjIslamic },
-                ] as { key: Subject; label: string }[]).map((s) => (
-                  <button
-                    key={s.key}
-                    onClick={() => setSubject(s.key)}
-                    className={`rounded-xl border p-3 text-sm transition ${
-                      subject === s.key ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
+              <label className="text-sm font-medium">{t.uploadFile}</label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="cursor-pointer border-2 border-dashed border-primary/30 hover:border-primary rounded-xl p-6 text-center transition"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.docx,.txt,application/pdf,text/plain"
+                  onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+                />
+                {file ? (
+                  <div className="flex flex-col items-center gap-1">
+                    <FileText className="w-8 h-8 text-primary" />
+                    <p className="font-medium text-sm truncate max-w-full">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <Upload className="w-8 h-8 text-primary" />
+                    <p className="font-medium text-sm">{t.uploadFile}</p>
+                    <p className="text-xs text-muted-foreground">{t.uploadHint}</p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="rounded-2xl border bg-card p-4 space-y-3">
@@ -474,8 +518,10 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setPhase("menu")} className="flex-1">{t.back}</Button>
-              <Button onClick={createRoom} className="flex-1">{t.createNow}</Button>
+              <Button variant="outline" onClick={() => setPhase("menu")} className="flex-1" disabled={creating}>{t.back}</Button>
+              <Button onClick={createRoom} className="flex-1" disabled={creating || !file}>
+                {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> {t.generating}</> : t.createNow}
+              </Button>
             </div>
           </div>
         )}
