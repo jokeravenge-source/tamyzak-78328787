@@ -21,6 +21,7 @@ export const Flashcard = ({ question, answer, index, total, direction, language 
   const [recording, setRecording] = useState(false);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
+  const [speed, setSpeed] = useState<number>(1.3);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const playbackRef = useRef<HTMLAudioElement | null>(null);
