@@ -2,10 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { Lock, ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 import type { AppSubject } from "@/pages/Subjects";
-import { SUBJECT_STORAGE_KEY } from "@/pages/Subjects";
+import { SUBJECT_STORAGE_KEY, PREVIOUS_SUBJECT_STORAGE_KEY } from "@/pages/Subjects";
 import SubjectAgent from "@/components/SubjectAgent";
 import { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "@/pages/EnglishCategory";
-import { subjectThemes } from "@/lib/subjectThemes";
+import CrossfadeSubjectTheme from "@/components/CrossfadeSubjectTheme";
+
 
 const physicsChapters = [
   { n: 1, title: "Capacitors", arTitle: "المتسعات", subtitle: "", locked: false },
