@@ -15,8 +15,8 @@ interface FlashcardProps {
 export const Flashcard = ({ question, answer, index, total, direction, language = "en" }: FlashcardProps) => {
   const [flipped, setFlipped] = useState(false);
   const labels = language === "ar"
-    ? { question: "السؤال", answer: "الإجابة", reveal: "اضغط لإظهار الإجابة", back: "اضغط لرؤية السؤال", record: "سجل صوتك", stop: "إيقاف التسجيل", play: "تشغيل تسجيلك", listen: "استمع للإجابة", stopAudio: "إيقاف الصوت", micError: "تعذّر الوصول إلى المايكروفون", faster: "أسرع", slower: "أبطأ" }
-    : { question: "Question", answer: "Answer", reveal: "Tap to reveal answer", back: "Tap to see question", record: "Record your voice", stop: "Stop recording", play: "Play your recording", listen: "Hear the answer", stopAudio: "Stop audio", micError: "Microphone unavailable", faster: "Faster", slower: "Slower" };
+    ? { question: "السؤال", answer: "الإجابة", reveal: "اضغط لإظهار الإجابة", back: "اضغط لرؤية السؤال", record: "سجل صوتك", stop: "إيقاف التسجيل", play: "تشغيل تسجيلك", listen: "استمع للإجابة", stopAudio: "إيقاف الصوت", micError: "تعذّر الوصول إلى المايكروفون" }
+    : { question: "Question", answer: "Answer", reveal: "Tap to reveal answer", back: "Tap to see question", record: "Record your voice", stop: "Stop recording", play: "Play your recording", listen: "Hear the answer", stopAudio: "Stop audio", micError: "Microphone unavailable" };
 
   const [recording, setRecording] = useState(false);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
