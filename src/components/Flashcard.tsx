@@ -230,6 +230,20 @@ export const Flashcard = ({ question, answer, index, total, direction, language 
             <VolumeX className="size-4" /> {labels.stopAudio}
           </button>
         )}
+
+        <div className="flex items-center gap-1 rounded-full border border-border bg-card px-2 py-1" title={language === "ar" ? "سرعة الصوت" : "Voice speed"}>
+          {[1, 1.25, 1.5, 2].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSpeed(s)}
+              className={`text-xs px-2 py-1 rounded-full transition-colors ${speed === s ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+              aria-label={`${s}x`}
+            >
+              {s}x
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
