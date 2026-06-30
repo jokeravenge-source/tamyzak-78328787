@@ -113,7 +113,7 @@ export const Flashcard = ({ question, answer, index, total, direction, language 
 
     try {
       const { data, error } = await supabase.functions.invoke("tts-speak", {
-        body: { text: answer, language, voice: language === "ar" ? "shimmer" : "alloy" },
+        body: { text: answer, language, voice: language === "ar" ? "shimmer" : "alloy", speed },
       });
       if (error || !data?.audio) throw error || new Error("No audio");
       audio.src = `data:${data.mime || "audio/mpeg"};base64,${data.audio}`;
