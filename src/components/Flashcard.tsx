@@ -15,13 +15,12 @@ interface FlashcardProps {
 export const Flashcard = ({ question, answer, index, total, direction, language = "en" }: FlashcardProps) => {
   const [flipped, setFlipped] = useState(false);
   const labels = language === "ar"
-    ? { question: "السؤال", answer: "الإجابة", reveal: "اضغط لإظهار الإجابة", back: "اضغط لرؤية السؤال", record: "سجل صوتك", stop: "إيقاف التسجيل", play: "تشغيل تسجيلك", listen: "استمع للإجابة", stopAudio: "إيقاف الصوت", micError: "تعذّر الوصول إلى المايكروفون", faster: "أسرع", slower: "أبطأ" }
-    : { question: "Question", answer: "Answer", reveal: "Tap to reveal answer", back: "Tap to see question", record: "Record your voice", stop: "Stop recording", play: "Play your recording", listen: "Hear the answer", stopAudio: "Stop audio", micError: "Microphone unavailable", faster: "Faster", slower: "Slower" };
+    ? { question: "السؤال", answer: "الإجابة", reveal: "اضغط لإظهار الإجابة", back: "اضغط لرؤية السؤال", record: "سجل صوتك", stop: "إيقاف التسجيل", play: "تشغيل تسجيلك", listen: "استمع للإجابة", stopAudio: "إيقاف الصوت", micError: "تعذّر الوصول إلى المايكروفون" }
+    : { question: "Question", answer: "Answer", reveal: "Tap to reveal answer", back: "Tap to see question", record: "Record your voice", stop: "Stop recording", play: "Play your recording", listen: "Hear the answer", stopAudio: "Stop audio", micError: "Microphone unavailable" };
 
   const [recording, setRecording] = useState(false);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
-  const [speed, setSpeed] = useState<number>(1.3);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const playbackRef = useRef<HTMLAudioElement | null>(null);
@@ -113,7 +112,7 @@ export const Flashcard = ({ question, answer, index, total, direction, language 
 
     try {
       const { data, error } = await supabase.functions.invoke("tts-speak", {
-        body: { text: answer, language, voice: language === "ar" ? "shimmer" : "alloy", speed },
+        body: { text: answer, language, voice: language === "ar" ? "shimmer" : "alloy", speed: 1.5 },
       });
       if (error || !data?.audio) throw error || new Error("No audio");
       audio.src = `data:${data.mime || "audio/mpeg"};base64,${data.audio}`;
@@ -230,20 +229,6 @@ export const Flashcard = ({ question, answer, index, total, direction, language 
             <VolumeX className="size-4" /> {labels.stopAudio}
           </button>
         )}
-
-        <div className="flex items-center gap-1 rounded-full border border-border bg-card px-2 py-1" title={language === "ar" ? "سرعة الصوت" : "Voice speed"}>
-          {[1, 1.25, 1.5, 2].map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSpeed(s)}
-              className={`text-xs px-2 py-1 rounded-full transition-colors ${speed === s ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
-              aria-label={`${s}x`}
-            >
-              {s}x
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );
