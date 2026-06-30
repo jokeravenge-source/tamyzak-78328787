@@ -68,6 +68,7 @@ import { groupFlashcardsByTopic } from "@/lib/flashcardTopics";
 import { explicitTopics, type TopicGroup } from "@/lib/flashcardTopics";
 import { buildPresetGroups } from "@/lib/flashcardTopicPresets";
 import { useTodos, topicProgress } from "@/lib/todoTopicProgress";
+import { subjectThemes } from "@/lib/subjectThemes";
 
 const decks: Record<string, { title: string; eyebrow: string; cards: typeof flashcards }> = {
   "1": { title: "Flashcards", eyebrow: "Ch 01 · Capacitors", cards: flashcardsCh1 },
@@ -571,6 +572,25 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       {/* Ambient blobs */}
       <div className="pointer-events-none absolute -top-40 -left-40 w-96 h-96 rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
+
+      {/* Subject theme */}
+      {subjectThemes[subject] && (
+        <>
+          <div
+            className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${subjectThemes[subject].tint} animate-fade-in`}
+            aria-hidden
+          />
+          <img
+            src={subjectThemes[subject].image}
+            alt=""
+            aria-hidden
+            loading="lazy"
+            width={1024}
+            height={1024}
+            className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,720px)] h-auto opacity-[0.06] md:opacity-[0.08] select-none animate-fade-in"
+          />
+        </>
+      )}
 
       <Link
         to="/"
