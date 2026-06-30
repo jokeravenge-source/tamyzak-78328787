@@ -147,211 +147,257 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
   const todo = report?.todo_today ?? { total: 0, done: 0, pending: [], pct: 0 };
 
   return (
-    <main className="min-h-screen px-4 py-12 md:py-16 relative overflow-hidden" dir={ar ? "rtl" : "ltr"}>
-      <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
-      <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-
-      <button onClick={onBack} aria-label={t.back}
-        className="absolute top-6 left-6 z-20 w-11 h-11 rounded-full border border-white/10 bg-secondary/60 backdrop-blur flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all">
-        <ArrowLeft className="w-5 h-5" />
-      </button>
-
-      <header className="text-center max-w-3xl mx-auto z-10 relative animate-fade-up mb-10">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
-          <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{t.today}</span>
+    <main
+      className="min-h-screen bg-[hsl(40_30%_93%)] text-[hsl(230_19%_9%)]"
+      dir={ar ? "rtl" : "ltr"}
+      style={{ fontFamily: ar ? "'IBM Plex Sans Arabic', system-ui, sans-serif" : "Inter, system-ui, sans-serif" }}
+    >
+      <div className="max-w-4xl mx-auto px-5 md:px-8 py-10 md:py-14">
+        {/* Header — calm, no glow, no gradient */}
+        <div className="flex items-start justify-between gap-4 mb-10">
+          <div className="min-w-0">
+            <button
+              onClick={onBack}
+              className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] hover:text-[hsl(230_19%_9%)] mb-4"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />{t.back}
+            </button>
+            <p className="text-[10px] uppercase tracking-[0.32em] text-[hsl(230_6%_42%)]">{t.today}</p>
+            <h1
+              className="text-3xl md:text-[44px] font-bold tracking-tight leading-[1.05] mt-1"
+              style={{ fontFamily: ar ? "'Cairo', 'IBM Plex Sans Arabic', sans-serif" : "'Space Grotesk', Inter, sans-serif" }}
+            >
+              {t.title}
+            </h1>
+          </div>
+          <button
+            onClick={() => load(true)}
+            disabled={refreshing}
+            className="shrink-0 inline-flex items-center gap-2 h-10 px-4 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-[hsl(230_19%_9%)] text-xs font-semibold uppercase tracking-[0.14em] disabled:opacity-50 transition-colors clip-facet-badge"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            {refreshing ? t.generating : t.regenerate}
+          </button>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold gradient-text leading-[1.1] mb-3">{t.title}</h1>
-        <button onClick={() => load(true)} disabled={refreshing}
-          className="mt-4 inline-flex items-center gap-2 h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-50">
-          <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-          {refreshing ? t.generating : t.regenerate}
-        </button>
-      </header>
 
-      <section className="max-w-5xl mx-auto z-10 relative space-y-6">
         {loading && !report ? (
-          <div className="text-center text-muted-foreground py-20">…</div>
+          <div className="py-24 text-center text-[hsl(230_6%_42%)] text-sm">…</div>
         ) : (
-          <>
-            {/* Stat cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Stat icon={Clock} label={t.minutes} value={`${report?.focused_minutes ?? 0}`} sub={`${focusedPct}% ${t.target}`} />
-              <Stat icon={ListChecks} label={t.todoToday} value={`${todo.done}/${todo.total}`} sub={`${todo.pct}% ${t.complete}`} />
-              <Stat icon={Trophy} label={t.missions} value={`${report?.missions_completed ?? 0}`} />
-              <Stat icon={Target} label={t.points} value={`${report?.points_earned ?? 0}`}
-                sub={meta?.days_to_exam != null ? `${meta.days_to_exam} ${t.exam}` : undefined} />
-            </div>
+          <div className="space-y-10">
+            {/* Primary measurements — 4 quiet number blocks divided by hairlines */}
+            <section className="grid grid-cols-2 md:grid-cols-4 border-t border-b border-[hsl(230_19%_9%/0.12)] divide-x divide-[hsl(230_19%_9%/0.12)] rtl:divide-x-reverse">
+              <Measure label={t.minutes} value={`${report?.focused_minutes ?? 0}`} unit={t.min} sub={meta ? `${focusedPct}% ${t.target}` : undefined} />
+              <Measure label={t.todoToday} value={`${todo.done}/${todo.total}`} sub={`${todo.pct}% ${t.complete}`} />
+              <Measure label={t.missions} value={`${report?.missions_completed ?? 0}`} />
+              <Measure label={t.points} value={`${report?.points_earned ?? 0}`} accent sub={meta?.days_to_exam != null ? `${meta.days_to_exam} ${t.exam}` : undefined} />
+            </section>
 
-            {/* Today's to-do list focus */}
-            <div className="rounded-2xl border border-primary/40 bg-primary/5 backdrop-blur p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <ListChecks className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">{t.todoToday}</span>
+            {/* Today's to-do — calm parchment card, single-cut corner */}
+            <Panel icon={ListChecks} title={t.todoToday}>
+              <div className="flex items-baseline justify-between mb-3">
+                <span className="text-sm text-[hsl(230_6%_42%)]">
+                  <span className="font-mono text-[hsl(230_19%_9%)] font-semibold tabular-nums">{todo.done}</span>{" "}
+                  {t.todoDone} {t.todoOf}{" "}
+                  <span className="font-mono tabular-nums">{todo.total}</span>
+                </span>
+                <span className="font-mono text-lg font-semibold tabular-nums">{todo.pct}%</span>
               </div>
-              <div className="flex justify-between text-xs mb-2 text-muted-foreground">
-                <span>{todo.done} {t.todoDone} {t.todoOf} {todo.total}</span>
-                <span className="text-primary font-semibold tabular-nums">{todo.pct}%</span>
-              </div>
-              <Progress value={todo.pct} className="h-2" />
+              <Bar value={todo.pct} />
               {todo.total === 0 ? (
-                <p className="text-sm text-muted-foreground mt-3">{t.todoEmpty}</p>
+                <p className="text-sm text-[hsl(230_6%_42%)] mt-4">{t.todoEmpty}</p>
               ) : todo.pending.length === 0 ? (
-                <p className="text-sm text-emerald-400 mt-3">{t.todoAllDone}</p>
+                <p className="text-sm text-[hsl(150_45%_30%)] mt-4">{t.todoAllDone}</p>
               ) : (
-                <div className="mt-3">
-                  <div className="text-xs font-semibold text-amber-400 mb-1">{t.todoRemaining}</div>
-                  <ul className="space-y-1 text-sm">
+                <div className="mt-5">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] mb-2">{t.todoRemaining}</div>
+                  <ul className="space-y-1.5 text-sm">
                     {todo.pending.map((x, i) => (
-                      <li key={i} className="flex gap-2"><span className="text-primary">•</span>{x}</li>
+                      <li key={i} className="flex gap-3 items-baseline">
+                        <span className="font-mono text-[hsl(230_6%_55%)] tabular-nums text-[11px] mt-0.5 w-5 shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                        <span className="flex-1">{x}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
               )}
-            </div>
+            </Panel>
 
             {/* Goal proximity */}
             {meta?.days_to_exam != null && (
-              <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <Flag className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-semibold">{t.goal}</span>
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">{t.goalDesc}</p>
-                <div className="flex items-end justify-between gap-4">
-                  <div>
-                    <div className="text-3xl font-bold gradient-text tabular-nums">{todo.pct}%</div>
-                    <div className="text-[11px] text-muted-foreground">{t.complete}</div>
+              <Panel icon={Flag} title={t.goal} subtitle={t.goalDesc}>
+                <div className="grid grid-cols-2 gap-px bg-[hsl(230_19%_9%/0.12)] mt-2 border border-[hsl(230_19%_9%/0.12)]">
+                  <div className="bg-[hsl(40_30%_93%)] p-5">
+                    <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] mb-1">{t.complete}</div>
+                    <div className="font-mono text-4xl font-bold tabular-nums">{todo.pct}<span className="text-xl text-[hsl(230_6%_55%)]">%</span></div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-foreground tabular-nums">{meta.days_to_exam}</div>
-                    <div className="text-[11px] text-muted-foreground">{t.exam}</div>
+                  <div className="bg-[hsl(40_30%_93%)] p-5">
+                    <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] mb-1">{t.exam}</div>
+                    <div className="font-mono text-4xl font-bold tabular-nums">{meta.days_to_exam}</div>
                   </div>
                 </div>
-                <div className="mt-3"><Progress value={todo.pct} className="h-2" /></div>
-              </div>
+                <div className="mt-4"><Bar value={todo.pct} /></div>
+              </Panel>
             )}
 
             {/* Daily target progress */}
             {meta && (
-              <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
-                <div className="flex justify-between text-xs mb-2 text-muted-foreground">
-                  <span>{t.minutes}</span>
-                  <span className="text-primary font-semibold tabular-nums">
-                    {report?.focused_minutes ?? 0} / {meta.daily_target_minutes} {t.min}
+              <Panel icon={Clock} title={t.minutes}>
+                <div className="flex items-baseline justify-between mb-3">
+                  <span className="text-sm text-[hsl(230_6%_42%)]">{t.target}</span>
+                  <span className="font-mono text-lg font-semibold tabular-nums">
+                    {report?.focused_minutes ?? 0} <span className="text-[hsl(230_6%_55%)]">/</span> {meta.daily_target_minutes} <span className="text-sm text-[hsl(230_6%_55%)]">{t.min}</span>
                   </span>
                 </div>
-                <Progress value={focusedPct} className="h-2" />
-              </div>
+                <Bar value={focusedPct} />
+              </Panel>
             )}
 
             {/* By subject */}
-            <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
-              <div className="text-sm text-muted-foreground mb-3">{t.bySubject}</div>
+            <Panel icon={Target} title={t.bySubject}>
               {!report?.subjects_breakdown?.length ? (
-                <div className="text-sm text-muted-foreground">{t.noActivity}</div>
+                <div className="text-sm text-[hsl(230_6%_42%)]">{t.noActivity}</div>
               ) : (
-                <div className="space-y-3">
-                  {report.subjects_breakdown.map((s) => (
-                    <div key={s.subject}>
-                      <div className="flex justify-between text-xs mb-1"><span>{s.subject}</span><span className="text-primary">{s.minutes} {t.min} · {s.missions} {t.missions}</span></div>
-                      <Progress value={Math.min(100, (s.minutes / Math.max(1, report.focused_minutes)) * 100)} className="h-1.5" />
-                    </div>
-                  ))}
+                <div className="space-y-4 mt-1">
+                  {report.subjects_breakdown.map((s) => {
+                    const pct = Math.min(100, (s.minutes / Math.max(1, report.focused_minutes)) * 100);
+                    return (
+                      <div key={s.subject}>
+                        <div className="flex justify-between text-sm mb-1.5">
+                          <span className="capitalize">{s.subject}</span>
+                          <span className="font-mono text-[hsl(230_6%_42%)] tabular-nums">
+                            {s.minutes} {t.min} · {s.missions} {t.missions}
+                          </span>
+                        </div>
+                        <Bar value={pct} />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-            </div>
+            </Panel>
 
             {/* AI Coach */}
-            <div className="rounded-2xl border border-primary/40 bg-primary/5 backdrop-blur p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Brain className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">{t.coach}</span>
-              </div>
+            <Panel icon={Brain} title={t.coach}>
               {!report?.ai_summary ? (
-                <p className="text-sm text-muted-foreground">{t.noCoach}</p>
+                <p className="text-sm text-[hsl(230_6%_42%)]">{t.noCoach}</p>
               ) : (
-                <div className="space-y-4">
-                  <p className="text-sm leading-relaxed">{report.ai_summary}</p>
-                  {report.ai_strengths?.length ? <Block title={t.strengths} items={report.ai_strengths} color="text-emerald-400" /> : null}
-                  {report.ai_weaknesses?.length ? <Block title={t.weaknesses} items={report.ai_weaknesses} color="text-amber-400" /> : null}
-                  {report.ai_plan?.length ? <Block title={t.plan} items={report.ai_plan} color="text-primary" /> : null}
+                <div className="space-y-5">
+                  <p className="text-[15px] leading-relaxed">{report.ai_summary}</p>
+                  {report.ai_strengths?.length ? <Block title={t.strengths} items={report.ai_strengths} /> : null}
+                  {report.ai_weaknesses?.length ? <Block title={t.weaknesses} items={report.ai_weaknesses} /> : null}
+                  {report.ai_plan?.length ? <Block title={t.plan} items={report.ai_plan} /> : null}
                 </div>
               )}
-            </div>
+            </Panel>
 
             {/* Parent link */}
-            <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
-              <div className="flex items-center gap-2 mb-2"><Share2 className="w-4 h-4 text-primary" /><span className="text-sm font-semibold">{t.parent}</span></div>
-              <p className="text-xs text-muted-foreground mb-3">{t.parentDesc}</p>
+            <Panel icon={Share2} title={t.parent} subtitle={t.parentDesc}>
               {!token ? (
-                <button onClick={enableLink} className="h-10 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-2">
-                  <Link2 className="w-4 h-4" />{t.enable}
+                <button
+                  onClick={enableLink}
+                  className="h-10 px-5 bg-[hsl(230_19%_9%)] text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.14em] inline-flex items-center gap-2 clip-facet-badge hover:opacity-90"
+                >
+                  <Link2 className="w-3.5 h-3.5" />{t.enable}
                 </button>
               ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 p-2 rounded-xl border border-white/10 bg-background/40 text-xs overflow-hidden">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 p-3 border border-[hsl(230_19%_9%/0.18)] font-mono text-xs overflow-hidden">
                     <span className="truncate">{location.origin}/follow/{token}</span>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={copyLink} className="h-9 px-4 rounded-xl border border-primary/40 text-primary text-xs font-semibold inline-flex items-center gap-2">
+                    <button onClick={copyLink} className="h-9 px-4 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-xs font-semibold uppercase tracking-[0.12em] inline-flex items-center gap-1.5 clip-facet-badge">
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       {copied ? t.copied : t.copy}
                     </button>
-                    <button onClick={revoke} className="h-9 px-4 rounded-xl border border-destructive/40 text-destructive text-xs font-semibold">
+                    <button onClick={revoke} className="h-9 px-4 border border-[hsl(0_60%_40%/0.4)] text-[hsl(0_60%_35%)] hover:border-[hsl(0_60%_40%/0.7)] text-xs font-semibold uppercase tracking-[0.12em] clip-facet-badge">
                       {t.revoke}
                     </button>
                   </div>
                   {accessCode && (
-                    <div className="mt-3 rounded-xl border border-primary/40 bg-primary/5 p-3">
-                      <div className="text-[11px] uppercase tracking-wider text-primary font-semibold mb-1">{t.accessCode}</div>
-                      <p className="text-[11px] text-muted-foreground mb-2">{t.accessCodeDesc}</p>
+                    <div className="mt-3 border border-[hsl(230_19%_9%/0.18)] p-4">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] font-semibold mb-1">{t.accessCode}</div>
+                      <p className="text-[11px] text-[hsl(230_6%_42%)] mb-3">{t.accessCodeDesc}</p>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 text-center text-2xl font-bold tabular-nums tracking-[0.4em] py-2 rounded-lg bg-background/60 border border-white/10">
+                        <div className="flex-1 text-center font-mono text-2xl font-bold tabular-nums tracking-[0.5em] py-3 bg-[hsl(230_19%_9%/0.04)] border border-[hsl(230_19%_9%/0.12)]">
                           {accessCode}
                         </div>
-                        <button onClick={copyCode} className="h-10 px-3 rounded-xl border border-primary/40 text-primary text-xs font-semibold inline-flex items-center gap-1">
+                        <button onClick={copyCode} className="h-12 px-3 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-xs font-semibold uppercase tracking-[0.12em] inline-flex items-center gap-1 clip-facet-badge">
                           {codeCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                          {codeCopied ? t.copied : t.copy}
                         </button>
                       </div>
-                      <button onClick={regenerateCode} className="mt-2 text-[11px] text-muted-foreground hover:text-primary underline">
+                      <button onClick={regenerateCode} className="mt-3 text-[11px] uppercase tracking-[0.14em] text-[hsl(230_6%_42%)] hover:text-[hsl(230_19%_9%)] underline underline-offset-4">
                         {t.regenCode}
                       </button>
                     </div>
                   )}
                 </div>
               )}
-            </div>
-
-          </>
+            </Panel>
+          </div>
         )}
 
-        {/* Excellence Companion (only on report screen) */}
-        <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5">
+        {/* Excellence Companion — kept here per product spec, framed like the rest */}
+        <div className="mt-10 border border-[hsl(230_19%_9%/0.12)] bg-[hsl(40_30%_93%)] p-5 clip-facet">
           <ExcellenceCompanion language={language} embedded />
         </div>
-      </section>
+      </div>
     </main>
   );
 }
 
-function Stat({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) {
+/* Calm primary measurement cell — divided columns, mono numeral, no chrome */
+function Measure({ label, value, unit, sub, accent }: { label: string; value: string; unit?: string; sub?: string; accent?: boolean }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-4">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1"><Icon className="w-3.5 h-3.5 text-primary" />{label}</div>
-      <div className="text-2xl font-bold text-foreground tabular-nums">{value}</div>
-      {sub && <div className="text-[11px] text-muted-foreground mt-1">{sub}</div>}
+    <div className="p-5 md:p-6">
+      <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] mb-2">{label}</div>
+      <div className={`font-mono text-3xl md:text-4xl font-bold tabular-nums leading-none ${accent ? "text-[hsl(35_80%_45%)]" : "text-[hsl(230_19%_9%)]"}`}>
+        {value}
+        {unit && <span className="text-base font-normal text-[hsl(230_6%_55%)] ms-1">{unit}</span>}
+      </div>
+      {sub && <div className="text-[11px] text-[hsl(230_6%_42%)] mt-2 font-mono tabular-nums">{sub}</div>}
     </div>
   );
 }
 
-function Block({ title, items, color }: { title: string; items: string[]; color: string }) {
+/* Parchment panel with a single beveled corner — the quiet "facet echo" */
+function Panel({ icon: Icon, title, subtitle, children }: { icon: any; title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <section className="border border-[hsl(230_19%_9%/0.14)] bg-[hsl(40_30%_93%)] p-5 md:p-6 clip-facet">
+      <header className="mb-4">
+        <div className="inline-flex items-center gap-2 mb-1">
+          <Icon className="w-3.5 h-3.5 text-[hsl(230_19%_9%)]" />
+          <h2 className="text-[11px] uppercase tracking-[0.22em] font-semibold text-[hsl(230_19%_9%)]">{title}</h2>
+        </div>
+        {subtitle && <p className="text-xs text-[hsl(230_6%_42%)]">{subtitle}</p>}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+/* Hairline progress bar — ink-on-parchment, no gradient */
+function Bar({ value }: { value: number }) {
+  return (
+    <div className="h-[3px] w-full bg-[hsl(230_19%_9%/0.1)] overflow-hidden">
+      <div
+        className="h-full bg-[hsl(230_19%_9%)] transition-[width] duration-700 ease-out"
+        style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+      />
+    </div>
+  );
+}
+
+function Block({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
-      <div className={`text-xs font-semibold mb-1 ${color}`}>{title}</div>
-      <ul className="space-y-1 text-sm">
-        {items.map((x, i) => <li key={i} className="flex gap-2"><span className="text-primary">•</span>{x}</li>)}
+      <div className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-2 text-[hsl(230_6%_42%)]">{title}</div>
+      <ul className="space-y-1.5 text-sm">
+        {items.map((x, i) => (
+          <li key={i} className="flex gap-3 items-baseline">
+            <span className="font-mono text-[hsl(230_6%_55%)] tabular-nums text-[11px] w-5 shrink-0">{String(i + 1).padStart(2, "0")}</span>
+            <span className="flex-1">{x}</span>
+          </li>
+        ))}
       </ul>
     </div>
   );
