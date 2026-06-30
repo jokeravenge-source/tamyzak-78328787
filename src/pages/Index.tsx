@@ -656,7 +656,25 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
         </nav>
       )}
 
-      <section className="w-full flex flex-col items-center gap-8 z-10 my-8 overflow-hidden">
+      <section
+        className="w-full flex flex-col items-center gap-8 z-10 my-8 overflow-hidden"
+        style={(() => {
+          // Subject-tinted flashcard back. Overrides only the back gradient
+          // and ensures readable foreground, while keeping the user's chosen
+          // theme for the front face and everything else.
+          const tints: Partial<Record<AppSubject, { from: string; to: string }>> = {
+            physics:   { from: "217 91% 55%", to: "199 95% 50%" }, // blue
+            chemistry: { from: "0 80% 55%",   to: "12 85% 58%"  }, // red
+            biology:   { from: "142 70% 38%", to: "158 65% 45%" }, // green
+          };
+          const t = tints[subject];
+          if (!t) return undefined;
+          return {
+            ["--gradient-card-back" as any]: `linear-gradient(135deg, hsl(${t.from}), hsl(${t.to}))`,
+            ["--card-back-fg" as any]: "0 0% 100%",
+          } as React.CSSProperties;
+        })()}
+      >
         <Flashcard
           question={card.q}
           answer={card.a}
