@@ -77,6 +77,10 @@ const Subjects = ({
       if (link) window.open(link, "_blank", "noopener,noreferrer");
       return;
     }
+    const previousSubject = localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null;
+    if (previousSubject && previousSubject !== s.code) {
+      localStorage.setItem(PREVIOUS_SUBJECT_STORAGE_KEY, previousSubject);
+    }
     localStorage.setItem(SUBJECT_STORAGE_KEY, s.code);
     onSelectSubject(s.code);
   };
