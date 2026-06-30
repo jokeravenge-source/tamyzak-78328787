@@ -693,7 +693,7 @@ function StatusStrip({
     | { kind: "retrying"; attempt: number; max: number }
     | { kind: "success" }
     | { kind: "failed"; message: string };
-  t: typeof copy["en"];
+  t: (typeof copy)[keyof typeof copy];
   loading: boolean;
   onRetry: () => void;
 }) {
