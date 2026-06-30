@@ -575,22 +575,14 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       <div className="pointer-events-none absolute -top-40 -left-40 w-96 h-96 rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
-      {/* Subject theme */}
-      {subjectThemes[subject] && (
-        <div key={`theme-${subject}`} className="pointer-events-none absolute inset-0 animate-fade-slide-in" aria-hidden>
-          <div
-            className={`absolute inset-0 bg-gradient-to-br ${subjectThemes[subject].tint}`}
-          />
-          <img
-            src={subjectThemes[subject].image}
-            alt=""
-            loading="lazy"
-            width={1024}
-            height={1024}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,720px)] h-auto opacity-[0.06] md:opacity-[0.08] select-none"
-          />
-        </div>
-      )}
+      {/* Subject theme crossfade */}
+      <CrossfadeSubjectTheme
+        subject={subject}
+        previousSubject={typeof window !== "undefined" ? (localStorage.getItem(PREVIOUS_SUBJECT_STORAGE_KEY) as AppSubject | null) : null}
+        onComplete={() => {
+          try { localStorage.removeItem(PREVIOUS_SUBJECT_STORAGE_KEY); } catch { /* ignore */ }
+        }}
+      />
 
       <Link
         to="/"
