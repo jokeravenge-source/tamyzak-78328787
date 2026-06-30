@@ -15,6 +15,7 @@ import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
+import RankStone, { rankFromPoints, RANK_LABELS } from "@/components/RankStone";
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
@@ -375,6 +376,22 @@ const Basics = ({
   };
 
   const [username, setUsername] = useState<string>(() => localStorage.getItem("app_display_name_v1") || "");
+  const [totalPoints, setTotalPoints] = useState<number>(0);
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("total_points")
+        .eq("user_id", u.user.id)
+        .maybeSingle();
+      if (typeof (data as any)?.total_points === "number") setTotalPoints((data as any).total_points);
+    })();
+  }, []);
+  const currentRank = rankFromPoints(totalPoints);
+  const rankLabel = RANK_LABELS[currentRank][language];
+  const stoneFill = Math.min(1, (streakDays || 0) / 20);
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
