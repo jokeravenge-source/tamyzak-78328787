@@ -96,6 +96,14 @@ export default {
           "0%": { opacity: "0", transform: "translateY(24px) scale(0.98)" },
           "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
         },
+        "card-slide-in-right": {
+          "0%": { opacity: "0", transform: "translateX(120%) scale(0.95)" },
+          "100%": { opacity: "1", transform: "translateX(0) scale(1)" },
+        },
+        "card-slide-in-left": {
+          "0%": { opacity: "0", transform: "translateX(-120%) scale(0.95)" },
+          "100%": { opacity: "1", transform: "translateX(0) scale(1)" },
+        },
         "theme-crossfade-in": {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
@@ -117,6 +125,8 @@ export default {
         "fade-slide-in": "fade-slide-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "theme-crossfade-in": "theme-crossfade-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "theme-crossfade-out": "theme-crossfade-out 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "card-slide-in-right": "card-slide-in-right 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "card-slide-in-left": "card-slide-in-left 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
     },
   },
