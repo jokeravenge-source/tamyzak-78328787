@@ -63,6 +63,22 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        display: ["Space Grotesk", "Inter", "system-ui", "sans-serif"],
+        "display-ar": ["Cairo", "IBM Plex Sans Arabic", "Noto Naskh Arabic", "sans-serif"],
+        body: ["Inter", "system-ui", "sans-serif"],
+        "body-ar": ["IBM Plex Sans Arabic", "Cairo", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+      },
+      colors: {
+        ink: "hsl(230 19% 9%)",
+        parchment: "hsl(40 30% 93%)",
+        ember: "hsl(35 80% 57%)",
+        ash: "hsl(230 6% 57%)",
+        physics: "hsl(var(--physics))",
+        chemistry: "hsl(var(--chemistry))",
+        biology: "hsl(var(--biology))",
+      },
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
         "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
