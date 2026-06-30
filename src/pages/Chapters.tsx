@@ -125,6 +125,25 @@ const Chapters = ({ language, subject, onChangeLanguage }: { language: AppLangua
       <div className="pointer-events-none absolute top-1/3 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
       <div className="pointer-events-none absolute -bottom-40 left-1/3 w-[28rem] h-[28rem] rounded-full bg-primary/15 blur-3xl animate-float" style={{ animationDelay: "4s" }} />
 
+      {/* Subject theme illustration */}
+      {subjectThemes[subject] && (
+        <>
+          <div
+            className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${subjectThemes[subject].tint} animate-fade-in`}
+            aria-hidden
+          />
+          <img
+            src={subjectThemes[subject].image}
+            alt=""
+            aria-hidden
+            loading="lazy"
+            width={1024}
+            height={1024}
+            className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(85vw,640px)] h-auto opacity-[0.07] md:opacity-[0.09] select-none animate-fade-in"
+          />
+        </>
+      )}
+
       <button
         onClick={handleChangeLanguage}
         aria-label={language === "ar" ? "تغيير اللغة" : "Change language"}
