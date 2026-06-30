@@ -5,6 +5,7 @@ import type { AppSubject } from "@/pages/Subjects";
 import { SUBJECT_STORAGE_KEY } from "@/pages/Subjects";
 import SubjectAgent from "@/components/SubjectAgent";
 import { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "@/pages/EnglishCategory";
+import { subjectThemes } from "@/lib/subjectThemes";
 
 const physicsChapters = [
   { n: 1, title: "Capacitors", arTitle: "المتسعات", subtitle: "", locked: false },
