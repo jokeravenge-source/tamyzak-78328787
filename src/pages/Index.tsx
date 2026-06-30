@@ -573,6 +573,25 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       <div className="pointer-events-none absolute -top-40 -left-40 w-96 h-96 rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
+      {/* Subject theme */}
+      {subjectThemes[subject] && (
+        <>
+          <div
+            className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${subjectThemes[subject].tint} animate-fade-in`}
+            aria-hidden
+          />
+          <img
+            src={subjectThemes[subject].image}
+            alt=""
+            aria-hidden
+            loading="lazy"
+            width={1024}
+            height={1024}
+            className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,720px)] h-auto opacity-[0.06] md:opacity-[0.08] select-none animate-fade-in"
+          />
+        </>
+      )}
+
       <Link
         to="/"
         className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-secondary/60 backdrop-blur text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 hover:-translate-x-0.5 transition-all duration-300 animate-fade-up"
