@@ -2,6 +2,7 @@ import { Lock, ArrowLeft, ArrowRight, Sparkles, Atom, FlaskConical, Leaf, BookOp
 import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGate";
 
 export const SUBJECT_STORAGE_KEY = "app_subject_v1";
+export const PREVIOUS_SUBJECT_STORAGE_KEY = "app_previous_subject_v1";
 
 export type AppSubject = "physics" | "english" | "chemistry" | "biology" | "french" | "arabic" | "islamic" | "revision";
 
