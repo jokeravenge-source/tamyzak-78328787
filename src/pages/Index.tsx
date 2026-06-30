@@ -403,7 +403,16 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   }, [topicResult, topicKey]);
 
   const [cards, setCards] = useState(activeTopicCards);
-  const [index, setIndex] = useState(0);
+  const progressKey = `flashcard-progress:${subject}:${chapter}:${savedView ? "saved" : topicKey}`;
+  const readSavedIndex = (max: number) => {
+    try {
+      const raw = localStorage.getItem(progressKey);
+      const n = raw ? parseInt(raw, 10) : 0;
+      if (!Number.isFinite(n) || n < 0) return 0;
+      return Math.min(n, Math.max(0, max - 1));
+    } catch { return 0; }
+  };
+  const [index, setIndex] = useState(() => readSavedIndex(activeTopicCards.length));
   const [direction, setDirection] = useState<"left" | "right">("right");
 
   const next = () => {
@@ -429,17 +438,21 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     setDirection("left");
   };
 
-  // Rebuild deck only when the underlying source changes — reset index here.
+  // Rebuild deck only when the underlying source changes — restore saved index.
   useEffect(() => {
-    if (savedView) {
-      setCards(saved.map((s) => ({ q: s.q, a: s.a })));
-    } else {
-      setCards(activeTopicCards);
-    }
-    setIndex(0);
+    const nextCards = savedView
+      ? saved.map((s) => ({ q: s.q, a: s.a }))
+      : activeTopicCards;
+    setCards(nextCards);
+    setIndex(readSavedIndex(nextCards.length));
     // intentionally exclude `saved` so bookmarking a card doesn't reset position
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTopicCards, savedView]);
+  }, [activeTopicCards, savedView, progressKey]);
+
+  // Persist current card position so the user resumes where they left off.
+  useEffect(() => {
+    try { localStorage.setItem(progressKey, String(index)); } catch { /* noop */ }
+  }, [index, progressKey]);
 
   // When in saved view and the saved list changes (e.g. unbookmark),
   // update cards in place without snapping back to the first card.
