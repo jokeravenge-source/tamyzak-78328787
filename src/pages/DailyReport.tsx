@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Sparkles, RefreshCw, Share2, Trophy, Clock, Target, Brain, Copy, Check, Link2, ListChecks, Flag } from "lucide-react";
+import { ArrowLeft, RefreshCw, Share2, Trophy, Clock, Target, Brain, Copy, Check, Link2, ListChecks, Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
