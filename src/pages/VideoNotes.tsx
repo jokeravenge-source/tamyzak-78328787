@@ -366,12 +366,12 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
               onChange={(e) => setUrl(e.target.value)}
               placeholder={t.placeholder}
               dir="ltr"
-              className="h-11 text-sm bg-transparent border border-border rounded-md font-mono focus-visible:ring-0 focus-visible:border-[hsl(230_19%_9%/0.6)]"
+              className="h-11 text-sm bg-transparent border border-border rounded-md font-mono focus-visible:ring-0 focus-visible:border-foreground/60"
             />
             <button
               onClick={run}
               disabled={loading || !url.trim()}
-              className="w-full h-11 bg-primary text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 rounded-md disabled:opacity-40 hover:opacity-90 transition-opacity"
+              className="w-full h-11 bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 rounded-md disabled:opacity-40 hover:opacity-90 transition-opacity"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               {loading ? t.working : t.generate}
@@ -471,7 +471,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                   <button
                     onClick={saveAllCards}
                     disabled={!subject || !chapter}
-                    className="w-full h-10 bg-primary text-[hsl(40_30%_93%)] text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 rounded-md disabled:opacity-30 hover:opacity-90 transition-opacity"
+                    className="w-full h-10 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 rounded-md disabled:opacity-30 hover:opacity-90 transition-opacity"
                   >
                     <Save className="w-3.5 h-3.5" />{t.addAll}
                   </button>
@@ -532,10 +532,10 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                         const isSelected = i === mcqSelected;
                         let cls = "border-border hover:border-foreground/50";
                         if (mcqRevealed) {
-                          if (isCorrect) cls = "border-[hsl(140_50%_35%)] bg-[hsl(140_50%_35%/0.08)]";
-                          else if (isSelected) cls = "border-[hsl(0_60%_45%)] bg-destructive/10";
+                          if (isCorrect) cls = "border-[hsl(140_50%_35%)] bg-[hsl(140_50%_35%/0.12)]";
+                          else if (isSelected) cls = "border-destructive bg-destructive/10";
                           else cls = "border-border opacity-50";
-                        } else if (isSelected) cls = "border-[hsl(230_19%_9%)] bg-primary/10";
+                        } else if (isSelected) cls = "border-primary bg-primary/10";
                         return (
                           <button
                             key={i}
@@ -557,7 +557,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                     </div>
 
                     {mcqRevealed && (
-                      <div className="border-l-2 border-[hsl(35_80%_45%)] bg-primary/10 p-3 mb-4">
+                      <div className="border-l-2 border-primary bg-primary/10 p-3 mb-4">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary mb-1">{t.explanation}</p>
                         <p className="text-sm text-foreground/90">{q.explanation}</p>
                       </div>
@@ -566,7 +566,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                     {!mcqRevealed && q.hint && (
                       <div className="mb-4">
                         {mcqHint ? (
-                          <div className="border-l-2 border-[hsl(230_6%_42%)] bg-[hsl(230_6%_42%/0.06)] p-3 flex gap-3">
+                          <div className="border-l-2 border-muted-foreground bg-muted/60 p-3 flex gap-3">
                             <Lightbulb className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                             <p className="text-sm text-foreground/90">{q.hint}</p>
                           </div>
@@ -585,14 +585,14 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                       <button
                         onClick={submitMcqAnswer}
                         disabled={mcqSelected === null}
-                        className="w-full h-11 bg-primary text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center rounded-md disabled:opacity-30 hover:opacity-90 transition-opacity"
+                        className="w-full h-11 bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center rounded-md disabled:opacity-30 hover:opacity-90 transition-opacity"
                       >
                         {t.next}
                       </button>
                     ) : (
                       <button
                         onClick={nextMcq}
-                        className="w-full h-11 bg-primary text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center rounded-md hover:opacity-90 transition-opacity"
+                        className="w-full h-11 bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center rounded-md hover:opacity-90 transition-opacity"
                       >
                         {mcqIdx + 1 >= mcqs.length ? t.finish : t.next}
                       </button>
@@ -671,7 +671,7 @@ function ActionBtn({
   const base =
     "h-12 inline-flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] rounded-md disabled:opacity-40 transition-colors px-4";
   const skin = primary
-    ? "bg-primary text-[hsl(40_30%_93%)] hover:opacity-90"
+    ? "bg-primary text-primary-foreground hover:opacity-90"
     : "border border-border hover:border-foreground/50 text-foreground";
   return (
     <button onClick={onClick} disabled={disabled} className={`${base} ${skin}`}>
@@ -699,7 +699,7 @@ function StatusStrip({
 }) {
   const tone =
     status.kind === "success"
-      ? "border-[hsl(140_50%_35%/0.45)] text-[hsl(140_50%_25%)] bg-[hsl(140_50%_35%/0.06)]"
+      ? "border-[hsl(140_50%_35%/0.45)] text-[hsl(140_50%_25%)] bg-[hsl(140_50%_35%/0.1)]"
       : status.kind === "failed"
       ? "border-destructive/45 text-destructive bg-destructive/10"
       : status.kind === "retrying"
