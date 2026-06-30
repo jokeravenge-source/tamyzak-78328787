@@ -6,7 +6,7 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { text, language, voice } = await req.json();
+    const { text, language, voice, speed } = await req.json();
     if (!text || typeof text !== "string") {
       return new Response(JSON.stringify({ error: "Missing text" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -23,6 +23,7 @@ Deno.serve(async (req) => {
         input,
         voice: voice || "alloy",
         response_format: "mp3",
+        speed: typeof speed === "number" && speed >= 0.25 && speed <= 4.0 ? speed : 1.25,
       }),
     });
     if (!res.ok) {
