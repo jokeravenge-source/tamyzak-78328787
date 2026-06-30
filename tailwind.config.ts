@@ -115,6 +115,8 @@ export default {
         "glow-pulse": "glow-pulse 3s ease-in-out infinite",
         "apple-pop": "apple-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)",
         "fade-slide-in": "fade-slide-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "theme-crossfade-in": "theme-crossfade-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "theme-crossfade-out": "theme-crossfade-out 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards",
       },
     },
   },
