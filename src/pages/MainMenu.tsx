@@ -53,7 +53,7 @@ const copy = {
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "leaderboard" | "news" | "premium" | "more" | "todo" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "companion";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "leaderboard" | "news" | "premium" | "more" | "todo" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "companion" | "subjectTutor";
 
 const MainMenu = ({
   language,
