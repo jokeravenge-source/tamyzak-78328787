@@ -228,7 +228,8 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
       });
       if (insErr) throw insErr;
       toast.success(t("Submitted — waiting for admin approval", "تم الإرسال — بانتظار موافقة المسؤول"));
-      setShowUpload(false); setFile(null); setName(""); setDescription("");
+      setFile(null); setName(""); setDescription("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err: any) {
       toast.error(err?.message ?? "Upload failed");
     } finally { setUploading(false); }
