@@ -745,9 +745,23 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold">{u.display_name}</h3>
                           {u.banned && <span className="text-xs px-2 py-0.5 rounded-full border border-red-500/40 text-red-400">Banned</span>}
+                          {u.is_premium && (
+                            <span className="text-xs px-2 py-0.5 rounded-full border border-amber-400/50 text-amber-300 inline-flex items-center gap-1">
+                              <Crown className="w-3 h-3" /> Premium
+                              {u.premium_expires_at && ` · until ${new Date(u.premium_expires_at).toLocaleDateString()}`}
+                            </span>
+                          )}
                         </div>
                         {u.email && <p className="text-xs text-muted-foreground mt-0.5 break-all">{u.email}</p>}
                       </div>
+                      <button
+                        onClick={() => togglePremium(u)}
+                        disabled={premiumBusyId === u.user_id}
+                        className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm disabled:opacity-60 ${u.is_premium ? "border border-amber-400/40 text-amber-300 hover:bg-amber-500/10" : "border border-amber-400/40 text-amber-200 hover:bg-amber-500/10"}`}
+                      >
+                        {premiumBusyId === u.user_id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
+                        {u.is_premium ? "Revoke Premium" : "Grant Premium"}
+                      </button>
                       <button
                         onClick={() => toggleSessions(u)}
                         className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-sm"
