@@ -677,7 +677,7 @@ const AccountCenter = ({
           </button>
         </div>
       </section>
-      {onNav && <CurvedNavBar language={language} active="account" onSelect={onNav} />}
+      
     </main>
   );
 };
