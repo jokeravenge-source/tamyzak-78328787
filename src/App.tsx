@@ -64,12 +64,6 @@ import TelegramGate from "./components/TelegramGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
 
-
-const PublicPrivacy = lazy(() => import("./pages/public/Privacy"));
-const PublicTerms = lazy(() => import("./pages/public/Terms"));
-const PublicRefund = lazy(() => import("./pages/public/Refund"));
-const PublicPricing = lazy(() => import("./pages/public/Pricing"));
-
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_INTRO_KEY = "app_companion_intro_v1";
 
