@@ -75,8 +75,9 @@ const PhysicsProblemSolver = ({ language, onBack }: { language: AppLanguage; onB
       let extractedText = text;
       if (file) {
         if (file.type.startsWith("image/")) {
-          const { data } = await supabase.storage.from("summaries").upload(`physics_solver/${Date.now()}_${file.name}`, file, { upsert: true });
-          const { data: urlData } = supabase.storage.from("summaries").createSignedUrl(data?.path || "", 600);
+          const { data: uploadData, error: uploadError } = await supabase.storage.from("summaries").upload(`physics_solver/${Date.now()}_${file.name}`, file, { upsert: true });
+          if (uploadError) throw uploadError;
+          const { data: urlData } = supabase.storage.from("summaries").createSignedUrl(uploadData?.path || "", 600);
           imageUrl = urlData?.signedUrl;
         } else {
           toast.loading(rtl ? "جارٍ قراءة الملف…" : "Reading file…", { id: "ext" });
