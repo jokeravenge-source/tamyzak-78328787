@@ -125,17 +125,21 @@ export default function Premium({ language, onBack }: { language: AppLanguage; o
               <p className="text-xs text-muted-foreground mt-1">{t.activeDesc}</p>
             </div>
           ) : (
-            <button
-              onClick={buy}
-              disabled={loading}
-              className="relative w-full h-12 rounded-xl font-bold text-white inline-flex items-center justify-center gap-2 transition disabled:opacity-60"
-              style={{
-                background: "linear-gradient(110deg, #f59e0b, #fbbf24, #f59e0b)",
-                boxShadow: "0 10px 30px -10px rgba(251, 191, 36, 0.6)",
-              }}
-            >
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" />{t.loading}</> : <><Sparkles className="w-4 h-4" />{t.cta}</>}
-            </button>
+            <div className="space-y-2">
+              <a
+                href={TELEGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative w-full h-12 rounded-xl font-bold text-white inline-flex items-center justify-center gap-2 transition"
+                style={{
+                  background: "linear-gradient(110deg, #f59e0b, #fbbf24, #f59e0b)",
+                  boxShadow: "0 10px 30px -10px rgba(251, 191, 36, 0.6)",
+                }}
+              >
+                <Send className="w-4 h-4" />{t.cta}
+              </a>
+              <p className="text-xs text-center text-muted-foreground">{t.ctaSub}</p>
+            </div>
           )}
         </motion.div>
       </motion.section>
