@@ -4,7 +4,7 @@ import { type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import StreakTree from "@/components/StreakTree";
-import CurvedNavBar from "@/components/CurvedNavBar";
+
 
 const copy = {
   en: {
