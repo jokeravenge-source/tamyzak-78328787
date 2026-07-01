@@ -74,8 +74,9 @@ button:active:not(:disabled), [role="button"]:active:not(:disabled) {
 
 /* ============ Global safe-area + UX polish ============ */
 :root {
-  /* Bottom safe-area inset only (no fixed nav bar) */
-  --nav-safe: env(safe-area-inset-bottom, 0px);
+  /* Height of the fixed BottomGroupNav (two rows + padding) + device safe-area */
+  --nav-height: 128px;
+  --nav-safe: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
 }
 
 html {
@@ -90,13 +91,15 @@ body {
   padding-right: env(safe-area-inset-right, 0px);
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+  /* Reserve space for the fixed bottom navigation on every page */
+  padding-bottom: var(--nav-safe);
 }
 
 /* Every full-height page auto-reserves top notch + bottom nav space */
 main.min-h-screen,
 div.min-h-screen {
   padding-top: max(env(safe-area-inset-top), 0px);
-  padding-bottom: max(var(--nav-safe), 1.5rem);
+  padding-bottom: calc(var(--nav-safe) + 1rem);
 }
 
 /* Fixed / sticky bottom UI (toolbars, action bars) should clear the nav */
