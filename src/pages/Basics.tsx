@@ -14,7 +14,7 @@ import { missionsData, missionsOrder } from "@/data/missions";
 import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
-import RankStone, { rankFromPoints, RANK_LABELS } from "@/components/RankStone";
+import RankStone, { rankFromPoints, RANK_LABELS, type StoneRank } from "@/components/RankStone";
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
