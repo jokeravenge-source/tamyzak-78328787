@@ -219,15 +219,6 @@ export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?
             {mode === "signin" ? "Create one" : "Sign in"}
           </button>
         </p>
-        <div className="mt-6 pt-5 border-t border-white/10 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
-          <a href="/pricing" className="hover:text-foreground">Pricing</a>
-          <span>·</span>
-          <a href="/terms" className="hover:text-foreground">Terms</a>
-          <span>·</span>
-          <a href="/privacy" className="hover:text-foreground">Privacy</a>
-          <span>·</span>
-          <a href="/refund" className="hover:text-foreground">Refund</a>
-        </div>
       </div>
       </section>
     </main>
