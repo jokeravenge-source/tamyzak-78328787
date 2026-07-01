@@ -60,6 +60,11 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
     window.setTimeout(() => fileInputRef.current?.focus(), 350);
   };
 
+  const pickFromUploadButton = (f: File | null) => {
+    onPickFile(f);
+    revealUploadPanel();
+  };
+
   const fetchAll = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -370,19 +375,32 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
             </button>
           ))}
         </div>
-        <button onClick={revealUploadPanel} className="inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold shadow-lg shadow-primary/30">
+        <label className="relative overflow-hidden inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold shadow-lg shadow-primary/30 cursor-pointer">
           <Upload className="w-4 h-4" /> {t("Upload files", "رفع الملفات")}
-        </button>
+          <input
+            type="file"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            aria-label={t("Upload files", "رفع الملفات")}
+            onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
+            onChange={(e) => pickFromUploadButton(e.target.files?.[0] ?? null)}
+          />
+        </label>
       </div>
 
-      {/* Floating upload CTA scrolls to the visible upload form */}
-      <button
-        onClick={revealUploadPanel}
-        className="fixed z-[90] bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] right-4 rtl:right-auto rtl:left-4 inline-flex items-center gap-2 px-5 h-12 rounded-full bg-primary text-primary-foreground shadow-2xl shadow-primary/40 hover:bg-primary/90 text-sm font-bold"
+      {/* Floating upload CTA is a real native file input so tapping it opens the picker directly */}
+      <label
+        className="fixed z-[90] bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] right-4 rtl:right-auto rtl:left-4 overflow-hidden inline-flex items-center gap-2 px-5 h-12 rounded-full bg-primary text-primary-foreground shadow-2xl shadow-primary/40 hover:bg-primary/90 text-sm font-bold cursor-pointer"
         aria-label={t("Upload files", "رفع الملفات")}
       >
         <Upload className="w-5 h-5" /> {t("Upload files", "رفع الملفات")}
-      </button>
+        <input
+          type="file"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          aria-label={t("Upload files", "رفع الملفات")}
+          onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
+          onChange={(e) => pickFromUploadButton(e.target.files?.[0] ?? null)}
+        />
+      </label>
 
       <section className="max-w-6xl mx-auto mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
         {loading ? (
