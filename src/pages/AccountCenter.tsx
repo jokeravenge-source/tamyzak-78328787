@@ -96,6 +96,8 @@ const AccountCenter = ({
   const [subjectSeconds, setSubjectSeconds] = useState<Record<string, number>>({});
   const [todaySubjectSeconds, setTodaySubjectSeconds] = useState<Record<string, number>>({});
   const [weeklyTotals, setWeeklyTotals] = useState<{ key: string; date: Date; seconds: number }[]>([]);
+  const [monthlyPoints, setMonthlyPoints] = useState<{ key: string; label: string; points: number }[]>([]);
+  const [currentMonthPoints, setCurrentMonthPoints] = useState(0);
 
   const tryPremium = (apply: () => void) => {
     if (!isPremium) {
@@ -134,8 +136,34 @@ const AccountCenter = ({
       setSavedName(p?.display_name ?? "");
       setGender((p?.gender as Gender) ?? null);
       setTraits(((p as any)?.character as CharacterTraits) ?? null);
-      const { data: pts } = await supabase.from("user_points").select("points").eq("user_id", u.user.id);
-      setPoints((pts ?? []).reduce((s: number, r: any) => s + (r.points ?? 0), 0));
+      const { data: pts } = await supabase
+        .from("user_points")
+        .select("points, created_at")
+        .eq("user_id", u.user.id);
+      const all = (pts ?? []) as { points: number; created_at: string }[];
+      setPoints(all.reduce((s, r) => s + (r.points ?? 0), 0));
+      // Group by Baghdad year-month
+      const byMonth = new Map<string, number>();
+      all.forEach((r) => {
+        if (!r.created_at) return;
+        const d = new Date(new Date(r.created_at).getTime() + 3 * 3600 * 1000);
+        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+        byMonth.set(key, (byMonth.get(key) ?? 0) + (r.points ?? 0));
+      });
+      const nowB = new Date(Date.now() + 3 * 3600 * 1000);
+      const curKey = `${nowB.getUTCFullYear()}-${String(nowB.getUTCMonth() + 1).padStart(2, "0")}`;
+      setCurrentMonthPoints(byMonth.get(curKey) ?? 0);
+      const list = Array.from(byMonth.entries())
+        .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+        .map(([key, points]) => {
+          const [y, m] = key.split("-").map(Number);
+          const label = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(
+            language === "ar" ? "ar-EG" : "en-US",
+            { month: "long", year: "numeric" }
+          );
+          return { key, label, points };
+        });
+      setMonthlyPoints(list);
       // Aggregate study time per subject across all sessions
       {
         const totals: Record<string, number> = {};
@@ -431,6 +459,50 @@ const AccountCenter = ({
                 </span>
               )}
             </div>
+            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                  {language === "ar" ? "هذا الشهر (المتصدرون)" : "This month (leaderboard)"}
+                </p>
+                <p className="text-2xl font-bold gradient-text leading-none mt-1">{currentMonthPoints}</p>
+              </div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground max-w-[55%] text-right">
+                {language === "ar"
+                  ? "تُصفَّر المتصدرون بداية كل شهر — أرشيفك محفوظ بالأسفل."
+                  : "Leaderboard resets on the 1st of each month — your history is saved below."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!loading && monthlyPoints.length > 0 && (
+          <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <CalendarClock className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">
+                  {language === "ar" ? "أرشيف النقاط الشهري" : "Monthly Points History"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {language === "ar"
+                    ? "كم نقطة جمعت في كل شهر"
+                    : "How many points you earned each month"}
+                </p>
+              </div>
+            </div>
+            <ul className="space-y-2">
+              {monthlyPoints.map((m) => (
+                <li
+                  key={m.key}
+                  className="flex items-center justify-between rounded-2xl border border-white/5 bg-background/30 px-4 py-3"
+                >
+                  <span className="text-sm font-medium">{m.label}</span>
+                  <span className="text-lg font-bold gradient-text">{m.points}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
