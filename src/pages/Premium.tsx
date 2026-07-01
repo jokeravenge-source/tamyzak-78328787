@@ -1,12 +1,12 @@
 import { useEffect } from "react";
-import { ArrowLeft, Check, Crown, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Crown, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
 import { useSubscription } from "@/hooks/useSubscription";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import type { AppLanguage } from "@/components/LanguageGate";
+
+const TELEGRAM_URL = "https://t.me/ias404";
 
 const copy = {
   en: {
@@ -17,7 +17,7 @@ const copy = {
     price: "$2",
     per: "/ month",
     cta: "Upgrade now",
-    loading: "Opening checkout…",
+    ctaSub: "Message @ias404 on Telegram to activate",
     active: "You're a Premium member",
     activeDesc: "Enjoy unlimited AI and your premium perks.",
     features: [
@@ -35,7 +35,7 @@ const copy = {
     price: "٢$",
     per: "/ شهرياً",
     cta: "ترقية الآن",
-    loading: "جاري فتح الدفع…",
+    ctaSub: "راسل @ias404 على تيليجرام للتفعيل",
     active: "أنت عضو بريميوم",
     activeDesc: "استمتع بذكاء اصطناعي غير محدود ومميزاتك البريميوم.",
     features: [
@@ -49,7 +49,6 @@ const copy = {
 
 export default function Premium({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
   const t = copy[language];
-  const { openCheckout, loading } = usePaddleCheckout();
   const { isPremium, loading: subLoading } = useSubscription();
 
   useEffect(() => {
@@ -61,24 +60,6 @@ export default function Premium({ language, onBack }: { language: AppLanguage; o
       window.history.replaceState({}, "", url.toString());
     }
   }, [language]);
-
-  const buy = async () => {
-    try {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) {
-        toast.error(language === "ar" ? "سجّل دخولك أولاً" : "Please sign in first");
-        return;
-      }
-      await openCheckout({
-        priceId: "premium_monthly",
-        customerEmail: u.user.email ?? undefined,
-        customData: { userId: u.user.id },
-        successUrl: `${window.location.origin}/?premium=success`,
-      });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to open checkout");
-    }
-  };
 
   return (
     <main className="min-h-screen px-4 py-12 md:py-20 pb-32 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -144,17 +125,21 @@ export default function Premium({ language, onBack }: { language: AppLanguage; o
               <p className="text-xs text-muted-foreground mt-1">{t.activeDesc}</p>
             </div>
           ) : (
-            <button
-              onClick={buy}
-              disabled={loading}
-              className="relative w-full h-12 rounded-xl font-bold text-white inline-flex items-center justify-center gap-2 transition disabled:opacity-60"
-              style={{
-                background: "linear-gradient(110deg, #f59e0b, #fbbf24, #f59e0b)",
-                boxShadow: "0 10px 30px -10px rgba(251, 191, 36, 0.6)",
-              }}
-            >
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" />{t.loading}</> : <><Sparkles className="w-4 h-4" />{t.cta}</>}
-            </button>
+            <div className="space-y-2">
+              <a
+                href={TELEGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative w-full h-12 rounded-xl font-bold text-white inline-flex items-center justify-center gap-2 transition"
+                style={{
+                  background: "linear-gradient(110deg, #f59e0b, #fbbf24, #f59e0b)",
+                  boxShadow: "0 10px 30px -10px rgba(251, 191, 36, 0.6)",
+                }}
+              >
+                <Send className="w-4 h-4" />{t.cta}
+              </a>
+              <p className="text-xs text-center text-muted-foreground">{t.ctaSub}</p>
+            </div>
           )}
         </motion.div>
       </motion.section>

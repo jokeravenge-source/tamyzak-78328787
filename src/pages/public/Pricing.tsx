@@ -65,7 +65,7 @@ export default function Pricing() {
             <span className="text-5xl font-bold">$2</span>
             <span className="text-muted-foreground">/ month</span>
           </div>
-          <p className="text-xs text-muted-foreground mb-6">Billed monthly by Paddle. Cancel anytime.</p>
+          <p className="text-xs text-muted-foreground mb-6">Activated manually via Telegram. Cancel anytime.</p>
           <ul className="space-y-3 mb-8">
             {premiumFeatures.map((f) => (
               <li key={f} className="flex items-start gap-3 text-sm">
@@ -76,13 +76,12 @@ export default function Pricing() {
               </li>
             ))}
           </ul>
-          <a href="/" className="block w-full h-12 rounded-xl font-bold text-white text-center leading-[3rem]" style={{ background: "linear-gradient(110deg,#f59e0b,#fbbf24,#f59e0b)", boxShadow: "0 10px 30px -10px rgba(251,191,36,0.6)" }}>Sign in to upgrade</a>
+          <a href="https://t.me/ias404" target="_blank" rel="noopener noreferrer" className="block w-full h-12 rounded-xl font-bold text-white text-center leading-[3rem]" style={{ background: "linear-gradient(110deg,#f59e0b,#fbbf24,#f59e0b)", boxShadow: "0 10px 30px -10px rgba(251,191,36,0.6)" }}>Message @ias404 on Telegram</a>
         </div>
       </section>
 
       <section className="max-w-3xl mx-auto px-6 pb-16 text-sm text-muted-foreground text-center space-y-3">
-        <p>Payments are processed by <strong>Paddle.com</strong>, our Merchant of Record. All prices are in USD and exclude any local taxes Paddle calculates at checkout.</p>
-        <p>See our <a href="/refund" className="underline">Refund Policy</a> (30-day money-back guarantee) and <a href="/terms" className="underline">Terms</a>.</p>
+        <p>Premium is activated manually. Message <a href="https://t.me/ias404" target="_blank" rel="noopener noreferrer" className="underline"><strong>@ias404</strong></a> on Telegram after signing up and your account will be upgraded.</p>
       </section>
 
       <PublicFooter />
