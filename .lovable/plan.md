@@ -1,95 +1,57 @@
-# Tamyzak Redesign — The Facet System
+Based on your preference for free AI/practice tools for physics, I recommend adding three focused tools to the Physics subject page. These will reuse existing AI infrastructure (generate-mcq, Lovable AI Gateway) and be marked as free.
 
-A focused redesign that builds the entire visual language around the rank metaphor (Coal → Royal). One bold move (the faceted rank stone), everything else disciplined and quiet.
+## Proposed Physics Tools
 
-## 1. Design tokens (foundation)
+### 1. Physics Problem Solver — "حل مسائل الفيزياء"
+- What it does: student types or uploads a photo of a physics problem; AI returns a step-by-step Arabic solution, identifies the law used, and plugs values into the formula.
+- Fit: reuses the OCR/photo pattern used in Essay/Al-Musahhih and the subject-agent AI response style.
+- Edge function: create `solve-physics-problem` that accepts `{ text?, image_url? }` and returns `{ law, variables, steps, answer, unit }`.
+- UI: simple form with a textarea, optional image upload, and a "Solve" button. Output is a numbered parchment-style solution card.
+- Why it helps: 6th-grade scientific physics is heavy on calculations; this gives instant guided help.
 
-Rewrite `src/index.css` and `tailwind.config.ts` with the new token system:
+### 2. Physics Quick MCQ — "اختبار الفيزياء السريع"
+- What it does: student picks a physics chapter or concept, and the app generates 5–10 physics MCQs with explanations.
+- Fit: reuses the existing `generate-mcq` Edge Function, but pre-filters for physics topics and uses the physics chapter list from `subjectChapters.ts`.
+- UI: a compact quiz card with a timer, progress bar, and immediate feedback per answer. No file upload needed, unlike the main MCQ tool.
+- Why it helps: fast self-testing before class or exams, focused only on physics.
 
-- Colors (HSL): `--ink 230 19% 9%`, `--parchment 40 30% 93%`, `--ember 35 80% 57%`, `--ash 230 6% 57%`, plus existing `--physics / --chemistry / --biology` kept exact.
-- Map shadcn semantics: `--background = ink`, `--foreground = parchment`, `--card = parchment` (dark-on-light in cards, light-on-dark in shell), `--primary = ember` (used sparingly — see rule below).
-- Typography: load Cairo + IBM Plex Sans Arabic + Space Grotesk + Inter + JetBrains Mono via `<link>` in `index.html`. Add Tailwind font families: `font-display-ar`, `font-display`, `font-body-ar`, `font-body`, `font-mono` (JetBrains).
-- Radius: drop global rounding to `--radius: 2px`. Add a utility `clip-facet` that uses `clip-path: polygon(...)` to cut a single top-end corner (logical, mirrors in RTL).
-- Ember rule: enforce by convention — only `Rank`, `Streak`, `Points`, `Achievement` components import the ember utility classes.
+### 3. Physics Laws & Unit Converter — "قوانين ووحدات الفيزياء"
+- What it does: two tabs in one tool.
+  - Laws tab: searchable cards of common 6th-grade physics laws (speed, density, force, pressure, work, power, Ohm's law, etc.) with formula and a one-line Arabic explanation.
+  - Converter tab: converts between units used in physics — km/h ↔ m/s, J ↔ cal, kg ↔ g, C ↔ F, etc.
+- Fit: no AI needed; lightweight static data + a small utility. Can be built client-side.
+- UI: faceted cards and a clean converter form. Responsive and safe for mobile.
+- Why it helps: students often lose marks on unit mistakes; quick reference saves time during homework.
 
-## 2. The Facet Stone component (signature)
+## Integration Plan
 
-New `src/components/RankStone.tsx` — reusable faceted SVG with six material variants:
+1. Add the three choices to `MainMenuChoice` in `src/pages/MainMenu.tsx`:
+   - `physicsProblemSolver`
+   - `physicsQuickMcq`
+   - `physicsLaws`
 
-```text
-Coal     → matte dark gradient, rough edges
-Copper   → warm copper gradient + soft specular
-Silver   → cool brushed gradient + sharp highlight
-Gold     → warm gold gradient + ember rim
-Diamond  → clear facets, refraction streaks, white sparkle
-Royal    → multi-facet, ember-gold inner glow (animated)
-```
+2. Add the three tools to the Physics subject list in `src/pages/SubjectsHub.tsx`, marked with new icons (e.g., `Calculator`, `Clock`, `Ruler` from lucide-react).
 
-Props: `rank`, `size`, `fillProgress` (0–1 for streak fill creeping up through facets), `animateRankUp` (one-shot Framer Motion sequence).
+3. Add the new keys to `FREE_TOOLS` in `src/pages/SubjectsHub.tsx` so every user can access them regardless of premium status.
 
-Reused at different scales in: Home dashboard (hero), Leaderboard rank markers, Live Battle (player + opponent), Achievement unlock modal, notification badge (mini facet polygon, not a circle).
+4. Add routing and lazy loading in `src/App.tsx`:
+   - `src/pages/PhysicsProblemSolver.tsx`
+   - `src/pages/PhysicsQuickMcq.tsx`
+   - `src/pages/PhysicsLaws.tsx`
 
-## 3. Bidirectional layout (structural)
+5. Create the `solve-physics-problem` Edge Function for the problem solver (optional image OCR via existing `ocr-images` if needed). The Quick MCQ can reuse `generate-mcq` with a physics prompt prefix. The Laws tool can be fully client-side.
 
-- Audit and replace `left/right`, `ml-/mr-`, `pl-/pr-` with `start/end` logical equivalents (`ms-`, `me-`, `ps-`, `pe-`, `start-0`, `end-0`).
-- Set `dir` at the `<html>` level from `LanguageGate`; remove ad-hoc `dir="rtl"` overrides where logical props now handle it.
-- Facet clip-path uses `inset-inline-start` math so the cut corner mirrors with language.
+6. Make sure the subject page auto-sets `physics` when launching from the Physics hub, so no subject picker is shown.
 
-## 4. Key screens
+## Technical Notes
+- All three tools are client-side pages + one new Edge Function, keeping the scope small.
+- No schema changes are needed.
+- The UI will follow the existing facet/parchment design system and use semantic tokens.
+- The tools will be free by default, as requested.
 
-**Home Dashboard (`src/pages/Basics.tsx`)**
-- Hero = RankStone (large, leading edge) + streak count in JetBrains Mono next to it, ember accent. No headline, no CTA.
-- Quiet search bar below the stone.
-- Subject tool cards: parchment surface, one beveled corner, subject color as a 2px inline-start edge + icon tint only. No full-bleed color blocks.
-- Streak tree + To-Do generate button move into secondary row, low contrast.
+## Suggested Order of Implementation
+1. Physics Laws & Unit Converter (fastest, no backend)
+2. Physics Quick MCQ (reuses generate-mcq)
+3. Physics Problem Solver (new edge function + optional image upload)
 
-**Study Session (`src/pages/Sessions.tsx`)**
-- Full-bleed ink background, remove most chrome.
-- Timer: JetBrains Mono, very large, parchment color.
-- Hourly "Continue" prompt: single faceted ember button, centered, nothing else on screen.
-- To-Do dropdown collapses to thin strip at bottom.
-
-**Flashcards (`src/components/Flashcard.tsx`, `src/pages/Index.tsx`)**
-- Real 3D flip (already partly there — confirm `transform-style: preserve-3d`, smooth rotateY).
-- Subject color as accent edge only (keep current subject palette overrides).
-- Chapter progress as a horizontal row of small facet polygons that fill, replacing the percentage bar.
-
-**Live Battle (`src/pages/LiveBattle.tsx`)**
-- Countdown: huge JetBrains Mono numerals.
-- Two RankStones mirrored across the screen (yours on the inline-start, opponent on inline-end).
-- Correct answer triggers a facet-of-light pulse on your stone — the win moment.
-- Loud 15s/25s timer ring.
-
-**Daily Report + Parent Follow-Up (`src/pages/DailyReport.tsx`, `src/pages/ParentFollow.tsx`)**
-- Parchment background, ink text, JetBrains Mono numerals.
-- No facet decoration; calm, legible, trust-first.
-
-**Leaderboard (`src/pages/Leaderboard.tsx`)**
-- Each row's rank marker = mini RankStone in the correct material.
-- Top-3 stones slightly larger.
-
-**Bottom nav (`src/components/CurvedNavBar.tsx`)**
-- Keep sticky portal behavior. Active tab indicator becomes a small facet shape instead of the rounded pill.
-
-## 5. Motion
-
-- One orchestrated rank-up sequence in `RankStone` — stone re-cuts, ember light spreads. Triggered from a new `useRankUpAnimation` hook listening on a `rank-up` window event (mirrors the existing `app:point-award` pattern).
-- Everywhere else: hover = subtle facet-edge highlight (border-color shift), no scale/bounce.
-- All animations gated by `@media (prefers-reduced-motion: reduce)`.
-
-## 6. Copy voice
-
-Sweep the most visible buttons/empty states in `Basics`, `Sessions`, `Index`, `TodoList` to match the voice spec ("ابدأ الجلسة / Start session", "جارية / In progress", "لا توجد بطاقات بعد — أنشئ أول بطاقة"). Not a full app-wide copy rewrite — just the surfaces a student hits daily.
-
-## Out of scope (this pass)
-
-- No backend changes, no new edge functions, no schema work.
-- No re-skin of admin dashboard, premium/Paddle flow, or onboarding companion internals — only their entry surfaces inherit the new tokens automatically.
-- No new illustrations beyond the RankStone variants (existing subject theme art stays).
-
-## Technical notes
-
-- Tokens land first (CSS + Tailwind), so every screen picks up the new palette/typography immediately even before per-screen passes.
-- `RankStone` ships as a single file with the six material variants as inline `<defs>` gradients — no extra assets.
-- Logical-property migration is mechanical; do it screen-by-screen as each is touched, not as one giant sweep.
-- Keep all existing functionality, routes, points logic, Supabase calls untouched.
+If you want to start with fewer tools, I recommend building the Problem Solver first because it has the highest learning value, then the Laws/Converter for quick reference.

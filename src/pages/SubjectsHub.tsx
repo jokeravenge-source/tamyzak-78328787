@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot } from "lucide-react";
+import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
 
-const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam", "companion", "subjectTutor"]);
+const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam", "companion", "subjectTutor", "physicsLaws", "physicsQuickMcq", "physicsProblemSolver"]);
 
 type SubjectKey = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic" | "islamic" | "revision";
 
@@ -17,6 +17,9 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
     code: "physics", en: "Physics", ar: "الفيزياء", Icon: Atom,
     tools: [
       { key: "subjectTutor", en: "AI Tutor", ar: "المعلم الذكي", Icon: Bot },
+      { key: "physicsProblemSolver", en: "Problem Solver", ar: "حل المسائل", Icon: Calculator },
+      { key: "physicsQuickMcq", en: "Quick MCQ", ar: "اختبار سريع", Icon: Zap },
+      { key: "physicsLaws", en: "Laws & Units", ar: "قوانين ووحدات", Icon: Ruler },
       { key: "ministerialBank", en: "Ministerial Bank", ar: "بنك الوزاريات", Icon: ScrollText },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
