@@ -386,14 +386,15 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
                   ref={fileInputRef}
                   type="file"
                   required
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  aria-label={t("Choose summary file", "اختر ملف الملخص")}
+                  className="absolute inset-0 z-20 h-full w-full cursor-pointer opacity-0"
                   onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
                   onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
                 />
-                <span className="w-10 h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                <span className="pointer-events-none w-10 h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
                   <Upload className="w-5 h-5" />
                 </span>
-                <span className="min-w-0 flex-1">
+                <span className="pointer-events-none min-w-0 flex-1">
                   <span className="block font-semibold text-foreground truncate">
                     {file ? file.name : t("Choose file", "اختر ملفاً")}
                   </span>
