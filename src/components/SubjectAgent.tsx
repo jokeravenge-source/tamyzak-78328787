@@ -187,15 +187,6 @@ const SubjectAgent = ({ subject, language }: { subject: AppSubject; language: Ap
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label={t.title}
-        className="fixed bottom-24 right-6 z-[55] inline-flex items-center gap-2 h-12 px-4 rounded-full border border-accent/40 bg-secondary/80 backdrop-blur text-foreground shadow-lg hover:scale-105 hover:border-accent transition-all duration-300"
-      >
-        <Bot className="w-5 h-5 text-primary" />
-        <span className="text-sm font-medium hidden sm:inline">{t.title} · {sName}</span>
-      </button>
-
       {open && (
         <div
           className="fixed inset-0 z-[80] bg-background/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
