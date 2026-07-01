@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee, Settings, Trash2, ListChecks, ChevronDown, CheckCircle2, Circle } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { ArrowLeft, Play, Pause, Square, Trophy, Timer, Target, Music, SkipForward, Volume2, VolumeX, Info, BookOpen, Languages, Globe, Sigma, Atom, FlaskConical, Leaf, Moon, Coffee, Settings, Trash2, ListChecks, ChevronDown, CheckCircle2, Circle, ArrowUpDown, ArrowDownUp, ArrowDown, ArrowUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,15 +39,20 @@ type PastSession = {
   created_at: string;
 };
 
+type SortField = "date" | "minutes" | "points";
+type SortDir = "asc" | "desc";
+
 const SessionsHistory = ({ language, userId }: { language: AppLanguage; userId: string | null }) => {
   const [open, setOpen] = useState(true);
   const [rows, setRows] = useState<PastSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const L = language === "ar"
-    ? { title: "سجل جلساتي", empty: "لا توجد جلسات سابقة.", delete: "حذف", deleted: "تم حذف الجلسة", confirmT: "حذف هذه الجلسة؟", confirmD: "لا يمكن التراجع. لن تُعاد النقاط.", cancel: "إلغاء", yes: "نعم، احذف", loading: "جاري التحميل...", pts: "نقطة", mins: "دقيقة", noMission: "بدون مهمة" }
-    : { title: "My session history", empty: "No past sessions.", delete: "Delete", deleted: "Session deleted", confirmT: "Delete this session?", confirmD: "This cannot be undone. Points will not be restored.", cancel: "Cancel", yes: "Yes, delete", loading: "Loading...", pts: "pts", mins: "min", noMission: "No mission" };
+    ? { title: "سجل جلساتي", empty: "لا توجد جلسات سابقة.", delete: "حذف", deleted: "تم حذف الجلسة", confirmT: "حذف هذه الجلسة؟", confirmD: "لا يمكن التراجع. لن تُعاد النقاط.", cancel: "إلغاء", yes: "نعم، احذف", loading: "جاري التحميل...", pts: "نقطة", mins: "دقيقة", noMission: "بدون مهمة", sort: "ترتيب", byDate: "التاريخ", byMins: "الدقائق", byPoints: "النقاط", asc: "تصاعدي", desc: "تنازلي" }
+    : { title: "My session history", empty: "No past sessions.", delete: "Delete", deleted: "Session deleted", confirmT: "Delete this session?", confirmD: "This cannot be undone. Points will not be restored.", cancel: "Cancel", yes: "Yes, delete", loading: "Loading...", pts: "pts", mins: "min", noMission: "No mission", sort: "Sort", byDate: "Date", byMins: "Minutes", byPoints: "Points", asc: "Ascending", desc: "Descending" };
 
   const SUBJ_LBL: Record<string, { en: string; ar: string }> = {
     islamic: { en: "Islamic", ar: "التربية الإسلامية" }, arabic: { en: "Arabic", ar: "العربية" },
@@ -73,6 +78,41 @@ const SessionsHistory = ({ language, userId }: { language: AppLanguage; userId: 
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  const sortedRows = useMemo(() => {
+    const sorted = [...rows];
+    const factor = sortDir === "asc" ? 1 : -1;
+    sorted.sort((a, b) => {
+      if (sortField === "date") return factor * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      if (sortField === "minutes") return factor * (a.duration_seconds - b.duration_seconds);
+      return factor * (a.points - b.points);
+    });
+    return sorted;
+  }, [rows, sortField, sortDir]);
+
+  const setSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir(field === "date" ? "desc" : "desc");
+    }
+  };
+
+  const SortPill = ({ field, label }: { field: SortField; label: string }) => {
+    const active = sortField === field;
+    const Icon = active ? (sortDir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+    return (
+      <button
+        type="button"
+        onClick={() => setSort(field)}
+        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold transition ${active ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary hover:bg-primary/20"}`}
+      >
+        <Icon className="w-3.5 h-3.5" />
+        {label}
+      </button>
+    );
+  };
 
   const doDelete = async (id: string) => {
     const prev = rows;
@@ -102,36 +142,44 @@ const SessionsHistory = ({ language, userId }: { language: AppLanguage; userId: 
         <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="border-t border-primary/20 max-h-[28rem] overflow-y-auto">
-          {loading ? (
-            <p className="px-4 py-6 text-sm text-muted-foreground text-center">{L.loading}</p>
-          ) : rows.length === 0 ? (
-            <p className="px-4 py-8 text-sm text-muted-foreground text-center">{L.empty}</p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {rows.map((r) => {
-                const s = SUBJ_LBL[r.subject];
-                const subjName = s ? (language === "ar" ? s.ar : s.en) : r.subject;
-                const mins = Math.round(r.duration_seconds / 60);
-                const date = new Date(r.created_at).toLocaleDateString(language === "ar" ? "ar-EG" : undefined, { year: "numeric", month: "short", day: "numeric" });
-                return (
-                  <li key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="text-sm font-bold text-foreground">{subjName}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-foreground font-mono">{mins} {L.mins}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-mono font-semibold">+{r.points} {L.pts}</span>
+        <div className="border-t border-primary/20">
+          <div className="px-4 py-3 border-b border-primary/20 bg-secondary/30 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground">{L.sort}:</span>
+            <SortPill field="date" label={L.byDate} />
+            <SortPill field="minutes" label={L.byMins} />
+            <SortPill field="points" label={L.byPoints} />
+          </div>
+          <div className="max-h-[28rem] overflow-y-auto">
+            {loading ? (
+              <p className="px-4 py-6 text-sm text-muted-foreground text-center">{L.loading}</p>
+            ) : sortedRows.length === 0 ? (
+              <p className="px-4 py-8 text-sm text-muted-foreground text-center">{L.empty}</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {sortedRows.map((r) => {
+                  const s = SUBJ_LBL[r.subject];
+                  const subjName = s ? (language === "ar" ? s.ar : s.en) : r.subject;
+                  const mins = Math.round(r.duration_seconds / 60);
+                  const date = new Date(r.created_at).toLocaleDateString(language === "ar" ? "ar-EG" : undefined, { year: "numeric", month: "short", day: "numeric" });
+                  return (
+                    <li key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="text-sm font-bold text-foreground">{subjName}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-foreground font-mono">{mins} {L.mins}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-mono font-semibold">+{r.points} {L.pts}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">{date} — {r.mission || L.noMission}</div>
                       </div>
-                      <div className="text-xs text-muted-foreground truncate">{date} — {r.mission || L.noMission}</div>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => setConfirmId(r.id)} className="text-destructive border-destructive/40 hover:bg-destructive/10 gap-1 shrink-0">
-                      <Trash2 className="w-4 h-4" /> {L.delete}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                      <Button size="sm" variant="outline" onClick={() => setConfirmId(r.id)} className="text-destructive border-destructive/40 hover:bg-destructive/10 gap-1 shrink-0">
+                        <Trash2 className="w-4 h-4" /> {L.delete}
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
       )}
       <AlertDialog open={!!confirmId} onOpenChange={(o) => !o && setConfirmId(null)}>
