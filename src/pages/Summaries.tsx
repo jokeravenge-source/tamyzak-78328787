@@ -380,19 +380,16 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
               <button type="button" onClick={() => setShowUpload(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">{t("File (max 100 MB)", "الملف (حد أقصى 100 ميجا)")}</label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                required
-                className="sr-only"
-                onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="mt-1 w-full min-h-16 rounded-2xl border border-dashed border-primary/40 bg-background/60 px-4 py-3 text-sm text-start hover:border-primary/70 hover:bg-primary/10 transition-all flex items-center gap-3"
-              >
+              <span className="text-xs text-muted-foreground">{t("File (max 100 MB)", "الملف (حد أقصى 100 ميجا)")}</span>
+              <label className="relative mt-1 w-full min-h-16 rounded-2xl border border-dashed border-primary/40 bg-background/60 px-4 py-3 text-sm text-start hover:border-primary/70 hover:bg-primary/10 transition-all flex items-center gap-3 cursor-pointer overflow-hidden">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  required
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
+                  onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+                />
                 <span className="w-10 h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
                   <Upload className="w-5 h-5" />
                 </span>
@@ -404,7 +401,7 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
                     {file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : t("Tap to browse your files", "اضغط لاختيار ملف من جهازك")}
                   </span>
                 </span>
-              </button>
+              </label>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">{t("Name *", "الاسم *")}</label>
