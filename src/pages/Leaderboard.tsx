@@ -8,6 +8,25 @@ import { CharacterAvatar, type Gender, type CharacterTraits } from "@/components
 
 type Row = { user_id: string; name: string; points: number; gender: Gender | null; traits: Partial<CharacterTraits> | null };
 
+// Start of the current month in Asia/Baghdad (UTC+3) as an ISO string
+function startOfMonthBaghdadISO(): string {
+  const now = new Date();
+  // Shift "now" into Baghdad wall time
+  const baghdad = new Date(now.getTime() + 3 * 3600 * 1000);
+  const y = baghdad.getUTCFullYear();
+  const m = baghdad.getUTCMonth();
+  // Midnight of the 1st in Baghdad = 21:00 UTC of the previous day
+  return new Date(Date.UTC(y, m, 1, -3, 0, 0)).toISOString();
+}
+
+function monthLabel(lang: "ar" | "en") {
+  const now = new Date();
+  return now.toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
 const Leaderboard = ({
   language,
   onBack,
@@ -27,7 +46,8 @@ const Leaderboard = ({
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       setMe(u.user?.id ?? null);
-      // Paginate user_points to bypass the default 1000-row cap so totals match AccountCenter.
+      // Only count points earned in the current month (Asia/Baghdad).
+      const monthStart = startOfMonthBaghdadISO();
       const pageSize = 1000;
       const totals = new Map<string, number>();
       let from = 0;
@@ -35,7 +55,8 @@ const Leaderboard = ({
       while (true) {
         const { data: page, error } = await supabase
           .from("user_points")
-          .select("user_id, points")
+          .select("user_id, points, created_at")
+          .gte("created_at", monthStart)
           .range(from, from + pageSize - 1);
         if (error) break;
         (page ?? []).forEach((r: any) => {
@@ -75,10 +96,17 @@ const Leaderboard = ({
       <header className="text-center max-w-2xl mx-auto z-10 relative">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-5">
           <Trophy className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{t("Leaderboard", "المتصدرون")}</span>
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            {t("Monthly Leaderboard", "متصدرو الشهر")} · {monthLabel(isAr ? "ar" : "en")}
+          </span>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold gradient-text mb-3">{t("Top Students", "أبطال النقاط")}</h1>
-        <p className="text-muted-foreground">{t("Earn points by sharing summaries, finishing flashcards, and scoring full marks.", "اربح النقاط بمشاركة الملخصات وإنهاء البطاقات والحصول على العلامة الكاملة.")}</p>
+        <p className="text-muted-foreground">
+          {t(
+            "Resets on the 1st of every month. Your all-time totals are saved in your profile.",
+            "تُصفَّر النقاط بداية كل شهر. أرشيف نقاطك محفوظ في ملفك الشخصي."
+          )}
+        </p>
       </header>
 
       <section className="max-w-2xl mx-auto mt-10 relative z-10">
