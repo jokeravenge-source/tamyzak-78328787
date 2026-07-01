@@ -56,7 +56,6 @@ const SubjectTutor = lazy(() => import("./pages/SubjectTutor"));
 const PhysicsLaws = lazy(() => import("./pages/PhysicsLaws"));
 const PhysicsQuickMcq = lazy(() => import("./pages/PhysicsQuickMcq"));
 const PhysicsProblemSolver = lazy(() => import("./pages/PhysicsProblemSolver"));
-import AppSidebar, { type SidebarKey } from "./components/AppSidebar";
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
@@ -320,13 +319,6 @@ const App = () => {
       )}
       {authed && language && authRole !== "admin" && tgVerified && (
         <CompanionWelcomeTrigger />
-      )}
-      {authed && language && authRole !== "admin" && tgVerified && (
-        <AppSidebar
-          language={language}
-          active={(menuChoice as SidebarKey | null) ?? "basics"}
-          onSelect={(k) => chooseMenu(k as MenuChoice)}
-        />
       )}
       {authed && language && authRole !== "admin" && tgVerified && (
         <BottomGroupNav
