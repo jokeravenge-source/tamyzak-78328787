@@ -764,7 +764,7 @@ const Basics = ({
               <button
                 onClick={() => {
                   try { sessionStorage.setItem("companion:autoSchedule", "1"); } catch { /* ignore */ }
-                  setShowCompanion(true);
+                  onNav("companion");
                   setTimeout(() => {
                     window.dispatchEvent(new Event("app:companion-auto-schedule"));
                   }, 60);
