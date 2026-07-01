@@ -108,6 +108,15 @@ const SubjectsHub = ({
       window.location.assign("/premium");
       return;
     }
+    // If launched from a focused subject page, preset the subject so tools
+    // that normally show a subject picker (e.g. flashcards) jump straight
+    // to the chapters step.
+    if (open) {
+      try {
+        localStorage.setItem("app_subject_v1", open);
+      } catch { /* ignore */ }
+      window.dispatchEvent(new CustomEvent("app:set-subject", { detail: { subject: open } }));
+    }
     onSelect(t.key);
   };
 
