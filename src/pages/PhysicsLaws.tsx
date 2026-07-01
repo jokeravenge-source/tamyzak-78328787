@@ -139,6 +139,42 @@ const CONVERSIONS = {
 
 const PhysicsLaws = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const t = copy[language];
+  return <PhysicsLawsInner language={language} onBack={onBack} />;
+};
+
+type Law = { name: string; formula: string; desc: string; mnemonic?: string };
+
+const LawCard = ({ law, rtl, t }: { law: Law; rtl: boolean; t: typeof copy["ar"] }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5 transition hover:border-primary/40">
+      <h3 className="font-bold text-foreground mb-1">{law.name}</h3>
+      <div className="font-mono text-lg text-primary mb-2">{law.formula}</div>
+      <p className="text-sm text-muted-foreground">{law.desc}</p>
+      {law.mnemonic && (
+        <>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition"
+          >
+            <Lightbulb className="w-3.5 h-3.5" />
+            {open ? t.hideMnemonic : t.showMnemonic}
+          </button>
+          {open && (
+            <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-3 flex gap-2 animate-fade-up" dir={rtl ? "rtl" : "ltr"}>
+              <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <p className="text-sm text-foreground/90 leading-relaxed">{law.mnemonic}</p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+const PhysicsLawsInner = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  const t = copy[language];
   const rtl = language === "ar";
   const [search, setSearch] = useState("");
   const [value, setValue] = useState<string>("");
