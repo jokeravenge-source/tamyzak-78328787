@@ -53,7 +53,7 @@ const CurvedNavBar = ({
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.45, ease }}
-        className="pointer-events-auto w-full max-w-3xl clip-facet border border-border bg-ink/90 backdrop-blur-xl shadow-[0_18px_50px_-12px_rgba(0,0,0,0.6)] p-1.5"
+        className="pointer-events-auto w-full max-w-3xl rounded-full border border-border bg-ink/90 backdrop-blur-xl shadow-[0_18px_50px_-12px_rgba(0,0,0,0.6)] p-1.5"
         dir="ltr"
       >
         <LayoutGroup id="curved-nav">
@@ -76,7 +76,7 @@ const CurvedNavBar = ({
                     <motion.span
                       layoutId="tabbar-active"
                       transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                      className="absolute inset-0 clip-facet bg-ember shadow-[0_6px_20px_hsl(35_80%_57%/0.45)]"
+                    className="absolute inset-0 rounded-full bg-ember shadow-[0_6px_20px_hsl(35_80%_57%/0.45)]"
                     />
                   )}
                   <motion.span
