@@ -389,7 +389,15 @@ const Basics = ({
   }, []);
   const currentRank = rankFromPoints(totalPoints);
   const rankLabel = RANK_LABELS[currentRank][language];
-  const stoneFill = Math.min(1, (streakDays || 0) / 20);
+  const STREAK_GOAL_BY_RANK: Record<StoneRank, number> = {
+    coal: 5,
+    copper: 10,
+    silver: 15,
+    gold: 20,
+    diamond: 25,
+    royal: 30,
+  };
+  const stoneFill = Math.min(1, (streakDays || 0) / STREAK_GOAL_BY_RANK[currentRank]);
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
