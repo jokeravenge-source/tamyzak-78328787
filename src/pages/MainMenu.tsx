@@ -287,7 +287,6 @@ const MainMenu = ({
         })}
       </motion.section>
       <StreakTree language={language} />
-      <CurvedNavBar language={language} onSelect={onSelect} />
     </main>
   );
 };

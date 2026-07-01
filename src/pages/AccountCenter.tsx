@@ -6,8 +6,8 @@ import { CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { LANGUAGE_STORAGE_KEY } from "@/components/LanguageGate";
-import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
+
 import { rankFor, RANKS } from "@/lib/points";
 import { ThemePicker } from "@/components/ThemePicker";
 import { PremiumBadge } from "@/components/PremiumBadge";
