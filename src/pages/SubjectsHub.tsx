@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam"]);
@@ -89,13 +88,11 @@ const SubjectsHub = ({
   const [open, setOpen] = useState<SubjectKey | null>(null);
   const current = SUBJECTS.find((s) => s.code === open);
   const { isPremium } = useSubscription();
-  const navigate = useNavigate();
-
   const handleToolClick = (t: Tool) => {
     const free = FREE_TOOLS.has(t.key);
     if (!free && !isPremium) {
       toast.error(isRTL ? "هذه الأداة متاحة للمشتركين في البريميوم فقط." : "This tool is available for Premium members only.");
-      navigate("/premium");
+      window.location.assign("/premium");
       return;
     }
     onSelect(t.key);
