@@ -17,7 +17,7 @@ const copy = {
     price: "$2",
     per: "/ month",
     cta: "Upgrade now",
-    loading: "Opening checkout…",
+    ctaSub: "Message @ias404 on Telegram to activate",
     active: "You're a Premium member",
     activeDesc: "Enjoy unlimited AI and your premium perks.",
     features: [
@@ -35,7 +35,7 @@ const copy = {
     price: "٢$",
     per: "/ شهرياً",
     cta: "ترقية الآن",
-    loading: "جاري فتح الدفع…",
+    ctaSub: "راسل @ias404 على تيليجرام للتفعيل",
     active: "أنت عضو بريميوم",
     activeDesc: "استمتع بذكاء اصطناعي غير محدود ومميزاتك البريميوم.",
     features: [
