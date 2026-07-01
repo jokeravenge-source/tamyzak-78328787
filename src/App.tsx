@@ -423,6 +423,12 @@ const App = () => {
         <PsychAssistant language={language} onBack={resetMenu} />
       ) : menuChoice === "subjectTutor" ? (
         <SubjectTutor language={language} onBack={resetMenu} />
+      ) : menuChoice === "physicsLaws" ? (
+        <PhysicsLaws language={language} onBack={resetMenu} />
+      ) : menuChoice === "physicsQuickMcq" ? (
+        <PhysicsQuickMcq language={language} onBack={resetMenu} />
+      ) : menuChoice === "physicsProblemSolver" ? (
+        <PhysicsProblemSolver language={language} onBack={resetMenu} />
       ) : menuChoice === "companion" ? (
         <main className="min-h-screen bg-background pb-28">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
