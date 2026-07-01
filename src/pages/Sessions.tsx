@@ -40,7 +40,7 @@ type PastSession = {
 };
 
 const SessionsHistory = ({ language, userId }: { language: AppLanguage; userId: string | null }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [rows, setRows] = useState<PastSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -70,9 +70,9 @@ const SessionsHistory = ({ language, userId }: { language: AppLanguage; userId: 
   };
 
   useEffect(() => {
-    if (open) load();
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, userId]);
+  }, [userId]);
 
   const doDelete = async (id: string) => {
     const prev = rows;
@@ -88,37 +88,43 @@ const SessionsHistory = ({ language, userId }: { language: AppLanguage; userId: 
   };
 
   return (
-    <div className="max-w-5xl mx-auto mb-6 rounded-2xl border border-white/10 bg-secondary/30 backdrop-blur overflow-hidden">
+    <div className="max-w-5xl mx-auto mb-6 rounded-2xl border-2 border-primary/30 bg-card shadow-lg overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition"
+        className="w-full flex items-center gap-3 px-5 py-4 bg-primary/10 hover:bg-primary/15 transition"
       >
-        <Timer className="w-4 h-4 text-primary" />
-        <span className="text-sm font-semibold flex-1 text-start">{L.title}</span>
-        <span className="text-xs text-muted-foreground">{rows.length}</span>
-        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+          <Timer className="w-5 h-5 text-primary" />
+        </div>
+        <span className="text-base font-bold flex-1 text-start">{L.title}</span>
+        <span className="text-sm font-semibold px-2.5 py-1 rounded-full bg-primary/20 text-primary">{rows.length}</span>
+        <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="border-t border-white/10 max-h-96 overflow-y-auto">
+        <div className="border-t border-primary/20 max-h-[28rem] overflow-y-auto">
           {loading ? (
-            <p className="px-4 py-4 text-sm text-muted-foreground text-center">{L.loading}</p>
+            <p className="px-4 py-6 text-sm text-muted-foreground text-center">{L.loading}</p>
           ) : rows.length === 0 ? (
-            <p className="px-4 py-4 text-sm text-muted-foreground text-center">{L.empty}</p>
+            <p className="px-4 py-8 text-sm text-muted-foreground text-center">{L.empty}</p>
           ) : (
-            <ul className="divide-y divide-white/5">
+            <ul className="divide-y divide-border">
               {rows.map((r) => {
                 const s = SUBJ_LBL[r.subject];
                 const subjName = s ? (language === "ar" ? s.ar : s.en) : r.subject;
                 const mins = Math.round(r.duration_seconds / 60);
                 const date = new Date(r.created_at).toLocaleDateString(language === "ar" ? "ar-EG" : undefined, { year: "numeric", month: "short", day: "numeric" });
                 return (
-                  <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                  <li key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition">
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{subjName} · {mins} {L.mins} · {r.points} {L.pts}</div>
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="text-sm font-bold text-foreground">{subjName}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-foreground font-mono">{mins} {L.mins}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-mono font-semibold">+{r.points} {L.pts}</span>
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">{date} — {r.mission || L.noMission}</div>
                     </div>
-                    <Button size="sm" variant="ghost" onClick={() => setConfirmId(r.id)} className="text-destructive gap-1">
+                    <Button size="sm" variant="outline" onClick={() => setConfirmId(r.id)} className="text-destructive border-destructive/40 hover:bg-destructive/10 gap-1 shrink-0">
                       <Trash2 className="w-4 h-4" /> {L.delete}
                     </Button>
                   </li>
