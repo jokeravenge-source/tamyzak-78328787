@@ -53,6 +53,7 @@ const SubjectsHub = lazy(() => import("./pages/SubjectsHub"));
 const TextToVideo = lazy(() => import("./pages/TextToVideo"));
 const PsychAssistant = lazy(() => import("./pages/PsychAssistant"));
 import AppSidebar, { type SidebarKey } from "./components/AppSidebar";
+import CurvedNavBar from "./components/CurvedNavBar";
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
@@ -339,6 +340,20 @@ const App = () => {
           language={language}
           active={(menuChoice as SidebarKey | null) ?? "basics"}
           onSelect={(k) => chooseMenu(k as MenuChoice)}
+        />
+      )}
+      {authed && language && authRole !== "admin" && tgVerified && (
+        <CurvedNavBar
+          language={language}
+          active={(() => {
+            const m = menuChoice ?? "basics";
+            if (m === "leaderboard" || m === "subjectsHub" || m === "report" || m === "premium" || m === "account") {
+              return m as "leaderboard" | "subjectsHub" | "report" | "premium" | "account";
+            }
+            if (!menuChoice || m === "basics") return "basics";
+            return null;
+          })()}
+          onSelect={(c) => chooseMenu(c as MenuChoice)}
         />
       )}
       <PageTransition

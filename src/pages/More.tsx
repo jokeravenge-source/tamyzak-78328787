@@ -110,7 +110,7 @@ const More = ({
         })}
       </motion.section>
     </motion.main>
-      <CurvedNavBar language={language} active="more" onSelect={onNav} />
+      
     </>
   );
 };

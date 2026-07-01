@@ -164,7 +164,7 @@ const Leaderboard = ({
         </div>
       </section>
 
-      <CurvedNavBar language={language} active="leaderboard" onSelect={onNav} />
+      
     </main>
   );
 };
