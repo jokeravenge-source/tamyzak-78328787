@@ -61,7 +61,8 @@ import SearchFAB from "./components/SearchFAB";
 import ExcellenceCompanion from "./components/ExcellenceCompanion";
 import TelegramGate from "./components/TelegramGate";
 import PageTransition from "./components/PageTransition";
-import CurvedNavBar from "./components/CurvedNavBar";
+import BottomGroupNav from "./components/BottomGroupNav";
+
 
 const PublicPrivacy = lazy(() => import("./pages/public/Privacy"));
 const PublicTerms = lazy(() => import("./pages/public/Terms"));
@@ -343,12 +344,10 @@ const App = () => {
         />
       )}
       {authed && language && authRole !== "admin" && tgVerified && (
-        <CurvedNavBar
+        <BottomGroupNav
           language={language}
-          active={(["basics","leaderboard","subjectsHub","report","premium","account"].includes(menuChoice as string)
-            ? (menuChoice as any)
-            : (!menuChoice ? "basics" : null))}
-          onSelect={(c) => chooseMenu(c as MenuChoice)}
+          active={(menuChoice as any) ?? "basics"}
+          onSelect={(k) => chooseMenu(k as MenuChoice)}
         />
       )}
       <PageTransition
