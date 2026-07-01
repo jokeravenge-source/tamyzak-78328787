@@ -74,12 +74,21 @@ Deno.serve(async (req) => {
           const u = await getAuthUser(p.user_id);
           const banned_until = u?.banned_until ?? null;
           const isBanned = !!banned_until && new Date(banned_until).getTime() > Date.now();
+          // Check active premium subscription (any environment)
+          const subRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${p.user_id}&status=in.(active,trialing,past_due)&select=id,current_period_end,environment&order=created_at.desc&limit=1`,
+            { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
+          );
+          const subs: any[] = await subRes.json().catch(() => []);
+          const activeSub = (subs ?? []).find((s) => !s.current_period_end || new Date(s.current_period_end).getTime() > Date.now());
           return {
             user_id: p.user_id,
             display_name: p.display_name,
             email: u?.email ?? null,
             banned: isBanned,
             banned_until,
+            is_premium: !!activeSub,
+            premium_expires_at: activeSub?.current_period_end ?? null,
           };
         }),
       );
@@ -160,6 +169,82 @@ Deno.serve(async (req) => {
         method: "DELETE",
         headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
       });
+      if (!r.ok) {
+        const txt = await r.text();
+        return new Response(JSON.stringify({ error: txt }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "grant_premium") {
+      const targetId = String(body?.user_id || "");
+      if (!targetId) {
+        return new Response(JSON.stringify({ error: "missing user_id" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Default: 1 year from now unless caller passed months (1-120)
+      const months = Math.min(120, Math.max(1, Number(body?.months || 12)));
+      const endsAt = new Date();
+      endsAt.setMonth(endsAt.getMonth() + months);
+      const manualId = `manual_${targetId}_${Date.now()}`;
+      const payload = {
+        user_id: targetId,
+        paddle_subscription_id: manualId,
+        paddle_customer_id: `manual_customer_${targetId}`,
+        product_id: "manual_premium",
+        price_id: "manual_premium_monthly",
+        status: "active",
+        current_period_start: new Date().toISOString(),
+        current_period_end: endsAt.toISOString(),
+        cancel_at_period_end: false,
+        environment: "live",
+      };
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/subscriptions`, {
+        method: "POST",
+        headers: {
+          apikey: SERVICE_ROLE,
+          Authorization: `Bearer ${SERVICE_ROLE}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!r.ok) {
+        const txt = await r.text();
+        return new Response(JSON.stringify({ error: txt }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, expires_at: endsAt.toISOString() }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "revoke_premium") {
+      const targetId = String(body?.user_id || "");
+      if (!targetId) {
+        return new Response(JSON.stringify({ error: "missing user_id" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const r = await fetch(
+        `${SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${targetId}&status=in.(active,trialing,past_due)`,
+        {
+          method: "PATCH",
+          headers: {
+            apikey: SERVICE_ROLE,
+            Authorization: `Bearer ${SERVICE_ROLE}`,
+            "Content-Type": "application/json",
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({ status: "canceled", cancel_at_period_end: true, current_period_end: new Date().toISOString() }),
+        },
+      );
       if (!r.ok) {
         const txt = await r.text();
         return new Response(JSON.stringify({ error: txt }), {
