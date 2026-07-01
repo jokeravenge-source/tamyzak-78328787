@@ -459,6 +459,50 @@ const AccountCenter = ({
                 </span>
               )}
             </div>
+            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                  {language === "ar" ? "هذا الشهر (المتصدرون)" : "This month (leaderboard)"}
+                </p>
+                <p className="text-2xl font-bold gradient-text leading-none mt-1">{currentMonthPoints}</p>
+              </div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground max-w-[55%] text-right">
+                {language === "ar"
+                  ? "تُصفَّر المتصدرون بداية كل شهر — أرشيفك محفوظ بالأسفل."
+                  : "Leaderboard resets on the 1st of each month — your history is saved below."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!loading && monthlyPoints.length > 0 && (
+          <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <CalendarClock className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">
+                  {language === "ar" ? "أرشيف النقاط الشهري" : "Monthly Points History"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {language === "ar"
+                    ? "كم نقطة جمعت في كل شهر"
+                    : "How many points you earned each month"}
+                </p>
+              </div>
+            </div>
+            <ul className="space-y-2">
+              {monthlyPoints.map((m) => (
+                <li
+                  key={m.key}
+                  className="flex items-center justify-between rounded-2xl border border-white/5 bg-background/30 px-4 py-3"
+                >
+                  <span className="text-sm font-medium">{m.label}</span>
+                  <span className="text-lg font-bold gradient-text">{m.points}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
