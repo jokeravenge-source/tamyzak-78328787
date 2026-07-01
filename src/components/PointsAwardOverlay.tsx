@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Trophy, Sparkles } from "lucide-react";
+import { Trophy, Sparkles, Star } from "lucide-react";
 import { POINT_VALUES, type PointSource, checkUnseenAwards } from "@/lib/points";
 
 const COPY: Record<PointSource, { en: string; ar: string }> = {
@@ -40,39 +40,79 @@ const PointsAwardOverlay = ({ language }: { language: "en" | "ar" }) => {
       {current && (
         <motion.div
           key={current.id}
-          initial={{ opacity: 0, y: -40, scale: 0.9 }}
+          initial={{ opacity: 0, y: -30, scale: 0.85 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -30, scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 280, damping: 24 }}
-          className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] pointer-events-none"
+          exit={{ opacity: 0, y: -20, scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 260, damping: 22 }}
+          className="fixed left-1/2 -translate-x-1/2 z-[100] pointer-events-none px-3"
+          style={{ top: "max(1rem, env(safe-area-inset-top))" }}
           dir={isAr ? "rtl" : "ltr"}
         >
-          <div className="relative w-[min(380px,calc(100vw-2rem))] rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/20 via-secondary/95 to-accent/20 backdrop-blur-xl p-5 shadow-[0_20px_60px_hsl(var(--primary)/0.45)]">
-            <div className="absolute -top-3 -right-3">
-              <motion.div
-                initial={{ rotate: -20, scale: 0 }}
-                animate={{ rotate: 0, scale: 1 }}
-                transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
-                className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg"
+          <div className="relative w-[min(400px,calc(100vw-1.5rem))] overflow-hidden rounded-[28px] border border-primary/40 bg-gradient-to-br from-primary/25 via-background/90 to-accent/25 backdrop-blur-2xl p-4 sm:p-5 shadow-[0_25px_70px_-10px_hsl(var(--primary)/0.55)]">
+            {/* Glow orbs */}
+            <div className="pointer-events-none absolute -top-16 -right-10 w-40 h-40 rounded-full bg-primary/30 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -left-10 w-40 h-40 rounded-full bg-accent/25 blur-3xl" />
+
+            {/* Floating sparkles */}
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                className="pointer-events-none absolute text-primary/70"
+                style={{
+                  top: `${15 + i * 22}%`,
+                  [i % 2 ? "right" : "left"]: `${8 + i * 10}%`,
+                }}
+                initial={{ opacity: 0, scale: 0, y: 6 }}
+                animate={{ opacity: [0, 1, 0], scale: [0.4, 1, 0.6], y: [-2, -12, -20] }}
+                transition={{ duration: 2.4, delay: 0.15 + i * 0.15, repeat: Infinity, repeatDelay: 0.4 }}
               >
-                <Trophy className="w-6 h-6" />
+                <Sparkles className="w-3 h-3" />
+              </motion.span>
+            ))}
+
+            <div className="relative flex items-center gap-3 sm:gap-4">
+              <motion.div
+                initial={{ rotate: -25, scale: 0 }}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ delay: 0.08, type: "spring", stiffness: 320, damping: 16 }}
+                className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center shadow-[0_10px_25px_-5px_hsl(var(--primary)/0.7)] ring-2 ring-primary/30"
+              >
+                <Trophy className="w-7 h-7 sm:w-8 sm:h-8 drop-shadow" />
               </motion.div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-xs uppercase tracking-[0.22em] text-primary font-bold mb-1">
+                  <Star className="w-3 h-3 fill-current" />
+                  <span className="truncate">{isAr ? "تهانينا!" : "Congratulations!"}</span>
+                </div>
+                <p className="text-sm sm:text-base font-semibold text-foreground leading-snug line-clamp-2">
+                  {(() => {
+                    const c = COPY[current.source] ?? { en: "Nice work!", ar: "أحسنت!" };
+                    return isAr ? c.ar : c.en;
+                  })()}
+                </p>
+                <div className="mt-1.5 flex items-baseline gap-1.5 flex-wrap">
+                  <motion.span
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.25, type: "spring", stiffness: 260 }}
+                    className="text-2xl sm:text-3xl font-black bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent leading-none"
+                  >
+                    +{current.points}
+                  </motion.span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">
+                    {isAr ? "نقطة" : "points"}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-primary font-semibold mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              {isAr ? "تهانينا!" : "Congratulations!"}
-            </div>
-            <p className="text-base font-semibold text-foreground mb-1">
-              {(() => {
-                const c = COPY[current.source] ?? { en: "Nice work!", ar: "أحسنت!" };
-                return isAr ? c.ar : c.en;
-              })()}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {isAr ? "لقد ربحت" : "You earned"}{" "}
-              <span className="text-primary font-bold text-lg">+{current.points}</span>{" "}
-              {isAr ? "نقطة" : "points"}
-            </p>
+
+            {/* Progress bar shimmer */}
+            <motion.div
+              className="absolute bottom-0 left-0 h-[3px] bg-gradient-to-r from-primary via-accent to-primary rounded-b-[28px]"
+              initial={{ width: "100%" }}
+              animate={{ width: "0%" }}
+              transition={{ duration: 3.4, ease: "linear" }}
+            />
           </div>
         </motion.div>
       )}
