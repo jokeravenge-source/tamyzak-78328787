@@ -179,7 +179,7 @@ const PhysicsQuickMcq = ({ language, onBack }: { language: AppLanguage; onBack: 
             </div>
 
             <Button onClick={handleGenerate} disabled={loading} className="w-full h-12 text-base">
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t.generating}</> : <><Clock className="w-4 h-4" /> {t.generate}</Button>}
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t.generating}</> : <><Clock className="w-4 h-4" /> {t.generate}</>}
             </Button>
           </div>
         )}
