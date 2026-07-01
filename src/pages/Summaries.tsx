@@ -284,7 +284,6 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
               id="summary-file-input"
               ref={fileInputRef}
               type="file"
-              required
               className="block w-full min-h-14 cursor-pointer rounded-2xl border-2 border-primary/40 bg-background p-3 text-base font-semibold text-foreground file:mr-4 file:cursor-pointer file:rounded-xl file:border-0 file:bg-primary file:px-5 file:py-3 file:text-sm file:font-bold file:text-primary-foreground hover:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20"
               onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
               onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
