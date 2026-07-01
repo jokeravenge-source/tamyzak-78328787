@@ -61,6 +61,7 @@ import SearchFAB from "./components/SearchFAB";
 import ExcellenceCompanion from "./components/ExcellenceCompanion";
 import TelegramGate from "./components/TelegramGate";
 import PageTransition from "./components/PageTransition";
+import BottomGroupNav from "./components/BottomGroupNav";
 
 
 const PublicPrivacy = lazy(() => import("./pages/public/Privacy"));
@@ -339,6 +340,13 @@ const App = () => {
         <AppSidebar
           language={language}
           active={(menuChoice as SidebarKey | null) ?? "basics"}
+          onSelect={(k) => chooseMenu(k as MenuChoice)}
+        />
+      )}
+      {authed && language && authRole !== "admin" && tgVerified && (
+        <BottomGroupNav
+          language={language}
+          active={(menuChoice as any) ?? "basics"}
           onSelect={(k) => chooseMenu(k as MenuChoice)}
         />
       )}
