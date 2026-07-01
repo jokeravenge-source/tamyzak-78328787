@@ -236,7 +236,7 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
   const subjTag = (code: string) => SUMMARY_SUBJECTS.find((x) => x.code === code)?.tag ?? `#${code}`;
 
   return (
-    <main className="min-h-screen px-4 py-12 md:py-16 relative overflow-hidden" dir={isAr ? "rtl" : "ltr"}>
+    <main className="min-h-screen px-4 py-12 md:py-16 pb-[calc(env(safe-area-inset-bottom)+9rem)] relative overflow-hidden" dir={isAr ? "rtl" : "ltr"}>
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
@@ -299,10 +299,19 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
             </button>
           ))}
         </div>
-        <button onClick={() => setShowUpload(true)} className="inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold">
+        <button onClick={() => setShowUpload(true)} className="inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold shadow-lg shadow-primary/30">
           <Upload className="w-4 h-4" /> {t("Upload summary", "رفع ملخص")}
         </button>
       </div>
+
+      {/* Floating upload CTA always visible above bottom nav */}
+      <button
+        onClick={() => setShowUpload(true)}
+        className="fixed z-[90] bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] right-4 rtl:right-auto rtl:left-4 inline-flex items-center gap-2 px-5 h-12 rounded-full bg-primary text-primary-foreground shadow-2xl shadow-primary/40 hover:bg-primary/90 text-sm font-bold"
+        aria-label={t("Upload summary", "رفع ملخص")}
+      >
+        <Upload className="w-5 h-5" /> {t("Upload", "رفع ملخص")}
+      </button>
 
       <section className="max-w-6xl mx-auto mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
         {loading ? (
