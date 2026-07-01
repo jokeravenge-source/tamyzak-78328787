@@ -1,24 +1,14 @@
 import { useState } from "react";
-import { ArrowLeft, Ruler, BookOpen, RotateCcw, Calculator, ArrowRightLeft, Lightbulb, Sparkles } from "lucide-react";
+import { ArrowLeft, Ruler, BookOpen, Lightbulb, Sparkles } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 const copy = {
   en: {
     title: "Physics Laws & Units",
     desc: "Quick reference for formulas and unit conversions.",
     back: "Back",
-    laws: "Laws",
-    converter: "Converter",
     search: "Search laws...",
-    value: "Value",
-    from: "From",
-    to: "To",
-    convert: "Convert",
-    result: "Result",
-    reset: "Reset",
     mnemonic: "Mnemonic",
     showMnemonic: "Show mnemonic",
     hideMnemonic: "Hide mnemonic",
@@ -27,20 +17,13 @@ const copy = {
     title: "قوانين ووحدات الفيزياء",
     desc: "مرجع سريع للقوانين والتحويلات.",
     back: "رجوع",
-    laws: "القوانين",
-    converter: "المحوّل",
     search: "ابحث عن قانون...",
-    value: "القيمة",
-    from: "من",
-    to: "إلى",
-    convert: "حوّل",
-    result: "النتيجة",
-    reset: "إعادة",
     mnemonic: "حيلة الحفظ",
     showMnemonic: "أظهر حيلة الحفظ",
     hideMnemonic: "إخفاء حيلة الحفظ",
   },
 } as const;
+
 
 const PHYSICS_LAWS = {
   en: [
@@ -106,36 +89,6 @@ const PHYSICS_LAWS = {
   ],
 };
 
-const CONVERSIONS = {
-  en: [
-    { label: "km/h → m/s", from: "km/h", to: "m/s", factor: 1 / 3.6 },
-    { label: "m/s → km/h", from: "m/s", to: "km/h", factor: 3.6 },
-    { label: "km → m", from: "km", to: "m", factor: 1000 },
-    { label: "m → km", from: "m", to: "km", factor: 1 / 1000 },
-    { label: "g → kg", from: "g", to: "kg", factor: 1 / 1000 },
-    { label: "kg → g", from: "kg", to: "g", factor: 1000 },
-    { label: "J → cal", from: "J", to: "cal", factor: 0.239 },
-    { label: "cal → J", from: "cal", to: "J", factor: 1 / 0.239 },
-    { label: "°C → °F", from: "°C", to: "°F", custom: (v: number) => v * 9 / 5 + 32 },
-    { label: "°F → °C", from: "°F", to: "°C", custom: (v: number) => (v - 32) * 5 / 9 },
-    { label: "min → s", from: "min", to: "s", factor: 60 },
-    { label: "s → min", from: "s", to: "min", factor: 1 / 60 },
-  ],
-  ar: [
-    { label: "كم/س → م/ث", from: "كم/س", to: "م/ث", factor: 1 / 3.6 },
-    { label: "م/ث → كم/س", from: "م/ث", to: "كم/س", factor: 3.6 },
-    { label: "كم → م", from: "كم", to: "م", factor: 1000 },
-    { label: "م → كم", from: "م", to: "كم", factor: 1 / 1000 },
-    { label: "غ → كغ", from: "غ", to: "كغ", factor: 1 / 1000 },
-    { label: "كغ → غ", from: "كغ", to: "غ", factor: 1000 },
-    { label: "جول → سعرة", from: "جول", to: "سعرة", factor: 0.239 },
-    { label: "سعرة → جول", from: "سعرة", to: "جول", factor: 1 / 0.239 },
-    { label: "°C → °F", from: "°C", to: "°F", custom: (v: number) => v * 9 / 5 + 32 },
-    { label: "°F → °C", from: "°F", to: "°C", custom: (v: number) => (v - 32) * 5 / 9 },
-    { label: "دقيقة → ثانية", from: "دقيقة", to: "ثانية", factor: 60 },
-    { label: "ثانية → دقيقة", from: "ثانية", to: "دقيقة", factor: 1 / 60 },
-  ],
-};
 
 const PhysicsLaws = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   return <PhysicsLawsInner language={language} onBack={onBack} />;
