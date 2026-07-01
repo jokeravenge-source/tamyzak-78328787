@@ -97,11 +97,34 @@ export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+    <main className="min-h-screen flex flex-col items-center px-4 py-12 relative overflow-hidden">
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
-      <section className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-8 animate-fade-up">
+      <section className="relative z-10 w-full max-w-5xl grid md:grid-cols-2 gap-10 items-center mt-6">
+        <div className="hidden md:block">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Tamayzak</span>
+          </div>
+          <h2 className="text-4xl lg:text-5xl font-bold gradient-text leading-tight mb-4">Master the Iraqi sixth-grade scientific stream.</h2>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
+            Tamayzak is a bilingual (Arabic / English) study platform built around the ministerial curriculum. Flashcards, AI essay grading, MCQ generation from your own files, video-to-notes, live study battles, streaks, a psychological assistant and Telegram reminders — all in one place.
+          </p>
+          <ul className="space-y-2 text-sm text-foreground/90 mb-6">
+            <li>• Free: flashcards, Malazam bank, streaks, sessions, to-do reminders</li>
+            <li>• Premium ($2/month): unlimited AI tools, live battles, exclusive styles</li>
+            <li>• 30-day money-back guarantee — cancel anytime</li>
+          </ul>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <a href="/pricing" className="underline text-primary">See pricing</a>
+            <a href="/terms" className="underline text-muted-foreground">Terms</a>
+            <a href="/privacy" className="underline text-muted-foreground">Privacy</a>
+            <a href="/refund" className="underline text-muted-foreground">Refund policy</a>
+          </div>
+        </div>
+
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur-xl p-8 animate-fade-up mx-auto">
         <div className="flex items-start justify-between mb-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-background/40">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
@@ -199,6 +222,16 @@ export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?
             {mode === "signin" ? "Create one" : "Sign in"}
           </button>
         </p>
+        <div className="mt-6 pt-5 border-t border-white/10 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
+          <a href="/pricing" className="hover:text-foreground">Pricing</a>
+          <span>·</span>
+          <a href="/terms" className="hover:text-foreground">Terms</a>
+          <span>·</span>
+          <a href="/privacy" className="hover:text-foreground">Privacy</a>
+          <span>·</span>
+          <a href="/refund" className="hover:text-foreground">Refund</a>
+        </div>
+      </div>
       </section>
     </main>
   );
