@@ -64,12 +64,6 @@ import TelegramGate from "./components/TelegramGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
 
-
-const PublicPrivacy = lazy(() => import("./pages/public/Privacy"));
-const PublicTerms = lazy(() => import("./pages/public/Terms"));
-const PublicRefund = lazy(() => import("./pages/public/Refund"));
-const PublicPricing = lazy(() => import("./pages/public/Pricing"));
-
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_INTRO_KEY = "app_companion_intro_v1";
 
@@ -113,27 +107,6 @@ const App = () => {
     );
   }
 
-  // Public legal / marketing routes — must render without auth for Paddle domain review.
-  const publicPath = typeof window !== "undefined" ? window.location.pathname : "";
-  const publicMap: Record<string, React.ComponentType> = {
-    "/privacy": PublicPrivacy,
-    "/terms": PublicTerms,
-    "/refund": PublicRefund,
-    "/pricing": PublicPricing,
-  };
-  const PublicPage = publicMap[publicPath];
-  if (PublicPage) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <PaymentTestModeBanner />
-          <PublicPage />
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
-  }
 
   useEffect(() => {
     applyTheme(getInitialTheme());
