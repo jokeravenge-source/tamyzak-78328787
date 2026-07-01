@@ -75,8 +75,23 @@ button:active:not(:disabled), [role="button"]:active:not(:disabled) {
 /* ============ Global safe-area + UX polish ============ */
 :root {
   /* Height of the fixed BottomGroupNav (two rows + padding) + device safe-area */
-  --nav-height: 128px;
+  --nav-height: 116px;
   --nav-safe: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Small phones: tighter nav padding */
+@media (max-width: 380px) {
+  :root { --nav-height: 108px; }
+}
+
+/* Tablets */
+@media (min-width: 768px) {
+  :root { --nav-height: 124px; }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  :root { --nav-height: 132px; }
 }
 
 html {
