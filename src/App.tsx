@@ -53,6 +53,9 @@ const SubjectsHub = lazy(() => import("./pages/SubjectsHub"));
 const TextToVideo = lazy(() => import("./pages/TextToVideo"));
 const PsychAssistant = lazy(() => import("./pages/PsychAssistant"));
 const SubjectTutor = lazy(() => import("./pages/SubjectTutor"));
+const PhysicsLaws = lazy(() => import("./pages/PhysicsLaws"));
+const PhysicsQuickMcq = lazy(() => import("./pages/PhysicsQuickMcq"));
+const PhysicsProblemSolver = lazy(() => import("./pages/PhysicsProblemSolver"));
 import AppSidebar, { type SidebarKey } from "./components/AppSidebar";
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
@@ -242,7 +245,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
