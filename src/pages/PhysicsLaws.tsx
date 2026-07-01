@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Ruler, BookOpen, RotateCcw, Calculator, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Ruler, BookOpen, RotateCcw, Calculator, ArrowRightLeft, Lightbulb, Sparkles } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,9 @@ const copy = {
     convert: "Convert",
     result: "Result",
     reset: "Reset",
+    mnemonic: "Mnemonic",
+    showMnemonic: "Show mnemonic",
+    hideMnemonic: "Hide mnemonic",
   },
   ar: {
     title: "قوانين ووحدات الفيزياء",
@@ -33,43 +36,73 @@ const copy = {
     convert: "حوّل",
     result: "النتيجة",
     reset: "إعادة",
+    mnemonic: "حيلة الحفظ",
+    showMnemonic: "أظهر حيلة الحفظ",
+    hideMnemonic: "إخفاء حيلة الحفظ",
   },
 } as const;
 
 const PHYSICS_LAWS = {
   en: [
-    { name: "Speed", formula: "v = d / t", desc: "Average speed equals distance divided by time." },
-    { name: "Acceleration", formula: "a = Δv / t", desc: "Acceleration equals change in velocity over time." },
-    { name: "Force", formula: "F = m × a", desc: "Newton's second law: force equals mass times acceleration." },
-    { name: "Weight", formula: "W = m × g", desc: "Weight equals mass times gravitational acceleration." },
-    { name: "Density", formula: "ρ = m / V", desc: "Density equals mass divided by volume." },
-    { name: "Pressure", formula: "P = F / A", desc: "Pressure equals force divided by area." },
-    { name: "Work", formula: "W = F × d", desc: "Work equals force times displacement in force direction." },
-    { name: "Power", formula: "P = W / t", desc: "Power equals work divided by time." },
-    { name: "Kinetic Energy", formula: "KE = ½ m v²", desc: "Energy of motion." },
-    { name: "Potential Energy", formula: "PE = m × g × h", desc: "Gravitational potential energy." },
-    { name: "Ohm's Law", formula: "V = I × R", desc: "Voltage equals current times resistance." },
-    { name: "Power (Electric)", formula: "P = V × I", desc: "Electric power equals voltage times current." },
-    { name: "Resistance", formula: "R = ρ L / A", desc: "Resistance depends on resistivity, length, and area." },
-    { name: "Wave Speed", formula: "v = f × λ", desc: "Wave speed equals frequency times wavelength." },
-    { name: "Lens Power", formula: "P = 1 / f", desc: "Lens power is reciprocal of focal length in meters." },
+    { name: "Capacitance (geometry)", formula: "C = ε₀·A / d", desc: "Capacitance from plate area and separation.", mnemonic: "\"Eyad\" (ε A / d) — remember it as one Arabic name: ε-A-d." },
+    { name: "Capacitance (charge)", formula: "C = Q / ΔV", desc: "Capacitance from charge and voltage.", mnemonic: "\"CQV\" cup: fill the Cup (C) with Quantity of charge (Q) divided by Voltage (V)." },
+    { name: "Electric field between plates", formula: "E = ΔV / d", desc: "Uniform field between two plates.", mnemonic: "Volts per meter — say it out loud, that IS the formula." },
+    { name: "Dielectric — Capacitance", formula: "C_K = K · C", desc: "Dielectric always multiplies capacitance.", mnemonic: "K is a Kicker — it ALWAYS boosts C, whether connected or disconnected." },
+    { name: "Dielectric — Voltage (isolated)", formula: "ΔV_K = ΔV / K", desc: "Voltage drops with K when battery is removed.", mnemonic: "Isolated = Injured: V gets DIVIDED by K." },
+    { name: "Energy stored", formula: "PE = ½ Q·ΔV = ½ C·ΔV² = ½ Q²/C", desc: "Three interchangeable forms.", mnemonic: "\"Half of Queen Victoria\" — ½ Q V. Swap Q or V using C = Q/V to get the other two." },
+    { name: "Series capacitors", formula: "1/C_eq = 1/C₁ + 1/C₂ + …", desc: "Series adds reciprocals; charge is shared.", mnemonic: "Series = Same charge (Q_T = Q₁ = Q₂). Reciprocals because life is hard in series." },
+    { name: "Parallel capacitors", formula: "C_eq = C₁ + C₂ + …", desc: "Parallel adds directly; voltage is shared.", mnemonic: "Parallel = Plus. Same Voltage across each." },
+    { name: "Two capacitors series shortcut", formula: "C_eq = (C₁·C₂)/(C₁+C₂)", desc: "Only for exactly two in series.", mnemonic: "\"Product over Sum\" — the P.O.S. trick, only for TWO." },
+    { name: "Moving rod EMF", formula: "ε = B·l·v", desc: "EMF induced in a rod moving in a magnetic field.", mnemonic: "\"BLV\" — Bells, Lights, Voltage: the rod rings up EMF." },
+    { name: "Rod current", formula: "I = B·l·v / R", desc: "Ohm's law applied to the induced EMF.", mnemonic: "Same BLV, just divide by R — Ohm always takes his cut." },
+    { name: "Inductor EMF", formula: "ε_L = -L · (ΔI/Δt)", desc: "Self-induced EMF opposes current change.", mnemonic: "\"L for Lazy\" — the coil resists any change in current (minus sign)." },
+    { name: "Inductive reactance", formula: "X_L = 2π·f·L", desc: "Opposition of inductor to AC.", mnemonic: "\"L Likes high f\" — bigger frequency, bigger block." },
+    { name: "Capacitive reactance", formula: "X_C = 1 / (2π·f·C)", desc: "Opposition of capacitor to AC.", mnemonic: "\"C Chills at high f\" — opposite of L, so it's the reciprocal." },
+    { name: "AC impedance (series RLC)", formula: "Z = √(R² + (X_L − X_C)²)", desc: "Pythagoras for RLC circuits.", mnemonic: "Right triangle: R on the base, (X_L − X_C) up the side, Z is the hypotenuse." },
+    { name: "Resonance frequency", formula: "f_r = 1 / (2π√(LC))", desc: "X_L = X_C → circuit is purely resistive.", mnemonic: "\"LC dance floor\" — at f_r, L and C cancel out and only R is left." },
+    { name: "Power factor", formula: "Pf = R / Z = cos φ", desc: "Ratio of real to apparent power.", mnemonic: "\"Cos of the angle\" — R over Z, always ≤ 1." },
+    { name: "Antenna length", formula: "L = λ / 4", desc: "Quarter-wave antenna length.", mnemonic: "\"Quarter Wave\" — divide wavelength by 4." },
+    { name: "Wave speed", formula: "c = f · λ", desc: "Wave equation for light and sound.", mnemonic: "\"Cats Follow Lions\" — c = f × λ." },
+    { name: "Double-slit fringe spacing", formula: "Δy = λ·L / d", desc: "Distance between bright fringes.", mnemonic: "\"Lambda Loves Long\" travel L, hates small d." },
+    { name: "Diffraction grating", formula: "d·sin θ = n·λ", desc: "Order n bright line from grating.", mnemonic: "\"D-sine equals N-lambda\" — sing it: d sin = nλ." },
+    { name: "Photon energy", formula: "E = h·f = h·c / λ", desc: "Energy of a single photon.", mnemonic: "\"Half\" the alphabet: h · f. Bigger frequency → bigger punch." },
+    { name: "Max KE of photoelectron", formula: "KE_max = h·f − W", desc: "Einstein photoelectric equation.", mnemonic: "\"Photon pays the doorman (W), keeps the rest as KE.\"" },
+    { name: "Stopping potential", formula: "eV_s = KE_max", desc: "Voltage needed to stop the fastest electron.", mnemonic: "\"e times Vs stops KE\" — the wall's voltage matches the electron's energy." },
+    { name: "de Broglie wavelength", formula: "λ = h / (m·v)", desc: "Matter wave of a moving particle.", mnemonic: "\"h over momentum\" — heavier or faster → shorter wave." },
+    { name: "Transistor current", formula: "I_E = I_C + I_B", desc: "Emitter current = collector + base.", mnemonic: "\"Emitter Eats\" both C and B currents." },
+    { name: "Transistor current gain", formula: "α = I_C / I_E,  β = I_C / I_B", desc: "α (common-base) and β (common-emitter).", mnemonic: "α = C over E (small, <1). β = C over B (big)." },
+    { name: "Power gain", formula: "G = α · A_V", desc: "Total power gain of an amplifier.", mnemonic: "\"G = alpha times voltage gain\" — multiply the two gains you already know." },
   ],
   ar: [
-    { name: "السرعة", formula: "v = d / t", desc: "السرعة المتوسطة تساوي المسافة مقسومة على الزمن." },
-    { name: "التسارع", formula: "a = Δv / t", desc: "التسارع يساوي التغيّر في السرعة على الزمن." },
-    { name: "القوة", formula: "F = m × a", desc: "قانون نيوتن الثاني: القوة تساوي الكتلة في التسارع." },
-    { name: "الوزن", formula: "W = m × g", desc: "الوزن يساوي الكتلة في التسارع الثقالي." },
-    { name: "الكثافة", formula: "ρ = m / V", desc: "الكثافة تساوي الكتلة مقسومة على الحجم." },
-    { name: "الضغط", formula: "P = F / A", desc: "الضغط يساوي القوة مقسومة على المساحة." },
-    { name: "الشغل", formula: "W = F × d", desc: "الشغل يساوي القوة في الإزاحة باتجاه القوة." },
-    { name: "القدرة", formula: "P = W / t", desc: "القدرة تساوي الشغل مقسومة على الزمن." },
-    { name: "الطاقة الحركية", formula: "KE = ½ m v²", desc: "طاقة الحركة." },
-    { name: "الطاقة الكامنة", formula: "PE = m × g × h", desc: "الطاقة الكامنة الثقالية." },
-    { name: "قانون أوم", formula: "V = I × R", desc: "الفولتية تساوي التيار في المقاومة." },
-    { name: "القدرة الكهربائية", formula: "P = V × I", desc: "القدرة الكهربائية تساوي الفولتية في التيار." },
-    { name: "المقاومة", formula: "R = ρ L / A", desc: "المقاومة تعتمد على المقاومية والطول والمساحة." },
-    { name: "سرعة الموجة", formula: "v = f × λ", desc: "سرعة الموجة تساوي التردد في الطول الموجي." },
-    { name: "قوة العدسة", formula: "P = 1 / f", desc: "قوة العدسة هي مقلوب البعد البؤري بالمتر." },
+    { name: "سعة المتسعة (من الأبعاد)", formula: "C = ε₀ · A / d", desc: "تُستخدم عند وجود مساحة الصفيحة والبعد بينها.", mnemonic: "احفظها كاسم \"إياد\": (إ)بسلون ε — (ا)ي A — (د)ي d. ε A / d." },
+    { name: "سعة المتسعة (شحنة وجهد)", formula: "C = Q / ΔV", desc: "تُستخدم عند وجود الشحنة وفرق الجهد.", mnemonic: "\"كوب\": C = Q / V. اذا ذُكرت الشحنة وفرق الجهد فقط، ما تستخدم قانون إياد." },
+    { name: "المجال الكهربائي بين الصفيحتين", formula: "E = ΔV / d", desc: "المجال المنتظم بين لوحي متسعة.", mnemonic: "الوحدة نفسها هي القانون: فولت لكل متر (V/m)." },
+    { name: "السعة بعد إدخال العازل", formula: "C_K = K · C", desc: "K تكبّر السعة دائماً، متصلة كانت أو منفصلة.", mnemonic: "\"K كبّر\" — العازل يضرب السعة × K في كل الحالات." },
+    { name: "فرق الجهد بعد العازل (منفصلة)", formula: "ΔV_K = ΔV / K", desc: "عند فصل البطارية: الجهد يقسم على K.", mnemonic: "منفصلة = مقسومة: الفولتية تنقسم على K، بينما الشحنة تبقى ثابتة." },
+    { name: "الشحنة بعد العازل (متصلة)", formula: "Q_K = K · Q", desc: "عند بقاء البطارية موصولة: الشحنة تُضرب بـ K.", mnemonic: "متصلة = مضروبة: الجهد ثابت (Q_K = K·Q)." },
+    { name: "الطاقة المخزونة في المتسعة", formula: "PE = ½ Q·ΔV = ½ C·ΔV² = ½ Q²/C", desc: "ثلاث صيغ لنفس الطاقة.", mnemonic: "\"نص في نص\": ½ Q V. بدّل Q أو V بعلاقة C = Q/V تحصل على الصيغتين الأخريين." },
+    { name: "التوالي", formula: "1/C_eq = 1/C₁ + 1/C₂ + …", desc: "بالتوالي: الشحنة نفسها والجهود تُجمع.", mnemonic: "\"توالي = تساوي الشحنة\" Q_T = Q₁ = Q₂. المقلوبات لأن الحياة صعبة بالتوالي." },
+    { name: "التوازي", formula: "C_eq = C₁ + C₂ + …", desc: "بالتوازي: الجهد نفسه والسعات تُجمع مباشرة.", mnemonic: "\"توازي = تجميع\" — نفس الفولتية على كل متسعة." },
+    { name: "متسعتان بالتوالي (اختصار)", formula: "C_eq = (C₁·C₂)/(C₁+C₂)", desc: "فقط عند وجود متسعتين بالتوالي.", mnemonic: "\"الضرب على الجمع\" — يصلح فقط لاثنتين، ولا يصلح لثلاث." },
+    { name: "القوة الدافعة للساق الموصلة", formula: "ε = B · l · v", desc: "قوة دافعة كهربائية مستحثة في ساق تتحرك.", mnemonic: "\"BLV\" — بيبسي بارد للجميع: B ثم l ثم v." },
+    { name: "تيار الساق الموصلة", formula: "I = B·l·v / R", desc: "قانون أوم مع القوة الدافعة المستحثة.", mnemonic: "نفس BLV، فقط قسمناها على R، لأن أوم دائماً يأخذ حصته." },
+    { name: "القوة الدافعة الذاتية للملف", formula: "ε_L = −L · (ΔI/Δt)", desc: "الملف يقاوم تغيّر التيار.", mnemonic: "\"L = كسول\" — يعارض أي تغيّر، لذلك الإشارة سالبة." },
+    { name: "المفاعلة الحثية", formula: "X_L = 2π · f · L", desc: "معارضة الملف للتيار المتناوب.", mnemonic: "\"L يحب التردد العالي\" — كلما زاد f زادت المعارضة." },
+    { name: "المفاعلة السعوية", formula: "X_C = 1 / (2π · f · C)", desc: "معارضة المتسعة للتيار المتناوب.", mnemonic: "\"C عكس L\" — كلما زاد f قلّت المعارضة (مقلوب)." },
+    { name: "الممانعة (RLC توالي)", formula: "Z = √(R² + (X_L − X_C)²)", desc: "فيثاغورس لدوائر RLC.", mnemonic: "مثلث قائم: R القاعدة، (X_L − X_C) الارتفاع، Z الوتر." },
+    { name: "تردد الرنين", formula: "f_r = 1 / (2π√(LC))", desc: "عندما X_L = X_C تصبح الدائرة مقاومة صرفة.", mnemonic: "\"LC تلغي بعضها\" عند الرنين، لا يبقى إلا R." },
+    { name: "معامل القدرة", formula: "Pf = R / Z = cos φ", desc: "نسبة القدرة الحقيقية إلى الظاهرية.", mnemonic: "\"جيب تمام الزاوية\" = R على Z، ولا يتجاوز 1 أبداً." },
+    { name: "طول الهوائي", formula: "L = λ / 4", desc: "طول الهوائي ربع الطول الموجي.", mnemonic: "\"ربع الموجة\" — اقسم λ على 4." },
+    { name: "سرعة الموجة", formula: "c = f · λ", desc: "معادلة الموجات للضوء والصوت.", mnemonic: "\"c = f × λ\" — احفظها كأغنية قصيرة." },
+    { name: "فاصلة الهدب (شقان)", formula: "Δy = λ·L / d", desc: "المسافة بين الأهداب المضيئة.", mnemonic: "\"لامدا تحب المسافات الطويلة L وتكره d الصغيرة.\"" },
+    { name: "محزز الحيود", formula: "d · sin θ = n · λ", desc: "خط مضيء من الرتبة n.", mnemonic: "\"دي سين يساوي إن لامدا\" — رددها بصوت عالٍ." },
+    { name: "طاقة الفوتون", formula: "E = h · f = h·c / λ", desc: "طاقة فوتون واحد.", mnemonic: "\"h × f\" — كلما زاد التردد زادت الضربة." },
+    { name: "الطاقة الحركية العظمى للإلكترون", formula: "KE_max = h·f − w", desc: "معادلة أينشتاين للتأثير الكهروضوئي.", mnemonic: "\"الفوتون يدفع أجرة البواب (w) ويحتفظ بالباقي كطاقة حركية.\"" },
+    { name: "جهد الإيقاف", formula: "e · V_s = KE_max", desc: "الجهد اللازم لإيقاف أسرع إلكترون.", mnemonic: "\"e Vs يوقف KE\" — الجدار الكهربائي يساوي طاقة الإلكترون." },
+    { name: "طول موجة دي برولي", formula: "λ = h / (m · v)", desc: "الطول الموجي المرافق للجسيم المتحرك.", mnemonic: "\"h على الزخم\" — كلما زادت الكتلة أو السرعة قصر الطول الموجي." },
+    { name: "تيارات الترانزستور", formula: "I_E = I_C + I_B", desc: "تيار الباعث = تيار المجمّع + تيار القاعدة.", mnemonic: "\"الباعث يأكل الاثنين\" — I_E تجمع C و B." },
+    { name: "ربح تيار الترانزستور", formula: "α = I_C / I_E ،  β = I_C / I_B", desc: "α (قاعدة مشتركة) و β (باعث مشترك).", mnemonic: "α = C على E (أصغر من 1). β = C على B (أكبر بكثير)." },
+    { name: "ربح القدرة", formula: "G = α · A_V", desc: "ربح القدرة الكلي للمكبّر.", mnemonic: "\"G = ألفا × ربح الفولتية\" — ضرب ما تحفظه أصلاً." },
   ],
 };
 
@@ -166,11 +199,7 @@ const PhysicsLaws = ({ language, onBack }: { language: AppLanguage; onBack: () =
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filtered.map((law) => (
-                <div key={law.name} className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5 transition hover:border-primary/40">
-                  <h3 className="font-bold text-foreground mb-1">{law.name}</h3>
-                  <div className="font-mono text-lg text-primary mb-2">{law.formula}</div>
-                  <p className="text-sm text-muted-foreground">{law.desc}</p>
-                </div>
+                <LawCard key={law.name} law={law} rtl={rtl} t={t} />
               ))}
             </div>
             {filtered.length === 0 && (
