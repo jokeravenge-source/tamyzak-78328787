@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 
 const copy = {
   en: {
-    title: "Physics Laws & Units",
-    desc: "Quick reference for formulas and unit conversions.",
+    title: "Physics Laws",
+    desc: "Quick reference for formulas with memory aids.",
     back: "Back",
     search: "Search laws...",
     mnemonic: "Mnemonic",
@@ -14,8 +14,8 @@ const copy = {
     hideMnemonic: "Hide mnemonic",
   },
   ar: {
-    title: "قوانين ووحدات الفيزياء",
-    desc: "مرجع سريع للقوانين والتحويلات.",
+    title: "قوانين الفيزياء",
+    desc: "مرجع سريع للقوانين مع حيل للحفظ.",
     back: "رجوع",
     search: "ابحث عن قانون...",
     mnemonic: "حيلة الحفظ",
