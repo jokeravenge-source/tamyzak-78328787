@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Upload, Heart, FileText, X, Loader2, Hash, Download, Sparkles, Bell, Clock, Check, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +44,7 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
   const [pending, setPending] = useState<SummaryRow[]>([]);
   const [preview, setPreview] = useState<{ url: string; name: string; mime: string } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Upload form
   const [file, setFile] = useState<File | null>(null);
@@ -380,8 +381,30 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
             </div>
             <div>
               <label className="text-xs text-muted-foreground">{t("File (max 100 MB)", "الملف (حد أقصى 100 ميجا)")}</label>
-              <input type="file" required onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} className="mt-1 w-full text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-primary file:text-primary-foreground" />
-              {file && <p className="text-xs text-muted-foreground mt-1">{file.name} — {(file.size / 1024 / 1024).toFixed(1)} MB</p>}
+              <input
+                ref={fileInputRef}
+                type="file"
+                required
+                className="sr-only"
+                onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-1 w-full min-h-16 rounded-2xl border border-dashed border-primary/40 bg-background/60 px-4 py-3 text-sm text-start hover:border-primary/70 hover:bg-primary/10 transition-all flex items-center gap-3"
+              >
+                <span className="w-10 h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                  <Upload className="w-5 h-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-foreground truncate">
+                    {file ? file.name : t("Choose file", "اختر ملفاً")}
+                  </span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">
+                    {file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : t("Tap to browse your files", "اضغط لاختيار ملف من جهازك")}
+                  </span>
+                </span>
+              </button>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">{t("Name *", "الاسم *")}</label>
