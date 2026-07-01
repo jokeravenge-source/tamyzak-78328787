@@ -6,7 +6,7 @@ import type { MainMenuChoice } from "@/pages/MainMenu";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
 
-const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam", "companion", "subjectTutor", "physicsLaws", "physicsQuickMcq", "physicsProblemSolver"]);
+const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam", "ministerialBank", "biologyDrawings", "islamicSurahs", "organicEquations"]);
 
 type SubjectKey = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic" | "islamic" | "revision";
 
