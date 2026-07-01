@@ -138,7 +138,6 @@ const CONVERSIONS = {
 };
 
 const PhysicsLaws = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
-  const t = copy[language];
   return <PhysicsLawsInner language={language} onBack={onBack} />;
 };
 
