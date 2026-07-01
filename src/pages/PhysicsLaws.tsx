@@ -144,7 +144,7 @@ const PhysicsLaws = ({ language, onBack }: { language: AppLanguage; onBack: () =
 
 type Law = { name: string; formula: string; desc: string; mnemonic?: string };
 
-const LawCard = ({ law, rtl, t }: { law: Law; rtl: boolean; t: typeof copy["ar"] }) => {
+const LawCard = ({ law, rtl, t }: { law: Law; rtl: boolean; t: (typeof copy)[AppLanguage] }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-5 transition hover:border-primary/40">
