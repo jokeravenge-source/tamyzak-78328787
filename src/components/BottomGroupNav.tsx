@@ -6,7 +6,7 @@ import {
   NotebookPen, FileText, HelpCircle, Network, Headphones, Video, Youtube,
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown, Atom, FlaskConical, Leaf, Languages as LangIcon, Moon,
-  Home, Palette, Heart,
+  Home, Palette, Heart, Wrench,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -44,7 +44,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
       { key: "textToVideo", labelEn: "Text → Video", labelAr: "نص إلى فيديو", Icon: Video },
       { key: "youtube", labelEn: "YouTube Player", labelAr: "مشغّل يوتيوب", Icon: Youtube },
-      { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
       { key: "essay", labelEn: "Al-Musahhih", labelAr: "المُصحِّح", Icon: BookOpen },
       { key: "companion", labelEn: "AI Companion", labelAr: "المرافق الذكي", Icon: Sparkles },
       { key: "psych", labelEn: "Psych Assistant", labelAr: "المساعد النفسي", Icon: Heart },
@@ -66,11 +65,30 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     items: [
       { key: "news", labelEn: "News", labelAr: "الأخبار", Icon: Newspaper },
       { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
+      { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
     ],
   },
   {
-    titleEn: "Play", titleAr: "العب",
-    items: [{ key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords }],
+    titleEn: "All Tools", titleAr: "كل الأدوات",
+    items: [
+      { key: "notes", labelEn: "Notes", labelAr: "ملاحظاتي", Icon: NotebookPen },
+      { key: "canvas", labelEn: "Canvas", labelAr: "اللوحة", Icon: Palette },
+      { key: "summaries", labelEn: "Summaries", labelAr: "الملخصات", Icon: FileText },
+      { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
+      { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
+      { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
+      { key: "textToVideo", labelEn: "Text → Video", labelAr: "نص إلى فيديو", Icon: Video },
+      { key: "youtube", labelEn: "YouTube Player", labelAr: "مشغّل يوتيوب", Icon: Youtube },
+      { key: "essay", labelEn: "Al-Musahhih", labelAr: "المُصحِّح", Icon: BookOpen },
+      { key: "companion", labelEn: "AI Companion", labelAr: "المرافق الذكي", Icon: Sparkles },
+      { key: "psych", labelEn: "Psych Assistant", labelAr: "المساعد النفسي", Icon: Heart },
+      { key: "subjectsHub", labelEn: "All Subjects", labelAr: "كل المواد", Icon: BookOpen },
+      { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
+      { key: "missions", labelEn: "Missions", labelAr: "المهمات", Icon: Target },
+      { key: "todo", labelEn: "To-Do List", labelAr: "قائمة المهام", Icon: ListChecks },
+      { key: "leaderboard", labelEn: "Leaderboard", labelAr: "المتصدرون", Icon: Trophy },
+      { key: "report", labelEn: "Daily Report", labelAr: "تقريري", Icon: Sparkles },
+    ],
   },
   {
     titleEn: "Account", titleAr: "الحساب",
@@ -86,7 +104,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Study: Layers,
   Progress: Target,
   Community: Users,
-  Play: Swords,
+  "All Tools": Wrench,
   Account: Settings,
 };
 
