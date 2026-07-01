@@ -129,21 +129,10 @@ const PhysicsLawsInner = ({ language, onBack }: { language: AppLanguage; onBack:
   const t = copy[language];
   const rtl = language === "ar";
   const [search, setSearch] = useState("");
-  const [value, setValue] = useState<string>("");
-  const [selected, setSelected] = useState(CONVERSIONS[language][0].label);
-  const [result, setResult] = useState<number | null>(null);
 
   const filtered = PHYSICS_LAWS[language].filter((l) =>
     `${l.name} ${l.formula} ${l.desc}`.toLowerCase().includes(search.toLowerCase())
   );
-
-  const convert = () => {
-    const conversion = CONVERSIONS[language].find((c) => c.label === selected);
-    const v = parseFloat(value);
-    if (!conversion || Number.isNaN(v)) return;
-    const out = conversion.custom ? conversion.custom(v) : v * (conversion.factor ?? 1);
-    setResult(Number(out.toFixed(4)));
-  };
 
   return (
     <main className="min-h-screen px-4 py-12 md:py-16 relative overflow-hidden" dir={rtl ? "rtl" : "ltr"}>
@@ -164,81 +153,26 @@ const PhysicsLawsInner = ({ language, onBack }: { language: AppLanguage; onBack:
           <p className="text-muted-foreground md:text-lg">{t.desc}</p>
         </header>
 
-        <Tabs defaultValue="laws" className="w-full">
-          <TabsList className="w-full h-12 mb-6 bg-secondary/60 backdrop-blur rounded-2xl border border-white/10">
-            <TabsTrigger value="laws" className="flex-1 gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <BookOpen className="w-4 h-4" /> {t.laws}
-            </TabsTrigger>
-            <TabsTrigger value="converter" className="flex-1 gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <ArrowRightLeft className="w-4 h-4" /> {t.converter}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="laws" className="space-y-4 animate-fade-up">
-            <div className="relative">
-              <BookOpen className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" style={{ [rtl ? "right" : "left"]: "1rem" }} />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t.search}
-                className="h-12 rounded-2xl bg-secondary/40 border-white/10 pl-12 pr-12"
-                dir={rtl ? "rtl" : "ltr"}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {filtered.map((law) => (
-                <LawCard key={law.name} law={law} rtl={rtl} t={t} />
-              ))}
-            </div>
-            {filtered.length === 0 && (
-              <p className="text-center text-muted-foreground py-10">{rtl ? "لا توجد نتائج" : "No results"}</p>
-            )}
-          </TabsContent>
-
-          <TabsContent value="converter" className="animate-fade-up">
-            <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur p-6 md:p-8 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.value}</label>
-                  <Input
-                    type="number"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    placeholder={rtl ? "أدخل قيمة" : "Enter value"}
-                    className="h-12 rounded-xl bg-background/40 border-white/10"
-                    dir={rtl ? "rtl" : "ltr"}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.from} → {t.to}</label>
-                  <select
-                    value={selected}
-                    onChange={(e) => { setSelected(e.target.value); setResult(null); }}
-                    className="w-full h-12 rounded-xl bg-background/40 border border-white/10 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {CONVERSIONS[language].map((c) => (
-                      <option key={c.label} value={c.label}>{c.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button onClick={convert} className="flex-1 h-12 gap-2">
-                  <Calculator className="w-4 h-4" /> {t.convert}
-                </Button>
-                <Button variant="outline" onClick={() => { setValue(""); setResult(null); }} className="h-12 gap-2">
-                  <RotateCcw className="w-4 h-4" /> {t.reset}
-                </Button>
-              </div>
-              {result !== null && (
-                <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">{t.result}</p>
-                  <p className="text-3xl md:text-4xl font-bold gradient-text">{result}</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-4 animate-fade-up">
+          <div className="relative">
+            <BookOpen className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" style={{ [rtl ? "right" : "left"]: "1rem" }} />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t.search}
+              className="h-12 rounded-2xl bg-secondary/40 border-white/10 pl-12 pr-12"
+              dir={rtl ? "rtl" : "ltr"}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filtered.map((law) => (
+              <LawCard key={law.name} law={law} rtl={rtl} t={t} />
+            ))}
+          </div>
+          {filtered.length === 0 && (
+            <p className="text-center text-muted-foreground py-10">{rtl ? "لا توجد نتائج" : "No results"}</p>
+          )}
+        </div>
       </div>
     </main>
   );
