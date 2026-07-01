@@ -1,12 +1,12 @@
 import { useEffect } from "react";
-import { ArrowLeft, Check, Crown, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Crown, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { usePaddleCheckout } from "@/hooks/usePaddleCheckout";
 import { useSubscription } from "@/hooks/useSubscription";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import type { AppLanguage } from "@/components/LanguageGate";
+
+const TELEGRAM_URL = "https://t.me/ias404";
 
 const copy = {
   en: {
