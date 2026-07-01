@@ -267,6 +267,18 @@ const AccountCenter = ({
     } catch {}
   };
 
+  // Auto-give Premium users the crown by default — but only once, so if they
+  // toggle it off it stays off across reloads.
+  useEffect(() => {
+    if (!userId || !isPremium || !gender) return;
+    const flagKey = `crown-defaulted:${userId}`;
+    if (localStorage.getItem(flagKey)) return;
+    if (traits?.accessory === "crown") { localStorage.setItem(flagKey, "1"); return; }
+    updateTraits({ accessory: "crown" });
+    localStorage.setItem(flagKey, "1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremium, userId, gender]);
+
   const randomize = () => {
     if (!gender) return;
     const seed = String(Date.now()) + Math.random();
