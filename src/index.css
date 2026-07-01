@@ -74,8 +74,8 @@ button:active:not(:disabled), [role="button"]:active:not(:disabled) {
 
 /* ============ Global safe-area + UX polish ============ */
 :root {
-  /* Height reserved for the fixed CurvedNavBar (approx 3.75rem bar + 0.75rem gap) */
-  --nav-safe: calc(env(safe-area-inset-bottom, 0px) + 5.25rem);
+  /* Bottom safe-area inset only (no fixed nav bar) */
+  --nav-safe: env(safe-area-inset-bottom, 0px);
 }
 
 html {

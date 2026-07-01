@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Trophy, Loader2, Medal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
-import CurvedNavBar from "@/components/CurvedNavBar";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
 import { CharacterAvatar, type Gender, type CharacterTraits } from "@/components/CharacterAvatar";

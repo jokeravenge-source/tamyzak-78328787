@@ -2,7 +2,7 @@ import { ArrowRight, Sparkles, HelpCircle, ListChecks, MessageSquareQuote, PenLi
 import { motion } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
-import CurvedNavBar from "@/components/CurvedNavBar";
+
 
 const copy = {
   en: {
