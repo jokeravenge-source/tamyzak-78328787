@@ -39,8 +39,14 @@ const CurvedNavBar = ({
 
   const bar = (
     <div
-      className="fixed left-0 right-0 z-[100] flex justify-center pointer-events-none px-3"
-      style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + 0.75rem)` }}
+      className="fixed inset-x-0 z-[100] flex justify-center pointer-events-none px-3"
+      style={{
+        bottom: 0,
+        paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + 0.75rem)`,
+        transform: "translateZ(0)",
+        WebkitTransform: "translateZ(0)",
+        willChange: "transform",
+      }}
     >
       <motion.nav
         aria-label="Primary"
