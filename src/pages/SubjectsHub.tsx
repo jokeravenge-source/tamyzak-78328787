@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -86,6 +86,19 @@ const SubjectsHub = ({
 }) => {
   const isRTL = language === "ar";
   const [open, setOpen] = useState<SubjectKey | null>(null);
+  useEffect(() => {
+    try {
+      const focus = localStorage.getItem("app_subject_focus_v1") as SubjectKey | null;
+      if (focus && SUBJECTS.some((s) => s.code === focus)) setOpen(focus);
+    } catch { /* ignore */ }
+    const handler = (e: Event) => {
+      const code = (e as CustomEvent).detail?.code as SubjectKey | null;
+      if (code && SUBJECTS.some((s) => s.code === code)) setOpen(code);
+      else setOpen(null);
+    };
+    window.addEventListener("app:open-subject", handler as EventListener);
+    return () => window.removeEventListener("app:open-subject", handler as EventListener);
+  }, []);
   const current = SUBJECTS.find((s) => s.code === open);
   const { isPremium } = useSubscription();
   const handleToolClick = (t: Tool) => {
