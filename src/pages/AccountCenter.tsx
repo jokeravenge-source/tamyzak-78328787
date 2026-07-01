@@ -96,6 +96,8 @@ const AccountCenter = ({
   const [subjectSeconds, setSubjectSeconds] = useState<Record<string, number>>({});
   const [todaySubjectSeconds, setTodaySubjectSeconds] = useState<Record<string, number>>({});
   const [weeklyTotals, setWeeklyTotals] = useState<{ key: string; date: Date; seconds: number }[]>([]);
+  const [monthlyPoints, setMonthlyPoints] = useState<{ key: string; label: string; points: number }[]>([]);
+  const [currentMonthPoints, setCurrentMonthPoints] = useState(0);
 
   const tryPremium = (apply: () => void) => {
     if (!isPremium) {
@@ -134,8 +136,34 @@ const AccountCenter = ({
       setSavedName(p?.display_name ?? "");
       setGender((p?.gender as Gender) ?? null);
       setTraits(((p as any)?.character as CharacterTraits) ?? null);
-      const { data: pts } = await supabase.from("user_points").select("points").eq("user_id", u.user.id);
-      setPoints((pts ?? []).reduce((s: number, r: any) => s + (r.points ?? 0), 0));
+      const { data: pts } = await supabase
+        .from("user_points")
+        .select("points, created_at")
+        .eq("user_id", u.user.id);
+      const all = (pts ?? []) as { points: number; created_at: string }[];
+      setPoints(all.reduce((s, r) => s + (r.points ?? 0), 0));
+      // Group by Baghdad year-month
+      const byMonth = new Map<string, number>();
+      all.forEach((r) => {
+        if (!r.created_at) return;
+        const d = new Date(new Date(r.created_at).getTime() + 3 * 3600 * 1000);
+        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+        byMonth.set(key, (byMonth.get(key) ?? 0) + (r.points ?? 0));
+      });
+      const nowB = new Date(Date.now() + 3 * 3600 * 1000);
+      const curKey = `${nowB.getUTCFullYear()}-${String(nowB.getUTCMonth() + 1).padStart(2, "0")}`;
+      setCurrentMonthPoints(byMonth.get(curKey) ?? 0);
+      const list = Array.from(byMonth.entries())
+        .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+        .map(([key, points]) => {
+          const [y, m] = key.split("-").map(Number);
+          const label = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(
+            language === "ar" ? "ar-EG" : "en-US",
+            { month: "long", year: "numeric" }
+          );
+          return { key, label, points };
+        });
+      setMonthlyPoints(list);
       // Aggregate study time per subject across all sessions
       {
         const totals: Record<string, number> = {};
