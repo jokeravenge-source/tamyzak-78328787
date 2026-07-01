@@ -16,6 +16,7 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
   {
     code: "physics", en: "Physics", ar: "الفيزياء", Icon: Atom,
     tools: [
+      { key: "companion", en: "AI Tutor", ar: "المعلم الذكي", Icon: Bot },
       { key: "ministerialBank", en: "Ministerial Bank", ar: "بنك الوزاريات", Icon: ScrollText },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
@@ -24,6 +25,7 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
   {
     code: "chemistry", en: "Chemistry", ar: "الكيمياء", Icon: FlaskConical,
     tools: [
+      { key: "companion", en: "AI Tutor", ar: "المعلم الذكي", Icon: Bot },
       { key: "ministerialBank", en: "Ministerial Bank", ar: "بنك الوزاريات", Icon: ScrollText },
       { key: "organicEquations", en: "Organic Equations", ar: "تفاعلات العضوية", Icon: FlaskConical },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
@@ -33,6 +35,7 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
   {
     code: "biology", en: "Biology", ar: "الأحياء", Icon: Leaf,
     tools: [
+      { key: "companion", en: "AI Tutor", ar: "المعلم الذكي", Icon: Bot },
       { key: "ministerialBank", en: "Ministerial Bank", ar: "بنك الوزاريات", Icon: ScrollText },
       { key: "biologyDrawings", en: "Biology Drawings", ar: "رسومات الأحياء", Icon: Microscope },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
@@ -42,6 +45,7 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
   {
     code: "english", en: "English", ar: "الإنجليزية", Icon: BookOpen,
     tools: [
+      { key: "companion", en: "AI Tutor", ar: "المعلم الذكي", Icon: Bot },
       { key: "englishEssays", en: "English Compositions", ar: "إنشاءات الإنكليزي", Icon: PenLine },
       { key: "englishIsqat", en: "Word Drops (Isqatat)", ar: "الإسقاطات", Icon: MousePointerClick },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
@@ -51,6 +55,7 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
   {
     code: "french", en: "French", ar: "الفرنسية", Icon: LangIcon,
     tools: [
+      { key: "companion", en: "AI Tutor", ar: "المعلم الذكي", Icon: Bot },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
     ],
@@ -58,6 +63,7 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
   {
     code: "arabic", en: "Arabic", ar: "العربية", Icon: BookOpen,
     tools: [
+      { key: "companion", en: "AI Tutor", ar: "المعلم الذكي", Icon: Bot },
       { key: "ministerialBank", en: "Ministerial Bank", ar: "بنك الوزاريات", Icon: ScrollText },
       { key: "poemsChecker", en: "Poems Checker", ar: "قصائد الأدب", Icon: ScrollText },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
@@ -67,6 +73,7 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
   {
     code: "islamic", en: "Islamic", ar: "التربية الإسلامية", Icon: Moon,
     tools: [
+      { key: "companion", en: "AI Tutor", ar: "المعلم الذكي", Icon: Bot },
       { key: "islamicSurahs", en: "Islamic Surahs", ar: "سور إسلامية", Icon: Moon },
       { key: "hadithChecker", en: "Hadith Checker", ar: "فاحص الأحاديث", Icon: Moon },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
