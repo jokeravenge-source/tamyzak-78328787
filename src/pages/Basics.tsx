@@ -14,7 +14,6 @@ import { missionsData, missionsOrder } from "@/data/missions";
 import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
-import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 import RankStone, { rankFromPoints, RANK_LABELS } from "@/components/RankStone";
 
 function useStreakDays(): number {
@@ -255,7 +254,6 @@ const Basics = ({
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
-  const [showCompanion, setShowCompanion] = useState<boolean>(false);
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
