@@ -148,7 +148,7 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
 
   return (
     <main
-      className="min-h-screen bg-[hsl(40_30%_93%)] text-[hsl(230_19%_9%)]"
+      className="min-h-screen bg-background text-foreground"
       dir={ar ? "rtl" : "ltr"}
       style={{ fontFamily: ar ? "'IBM Plex Sans Arabic', system-ui, sans-serif" : "Inter, system-ui, sans-serif" }}
     >
@@ -158,11 +158,11 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
           <div className="min-w-0">
             <button
               onClick={onBack}
-              className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] hover:text-[hsl(230_19%_9%)] mb-4"
+              className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground mb-4"
             >
               <ArrowLeft className="w-3.5 h-3.5" />{t.back}
             </button>
-            <p className="text-[10px] uppercase tracking-[0.32em] text-[hsl(230_6%_42%)]">{t.today}</p>
+            <p className="text-[10px] uppercase tracking-[0.32em] text-muted-foreground">{t.today}</p>
             <h1
               className="text-3xl md:text-[44px] font-bold tracking-tight leading-[1.05] mt-1"
               style={{ fontFamily: ar ? "'Cairo', 'IBM Plex Sans Arabic', sans-serif" : "'Space Grotesk', Inter, sans-serif" }}
@@ -173,7 +173,7 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
           <button
             onClick={() => load(true)}
             disabled={refreshing}
-            className="shrink-0 inline-flex items-center gap-2 h-10 px-4 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-[hsl(230_19%_9%)] text-xs font-semibold uppercase tracking-[0.14em] disabled:opacity-50 transition-colors clip-facet-badge"
+            className="shrink-0 inline-flex items-center gap-2 h-10 px-4 border border-border hover:border-foreground/50 text-foreground text-xs font-semibold uppercase tracking-[0.14em] disabled:opacity-50 transition-colors clip-facet-badge"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
             {refreshing ? t.generating : t.regenerate}
@@ -181,11 +181,11 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
         </div>
 
         {loading && !report ? (
-          <div className="py-24 text-center text-[hsl(230_6%_42%)] text-sm">…</div>
+          <div className="py-24 text-center text-muted-foreground text-sm">…</div>
         ) : (
           <div className="space-y-10">
             {/* Primary measurements — 4 quiet number blocks divided by hairlines */}
-            <section className="grid grid-cols-2 md:grid-cols-4 border-t border-b border-[hsl(230_19%_9%/0.12)] divide-x divide-[hsl(230_19%_9%/0.12)] rtl:divide-x-reverse">
+            <section className="grid grid-cols-2 md:grid-cols-4 border-t border-b border-border divide-x divide-border rtl:divide-x-reverse">
               <Measure label={t.minutes} value={`${report?.focused_minutes ?? 0}`} unit={t.min} sub={meta ? `${focusedPct}% ${t.target}` : undefined} />
               <Measure label={t.todoToday} value={`${todo.done}/${todo.total}`} sub={`${todo.pct}% ${t.complete}`} />
               <Measure label={t.missions} value={`${report?.missions_completed ?? 0}`} />
@@ -195,8 +195,8 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
             {/* Today's to-do — calm parchment card, single-cut corner */}
             <Panel icon={ListChecks} title={t.todoToday}>
               <div className="flex items-baseline justify-between mb-3">
-                <span className="text-sm text-[hsl(230_6%_42%)]">
-                  <span className="font-mono text-[hsl(230_19%_9%)] font-semibold tabular-nums">{todo.done}</span>{" "}
+                <span className="text-sm text-muted-foreground">
+                  <span className="font-mono text-foreground font-semibold tabular-nums">{todo.done}</span>{" "}
                   {t.todoDone} {t.todoOf}{" "}
                   <span className="font-mono tabular-nums">{todo.total}</span>
                 </span>
@@ -204,16 +204,16 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
               </div>
               <Bar value={todo.pct} />
               {todo.total === 0 ? (
-                <p className="text-sm text-[hsl(230_6%_42%)] mt-4">{t.todoEmpty}</p>
+                <p className="text-sm text-muted-foreground mt-4">{t.todoEmpty}</p>
               ) : todo.pending.length === 0 ? (
-                <p className="text-sm text-[hsl(150_45%_30%)] mt-4">{t.todoAllDone}</p>
+                <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-4">{t.todoAllDone}</p>
               ) : (
                 <div className="mt-5">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] mb-2">{t.todoRemaining}</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">{t.todoRemaining}</div>
                   <ul className="space-y-1.5 text-sm">
                     {todo.pending.map((x, i) => (
                       <li key={i} className="flex gap-3 items-baseline">
-                        <span className="font-mono text-[hsl(230_6%_55%)] tabular-nums text-[11px] mt-0.5 w-5 shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                        <span className="font-mono text-muted-foreground/70 tabular-nums text-[11px] mt-0.5 w-5 shrink-0">{String(i + 1).padStart(2, "0")}</span>
                         <span className="flex-1">{x}</span>
                       </li>
                     ))}
@@ -225,13 +225,13 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
             {/* Goal proximity */}
             {meta?.days_to_exam != null && (
               <Panel icon={Flag} title={t.goal} subtitle={t.goalDesc}>
-                <div className="grid grid-cols-2 gap-px bg-[hsl(230_19%_9%/0.12)] mt-2 border border-[hsl(230_19%_9%/0.12)]">
-                  <div className="bg-[hsl(40_30%_93%)] p-5">
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] mb-1">{t.complete}</div>
-                    <div className="font-mono text-4xl font-bold tabular-nums">{todo.pct}<span className="text-xl text-[hsl(230_6%_55%)]">%</span></div>
+                <div className="grid grid-cols-2 gap-px bg-border mt-2 border border-border">
+                  <div className="bg-background p-5">
+                    <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">{t.complete}</div>
+                    <div className="font-mono text-4xl font-bold tabular-nums">{todo.pct}<span className="text-xl text-muted-foreground/70">%</span></div>
                   </div>
-                  <div className="bg-[hsl(40_30%_93%)] p-5">
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] mb-1">{t.exam}</div>
+                  <div className="bg-background p-5">
+                    <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">{t.exam}</div>
                     <div className="font-mono text-4xl font-bold tabular-nums">{meta.days_to_exam}</div>
                   </div>
                 </div>
@@ -243,9 +243,9 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
             {meta && (
               <Panel icon={Clock} title={t.minutes}>
                 <div className="flex items-baseline justify-between mb-3">
-                  <span className="text-sm text-[hsl(230_6%_42%)]">{t.target}</span>
+                  <span className="text-sm text-muted-foreground">{t.target}</span>
                   <span className="font-mono text-lg font-semibold tabular-nums">
-                    {report?.focused_minutes ?? 0} <span className="text-[hsl(230_6%_55%)]">/</span> {meta.daily_target_minutes} <span className="text-sm text-[hsl(230_6%_55%)]">{t.min}</span>
+                    {report?.focused_minutes ?? 0} <span className="text-muted-foreground/70">/</span> {meta.daily_target_minutes} <span className="text-sm text-muted-foreground/70">{t.min}</span>
                   </span>
                 </div>
                 <Bar value={focusedPct} />
@@ -255,7 +255,7 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
             {/* By subject */}
             <Panel icon={Target} title={t.bySubject}>
               {!report?.subjects_breakdown?.length ? (
-                <div className="text-sm text-[hsl(230_6%_42%)]">{t.noActivity}</div>
+                <div className="text-sm text-muted-foreground">{t.noActivity}</div>
               ) : (
                 <div className="space-y-4 mt-1">
                   {report.subjects_breakdown.map((s) => {
@@ -264,7 +264,7 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
                       <div key={s.subject}>
                         <div className="flex justify-between text-sm mb-1.5">
                           <span className="capitalize">{s.subject}</span>
-                          <span className="font-mono text-[hsl(230_6%_42%)] tabular-nums">
+                          <span className="font-mono text-muted-foreground tabular-nums">
                             {s.minutes} {t.min} · {s.missions} {t.missions}
                           </span>
                         </div>
@@ -279,7 +279,7 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
             {/* AI Coach */}
             <Panel icon={Brain} title={t.coach}>
               {!report?.ai_summary ? (
-                <p className="text-sm text-[hsl(230_6%_42%)]">{t.noCoach}</p>
+                <p className="text-sm text-muted-foreground">{t.noCoach}</p>
               ) : (
                 <div className="space-y-5">
                   <p className="text-[15px] leading-relaxed">{report.ai_summary}</p>
@@ -295,37 +295,37 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
               {!token ? (
                 <button
                   onClick={enableLink}
-                  className="h-10 px-5 bg-[hsl(230_19%_9%)] text-[hsl(40_30%_93%)] text-xs font-semibold uppercase tracking-[0.14em] inline-flex items-center gap-2 clip-facet-badge hover:opacity-90"
+                  className="h-10 px-5 bg-foreground text-background text-xs font-semibold uppercase tracking-[0.14em] inline-flex items-center gap-2 clip-facet-badge hover:opacity-90"
                 >
                   <Link2 className="w-3.5 h-3.5" />{t.enable}
                 </button>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 p-3 border border-[hsl(230_19%_9%/0.18)] font-mono text-xs overflow-hidden">
+                  <div className="flex items-center gap-2 p-3 border border-border font-mono text-xs overflow-hidden">
                     <span className="truncate">{location.origin}/follow/{token}</span>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={copyLink} className="h-9 px-4 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-xs font-semibold uppercase tracking-[0.12em] inline-flex items-center gap-1.5 clip-facet-badge">
+                    <button onClick={copyLink} className="h-9 px-4 border border-border hover:border-foreground/50 text-xs font-semibold uppercase tracking-[0.12em] inline-flex items-center gap-1.5 clip-facet-badge">
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       {copied ? t.copied : t.copy}
                     </button>
-                    <button onClick={revoke} className="h-9 px-4 border border-[hsl(0_60%_40%/0.4)] text-[hsl(0_60%_35%)] hover:border-[hsl(0_60%_40%/0.7)] text-xs font-semibold uppercase tracking-[0.12em] clip-facet-badge">
+                    <button onClick={revoke} className="h-9 px-4 border border-destructive/40 text-destructive hover:border-destructive/70 text-xs font-semibold uppercase tracking-[0.12em] clip-facet-badge">
                       {t.revoke}
                     </button>
                   </div>
                   {accessCode && (
-                    <div className="mt-3 border border-[hsl(230_19%_9%/0.18)] p-4">
-                      <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] font-semibold mb-1">{t.accessCode}</div>
-                      <p className="text-[11px] text-[hsl(230_6%_42%)] mb-3">{t.accessCodeDesc}</p>
+                    <div className="mt-3 border border-border p-4">
+                      <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground font-semibold mb-1">{t.accessCode}</div>
+                      <p className="text-[11px] text-muted-foreground mb-3">{t.accessCodeDesc}</p>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 text-center font-mono text-2xl font-bold tabular-nums tracking-[0.5em] py-3 bg-[hsl(230_19%_9%/0.04)] border border-[hsl(230_19%_9%/0.12)]">
+                        <div className="flex-1 text-center font-mono text-2xl font-bold tabular-nums tracking-[0.5em] py-3 bg-foreground/5 border border-border">
                           {accessCode}
                         </div>
-                        <button onClick={copyCode} className="h-12 px-3 border border-[hsl(230_19%_9%/0.18)] hover:border-[hsl(230_19%_9%/0.5)] text-xs font-semibold uppercase tracking-[0.12em] inline-flex items-center gap-1 clip-facet-badge">
+                        <button onClick={copyCode} className="h-12 px-3 border border-border hover:border-foreground/50 text-xs font-semibold uppercase tracking-[0.12em] inline-flex items-center gap-1 clip-facet-badge">
                           {codeCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                       </div>
-                      <button onClick={regenerateCode} className="mt-3 text-[11px] uppercase tracking-[0.14em] text-[hsl(230_6%_42%)] hover:text-[hsl(230_19%_9%)] underline underline-offset-4">
+                      <button onClick={regenerateCode} className="mt-3 text-[11px] uppercase tracking-[0.14em] text-muted-foreground hover:text-foreground underline underline-offset-4">
                         {t.regenCode}
                       </button>
                     </div>
@@ -337,7 +337,7 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
         )}
 
         {/* Excellence Companion — kept here per product spec, framed like the rest */}
-        <div className="mt-10 border border-[hsl(230_19%_9%/0.12)] bg-[hsl(40_30%_93%)] p-5 clip-facet">
+        <div className="mt-10 border border-border bg-background p-5 clip-facet">
           <ExcellenceCompanion language={language} embedded />
         </div>
       </div>
@@ -349,12 +349,12 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
 function Measure({ label, value, unit, sub, accent }: { label: string; value: string; unit?: string; sub?: string; accent?: boolean }) {
   return (
     <div className="p-5 md:p-6">
-      <div className="text-[10px] uppercase tracking-[0.22em] text-[hsl(230_6%_42%)] mb-2">{label}</div>
-      <div className={`font-mono text-3xl md:text-4xl font-bold tabular-nums leading-none ${accent ? "text-[hsl(35_80%_45%)]" : "text-[hsl(230_19%_9%)]"}`}>
+      <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">{label}</div>
+      <div className={`font-mono text-3xl md:text-4xl font-bold tabular-nums leading-none ${accent ? "text-primary" : "text-foreground"}`}>
         {value}
-        {unit && <span className="text-base font-normal text-[hsl(230_6%_55%)] ms-1">{unit}</span>}
+        {unit && <span className="text-base font-normal text-muted-foreground/70 ms-1">{unit}</span>}
       </div>
-      {sub && <div className="text-[11px] text-[hsl(230_6%_42%)] mt-2 font-mono tabular-nums">{sub}</div>}
+      {sub && <div className="text-[11px] text-muted-foreground mt-2 font-mono tabular-nums">{sub}</div>}
     </div>
   );
 }
@@ -362,13 +362,13 @@ function Measure({ label, value, unit, sub, accent }: { label: string; value: st
 /* Parchment panel with a single beveled corner — the quiet "facet echo" */
 function Panel({ icon: Icon, title, subtitle, children }: { icon: any; title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <section className="border border-[hsl(230_19%_9%/0.14)] bg-[hsl(40_30%_93%)] p-5 md:p-6 clip-facet">
+    <section className="border border-border bg-background p-5 md:p-6 clip-facet">
       <header className="mb-4">
         <div className="inline-flex items-center gap-2 mb-1">
-          <Icon className="w-3.5 h-3.5 text-[hsl(230_19%_9%)]" />
-          <h2 className="text-[11px] uppercase tracking-[0.22em] font-semibold text-[hsl(230_19%_9%)]">{title}</h2>
+          <Icon className="w-3.5 h-3.5 text-foreground" />
+          <h2 className="text-[11px] uppercase tracking-[0.22em] font-semibold text-foreground">{title}</h2>
         </div>
-        {subtitle && <p className="text-xs text-[hsl(230_6%_42%)]">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </header>
       {children}
     </section>
@@ -378,9 +378,9 @@ function Panel({ icon: Icon, title, subtitle, children }: { icon: any; title: st
 /* Hairline progress bar — ink-on-parchment, no gradient */
 function Bar({ value }: { value: number }) {
   return (
-    <div className="h-[3px] w-full bg-[hsl(230_19%_9%/0.1)] overflow-hidden">
+    <div className="h-[3px] w-full bg-foreground/10 overflow-hidden">
       <div
-        className="h-full bg-[hsl(230_19%_9%)] transition-[width] duration-700 ease-out"
+        className="h-full bg-foreground transition-[width] duration-700 ease-out"
         style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
       />
     </div>
@@ -390,11 +390,11 @@ function Bar({ value }: { value: number }) {
 function Block({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-2 text-[hsl(230_6%_42%)]">{title}</div>
+      <div className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-2 text-muted-foreground">{title}</div>
       <ul className="space-y-1.5 text-sm">
         {items.map((x, i) => (
           <li key={i} className="flex gap-3 items-baseline">
-            <span className="font-mono text-[hsl(230_6%_55%)] tabular-nums text-[11px] w-5 shrink-0">{String(i + 1).padStart(2, "0")}</span>
+            <span className="font-mono text-muted-foreground/70 tabular-nums text-[11px] w-5 shrink-0">{String(i + 1).padStart(2, "0")}</span>
             <span className="flex-1">{x}</span>
           </li>
         ))}
