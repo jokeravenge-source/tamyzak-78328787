@@ -112,10 +112,10 @@ export function CharacterAvatar({
           aria-hidden
           style={{
             position: "absolute",
-            top: "2%",
+            top: "22%",
             left: "50%",
             transform: "translate(-50%, -100%)",
-            fontSize: size * 0.34,
+            fontSize: size * 0.32,
             lineHeight: 1,
             filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))",
             pointerEvents: "none",
