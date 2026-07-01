@@ -71,23 +71,13 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
   {
     titleEn: "All Tools", titleAr: "كل الأدوات",
     items: [
-      { key: "notes", labelEn: "Notes", labelAr: "ملاحظاتي", Icon: NotebookPen },
-      { key: "canvas", labelEn: "Canvas", labelAr: "اللوحة", Icon: Palette },
-      { key: "summaries", labelEn: "Summaries", labelAr: "الملخصات", Icon: FileText },
       { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
       { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
       { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
       { key: "textToVideo", labelEn: "Text → Video", labelAr: "نص إلى فيديو", Icon: Video },
-      { key: "youtube", labelEn: "YouTube Player", labelAr: "مشغّل يوتيوب", Icon: Youtube },
       { key: "essay", labelEn: "Al-Musahhih", labelAr: "المُصحِّح", Icon: BookOpen },
       { key: "companion", labelEn: "AI Companion", labelAr: "المرافق الذكي", Icon: Sparkles },
       { key: "psych", labelEn: "Psych Assistant", labelAr: "المساعد النفسي", Icon: Heart },
-      { key: "subjectsHub", labelEn: "All Subjects", labelAr: "كل المواد", Icon: BookOpen },
-      { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
-      { key: "missions", labelEn: "Missions", labelAr: "المهمات", Icon: Target },
-      { key: "todo", labelEn: "To-Do List", labelAr: "قائمة المهام", Icon: ListChecks },
-      { key: "leaderboard", labelEn: "Leaderboard", labelAr: "المتصدرون", Icon: Trophy },
-      { key: "report", labelEn: "Daily Report", labelAr: "تقريري", Icon: Sparkles },
     ],
   },
   {
