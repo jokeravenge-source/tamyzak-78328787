@@ -1,8 +1,13 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked } from "lucide-react";
+import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam"]);
 
 type SubjectKey = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic" | "islamic" | "revision";
 
@@ -83,6 +88,18 @@ const SubjectsHub = ({
   const isRTL = language === "ar";
   const [open, setOpen] = useState<SubjectKey | null>(null);
   const current = SUBJECTS.find((s) => s.code === open);
+  const { isPremium } = useSubscription();
+  const navigate = useNavigate();
+
+  const handleToolClick = (t: Tool) => {
+    const free = FREE_TOOLS.has(t.key);
+    if (!free && !isPremium) {
+      toast.error(isRTL ? "هذه الأداة متاحة للمشتركين في البريميوم فقط." : "This tool is available for Premium members only.");
+      navigate("/premium");
+      return;
+    }
+    onSelect(t.key);
+  };
 
   return (
     <main dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-background pb-28">
@@ -147,20 +164,32 @@ const SubjectsHub = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {current.tools.map((t) => {
                   const Icon = t.Icon;
+                  const free = FREE_TOOLS.has(t.key);
+                  const locked = !free && !isPremium;
                   return (
                     <motion.button
                       key={t.key}
                       whileHover={{ y: -2 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => onSelect(t.key)}
-                      className="group bg-card p-5 border border-border rounded-2xl text-left hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all"
+                      onClick={() => handleToolClick(t)}
+                      className={`group relative bg-card p-5 border rounded-2xl text-left transition-all ${
+                        locked
+                          ? "border-border/60 hover:border-amber-400/60"
+                          : "border-border hover:border-primary/40 hover:shadow-[var(--shadow-card)]"
+                      }`}
                     >
+                      {locked && (
+                        <span className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-400/15 text-amber-600 border border-amber-400/30`}>
+                          <Lock className="w-3 h-3" />
+                          {isRTL ? "بريميوم" : "PREMIUM"}
+                        </span>
+                      )}
                       <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
                         <Icon className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors" />
                       </div>
                       <h5 className="font-bold text-base mb-3">{isRTL ? t.ar : t.en}</h5>
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                        {isRTL ? "افتح" : "Open"}
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${locked ? "text-amber-600" : "text-primary"}`}>
+                        {locked ? (isRTL ? "ترقية للفتح" : "Upgrade to unlock") : (isRTL ? "افتح" : "Open")}
                         <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
                       </span>
                     </motion.button>
