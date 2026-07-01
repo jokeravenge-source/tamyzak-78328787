@@ -38,7 +38,7 @@ export default function Pricing() {
           <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Pricing</span>
         </div>
         <h1 className="text-5xl md:text-6xl font-bold gradient-text mb-4">Simple pricing for serious study</h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Start free. Upgrade to Premium for $2/month to unlock unlimited AI tools built for the Iraqi sixth-grade scientific stream.</p>
+        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Start free. Upgrade to Premium for 7.99 dinar/month to unlock unlimited AI tools built for the Iraqi sixth-grade scientific stream.</p>
       </section>
 
       <section className="max-w-5xl mx-auto px-6 pb-20 grid md:grid-cols-2 gap-6">
@@ -63,7 +63,7 @@ export default function Pricing() {
           <div className="absolute top-4 right-4 opacity-20"><Crown className="w-24 h-24 text-amber-400" /></div>
           <div className="text-sm uppercase tracking-widest text-amber-400 mb-2">Premium</div>
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-5xl font-bold">$2</span>
+            <span className="text-5xl font-bold">7.99 dinar</span>
             <span className="text-muted-foreground">/ month</span>
           </div>
           <p className="text-xs text-muted-foreground mb-6">Activated manually via Telegram. Cancel anytime.</p>
