@@ -5,7 +5,7 @@ import {
   Layers, Target, Users, Swords, ScrollText, Settings, BookOpen,
   NotebookPen, FileText, HelpCircle, Network, Headphones, Video, Youtube,
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
-  UserCog, Crown,
+  UserCog, Crown, Atom, FlaskConical, Leaf, Languages as LangIcon, Moon,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -15,12 +15,22 @@ type NavItem = {
   labelEn: string;
   labelAr: string;
   Icon: React.ComponentType<{ className?: string }>;
+  subject?: string; // when set, opens SubjectsHub focused on this subject
 };
 
 const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
   {
     titleEn: "Subjects", titleAr: "المواد",
-    items: [{ key: "subjectsHub", labelEn: "All Subjects", labelAr: "كل المواد", Icon: BookOpen }],
+    items: [
+      { key: "subjectsHub", labelEn: "All Subjects", labelAr: "كل المواد", Icon: BookOpen },
+      { key: "subjectsHub", labelEn: "Physics", labelAr: "الفيزياء", Icon: Atom, subject: "physics" },
+      { key: "subjectsHub", labelEn: "Chemistry", labelAr: "الكيمياء", Icon: FlaskConical, subject: "chemistry" },
+      { key: "subjectsHub", labelEn: "Biology", labelAr: "الأحياء", Icon: Leaf, subject: "biology" },
+      { key: "subjectsHub", labelEn: "English", labelAr: "الإنجليزية", Icon: BookOpen, subject: "english" },
+      { key: "subjectsHub", labelEn: "French", labelAr: "الفرنسية", Icon: LangIcon, subject: "french" },
+      { key: "subjectsHub", labelEn: "Arabic", labelAr: "العربية", Icon: BookOpen, subject: "arabic" },
+      { key: "subjectsHub", labelEn: "Islamic", labelAr: "الإسلامية", Icon: Moon, subject: "islamic" },
+    ],
   },
   {
     titleEn: "Study", titleAr: "الأدوات",
@@ -133,7 +143,18 @@ const BottomGroupNav = ({
                   <motion.button
                     key={it.key}
                     whileTap={{ scale: 0.94 }}
-                    onClick={() => onSelect(it.key)}
+                    onClick={() => {
+                      if (it.subject) {
+                        try {
+                          localStorage.setItem("app_subject_focus_v1", it.subject);
+                        } catch { /* ignore */ }
+                        window.dispatchEvent(new CustomEvent("app:open-subject", { detail: { code: it.subject } }));
+                      } else if (it.key === "subjectsHub") {
+                        try { localStorage.removeItem("app_subject_focus_v1"); } catch { /* ignore */ }
+                        window.dispatchEvent(new CustomEvent("app:open-subject", { detail: { code: null } }));
+                      }
+                      onSelect(it.key);
+                    }}
                     className={`relative shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                       isActive ? "text-primary" : "text-foreground/60 hover:text-foreground"
                     }`}
