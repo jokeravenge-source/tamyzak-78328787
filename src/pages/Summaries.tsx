@@ -201,7 +201,8 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
 
   const submitUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !userId) return;
+    if (!file) return toast.error(t("Please choose a file", "الرجاء اختيار ملف"));
+    if (!userId) return toast.error(t("Please sign in to upload", "الرجاء تسجيل الدخول للرفع"));
     if (!name.trim()) return toast.error(t("Name is required", "الاسم مطلوب"));
     setUploading(true);
     try {
