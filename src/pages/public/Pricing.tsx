@@ -8,6 +8,7 @@ export default function Pricing() {
     "Study streaks, points & leaderboard",
     "Study sessions with hourly check-ins",
     "Telegram to-do reminders",
+    "1 free use per day of every AI tool — resets at midnight Baghdad time (UTC+3)",
   ];
   const premiumFeatures = [
     "Everything in Free",
