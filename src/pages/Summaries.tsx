@@ -201,7 +201,8 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
 
   const submitUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !userId) return;
+    if (!file) return toast.error(t("Please choose a file", "الرجاء اختيار ملف"));
+    if (!userId) return toast.error(t("Please sign in to upload", "الرجاء تسجيل الدخول للرفع"));
     if (!name.trim()) return toast.error(t("Name is required", "الاسم مطلوب"));
     setUploading(true);
     try {
@@ -371,8 +372,8 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
       )}
 
       {showUpload && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4" onClick={() => !uploading && setShowUpload(false)}>
-          <form onSubmit={submitUpload} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border border-white/10 bg-secondary p-6 space-y-4 animate-fade-up">
+        <div className="fixed inset-0 z-[200] flex items-start sm:items-center justify-center bg-background/80 backdrop-blur-sm px-4 py-8 overflow-y-auto" onClick={() => !uploading && setShowUpload(false)}>
+          <form onSubmit={submitUpload} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border border-white/10 bg-secondary p-6 space-y-4 animate-fade-up my-auto mb-[calc(env(safe-area-inset-bottom)+7rem)] sm:mb-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold gradient-text">{t("Upload summary", "رفع ملخص")}</h2>
               <button type="button" onClick={() => setShowUpload(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
