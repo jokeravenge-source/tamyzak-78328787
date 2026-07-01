@@ -124,7 +124,7 @@ const Leaderboard = ({
                 {t("Congrats to ", "تهانينا لـ ")}<span className="gradient-text">{rows[0]?.name || "—"}</span>
               </p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {t("for completing the challenge!", "على إكمال التحدي!")}
+                {t("for achieving the first place!", "لحصوله على المرتبة الاولى")}
               </p>
             </div>
           </div>
