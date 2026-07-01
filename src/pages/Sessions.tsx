@@ -29,6 +29,121 @@ import { pushTodos, pullTodos } from "@/lib/todosSync";
 type TodoItem = { id: string; text: string; done: boolean; day?: string };
 const TODO_STORAGE_KEY = "app_todos_v1";
 
+type PastSession = {
+  id: string;
+  subject: string;
+  mission: string | null;
+  duration_seconds: number;
+  points: number;
+  mission_completed: boolean;
+  created_at: string;
+};
+
+const SessionsHistory = ({ language, userId }: { language: AppLanguage; userId: string | null }) => {
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState<PastSession[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  const L = language === "ar"
+    ? { title: "سجل جلساتي", empty: "لا توجد جلسات سابقة.", delete: "حذف", deleted: "تم حذف الجلسة", confirmT: "حذف هذه الجلسة؟", confirmD: "لا يمكن التراجع. لن تُعاد النقاط.", cancel: "إلغاء", yes: "نعم، احذف", loading: "جاري التحميل...", pts: "نقطة", mins: "دقيقة", noMission: "بدون مهمة" }
+    : { title: "My session history", empty: "No past sessions.", delete: "Delete", deleted: "Session deleted", confirmT: "Delete this session?", confirmD: "This cannot be undone. Points will not be restored.", cancel: "Cancel", yes: "Yes, delete", loading: "Loading...", pts: "pts", mins: "min", noMission: "No mission" };
+
+  const SUBJ_LBL: Record<string, { en: string; ar: string }> = {
+    islamic: { en: "Islamic", ar: "التربية الإسلامية" }, arabic: { en: "Arabic", ar: "العربية" },
+    english: { en: "English", ar: "الإنجليزية" }, french: { en: "French", ar: "الفرنسية" },
+    math: { en: "Math", ar: "الرياضيات" }, physics: { en: "Physics", ar: "الفيزياء" },
+    chemistry: { en: "Chemistry", ar: "الكيمياء" }, biology: { en: "Biology", ar: "الأحياء" },
+  };
+
+  const load = async () => {
+    if (!userId) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("study_sessions")
+      .select("id,subject,mission,duration_seconds,points,mission_completed,created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (!error) setRows((data ?? []) as PastSession[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (open) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, userId]);
+
+  const doDelete = async (id: string) => {
+    const prev = rows;
+    setRows((r) => r.filter((x) => x.id !== id));
+    const { error } = await supabase.from("study_sessions").delete().eq("id", id);
+    if (error) {
+      setRows(prev);
+      toast.error(error.message);
+    } else {
+      toast.success(L.deleted);
+    }
+    setConfirmId(null);
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto mb-6 rounded-2xl border border-white/10 bg-secondary/30 backdrop-blur overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition"
+      >
+        <Timer className="w-4 h-4 text-primary" />
+        <span className="text-sm font-semibold flex-1 text-start">{L.title}</span>
+        <span className="text-xs text-muted-foreground">{rows.length}</span>
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="border-t border-white/10 max-h-96 overflow-y-auto">
+          {loading ? (
+            <p className="px-4 py-4 text-sm text-muted-foreground text-center">{L.loading}</p>
+          ) : rows.length === 0 ? (
+            <p className="px-4 py-4 text-sm text-muted-foreground text-center">{L.empty}</p>
+          ) : (
+            <ul className="divide-y divide-white/5">
+              {rows.map((r) => {
+                const s = SUBJ_LBL[r.subject];
+                const subjName = s ? (language === "ar" ? s.ar : s.en) : r.subject;
+                const mins = Math.round(r.duration_seconds / 60);
+                const date = new Date(r.created_at).toLocaleDateString(language === "ar" ? "ar-EG" : undefined, { year: "numeric", month: "short", day: "numeric" });
+                return (
+                  <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{subjName} · {mins} {L.mins} · {r.points} {L.pts}</div>
+                      <div className="text-xs text-muted-foreground truncate">{date} — {r.mission || L.noMission}</div>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => setConfirmId(r.id)} className="text-destructive gap-1">
+                      <Trash2 className="w-4 h-4" /> {L.delete}
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
+      <AlertDialog open={!!confirmId} onOpenChange={(o) => !o && setConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{L.confirmT}</AlertDialogTitle>
+            <AlertDialogDescription>{L.confirmD}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{L.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmId && doDelete(confirmId)}>{L.yes}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
 const SessionTodos = ({ language }: { language: AppLanguage }) => {
   const [todos, setTodos] = useState<TodoItem[]>(() => {
     try { return JSON.parse(localStorage.getItem(TODO_STORAGE_KEY) || "[]"); } catch { return []; }
