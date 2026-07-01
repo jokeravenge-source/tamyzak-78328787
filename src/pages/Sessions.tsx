@@ -818,6 +818,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             <li>{L.pointsLine3}</li>
           </ul>
         </div>
+        <SessionsHistory language={language} userId={userId} />
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {SUBJECTS.map((s) => {
             const SIcon = s.Icon;
