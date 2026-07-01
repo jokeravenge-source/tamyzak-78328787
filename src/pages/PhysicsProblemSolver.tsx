@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { ArrowLeft, Upload, Sparkles, Loader2, FileText, Calculator, Wand2, RotateCw, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Upload, Sparkles, Loader2, FileText, Calculator, Wand2, RotateCw, Image as ImageIcon, BookOpen, CheckCircle2, Trophy, Copy, Check, ListOrdered } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { type AppLanguage } from "@/components/LanguageGate";
@@ -57,6 +57,7 @@ const PhysicsProblemSolver = ({ language, onBack }: { language: AppLanguage; onB
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [solution, setSolution] = useState<Solution | null>(null);
+  const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onFile = (f: File | null) => {
@@ -118,6 +119,12 @@ const PhysicsProblemSolver = ({ language, onBack }: { language: AppLanguage; onB
     setText(""); setFile(null); setSolution(null);
   };
 
+  const copyAnswer = async () => {
+    if (!solution) return;
+    const txt = `${solution.answer}${solution.unit ? " " + solution.unit : ""}`;
+    try { await navigator.clipboard.writeText(txt); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {}
+  };
+
   return (
     <main className="min-h-screen px-4 py-12 md:py-16 relative overflow-hidden" dir={rtl ? "rtl" : "ltr"}>
       <div className="pointer-events-none absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl animate-float" />
@@ -177,32 +184,81 @@ const PhysicsProblemSolver = ({ language, onBack }: { language: AppLanguage; onB
           </div>
         ) : (
           <div className="space-y-6 animate-fade-up">
-            <div className="rounded-3xl border border-primary/30 bg-primary/5 backdrop-blur p-6 md:p-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Calculator className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-lg">{t.law}</h3>
+            {/* Hero Answer */}
+            <div className="relative overflow-hidden rounded-3xl p-8 md:p-10 text-center border border-emerald-400/30"
+              style={{ background: "linear-gradient(135deg, hsl(var(--primary)/0.15), hsl(var(--accent)/0.12) 60%, hsl(160 84% 39% / 0.18))" }}>
+              <div className="pointer-events-none absolute -top-20 -right-20 w-64 h-64 rounded-full bg-emerald-400/20 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-primary/20 blur-3xl" />
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 mb-4">
+                  <Trophy className="w-3.5 h-3.5 text-emerald-300" />
+                  <span className="text-[11px] uppercase tracking-[0.3em] text-emerald-200">{t.answer}</span>
+                </div>
+                <div className="flex items-end justify-center gap-2 flex-wrap">
+                  <span className="text-5xl md:text-7xl font-black bg-gradient-to-br from-emerald-300 via-emerald-400 to-primary bg-clip-text text-transparent leading-none">
+                    {solution.answer}
+                  </span>
+                  {solution.unit && (
+                    <span className="text-2xl md:text-3xl font-semibold text-emerald-200/90 mb-1">{solution.unit}</span>
+                  )}
+                </div>
+                <button
+                  onClick={copyAnswer}
+                  className="mt-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs bg-background/40 hover:bg-background/60 border border-white/10 text-muted-foreground hover:text-foreground transition"
+                >
+                  {copied ? <><Check className="w-3.5 h-3.5" /> {rtl ? "تم النسخ" : "Copied"}</> : <><Copy className="w-3.5 h-3.5" /> {rtl ? "نسخ" : "Copy"}</>}
+                </button>
               </div>
-              <p className="text-foreground/90">{solution.law}</p>
             </div>
 
+            {/* Law Card */}
+            <div className="group relative rounded-3xl p-6 md:p-7 border border-primary/25 bg-gradient-to-br from-primary/10 via-secondary/40 to-transparent backdrop-blur">
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-primary/80 mb-1">{t.law}</p>
+                  <p className="text-foreground/95 text-base md:text-lg font-medium leading-relaxed">{solution.law}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Steps Timeline */}
             <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur p-6 md:p-8">
-              <h3 className="font-bold text-lg mb-4">{t.steps}</h3>
-              <ol className="space-y-4">
+              <div className="flex items-center gap-2 mb-6">
+                <ListOrdered className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-lg">{t.steps}</h3>
+                <span className="ms-auto text-xs text-muted-foreground">{solution.steps.length}</span>
+              </div>
+              <ol className="relative space-y-4">
+                <div className={`absolute top-3 bottom-3 w-px bg-gradient-to-b from-primary/50 via-primary/20 to-transparent ${rtl ? "right-[18px]" : "left-[18px]"}`} />
                 {solution.steps.map((step, i) => (
-                  <li key={i} className="flex gap-3">
-                    <span className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center text-sm font-bold shrink-0">{i + 1}</span>
-                    <p className="text-foreground/90 leading-relaxed">{step}</p>
+                  <li
+                    key={i}
+                    className="relative flex gap-4 rounded-2xl p-4 border border-white/5 bg-background/30 hover:bg-background/50 hover:border-primary/30 transition-all animate-fade-up"
+                    style={{ animationDelay: `${i * 60}ms` }}
+                  >
+                    <div className="relative shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg shadow-primary/30">
+                        {i + 1}
+                      </div>
+                    </div>
+                    <p className="text-foreground/90 leading-relaxed flex-1 pt-1">{step}</p>
                   </li>
                 ))}
+                <li className="relative flex gap-4 rounded-2xl p-4 border border-emerald-400/20 bg-emerald-500/5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <p className="text-emerald-200/90 leading-relaxed flex-1 pt-1 font-medium">
+                    {rtl ? "الحل مكتمل" : "Solution complete"}
+                  </p>
+                </li>
               </ol>
             </div>
 
-            <div className="rounded-3xl border border-emerald-400/30 bg-emerald-500/10 backdrop-blur p-6 md:p-8 text-center">
-              <p className="text-sm uppercase tracking-[0.3em] text-emerald-300 mb-2">{t.answer}</p>
-              <p className="text-3xl md:text-4xl font-bold text-emerald-400">{solution.answer} {solution.unit ? <span className="text-xl">{solution.unit}</span> : null}</p>
-            </div>
-
-            <Button onClick={reset} className="w-full h-12 gap-2">
+            <Button onClick={reset} className="w-full h-12 gap-2 rounded-2xl">
               <RotateCw className="w-4 h-4" /> {t.new}
             </Button>
           </div>
