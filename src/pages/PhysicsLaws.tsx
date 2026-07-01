@@ -1,46 +1,29 @@
 import { useState } from "react";
-import { ArrowLeft, Ruler, BookOpen, RotateCcw, Calculator, ArrowRightLeft, Lightbulb, Sparkles } from "lucide-react";
+import { ArrowLeft, Ruler, BookOpen, Lightbulb, Sparkles } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 const copy = {
   en: {
-    title: "Physics Laws & Units",
-    desc: "Quick reference for formulas and unit conversions.",
+    title: "Physics Laws",
+    desc: "Quick reference for formulas with memory aids.",
     back: "Back",
-    laws: "Laws",
-    converter: "Converter",
     search: "Search laws...",
-    value: "Value",
-    from: "From",
-    to: "To",
-    convert: "Convert",
-    result: "Result",
-    reset: "Reset",
     mnemonic: "Mnemonic",
     showMnemonic: "Show mnemonic",
     hideMnemonic: "Hide mnemonic",
   },
   ar: {
-    title: "قوانين ووحدات الفيزياء",
-    desc: "مرجع سريع للقوانين والتحويلات.",
+    title: "قوانين الفيزياء",
+    desc: "مرجع سريع للقوانين مع حيل للحفظ.",
     back: "رجوع",
-    laws: "القوانين",
-    converter: "المحوّل",
     search: "ابحث عن قانون...",
-    value: "القيمة",
-    from: "من",
-    to: "إلى",
-    convert: "حوّل",
-    result: "النتيجة",
-    reset: "إعادة",
     mnemonic: "حيلة الحفظ",
     showMnemonic: "أظهر حيلة الحفظ",
     hideMnemonic: "إخفاء حيلة الحفظ",
   },
 } as const;
+
 
 const PHYSICS_LAWS = {
   en: [
@@ -106,36 +89,6 @@ const PHYSICS_LAWS = {
   ],
 };
 
-const CONVERSIONS = {
-  en: [
-    { label: "km/h → m/s", from: "km/h", to: "m/s", factor: 1 / 3.6 },
-    { label: "m/s → km/h", from: "m/s", to: "km/h", factor: 3.6 },
-    { label: "km → m", from: "km", to: "m", factor: 1000 },
-    { label: "m → km", from: "m", to: "km", factor: 1 / 1000 },
-    { label: "g → kg", from: "g", to: "kg", factor: 1 / 1000 },
-    { label: "kg → g", from: "kg", to: "g", factor: 1000 },
-    { label: "J → cal", from: "J", to: "cal", factor: 0.239 },
-    { label: "cal → J", from: "cal", to: "J", factor: 1 / 0.239 },
-    { label: "°C → °F", from: "°C", to: "°F", custom: (v: number) => v * 9 / 5 + 32 },
-    { label: "°F → °C", from: "°F", to: "°C", custom: (v: number) => (v - 32) * 5 / 9 },
-    { label: "min → s", from: "min", to: "s", factor: 60 },
-    { label: "s → min", from: "s", to: "min", factor: 1 / 60 },
-  ],
-  ar: [
-    { label: "كم/س → م/ث", from: "كم/س", to: "م/ث", factor: 1 / 3.6 },
-    { label: "م/ث → كم/س", from: "م/ث", to: "كم/س", factor: 3.6 },
-    { label: "كم → م", from: "كم", to: "م", factor: 1000 },
-    { label: "م → كم", from: "م", to: "كم", factor: 1 / 1000 },
-    { label: "غ → كغ", from: "غ", to: "كغ", factor: 1 / 1000 },
-    { label: "كغ → غ", from: "كغ", to: "غ", factor: 1000 },
-    { label: "جول → سعرة", from: "جول", to: "سعرة", factor: 0.239 },
-    { label: "سعرة → جول", from: "سعرة", to: "جول", factor: 1 / 0.239 },
-    { label: "°C → °F", from: "°C", to: "°F", custom: (v: number) => v * 9 / 5 + 32 },
-    { label: "°F → °C", from: "°F", to: "°C", custom: (v: number) => (v - 32) * 5 / 9 },
-    { label: "دقيقة → ثانية", from: "دقيقة", to: "ثانية", factor: 60 },
-    { label: "ثانية → دقيقة", from: "ثانية", to: "دقيقة", factor: 1 / 60 },
-  ],
-};
 
 const PhysicsLaws = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   return <PhysicsLawsInner language={language} onBack={onBack} />;
@@ -176,21 +129,10 @@ const PhysicsLawsInner = ({ language, onBack }: { language: AppLanguage; onBack:
   const t = copy[language];
   const rtl = language === "ar";
   const [search, setSearch] = useState("");
-  const [value, setValue] = useState<string>("");
-  const [selected, setSelected] = useState(CONVERSIONS[language][0].label);
-  const [result, setResult] = useState<number | null>(null);
 
   const filtered = PHYSICS_LAWS[language].filter((l) =>
     `${l.name} ${l.formula} ${l.desc}`.toLowerCase().includes(search.toLowerCase())
   );
-
-  const convert = () => {
-    const conversion = CONVERSIONS[language].find((c) => c.label === selected);
-    const v = parseFloat(value);
-    if (!conversion || Number.isNaN(v)) return;
-    const out = conversion.custom ? conversion.custom(v) : v * (conversion.factor ?? 1);
-    setResult(Number(out.toFixed(4)));
-  };
 
   return (
     <main className="min-h-screen px-4 py-12 md:py-16 relative overflow-hidden" dir={rtl ? "rtl" : "ltr"}>
@@ -211,81 +153,26 @@ const PhysicsLawsInner = ({ language, onBack }: { language: AppLanguage; onBack:
           <p className="text-muted-foreground md:text-lg">{t.desc}</p>
         </header>
 
-        <Tabs defaultValue="laws" className="w-full">
-          <TabsList className="w-full h-12 mb-6 bg-secondary/60 backdrop-blur rounded-2xl border border-white/10">
-            <TabsTrigger value="laws" className="flex-1 gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <BookOpen className="w-4 h-4" /> {t.laws}
-            </TabsTrigger>
-            <TabsTrigger value="converter" className="flex-1 gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <ArrowRightLeft className="w-4 h-4" /> {t.converter}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="laws" className="space-y-4 animate-fade-up">
-            <div className="relative">
-              <BookOpen className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" style={{ [rtl ? "right" : "left"]: "1rem" }} />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t.search}
-                className="h-12 rounded-2xl bg-secondary/40 border-white/10 pl-12 pr-12"
-                dir={rtl ? "rtl" : "ltr"}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {filtered.map((law) => (
-                <LawCard key={law.name} law={law} rtl={rtl} t={t} />
-              ))}
-            </div>
-            {filtered.length === 0 && (
-              <p className="text-center text-muted-foreground py-10">{rtl ? "لا توجد نتائج" : "No results"}</p>
-            )}
-          </TabsContent>
-
-          <TabsContent value="converter" className="animate-fade-up">
-            <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur p-6 md:p-8 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.value}</label>
-                  <Input
-                    type="number"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    placeholder={rtl ? "أدخل قيمة" : "Enter value"}
-                    className="h-12 rounded-xl bg-background/40 border-white/10"
-                    dir={rtl ? "rtl" : "ltr"}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t.from} → {t.to}</label>
-                  <select
-                    value={selected}
-                    onChange={(e) => { setSelected(e.target.value); setResult(null); }}
-                    className="w-full h-12 rounded-xl bg-background/40 border border-white/10 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {CONVERSIONS[language].map((c) => (
-                      <option key={c.label} value={c.label}>{c.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button onClick={convert} className="flex-1 h-12 gap-2">
-                  <Calculator className="w-4 h-4" /> {t.convert}
-                </Button>
-                <Button variant="outline" onClick={() => { setValue(""); setResult(null); }} className="h-12 gap-2">
-                  <RotateCcw className="w-4 h-4" /> {t.reset}
-                </Button>
-              </div>
-              {result !== null && (
-                <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center">
-                  <p className="text-sm text-muted-foreground mb-1">{t.result}</p>
-                  <p className="text-3xl md:text-4xl font-bold gradient-text">{result}</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-4 animate-fade-up">
+          <div className="relative">
+            <BookOpen className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" style={{ [rtl ? "right" : "left"]: "1rem" }} />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t.search}
+              className="h-12 rounded-2xl bg-secondary/40 border-white/10 pl-12 pr-12"
+              dir={rtl ? "rtl" : "ltr"}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filtered.map((law) => (
+              <LawCard key={law.name} law={law} rtl={rtl} t={t} />
+            ))}
+          </div>
+          {filtered.length === 0 && (
+            <p className="text-center text-muted-foreground py-10">{rtl ? "لا توجد نتائج" : "No results"}</p>
+          )}
+        </div>
       </div>
     </main>
   );
