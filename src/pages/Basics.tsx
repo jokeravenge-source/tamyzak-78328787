@@ -382,11 +382,11 @@ const Basics = ({
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
       const { data } = await supabase
-        .from("profiles")
-        .select("total_points")
-        .eq("user_id", u.user.id)
-        .maybeSingle();
-      if (typeof (data as any)?.total_points === "number") setTotalPoints((data as any).total_points);
+        .from("user_points")
+        .select("points")
+        .eq("user_id", u.user.id);
+      const total = (data ?? []).reduce((sum, r: { points: number | null }) => sum + (r.points ?? 0), 0);
+      setTotalPoints(total);
     })();
   }, []);
   const currentRank = rankFromPoints(totalPoints);
