@@ -92,10 +92,10 @@ Deno.serve(async (req) => {
     if (!mode || !Array.isArray(messages)) {
       return json200({ reply: ar ? "حدث خطأ في الطلب. حاول مرة أخرى." : "Bad request. Please try again." });
     }
-    const ent = await claimFeature(req, "agent");
-    if (!ent.ok) {
-      // Always 200 so the client never sees "non-2xx" – pass upgrade flag in the body.
-      return json200({ error: ent.error, upgrade: ent.status === 429, reply: ent.error });
+    // Success Companion is unlimited — only require an authenticated session.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json200({ error: "Sign in to use this feature.", reply: ar ? "يرجى تسجيل الدخول." : "Please sign in." });
     }
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
