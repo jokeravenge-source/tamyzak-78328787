@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -218,11 +218,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
 
   // Users / Bans state
-  type UserRow = { user_id: string; display_name: string; email: string | null; banned: boolean; banned_until: string | null };
+  type UserRow = { user_id: string; display_name: string; email: string | null; banned: boolean; banned_until: string | null; is_premium?: boolean; premium_expires_at?: string | null };
   const [userQuery, setUserQuery] = useState("");
   const [userResults, setUserResults] = useState<UserRow[]>([]);
   const [userBusy, setUserBusy] = useState(false);
   const [userActionId, setUserActionId] = useState<string | null>(null);
+  const [premiumBusyId, setPremiumBusyId] = useState<string | null>(null);
   const searchUsers = async () => {
     if (!userQuery.trim()) { setUserResults([]); return; }
     setUserBusy(true);
@@ -240,6 +241,36 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error ?? "Failed");
     toast.success(action === "ban" ? "User banned" : "User unbanned");
     setUserResults((r) => r.map((x) => x.user_id === u.user_id ? { ...x, banned: !u.banned } : x));
+  };
+
+  const togglePremium = async (u: UserRow) => {
+    const grant = !u.is_premium;
+    let months = 12;
+    if (grant) {
+      const input = prompt(`Grant Premium to ${u.display_name} for how many months?`, "12");
+      if (input === null) return;
+      const n = Math.floor(Number(input));
+      if (!Number.isFinite(n) || n < 1 || n > 120) return toast.error("Enter 1–120 months");
+      months = n;
+    } else {
+      if (!confirm(`Revoke Premium from ${u.display_name}?`)) return;
+    }
+    setPremiumBusyId(u.user_id);
+    const { data, error } = await supabase.functions.invoke("admin-manage-users", {
+      body: grant
+        ? { action: "grant_premium", user_id: u.user_id, months }
+        : { action: "revoke_premium", user_id: u.user_id },
+    });
+    setPremiumBusyId(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error ?? "Failed");
+    toast.success(grant ? `Granted Premium for ${months} month(s)` : "Premium revoked");
+    setUserResults((r) =>
+      r.map((x) =>
+        x.user_id === u.user_id
+          ? { ...x, is_premium: grant, premium_expires_at: grant ? (data as any)?.expires_at ?? null : null }
+          : x,
+      ),
+    );
   };
 
   // Per-user study sessions (admin can view + delete)
@@ -714,9 +745,23 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold">{u.display_name}</h3>
                           {u.banned && <span className="text-xs px-2 py-0.5 rounded-full border border-red-500/40 text-red-400">Banned</span>}
+                          {u.is_premium && (
+                            <span className="text-xs px-2 py-0.5 rounded-full border border-amber-400/50 text-amber-300 inline-flex items-center gap-1">
+                              <Crown className="w-3 h-3" /> Premium
+                              {u.premium_expires_at && ` · until ${new Date(u.premium_expires_at).toLocaleDateString()}`}
+                            </span>
+                          )}
                         </div>
                         {u.email && <p className="text-xs text-muted-foreground mt-0.5 break-all">{u.email}</p>}
                       </div>
+                      <button
+                        onClick={() => togglePremium(u)}
+                        disabled={premiumBusyId === u.user_id}
+                        className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm disabled:opacity-60 ${u.is_premium ? "border border-amber-400/40 text-amber-300 hover:bg-amber-500/10" : "border border-amber-400/40 text-amber-200 hover:bg-amber-500/10"}`}
+                      >
+                        {premiumBusyId === u.user_id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
+                        {u.is_premium ? "Revoke Premium" : "Grant Premium"}
+                      </button>
                       <button
                         onClick={() => toggleSessions(u)}
                         className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-sm"

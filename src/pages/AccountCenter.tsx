@@ -267,6 +267,18 @@ const AccountCenter = ({
     } catch {}
   };
 
+  // Auto-give Premium users the crown by default — but only once, so if they
+  // toggle it off it stays off across reloads.
+  useEffect(() => {
+    if (!userId || !isPremium || !gender) return;
+    const flagKey = `crown-defaulted:${userId}`;
+    if (localStorage.getItem(flagKey)) return;
+    if (traits?.accessory === "crown") { localStorage.setItem(flagKey, "1"); return; }
+    updateTraits({ accessory: "crown" });
+    localStorage.setItem(flagKey, "1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremium, userId, gender]);
+
   const randomize = () => {
     if (!gender) return;
     const seed = String(Date.now()) + Math.random();
@@ -345,6 +357,28 @@ const AccountCenter = ({
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* Crown accessory — Premium only */}
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">
+                    👑 {text.crown}
+                    {!isPremium && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full border border-amber-400/40 text-amber-300">
+                        {text.premiumOnly}
+                      </span>
+                    )}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => tryPremium(() => updateTraits({ accessory: "crown" }))}
+                      className={`flex-1 h-10 rounded-lg text-xs font-semibold border transition ${effective?.accessory === "crown" ? "bg-amber-500/20 border-amber-400 text-amber-200" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                    >{text.on}</button>
+                    <button
+                      onClick={() => tryPremium(() => updateTraits({ accessory: null }))}
+                      className={`flex-1 h-10 rounded-lg text-xs font-semibold border transition ${effective?.accessory !== "crown" ? "bg-primary/15 border-primary text-primary" : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground"}`}
+                    >{text.off}</button>
                   </div>
                 </div>
               </div>
