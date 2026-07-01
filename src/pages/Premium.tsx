@@ -49,7 +49,6 @@ const copy = {
 
 export default function Premium({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
   const t = copy[language];
-  const { openCheckout, loading } = usePaddleCheckout();
   const { isPremium, loading: subLoading } = useSubscription();
 
   useEffect(() => {
@@ -61,24 +60,6 @@ export default function Premium({ language, onBack }: { language: AppLanguage; o
       window.history.replaceState({}, "", url.toString());
     }
   }, [language]);
-
-  const buy = async () => {
-    try {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) {
-        toast.error(language === "ar" ? "سجّل دخولك أولاً" : "Please sign in first");
-        return;
-      }
-      await openCheckout({
-        priceId: "premium_monthly",
-        customerEmail: u.user.email ?? undefined,
-        customData: { userId: u.user.id },
-        successUrl: `${window.location.origin}/?premium=success`,
-      });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to open checkout");
-    }
-  };
 
   return (
     <main className="min-h-screen px-4 py-12 md:py-20 pb-32 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
