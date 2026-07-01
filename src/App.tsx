@@ -342,6 +342,20 @@ const App = () => {
           onSelect={(k) => chooseMenu(k as MenuChoice)}
         />
       )}
+      {authed && language && authRole !== "admin" && tgVerified && (
+        <CurvedNavBar
+          language={language}
+          active={(() => {
+            const m = menuChoice ?? "basics";
+            if (m === "leaderboard" || m === "subjectsHub" || m === "report" || m === "premium" || m === "account") {
+              return m as "leaderboard" | "subjectsHub" | "report" | "premium" | "account";
+            }
+            if (!menuChoice || m === "basics") return "basics";
+            return null;
+          })()}
+          onSelect={(c) => chooseMenu(c as MenuChoice)}
+        />
+      )}
       <PageTransition
         routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${tgVerified ? "tg" : "notg"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
       >
