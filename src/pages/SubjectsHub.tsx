@@ -115,22 +115,32 @@ const SubjectsHub = ({
     <main dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-background pb-28">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
         <button
-          onClick={onBack}
+          onClick={() => {
+            if (current) {
+              setOpen(null);
+              try { localStorage.removeItem("app_subject_focus_v1"); } catch { /* ignore */ }
+            } else {
+              onBack();
+            }
+          }}
           className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors mb-6"
         >
           <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
-          {isRTL ? "رجوع" : "Back"}
+          {isRTL ? (current ? "كل المواد" : "رجوع") : (current ? "All Subjects" : "Back")}
         </button>
 
-        <header className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
-            {isRTL ? "المواد" : "Subjects"}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base">
-            {isRTL ? "اختر مادة لعرض الأدوات الخاصة بها." : "Pick a subject to see its tools."}
-          </p>
-        </header>
+        {!current && (
+          <header className="mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              {isRTL ? "المواد" : "Subjects"}
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+              {isRTL ? "اختر مادة لعرض الأدوات الخاصة بها." : "Pick a subject to see its tools."}
+            </p>
+          </header>
+        )}
 
+        {!current && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
           {SUBJECTS.map((s) => {
             const Icon = s.Icon;
@@ -140,7 +150,14 @@ const SubjectsHub = ({
                 key={s.code}
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => setOpen(active ? null : s.code)}
+                onClick={() => {
+                  const next = active ? null : s.code;
+                  setOpen(next);
+                  try {
+                    if (next) localStorage.setItem("app_subject_focus_v1", next);
+                    else localStorage.removeItem("app_subject_focus_v1");
+                  } catch { /* ignore */ }
+                }}
                 className={`p-4 rounded-2xl border text-left transition-all ${
                   active
                     ? "border-primary bg-primary/10 shadow-[var(--shadow-card)]"
@@ -158,6 +175,7 @@ const SubjectsHub = ({
             );
           })}
         </div>
+        )}
 
         <AnimatePresence mode="wait">
           {current && (
@@ -168,9 +186,19 @@ const SubjectsHub = ({
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25 }}
             >
-              <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                {isRTL ? `أدوات ${current.ar}` : `${current.en} tools`}
-              </h2>
+              <header className="mb-6 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <current.Icon className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                    {isRTL ? current.ar : current.en}
+                  </h1>
+                  <p className="text-muted-foreground text-sm">
+                    {current.tools.length} {isRTL ? "أدوات لهذه المادة" : "tools for this subject"}
+                  </p>
+                </div>
+              </header>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {current.tools.map((t) => {
                   const Icon = t.Icon;
