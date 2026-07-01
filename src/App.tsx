@@ -257,6 +257,14 @@ const App = () => {
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const s = (e as CustomEvent).detail?.subject as AppSubject | null;
+      if (s) setSubject(s);
+    };
+    window.addEventListener("app:set-subject", handler as EventListener);
+    return () => window.removeEventListener("app:set-subject", handler as EventListener);
+  }, []);
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
