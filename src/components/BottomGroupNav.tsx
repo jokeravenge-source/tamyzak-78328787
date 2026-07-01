@@ -6,6 +6,7 @@ import {
   NotebookPen, FileText, HelpCircle, Network, Headphones, Video, Youtube,
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown, Atom, FlaskConical, Leaf, Languages as LangIcon, Moon,
+  Home, Palette, Heart,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -36,6 +37,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     titleEn: "Study", titleAr: "الأدوات",
     items: [
       { key: "notes", labelEn: "Notes", labelAr: "ملاحظاتي", Icon: NotebookPen },
+      { key: "canvas", labelEn: "Canvas", labelAr: "اللوحة", Icon: Palette },
       { key: "summaries", labelEn: "Summaries", labelAr: "الملخصات", Icon: FileText },
       { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
       { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
@@ -45,11 +47,13 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
       { key: "essay", labelEn: "Al-Musahhih", labelAr: "المُصحِّح", Icon: BookOpen },
       { key: "companion", labelEn: "AI Companion", labelAr: "المرافق الذكي", Icon: Sparkles },
+      { key: "psych", labelEn: "Psych Assistant", labelAr: "المساعد النفسي", Icon: Heart },
     ],
   },
   {
     titleEn: "Progress", titleAr: "التقدم",
     items: [
+      { key: "basics", labelEn: "Home", labelAr: "الرئيسية", Icon: Home },
       { key: "report", labelEn: "Daily Report", labelAr: "تقريري", Icon: Sparkles },
       { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
       { key: "missions", labelEn: "Missions", labelAr: "المهمات", Icon: Target },
