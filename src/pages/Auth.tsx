@@ -117,10 +117,7 @@ export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?
             <li>• 30-day money-back guarantee — cancel anytime</li>
           </ul>
           <div className="flex flex-wrap gap-4 text-sm">
-            <a href="/pricing" className="underline text-primary">See pricing</a>
-            <a href="/terms" className="underline text-muted-foreground">Terms</a>
-            <a href="/privacy" className="underline text-muted-foreground">Privacy</a>
-            <a href="/refund" className="underline text-muted-foreground">Refund policy</a>
+            <span className="text-muted-foreground">Premium via Telegram</span>
           </div>
         </div>
 
