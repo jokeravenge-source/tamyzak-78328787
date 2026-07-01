@@ -268,7 +268,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -444,6 +444,18 @@ const App = () => {
         <TextToVideo language={language} onBack={resetMenu} />
       ) : menuChoice === "psych" ? (
         <PsychAssistant language={language} onBack={resetMenu} />
+      ) : menuChoice === "companion" ? (
+        <main className="min-h-screen bg-background pb-28">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
+            <button
+              onClick={resetMenu}
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors mb-6"
+            >
+              {language === "ar" ? "رجوع" : "Back"}
+            </button>
+            <ExcellenceCompanion language={language} embedded />
+          </div>
+        </main>
       ) : menuChoice === "premium" ? (
         <Premium language={language} onBack={resetMenu} />
       ) : menuChoice === "more" ? (
