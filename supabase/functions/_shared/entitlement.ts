@@ -37,7 +37,7 @@ export async function claimFeature(req: Request, feature: string): Promise<Entit
     return {
       ok: false,
       status: 429,
-      error: "You've used your 5 free uses today. Upgrade to Premium for unlimited access.",
+      error: "You've used your free daily use of this tool. Upgrade to Premium for unlimited access.",
     };
   }
   return { ok: true, userId, bypassed: false };
