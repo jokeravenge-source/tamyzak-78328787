@@ -38,12 +38,12 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
   const [myLikes, setMyLikes] = useState<Set<string>>(new Set());
   const [userId, setUserId] = useState<string | null>(null);
   const [filter, setFilter] = useState<SubjectCode | "all">("all");
-  const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pending, setPending] = useState<SummaryRow[]>([]);
   const [preview, setPreview] = useState<{ url: string; name: string; mime: string } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const uploadPanelRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Upload form
@@ -54,6 +54,16 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
   const [uploading, setUploading] = useState(false);
 
   const t = (en: string, ar: string) => (isAr ? ar : en);
+
+  const revealUploadPanel = () => {
+    uploadPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => fileInputRef.current?.focus(), 350);
+  };
+
+  const pickFromUploadButton = (f: File | null) => {
+    onPickFile(f);
+    revealUploadPanel();
+  };
 
   const fetchAll = async () => {
     setLoading(true);
@@ -223,7 +233,8 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
       });
       if (insErr) throw insErr;
       toast.success(t("Submitted — waiting for admin approval", "تم الإرسال — بانتظار موافقة المسؤول"));
-      setShowUpload(false); setFile(null); setName(""); setDescription("");
+      setFile(null); setName(""); setDescription("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err: any) {
       toast.error(err?.message ?? "Upload failed");
     } finally { setUploading(false); }
@@ -252,6 +263,70 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
         <h1 className="text-4xl md:text-6xl font-bold gradient-text leading-[1.1] mb-3">{t("Community Summaries", "ملخصات الطلاب")}</h1>
         <p className="text-muted-foreground md:text-lg">{t("Share PDF summaries and like the best ones. Top likes rise to the top.", "شارك ملخصاتك مع زملائك وادعم الأفضل. الأكثر إعجاباً يتصدر.")}</p>
       </header>
+
+      <section ref={uploadPanelRef} className="max-w-3xl mx-auto mt-8 relative z-20 scroll-mt-8">
+        <form onSubmit={submitUpload} className="rounded-3xl border-2 border-primary/40 bg-card/95 shadow-2xl shadow-primary/10 p-5 md:p-6 space-y-4 animate-fade-up">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <Upload className="w-6 h-6 text-primary" />
+                {t("Upload files", "رفع الملفات")}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">{t("Choose your file directly here — no popup needed.", "اختر ملفك من هنا مباشرة — بدون نافذة منبثقة.")}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border-2 border-dashed border-primary/50 bg-primary/10 p-4 space-y-3">
+            <label htmlFor="summary-file-input" className="block text-sm font-bold text-foreground">
+              {t("1. Choose file", "١. اختر الملف")}
+            </label>
+            <input
+              id="summary-file-input"
+              ref={fileInputRef}
+              type="file"
+              className="block w-full min-h-14 cursor-pointer rounded-2xl border-2 border-primary/40 bg-background p-3 text-base font-semibold text-foreground file:mr-4 file:cursor-pointer file:rounded-xl file:border-0 file:bg-primary file:px-5 file:py-3 file:text-sm file:font-bold file:text-primary-foreground hover:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20"
+              onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
+              onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+            />
+            <div className="flex items-center gap-3 text-sm">
+              <span className="w-11 h-11 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold text-foreground truncate">
+                  {file ? file.name : t("No file selected yet", "لم يتم اختيار ملف بعد")}
+                </span>
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  {file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : t("Tap the file chooser above", "اضغط على اختيار الملف بالأعلى")}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">{t("2. Name *", "٢. الاسم *")}</label>
+              <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={120} className="mt-1 w-full h-12 px-4 rounded-xl bg-background border border-border focus:border-primary/60 outline-none text-sm" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">{t("3. Subject *", "٣. المادة *")}</label>
+              <select value={subject} onChange={(e) => setSubject(e.target.value as SubjectCode)} className="mt-1 w-full h-12 px-4 rounded-xl bg-background border border-border focus:border-primary/60 outline-none text-sm">
+                {SUMMARY_SUBJECTS.map((s) => <option key={s.code} value={s.code}>{isAr ? s.ar : s.en} — {s.tag}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground">{t("Description (optional)", "الوصف (اختياري)")}</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={500} className="mt-1 w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary/60 outline-none text-sm" />
+          </div>
+
+          <button type="submit" disabled={uploading || !file} className="w-full h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold disabled:opacity-60 inline-flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
+            {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("Uploading…", "جارٍ الرفع…")}</> : <><Upload className="w-4 h-4" /> {t("Submit for approval", "إرسال للموافقة")}</>}
+          </button>
+          <p className="text-xs text-muted-foreground text-center">{t("An admin will review your file before it appears.", "سيراجع المسؤول الملف قبل ظهوره.")}</p>
+        </form>
+      </section>
 
       {pending.length > 0 && (
         <div className="max-w-3xl mx-auto mt-8 space-y-2 relative z-10">
@@ -299,19 +374,32 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
             </button>
           ))}
         </div>
-        <button onClick={() => setShowUpload(true)} className="inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold shadow-lg shadow-primary/30">
-          <Upload className="w-4 h-4" /> {t("Upload summary", "رفع ملخص")}
-        </button>
+        <label className="relative overflow-hidden inline-flex items-center gap-2 px-5 h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold shadow-lg shadow-primary/30 cursor-pointer">
+          <Upload className="w-4 h-4" /> {t("Upload files", "رفع الملفات")}
+          <input
+            type="file"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            aria-label={t("Upload files", "رفع الملفات")}
+            onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
+            onChange={(e) => pickFromUploadButton(e.target.files?.[0] ?? null)}
+          />
+        </label>
       </div>
 
-      {/* Floating upload CTA always visible above bottom nav */}
-      <button
-        onClick={() => setShowUpload(true)}
-        className="fixed z-[90] bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] right-4 rtl:right-auto rtl:left-4 inline-flex items-center gap-2 px-5 h-12 rounded-full bg-primary text-primary-foreground shadow-2xl shadow-primary/40 hover:bg-primary/90 text-sm font-bold"
-        aria-label={t("Upload summary", "رفع ملخص")}
+      {/* Floating upload CTA is a real native file input so tapping it opens the picker directly */}
+      <label
+        className="fixed z-[90] bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] right-4 rtl:right-auto rtl:left-4 overflow-hidden inline-flex items-center gap-2 px-5 h-12 rounded-full bg-primary text-primary-foreground shadow-2xl shadow-primary/40 hover:bg-primary/90 text-sm font-bold cursor-pointer"
+        aria-label={t("Upload files", "رفع الملفات")}
       >
-        <Upload className="w-5 h-5" /> {t("Upload", "رفع ملخص")}
-      </button>
+        <Upload className="w-5 h-5" /> {t("Upload files", "رفع الملفات")}
+        <input
+          type="file"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          aria-label={t("Upload files", "رفع الملفات")}
+          onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
+          onChange={(e) => pickFromUploadButton(e.target.files?.[0] ?? null)}
+        />
+      </label>
 
       <section className="max-w-6xl mx-auto mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
         {loading ? (
@@ -378,62 +466,6 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
               )}
             </div>
           </div>
-        </div>
-      )}
-
-      {showUpload && (
-        <div className="fixed inset-0 z-[200] flex items-start sm:items-center justify-center bg-background/80 backdrop-blur-sm px-4 py-8 overflow-y-auto" onClick={() => !uploading && setShowUpload(false)}>
-          <form onSubmit={submitUpload} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border border-white/10 bg-secondary p-6 space-y-4 animate-fade-up my-auto mb-[calc(env(safe-area-inset-bottom)+7rem)] sm:mb-auto">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold gradient-text">{t("Upload summary", "رفع ملخص")}</h2>
-              <button type="button" onClick={() => setShowUpload(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
-            </div>
-            <div>
-              <label htmlFor="summary-file-input" className="text-xs text-muted-foreground">{t("File (max 100 MB)", "الملف (حد أقصى 100 ميجا)")}</label>
-              <div className="mt-1 rounded-2xl border border-dashed border-primary/40 bg-background/60 p-3 space-y-3">
-                <input
-                  id="summary-file-input"
-                  ref={fileInputRef}
-                  type="file"
-                  required
-                  className="block w-full cursor-pointer rounded-xl border border-border bg-card p-2 text-sm text-foreground file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:border-primary/60"
-                  onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
-                  onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
-                />
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="w-10 h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
-                    <Upload className="w-5 h-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold text-foreground truncate">
-                      {file ? file.name : t("No file selected yet", "لم يتم اختيار ملف بعد")}
-                    </span>
-                    <span className="block text-xs text-muted-foreground mt-0.5">
-                      {file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : t("Press Choose File above", "اضغط زر اختيار الملف بالأعلى")}
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{t("Name *", "الاسم *")}</label>
-              <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={120} className="mt-1 w-full h-10 px-3 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{t("Description (optional)", "الوصف (اختياري)")}</label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={500} className="mt-1 w-full px-3 py-2 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">{t("Subject *", "المادة *")}</label>
-              <select value={subject} onChange={(e) => setSubject(e.target.value as SubjectCode)} className="mt-1 w-full h-10 px-3 rounded-xl bg-background/60 border border-white/10 focus:border-primary/60 outline-none text-sm">
-                {SUMMARY_SUBJECTS.map((s) => <option key={s.code} value={s.code}>{isAr ? s.ar : s.en} — {s.tag}</option>)}
-              </select>
-            </div>
-            <button type="submit" disabled={uploading || !file} className="w-full h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2">
-              {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("Uploading…", "جارٍ الرفع…")}</> : <><Upload className="w-4 h-4" /> {t("Submit for approval", "إرسال للموافقة")}</>}
-            </button>
-            <p className="text-xs text-muted-foreground text-center">{t("An admin will review your file before it appears.", "سيراجع المسؤول الملف قبل ظهوره.")}</p>
-          </form>
         </div>
       )}
     </main>
