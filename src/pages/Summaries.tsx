@@ -380,29 +380,31 @@ const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => 
               <button type="button" onClick={() => setShowUpload(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
             </div>
             <div>
-              <span className="text-xs text-muted-foreground">{t("File (max 100 MB)", "الملف (حد أقصى 100 ميجا)")}</span>
-              <label className="relative mt-1 w-full min-h-16 rounded-2xl border border-dashed border-primary/40 bg-background/60 px-4 py-3 text-sm text-start hover:border-primary/70 hover:bg-primary/10 transition-all flex items-center gap-3 cursor-pointer overflow-hidden">
+              <label htmlFor="summary-file-input" className="text-xs text-muted-foreground">{t("File (max 100 MB)", "الملف (حد أقصى 100 ميجا)")}</label>
+              <div className="mt-1 rounded-2xl border border-dashed border-primary/40 bg-background/60 p-3 space-y-3">
                 <input
+                  id="summary-file-input"
                   ref={fileInputRef}
                   type="file"
                   required
-                  aria-label={t("Choose summary file", "اختر ملف الملخص")}
-                  className="absolute inset-0 z-20 h-full w-full cursor-pointer opacity-0"
+                  className="block w-full cursor-pointer rounded-xl border border-border bg-card p-2 text-sm text-foreground file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:border-primary/60"
                   onClick={(e) => { (e.currentTarget as HTMLInputElement).value = ""; }}
                   onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
                 />
-                <span className="pointer-events-none w-10 h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
-                  <Upload className="w-5 h-5" />
-                </span>
-                <span className="pointer-events-none min-w-0 flex-1">
-                  <span className="block font-semibold text-foreground truncate">
-                    {file ? file.name : t("Choose file", "اختر ملفاً")}
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="w-10 h-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                    <Upload className="w-5 h-5" />
                   </span>
-                  <span className="block text-xs text-muted-foreground mt-0.5">
-                    {file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : t("Tap to browse your files", "اضغط لاختيار ملف من جهازك")}
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold text-foreground truncate">
+                      {file ? file.name : t("No file selected yet", "لم يتم اختيار ملف بعد")}
+                    </span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">
+                      {file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : t("Press Choose File above", "اضغط زر اختيار الملف بالأعلى")}
+                    </span>
                   </span>
-                </span>
-              </label>
+                </div>
+              </div>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">{t("Name *", "الاسم *")}</label>
