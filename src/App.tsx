@@ -107,27 +107,6 @@ const App = () => {
     );
   }
 
-  // Public legal / marketing routes — must render without auth for Paddle domain review.
-  const publicPath = typeof window !== "undefined" ? window.location.pathname : "";
-  const publicMap: Record<string, React.ComponentType> = {
-    "/privacy": PublicPrivacy,
-    "/terms": PublicTerms,
-    "/refund": PublicRefund,
-    "/pricing": PublicPricing,
-  };
-  const PublicPage = publicMap[publicPath];
-  if (PublicPage) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <PaymentTestModeBanner />
-          <PublicPage />
-        </TooltipProvider>
-      </QueryClientProvider>
-    );
-  }
 
   useEffect(() => {
     applyTheme(getInitialTheme());
