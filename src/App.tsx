@@ -53,6 +53,7 @@ const SubjectsHub = lazy(() => import("./pages/SubjectsHub"));
 const TextToVideo = lazy(() => import("./pages/TextToVideo"));
 const PsychAssistant = lazy(() => import("./pages/PsychAssistant"));
 import AppSidebar, { type SidebarKey } from "./components/AppSidebar";
+import CurvedNavBar from "./components/CurvedNavBar";
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
