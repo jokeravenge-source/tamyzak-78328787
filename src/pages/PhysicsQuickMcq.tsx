@@ -80,7 +80,7 @@ const PhysicsQuickMcq = ({ language, onBack }: { language: AppLanguage; onBack: 
       const chapter = chapterN ? physicsChapters.find((c) => c.n === chapterN) : null;
       const topic = chapter ? (language === "ar" ? chapter.arTitle : chapter.title) : t.generic;
       const prompt = language === "ar"
-        ? `أنشئ أسئلة اختيار من متعدد في موضوع "${topic}" من الفيزياء للصف السادس العلمي العراقي. لا تستخدم أي نص خارجي، استخدم معلوماتك فقط."
+        ? `أنشئ أسئلة اختيار من متعدد في موضوع "${topic}" من الفيزياء للصف السادس العلمي العراقي. لا تستخدم أي نص خارجي، استخدم معلوماتك فقط.`
         : `Generate multiple-choice questions for 6th-grade scientific physics topic "${topic}". Use your own knowledge only.`;
       toast.loading(t.generating, { id: "gen" });
       const { data, error } = await supabase.functions.invoke("generate-mcq", {
