@@ -567,8 +567,8 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
               <h1 className="text-lg font-bold">{isRTL ? lecture.titleAr : lecture.titleFr} — {isRTL ? "المعاكسات" : "Antonymes"}</h1>
               <p className="text-xs text-white/85">
                 {reversed
-                  ? (isRTL ? "اسحب الكلمة من اليسار وأفلتها بجانب مرادفها على اليمين" : "Drag from the left and drop onto the right")
-                  : (isRTL ? "اسحب الكلمة من اليمين وأفلتها بجانب مرادفها على اليسار" : "Drag from the right and drop onto the left")}
+                  ? (isRTL ? "اسحب الكلمة من اليسار وأفلتها بجانب معاكسها على اليمين" : "Drag from the left and drop onto the right")
+                  : (isRTL ? "اسحب الكلمة من اليمين وأفلتها بجانب معاكسها على اليسار" : "Drag from the right and drop onto the left")}
               </p>
             </div>
             <div className="text-sm font-semibold bg-white/20 rounded-lg px-3 py-1.5">
