@@ -1,57 +1,68 @@
-Based on your preference for free AI/practice tools for physics, I recommend adding three focused tools to the Physics subject page. These will reuse existing AI infrastructure (generate-mcq, Lovable AI Gateway) and be marked as free.
+# Problem Generator (مولّد المسائل)
 
-## Proposed Physics Tools
+A new standalone AI tool. User uploads a file containing sample problems; AI generates new problems in the same style, subject, difficulty, and language. Problems are shown one-by-one with a "Show solution" reveal (Practice mode). Premium-only.
 
-### 1. Physics Problem Solver — "حل مسائل الفيزياء"
-- What it does: student types or uploads a photo of a physics problem; AI returns a step-by-step Arabic solution, identifies the law used, and plugs values into the formula.
-- Fit: reuses the OCR/photo pattern used in Essay/Al-Musahhih and the subject-agent AI response style.
-- Edge function: create `solve-physics-problem` that accepts `{ text?, image_url? }` and returns `{ law, variables, steps, answer, unit }`.
-- UI: simple form with a textarea, optional image upload, and a "Solve" button. Output is a numbered parchment-style solution card.
-- Why it helps: 6th-grade scientific physics is heavy on calculations; this gives instant guided help.
+## User flow
 
-### 2. Physics Quick MCQ — "اختبار الفيزياء السريع"
-- What it does: student picks a physics chapter or concept, and the app generates 5–10 physics MCQs with explanations.
-- Fit: reuses the existing `generate-mcq` Edge Function, but pre-filters for physics topics and uses the physics chapter list from `subjectChapters.ts`.
-- UI: a compact quiz card with a timer, progress bar, and immediate feedback per answer. No file upload needed, unlike the main MCQ tool.
-- Why it helps: fast self-testing before class or exams, focused only on physics.
+1. From "All Tools" (كل الأدوات) in the nav, user opens **Problem Generator / مولّد المسائل**.
+2. Upload area accepts PDF / DOCX / TXT / image (JPG, PNG). Max ~10MB.
+3. User picks count: **5 / 10 / 20**.
+4. Tap **Generate** → loading state → cards appear.
+5. Each card shows one problem; tap **إظهار الحل / Show solution** to reveal the step-by-step answer.
+6. Navigation: Previous / Next, progress dots, and a "Regenerate" button to produce a fresh batch from the same file.
 
-### 3. Physics Laws & Unit Converter — "قوانين ووحدات الفيزياء"
-- What it does: two tabs in one tool.
-  - Laws tab: searchable cards of common 6th-grade physics laws (speed, density, force, pressure, work, power, Ohm's law, etc.) with formula and a one-line Arabic explanation.
-  - Converter tab: converts between units used in physics — km/h ↔ m/s, J ↔ cal, kg ↔ g, C ↔ F, etc.
-- Fit: no AI needed; lightweight static data + a small utility. Can be built client-side.
-- UI: faceted cards and a clean converter form. Responsive and safe for mobile.
-- Why it helps: students often lose marks on unit mistakes; quick reference saves time during homework.
+## UI
 
-## Integration Plan
+- New page `src/pages/ProblemGenerator.tsx`, styled like `PhysicsProblemSolver.tsx` (semantic theme tokens, rounded cards, motion transitions, RTL-aware).
+- Upload block: dashed drop zone + native file input, with filename chip after selection.
+- Count selector: 3 pill buttons (5 / 10 / 20).
+- Result: a stack of Practice cards with slide-in animation matching the flashcard style; solution reveal is a collapsible section with a subtle divider.
+- Sticky bottom mini-bar: `← Previous`  ·  `3 / 10`  ·  `Next →`.
+- Premium lock: if not premium, show the same upgrade toast + SPA nav to Premium page used elsewhere.
 
-1. Add the three choices to `MainMenuChoice` in `src/pages/MainMenu.tsx`:
-   - `physicsProblemSolver`
-   - `physicsQuickMcq`
-   - `physicsLaws`
+## Wiring in the app
 
-2. Add the three tools to the Physics subject list in `src/pages/SubjectsHub.tsx`, marked with new icons (e.g., `Calculator`, `Clock`, `Ruler` from lucide-react).
+- Add `problemGenerator` to `MainMenuChoice` and register the page in `src/App.tsx` (lazy-loaded like other pages).
+- Add an entry to `BottomGroupNav.tsx` inside the **All Tools** (AI-only) group.
+- Register in `SubjectsHub` free/lock logic is not needed since it's not per-subject.
 
-3. Add the new keys to `FREE_TOOLS` in `src/pages/SubjectsHub.tsx` so every user can access them regardless of premium status.
+## Backend
 
-4. Add routing and lazy loading in `src/App.tsx`:
-   - `src/pages/PhysicsProblemSolver.tsx`
-   - `src/pages/PhysicsQuickMcq.tsx`
-   - `src/pages/PhysicsLaws.tsx`
+New edge function `supabase/functions/generate-similar-problems/index.ts`:
 
-5. Create the `solve-physics-problem` Edge Function for the problem solver (optional image OCR via existing `ocr-images` if needed). The Quick MCQ can reuse `generate-mcq` with a physics prompt prefix. The Laws tool can be fully client-side.
+- Auth-gated (Bearer JWT verified via `getClaims`, like other AI functions).
+- Calls `claim_daily_feature('problemGenerator')` for entitlement (premium bypasses; free returns 429 with `upgrade: true`).
+- Accepts `{ fileBase64, mime, filename, count, language }`.
+- Uses Gemini via Lovable AI Gateway with multimodal input:
+  - PDF → `type: file` with `file_data: data:<mime>;base64,...`
+  - Image → `type: image_url` data URL
+  - TXT/DOCX → server-side text extraction (DOCX via `npm:mammoth`), passed as text
+- Model: `google/gemini-3-flash-preview` (default), structured output via `Output.object` with a small schema `{ problems: [{ statement, solution }] }` (no length constraints in schema — count enforced in prompt + clamped in code).
+- Prompt: "You are given a file of practice problems. Produce N NEW problems in the same subject, style, difficulty, notation, and language as the source. Include a full step-by-step solution for each. Do not repeat the originals."
+- Response: `{ problems: [...] }`. Handles 429/402 with clear messages.
 
-6. Make sure the subject page auto-sets `physics` when launching from the Physics hub, so no subject picker is shown.
+## Client integration
 
-## Technical Notes
-- All three tools are client-side pages + one new Edge Function, keeping the scope small.
-- No schema changes are needed.
-- The UI will follow the existing facet/parchment design system and use semantic tokens.
-- The tools will be free by default, as requested.
+- `ProblemGenerator.tsx` invokes the function with `supabase.functions.invoke`.
+- Auto-detects language of file name / content for RTL layout (fallback to app language).
+- Persists last-generated batch in `localStorage` (`app_problem_gen_last_v1`) so users don't lose progress on reload.
+- Uses `handleAiError` from `src/lib/upgradeToast.ts` for the 429 upgrade nudge.
 
-## Suggested Order of Implementation
-1. Physics Laws & Unit Converter (fastest, no backend)
-2. Physics Quick MCQ (reuses generate-mcq)
-3. Physics Problem Solver (new edge function + optional image upload)
+## Access
 
-If you want to start with fewer tools, I recommend building the Problem Solver first because it has the highest learning value, then the Laws/Converter for quick reference.
+- **Premium only**, consistent with other AI tools. Gate at both the frontend nav entry (lock badge for free users) and the edge function (`claim_daily_feature` returns false for non-premium on this feature).
+
+## Technical notes
+
+- Reuse existing PDF text extraction helper if present (`src/lib/fileText.ts`); otherwise send the file as base64 to Gemini which reads PDFs directly.
+- No new DB tables required.
+- No new secrets — uses existing `LOVABLE_API_KEY`.
+- Follow existing edge function patterns: CORS headers from `npm:@supabase/supabase-js@2/cors`, Zod validation on body, structured JSON error responses.
+
+## Files to add / edit
+
+- add `src/pages/ProblemGenerator.tsx`
+- add `supabase/functions/generate-similar-problems/index.ts`
+- edit `src/App.tsx` — lazy route + `MainMenuChoice` union
+- edit `src/pages/MainMenu.tsx` (type export) if `MainMenuChoice` lives there
+- edit `src/components/BottomGroupNav.tsx` — add to All Tools group
