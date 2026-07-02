@@ -56,6 +56,7 @@ const SubjectTutor = lazy(() => import("./pages/SubjectTutor"));
 const PhysicsLaws = lazy(() => import("./pages/PhysicsLaws"));
 const PhysicsQuickMcq = lazy(() => import("./pages/PhysicsQuickMcq"));
 const PhysicsProblemSolver = lazy(() => import("./pages/PhysicsProblemSolver"));
+const ProblemGenerator = lazy(() => import("./pages/ProblemGenerator"));
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
