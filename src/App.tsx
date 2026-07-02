@@ -422,6 +422,8 @@ const App = () => {
         <PhysicsQuickMcq language={language} onBack={resetMenu} />
       ) : menuChoice === "physicsProblemSolver" ? (
         <PhysicsProblemSolver language={language} onBack={resetMenu} />
+      ) : menuChoice === "problemGenerator" ? (
+        <ProblemGenerator language={language} onBack={resetMenu} onNav={(c) => setMenuChoice(c as MenuChoice)} />
       ) : menuChoice === "companion" ? (
         <main className="min-h-screen bg-background pb-28">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
