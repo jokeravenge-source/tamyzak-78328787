@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
+import { useNavVisibility } from "@/hooks/useNavVisibility";
 
 type NavItem = {
   key: MainMenuChoice;
@@ -118,17 +119,18 @@ const BottomGroupNav = ({
 
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   useEffect(() => { setPortalRoot(document.body); }, []);
+  const navVisible = useNavVisibility();
 
   const currentGroup = NAV_GROUPS.find((g) => g.titleEn === activeGroup) ?? NAV_GROUPS[0];
 
   const bar = (
     <div
-      className="fixed left-0 right-0 z-[100] flex justify-center pointer-events-none px-3"
+      className="fixed left-0 right-0 z-[100] flex justify-center pointer-events-none px-3 transition-transform duration-300 ease-out"
       style={{
         bottom: 0,
         paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + 0.75rem)`,
-        transform: "translateZ(0)",
-        WebkitTransform: "translateZ(0)",
+        transform: navVisible ? "translate3d(0,0,0)" : "translate3d(0, 140%, 0)",
+        WebkitTransform: navVisible ? "translate3d(0,0,0)" : "translate3d(0, 140%, 0)",
         willChange: "transform",
       }}
       dir={isRTL ? "rtl" : "ltr"}
