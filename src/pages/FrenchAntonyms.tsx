@@ -209,7 +209,7 @@ const TypeMode = ({
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <button onClick={onBack} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors">
             {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
-            {isRTL ? "المحاورات" : "Lectures"}
+            {isRTL ? "المجموعات" : "Lectures"}
           </button>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {modeToggle}
@@ -233,9 +233,9 @@ const TypeMode = ({
           <div className="flex items-center gap-3">
             <div className="text-3xl">{lecture.emoji}</div>
             <div className="flex-1">
-              <h1 className="text-lg font-bold">{isRTL ? lecture.titleAr : lecture.titleFr} — {isRTL ? "اكتب المرادف" : "Écris le synonyme"}</h1>
+              <h1 className="text-lg font-bold">{isRTL ? lecture.titleAr : lecture.titleFr} — {isRTL ? "اكتب المعاكس" : "Écris l'antonyme"}</h1>
               <p className="text-xs text-white/85">
-                {isRTL ? "اكتب المرادف الصحيح للكلمة المعروضة، وسيصحّح لك الذكاء الاصطناعي." : "Type the correct synonym and get instant AI-style feedback."}
+                {isRTL ? "اكتب المعاكس الصحيح للكلمة المعروضة، وسيصحّح لك الذكاء الاصطناعي." : "Type the correct antonym and get instant AI-style feedback."}
               </p>
             </div>
             <div className="text-sm font-semibold bg-white/20 rounded-lg px-3 py-1.5">
@@ -260,7 +260,7 @@ const TypeMode = ({
             </div>
 
             <label className="text-xs font-semibold text-muted-foreground mb-1 block">
-              {isRTL ? "المرادف بالفرنسية" : "Synonyme"}
+              {isRTL ? "المعاكس بالفرنسية" : "Antonyme"}
             </label>
             <input
               autoFocus
@@ -488,7 +488,7 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
             className={`rounded-3xl p-10 text-center bg-gradient-to-br ${lecture.gradient} text-white shadow-2xl`}>
             <div className="text-6xl mb-4">{lecture.emoji}</div>
             <h2 className="text-2xl font-bold mb-2">{isRTL ? lecture.titleAr : lecture.titleFr}</h2>
-            <p className="text-white/90">{isRTL ? "قلتلك لا يوجد مرادفات 😄" : "No synonyms in this conversation 😄"}</p>
+            <p className="text-white/90">{isRTL ? "لا يوجد معاكسات هنا 😄" : "No antonyms in this set 😄"}</p>
           </motion.div>
         </div>
       </div>
@@ -537,7 +537,7 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
         <div className="flex items-center justify-between mb-4">
           <button onClick={onBack} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors">
             {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
-            {isRTL ? "المحاورات" : "Lectures"}
+            {isRTL ? "المجموعات" : "Lectures"}
           </button>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {modeToggle}
@@ -564,7 +564,7 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
           <div className="flex items-center gap-3">
             <div className="text-3xl">{lecture.emoji}</div>
             <div className="flex-1">
-              <h1 className="text-lg font-bold">{isRTL ? lecture.titleAr : lecture.titleFr} — {isRTL ? "المرادفات" : "Synonymes"}</h1>
+              <h1 className="text-lg font-bold">{isRTL ? lecture.titleAr : lecture.titleFr} — {isRTL ? "المعاكسات" : "Antonymes"}</h1>
               <p className="text-xs text-white/85">
                 {reversed
                   ? (isRTL ? "اسحب الكلمة من اليسار وأفلتها بجانب مرادفها على اليمين" : "Drag from the left and drop onto the right")
@@ -609,7 +609,7 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
               <Trophy className="w-8 h-8 mx-auto mb-2" />
               <h3 className="text-lg font-bold mb-1">{isRTL ? "أحسنت! 🎉" : "Excellent! 🎉"}</h3>
               <p className="text-sm text-white/90 mb-3">
-                {isRTL ? "طابقت كل المرادفات بنجاح." : "You matched every synonym!"}
+                {isRTL ? "طابقت كل المعاكسات بنجاح." : "You matched every antonym!"}
               </p>
               <button onClick={reset} className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-white/20 hover:bg-white/30 text-sm font-semibold transition-colors">
                 <RotateCcw className="w-4 h-4" />
@@ -623,7 +623,7 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
   );
 };
 
-const FrenchSynonyms = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+const FrenchAntonyms = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const isRTL = language === "ar";
   const [selected, setSelected] = useState<number | null>(null);
   const active = useMemo(() => LECTURES.find((l) => l.id === selected) ?? null, [selected]);
@@ -645,9 +645,9 @@ const FrenchSynonyms = ({ language, onBack }: { language: AppLanguage; onBack: (
             <BookOpen className="w-3.5 h-3.5" />
             {isRTL ? "الفرنسية" : "French"}
           </div>
-          <h1 className="text-3xl font-bold mb-1">{isRTL ? "المرادفات" : "Les Synonymes"}</h1>
+          <h1 className="text-3xl font-bold mb-1">{isRTL ? "المعاكسات" : "Les Antonymes"}</h1>
           <p className="text-muted-foreground text-sm">
-            {isRTL ? "اختر محاورة وتدرّب على مطابقة المرادفات بالسحب والإفلات." : "Pick a conversation and match synonyms by drag & drop."}
+            {isRTL ? "اختر مجموعة وتدرّب على مطابقة المعاكسات بالسحب والإفلات." : "Pick a set and match antonyms by drag & drop."}
           </p>
         </div>
 
@@ -668,13 +668,13 @@ const FrenchSynonyms = ({ language, onBack }: { language: AppLanguage; onBack: (
               </div>
               <div className="relative">
                 <div className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">
-                  {isRTL ? `المحاورة ${lec.id}` : `Lecture ${lec.id}`}
+                  {isRTL ? `المجموعة ${lec.id}` : `Série ${lec.id}`}
                 </div>
                 <div className="text-xl font-bold mb-3">{isRTL ? lec.titleAr : lec.titleFr}</div>
                 <div className="inline-flex items-center gap-1.5 text-xs font-medium bg-white/20 rounded-full px-2.5 py-1">
                   {lec.pairs.length > 0
-                    ? (isRTL ? `${lec.pairs.length} مرادفات` : `${lec.pairs.length} pairs`)
-                    : (isRTL ? "بدون مرادفات" : "No synonyms")}
+                    ? (isRTL ? `${lec.pairs.length} أزواج` : `${lec.pairs.length} pairs`)
+                    : (isRTL ? "بدون معاكسات" : "No antonyms")}
                 </div>
               </div>
             </motion.button>
@@ -685,4 +685,4 @@ const FrenchSynonyms = ({ language, onBack }: { language: AppLanguage; onBack: (
   );
 };
 
-export default FrenchSynonyms;
+export default FrenchAntonyms;
