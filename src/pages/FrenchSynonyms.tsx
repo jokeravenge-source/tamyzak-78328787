@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles, BookOpen, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles, BookOpen, Trophy, ArrowLeftRight } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 
 type Pair = { fr1: string; fr2: string; ar: string };
@@ -82,8 +82,19 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
   const [matched, setMatched] = useState<Set<number>>(new Set());
   const [wrongOn, setWrongOn] = useState<number | null>(null);
   const [dragging, setDragging] = useState<number | null>(null);
+  const [reversed, setReversed] = useState(false);
+
+  const leftText = (p: Pair) => (reversed ? p.fr2 : p.fr1);
+  const rightText = (p: Pair) => (reversed ? p.fr1 : p.fr2);
 
   const reset = () => {
+    setRightOrder(shuffle(lecture.pairs.map((_, i) => i)));
+    setMatched(new Set());
+    setWrongOn(null);
+  };
+
+  const toggleReverse = () => {
+    setReversed((r) => !r);
     setRightOrder(shuffle(lecture.pairs.map((_, i) => i)));
     setMatched(new Set());
     setWrongOn(null);
@@ -131,10 +142,24 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
             {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {isRTL ? "المحاورات" : "Lectures"}
           </button>
-          <button onClick={reset} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors">
-            <RotateCcw className="w-4 h-4" />
-            {isRTL ? "إعادة" : "Reset"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleReverse}
+              className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                reversed
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card hover:bg-secondary"
+              }`}
+              title={isRTL ? "عكس الاتجاه" : "Reverse"}
+            >
+              <ArrowLeftRight className="w-4 h-4" />
+              {isRTL ? "عكس" : "Reverse"}
+            </button>
+            <button onClick={reset} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors">
+              <RotateCcw className="w-4 h-4" />
+              {isRTL ? "إعادة" : "Reset"}
+            </button>
+          </div>
         </div>
 
         <div className={`rounded-2xl p-4 mb-5 bg-gradient-to-br ${lecture.gradient} text-white shadow-lg`}>
@@ -176,7 +201,7 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
                       {i + 1}
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-sm">{p.fr1}</div>
+                      <div className="font-semibold text-sm">{leftText(p)}</div>
                       {isMatched && (
                         <motion.div
                           initial={{ opacity: 0, y: -4 }}
@@ -185,7 +210,7 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
                         >
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                             <Check className="w-3 h-3" />
-                            {p.fr2}
+                            {rightText(p)}
                           </span>
                           <span className="text-[11px] text-muted-foreground" dir="rtl">— {p.ar}</span>
                         </motion.div>
@@ -227,7 +252,7 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
                     dragging === idx ? "opacity-50" : ""
                   }`}
                 >
-                  {p.fr2}
+                  {rightText(p)}
                 </motion.div>
               );
             })}
