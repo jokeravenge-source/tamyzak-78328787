@@ -721,6 +721,33 @@ const AccountCenter = ({
               <h2 className="text-lg font-semibold">{text.account}</h2>
             </div>
           </div>
+          <div className="rounded-xl border border-white/10 bg-background/40 p-3 space-y-2">
+            <p className="text-sm font-medium text-foreground">{text.navBar}</p>
+            <p className="text-xs text-muted-foreground">{text.navBarDesc}</p>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              {(["always", "auto-hide"] as NavVisibilityMode[]).map((m) => {
+                const active = navMode === m;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      setNavMode(m);
+                      setNavVisibilityMode(m);
+                      toast.success(text.navSaved);
+                    }}
+                    className={`h-11 px-3 rounded-lg border text-xs font-semibold transition ${
+                      active
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-white/10 bg-background/40 text-muted-foreground hover:text-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    {m === "always" ? text.navAlways : text.navAutoHide}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <button
             onClick={() => {
               localStorage.removeItem(LANGUAGE_STORAGE_KEY);
