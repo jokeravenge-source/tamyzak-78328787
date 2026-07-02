@@ -640,11 +640,33 @@ const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void
         import("jspdf"),
       ]);
       const node = exportRef.current;
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
-        useCORS: true,
-      });
+      // Force a light-mode look so exported text is legible on white paper
+      const styleEl = document.createElement("style");
+      styleEl.setAttribute("data-pdf-export", "true");
+      styleEl.textContent = `
+        .pdf-export-root, .pdf-export-root * {
+          color: #111 !important;
+          background-color: transparent !important;
+          border-color: #d4d4d8 !important;
+          box-shadow: none !important;
+          text-shadow: none !important;
+        }
+        .pdf-export-root { background-color: #ffffff !important; }
+        .pdf-export-root a { color: #1d4ed8 !important; }
+      `;
+      document.head.appendChild(styleEl);
+      node.classList.add("pdf-export-root");
+      let canvas: HTMLCanvasElement;
+      try {
+        canvas = await html2canvas(node, {
+          scale: 2,
+          backgroundColor: "#ffffff",
+          useCORS: true,
+        });
+      } finally {
+        node.classList.remove("pdf-export-root");
+        styleEl.remove();
+      }
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
       const pdf = new jsPDF({ unit: "pt", format: pdfSize, orientation: pdfOrientation });
       const pageW = pdf.internal.pageSize.getWidth();
