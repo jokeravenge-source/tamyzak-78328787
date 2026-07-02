@@ -6,7 +6,7 @@ import {
   NotebookPen, FileText, HelpCircle, Network, Headphones, Video, Youtube,
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown, Atom, FlaskConical, Leaf, Languages as LangIcon, Moon,
-  Home, Palette, Heart, Wrench,
+  Home, Palette, Heart, Wrench, Wand2,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
