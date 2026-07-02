@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles, BookOpen, Trophy, ArrowLeftRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles, BookOpen, Trophy, ArrowLeftRight, Keyboard, MousePointer2, X, Eye } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 
 type Pair = { fr1: string; fr2: string; ar: string };
@@ -76,8 +76,75 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+// ---------- Type-mode helpers ----------
+const normalize = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // strip accents
+    .replace(/[’'`]/g, "'")
+    .replace(/[.,;:!?()"]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+// Split "important / obligatoire" or "un livre" into accepted variants
+const acceptedVariants = (s: string): string[] => {
+  const parts = s.split("/").map((p) => p.trim()).filter(Boolean);
+  return parts.length ? parts : [s];
+};
+
+// Simple LCS-based character diff → mark which chars in the user answer are wrong
+type DiffChar = { ch: string; ok: boolean };
+function diffChars(user: string, correct: string): { chars: DiffChar[]; missing: string } {
+  const a = user;
+  const b = correct;
+  const m = a.length;
+  const n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i - 1].toLowerCase() === b[j - 1].toLowerCase()
+        ? dp[i - 1][j - 1] + 1
+        : Math.max(dp[i - 1][j], dp[i][j - 1]);
+  const chars: DiffChar[] = [];
+  let i = m, j = n;
+  let missing = "";
+  while (i > 0 && j > 0) {
+    if (a[i - 1].toLowerCase() === b[j - 1].toLowerCase()) {
+      chars.unshift({ ch: a[i - 1], ok: true }); i--; j--;
+    } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+      chars.unshift({ ch: a[i - 1], ok: false }); i--;
+    } else {
+      missing = b[j - 1] + missing; j--;
+    }
+  }
+  while (i > 0) { chars.unshift({ ch: a[i - 1], ok: false }); i--; }
+  while (j > 0) { missing = b[j - 1] + missing; j--; }
+  return { chars, missing };
+}
+
+function checkAnswer(user: string, correctRaw: string) {
+  const variants = acceptedVariants(correctRaw);
+  const userN = normalize(user);
+  // exact (normalized) match against any accepted variant
+  const exact = variants.find((v) => normalize(v) === userN);
+  if (exact) return { ok: true as const, best: exact };
+  // pick closest variant for feedback
+  let best = variants[0];
+  let bestScore = -1;
+  for (const v of variants) {
+    const { chars } = diffChars(user.trim(), v);
+    const score = chars.filter((c) => c.ok).length - Math.abs(v.length - user.trim().length);
+    if (score > bestScore) { bestScore = score; best = v; }
+  }
+  return { ok: false as const, best };
+}
+
+type Mode = "drag" | "type";
+
 const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language: AppLanguage; onBack: () => void }) => {
   const isRTL = language === "ar";
+  const [mode, setMode] = useState<Mode>("drag");
   const [sourceOrder, setSourceOrder] = useState<number[]>(() => shuffle(lecture.pairs.map((_, i) => i)));
   const [matched, setMatched] = useState<Set<number>>(new Set());
   const [wrongOn, setWrongOn] = useState<number | null>(null);
@@ -204,6 +271,42 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
     );
   }
 
+  const modeToggle = (
+    <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
+      <button
+        onClick={() => setMode("drag")}
+        className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-semibold transition-colors ${
+          mode === "drag" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+        }`}
+      >
+        <MousePointer2 className="w-3.5 h-3.5" />
+        {isRTL ? "سحب" : "Drag"}
+      </button>
+      <button
+        onClick={() => setMode("type")}
+        className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-semibold transition-colors ${
+          mode === "type" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+        }`}
+      >
+        <Keyboard className="w-3.5 h-3.5" />
+        {isRTL ? "كتابة" : "Type"}
+      </button>
+    </div>
+  );
+
+  if (mode === "type") {
+    return (
+      <TypeMode
+        lecture={lecture}
+        language={language}
+        onBack={onBack}
+        reversed={reversed}
+        setReversed={setReversed}
+        modeToggle={modeToggle}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-32">
       <div className="max-w-3xl mx-auto px-4 pt-6" dir={isRTL ? "rtl" : "ltr"}>
@@ -212,7 +315,8 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
             {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
             {isRTL ? "المحاورات" : "Lectures"}
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {modeToggle}
             <button
               onClick={toggleReverse}
               className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg border text-sm font-medium transition-colors ${
