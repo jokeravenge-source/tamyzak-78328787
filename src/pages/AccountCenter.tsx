@@ -83,6 +83,7 @@ const AccountCenter = ({
 }) => {
   const text = t[language];
   const [name, setName] = useState("");
+  const [navMode, setNavMode] = useState<NavVisibilityMode>(() => getNavVisibilityMode());
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
