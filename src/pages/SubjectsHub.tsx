@@ -115,7 +115,7 @@ const SubjectsHub = ({
     const free = FREE_TOOLS.has(t.key);
     if (!free && !isPremium) {
       toast.error(isRTL ? "هذه الأداة متاحة للمشتركين في البريميوم فقط." : "This tool is available for Premium members only.");
-      window.location.assign("/premium");
+      onSelect("premium" as MainMenuChoice);
       return;
     }
     // If launched from a focused subject page, preset the subject so tools

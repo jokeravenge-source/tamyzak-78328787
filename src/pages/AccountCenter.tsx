@@ -110,19 +110,8 @@ const AccountCenter = ({
   };
 
   const openPortal = async () => {
-    setPortalLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("paddle-portal", {
-        body: { environment: getPaddleEnvironment() },
-      });
-      if (error) throw error;
-      if (!data?.url && !data?.overview) throw new Error("No portal URL");
-      window.open(data.url || data.overview, "_blank", "noopener,noreferrer");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to open portal");
-    } finally {
-      setPortalLoading(false);
-    }
+    // Subscriptions are managed manually via Telegram (@ias404).
+    window.open("https://t.me/ias404", "_blank", "noopener,noreferrer");
   };
 
   useEffect(() => {
