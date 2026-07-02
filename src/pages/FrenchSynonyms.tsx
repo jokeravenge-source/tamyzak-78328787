@@ -168,7 +168,9 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
             <div className="flex-1">
               <h1 className="text-lg font-bold">{isRTL ? lecture.titleAr : lecture.titleFr} — {isRTL ? "المرادفات" : "Synonymes"}</h1>
               <p className="text-xs text-white/85">
-                {isRTL ? "اسحب الكلمة من اليمين وأفلتها بجانب مرادفها" : "Drag each word next to its matching synonym"}
+                {reversed
+                  ? (isRTL ? "اسحب الكلمة من اليسار وأفلتها بجانب مرادفها على اليمين" : "Drag from the left and drop onto the right")
+                  : (isRTL ? "اسحب الكلمة من اليمين وأفلتها بجانب مرادفها على اليسار" : "Drag from the right and drop onto the left")}
               </p>
             </div>
             <div className="text-sm font-semibold bg-white/20 rounded-lg px-3 py-1.5">
@@ -178,48 +180,11 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-start" dir="ltr">
-          {/* Left column — targets */}
+          {/* Left column */}
           <div className="space-y-2.5">
-            {lecture.pairs.map((p, i) => {
-              const isMatched = matched.has(i);
-              const isWrong = wrongOn === i;
-              return (
-                <motion.div
-                  key={`L${i}`}
-                  animate={isWrong ? { x: [0, -8, 8, -6, 6, 0] } : { x: 0 }}
-                  transition={{ duration: 0.4 }}
-                  onDragOver={(e) => { e.preventDefault(); }}
-                  onDrop={() => onDrop(i)}
-                  className={`rounded-xl p-3 border-2 transition-all ${
-                    isMatched
-                      ? "border-emerald-500/60 bg-emerald-500/10"
-                      : "border-dashed border-border bg-card hover:border-primary/60"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-md bg-primary/15 text-primary font-bold flex items-center justify-center text-xs shrink-0">
-                      {i + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-sm">{leftText(p)}</div>
-                      {isMatched && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="mt-1 flex items-center gap-1.5 flex-wrap"
-                        >
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                            <Check className="w-3 h-3" />
-                            {rightText(p)}
-                          </span>
-                          <span className="text-[11px] text-muted-foreground" dir="rtl">— {p.ar}</span>
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+            {reversed
+              ? sourceOrder.map((idx) => renderSource(idx, "left"))
+              : lecture.pairs.map((_, i) => renderTarget(i, "left"))}
           </div>
 
           <div className="hidden sm:flex flex-col items-center justify-center pt-2 gap-1 text-muted-foreground">
@@ -227,35 +192,11 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
             <div className="w-px flex-1 bg-border" />
           </div>
 
-          {/* Right column — draggables */}
+          {/* Right column */}
           <div className="space-y-2.5">
-            {rightOrder.map((idx) => {
-              const p = lecture.pairs[idx];
-              const isMatched = matched.has(idx);
-              if (isMatched) {
-                return (
-                  <div key={`R${idx}`} className="rounded-xl p-3 border-2 border-dashed border-border/40 bg-muted/30 text-center text-xs text-muted-foreground">
-                    ✓
-                  </div>
-                );
-              }
-              return (
-                <motion.div
-                  key={`R${idx}`}
-                  layout
-                  draggable
-                  onDragStart={() => setDragging(idx)}
-                  onDragEnd={() => setDragging(null)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`rounded-xl p-3 border-2 border-primary/40 bg-gradient-to-br ${lecture.gradient} text-white font-semibold text-sm cursor-grab active:cursor-grabbing shadow-md select-none ${
-                    dragging === idx ? "opacity-50" : ""
-                  }`}
-                >
-                  {rightText(p)}
-                </motion.div>
-              );
-            })}
+            {reversed
+              ? lecture.pairs.map((_, i) => renderTarget(i, "right"))
+              : sourceOrder.map((idx) => renderSource(idx, "right"))}
           </div>
         </div>
 
