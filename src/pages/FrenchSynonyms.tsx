@@ -115,6 +115,76 @@ const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language
 
   const isDone = matched.size === lecture.pairs.length && lecture.pairs.length > 0;
 
+  const renderTarget = (i: number, side: "left" | "right") => {
+    const p = lecture.pairs[i];
+    const isMatched = matched.has(i);
+    const isWrong = wrongOn === i;
+    return (
+      <motion.div
+        key={`T-${side}-${i}`}
+        animate={isWrong ? { x: [0, -8, 8, -6, 6, 0] } : { x: 0 }}
+        transition={{ duration: 0.4 }}
+        onDragOver={(e) => { e.preventDefault(); }}
+        onDrop={() => onDrop(i)}
+        className={`rounded-xl p-3 border-2 transition-all ${
+          isMatched
+            ? "border-emerald-500/60 bg-emerald-500/10"
+            : "border-dashed border-border bg-card hover:border-primary/60"
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-md bg-primary/15 text-primary font-bold flex items-center justify-center text-xs shrink-0">
+            {i + 1}
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-sm">{targetText(p)}</div>
+            {isMatched && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-1 flex items-center gap-1.5 flex-wrap"
+              >
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <Check className="w-3 h-3" />
+                  {sourceText(p)}
+                </span>
+                <span className="text-[11px] text-muted-foreground" dir="rtl">— {p.ar}</span>
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  const renderSource = (idx: number, side: "left" | "right") => {
+    const p = lecture.pairs[idx];
+    const isMatched = matched.has(idx);
+    if (isMatched) {
+      return (
+        <div key={`S-${side}-${idx}`} className="rounded-xl p-3 border-2 border-dashed border-border/40 bg-muted/30 text-center text-xs text-muted-foreground">
+          ✓
+        </div>
+      );
+    }
+    return (
+      <motion.div
+        key={`S-${side}-${idx}`}
+        layout
+        draggable
+        onDragStart={() => setDragging(idx)}
+        onDragEnd={() => setDragging(null)}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className={`rounded-xl p-3 border-2 border-primary/40 bg-gradient-to-br ${lecture.gradient} text-white font-semibold text-sm cursor-grab active:cursor-grabbing shadow-md select-none ${
+          dragging === idx ? "opacity-50" : ""
+        }`}
+      >
+        {sourceText(p)}
+      </motion.div>
+    );
+  };
+
   if (lecture.pairs.length === 0) {
     return (
       <div className="min-h-screen bg-background pb-32">
