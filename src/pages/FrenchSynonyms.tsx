@@ -78,24 +78,24 @@ function shuffle<T>(arr: T[]): T[] {
 
 const LectureGame = ({ lecture, language, onBack }: { lecture: Lecture; language: AppLanguage; onBack: () => void }) => {
   const isRTL = language === "ar";
-  const [rightOrder, setRightOrder] = useState<number[]>(() => shuffle(lecture.pairs.map((_, i) => i)));
+  const [sourceOrder, setSourceOrder] = useState<number[]>(() => shuffle(lecture.pairs.map((_, i) => i)));
   const [matched, setMatched] = useState<Set<number>>(new Set());
   const [wrongOn, setWrongOn] = useState<number | null>(null);
   const [dragging, setDragging] = useState<number | null>(null);
   const [reversed, setReversed] = useState(false);
 
-  const leftText = (p: Pair) => (reversed ? p.fr2 : p.fr1);
-  const rightText = (p: Pair) => (reversed ? p.fr1 : p.fr2);
+  const sourceText = (p: Pair) => (reversed ? p.fr2 : p.fr1);
+  const targetText = (p: Pair) => (reversed ? p.fr1 : p.fr2);
 
   const reset = () => {
-    setRightOrder(shuffle(lecture.pairs.map((_, i) => i)));
+    setSourceOrder(shuffle(lecture.pairs.map((_, i) => i)));
     setMatched(new Set());
     setWrongOn(null);
   };
 
   const toggleReverse = () => {
     setReversed((r) => !r);
-    setRightOrder(shuffle(lecture.pairs.map((_, i) => i)));
+    setSourceOrder(shuffle(lecture.pairs.map((_, i) => i)));
     setMatched(new Set());
     setWrongOn(null);
   };
