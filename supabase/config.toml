@@ -43,3 +43,12 @@ verify_jwt = false
 
 [functions.parent-follow-view]
 verify_jwt = false
+
+[functions.bunny-create-video]
+verify_jwt = false
+
+[functions.bunny-finalize-video]
+verify_jwt = false
+
+[functions.course-track-view]
+verify_jwt = false
