@@ -1,68 +1,82 @@
-# Problem Generator (مولّد المسائل)
 
-A new standalone AI tool. User uploads a file containing sample problems; AI generates new problems in the same style, subject, difficulty, and language. Problems are shown one-by-one with a "Show solution" reveal (Practice mode). Premium-only.
+## Overview
 
-## User flow
+Add a new **الدورات (Courses)** section. First course = **French**. Videos are hosted on **Bunny Stream**. Each course has **chapters** (what you called "divisions") — a named group that owns a list of lecture videos. Access is by **manual enrollment**. A new **teacher** role can manage a specific course. We track both **opened** and **% watched** per student per video.
 
-1. From "All Tools" (كل الأدوات) in the nav, user opens **Problem Generator / مولّد المسائل**.
-2. Upload area accepts PDF / DOCX / TXT / image (JPG, PNG). Max ~10MB.
-3. User picks count: **5 / 10 / 20**.
-4. Tap **Generate** → loading state → cards appear.
-5. Each card shows one problem; tap **إظهار الحل / Show solution** to reveal the step-by-step answer.
-6. Navigation: Previous / Next, progress dots, and a "Regenerate" button to produce a fresh batch from the same file.
+## Secrets to add (Bunny Stream)
 
-## UI
+Requested via `add_secret`:
+- `BUNNY_STREAM_API_KEY` — Bunny Stream account API key (used server-side to create videos and issue upload URLs).
+- `BUNNY_STREAM_LIBRARY_ID` — Video Library ID.
+- `BUNNY_STREAM_CDN_HOSTNAME` — e.g. `vz-xxxxxx.b-cdn.net` (for playback iframe / HLS URL).
 
-- New page `src/pages/ProblemGenerator.tsx`, styled like `PhysicsProblemSolver.tsx` (semantic theme tokens, rounded cards, motion transitions, RTL-aware).
-- Upload block: dashed drop zone + native file input, with filename chip after selection.
-- Count selector: 3 pill buttons (5 / 10 / 20).
-- Result: a stack of Practice cards with slide-in animation matching the flashcard style; solution reveal is a collapsible section with a subtle divider.
-- Sticky bottom mini-bar: `← Previous`  ·  `3 / 10`  ·  `Next →`.
-- Premium lock: if not premium, show the same upgrade toast + SPA nav to Premium page used elsewhere.
+## Database (one migration)
 
-## Wiring in the app
+New enum + tables in `public`:
 
-- Add `problemGenerator` to `MainMenuChoice` and register the page in `src/App.tsx` (lazy-loaded like other pages).
-- Add an entry to `BottomGroupNav.tsx` inside the **All Tools** (AI-only) group.
-- Register in `SubjectsHub` free/lock logic is not needed since it's not per-subject.
+- `course_role` enum: `teacher`.
+- `courses` — `id`, `slug` (unique, e.g. `french`), `title_ar`, `title_en`, `description_ar/en`, `cover_url`, `is_published`.
+- `course_teachers` — `course_id`, `user_id` (unique pair). Grants teacher rights on that course.
+- `course_enrollments` — `course_id`, `user_id`, `enrolled_at`, `enrolled_by`. Unique pair. Manual only.
+- `course_chapters` — `course_id`, `title`, `sort_order`. (These are your "divisions".)
+- `course_videos` — `chapter_id`, `title`, `description`, `duration_sec`, `bunny_video_guid`, `bunny_library_id`, `thumbnail_url`, `sort_order`, `is_published`, `created_by`.
+- `course_video_views` — `video_id`, `user_id`, `opened_at`, `last_seen_at`, `max_percent` (0–100), `completed` (bool, derived when max_percent ≥ 90). Unique (`video_id`, `user_id`).
 
-## Backend
+Helper security-definer functions:
+- `is_course_teacher(_course uuid)` — returns true if `auth.uid()` is in `course_teachers` for `_course` OR is a global `admin` via existing `has_role`.
+- `is_course_enrolled(_course uuid)` — true if user has active row in `course_enrollments`.
 
-New edge function `supabase/functions/generate-similar-problems/index.ts`:
+RLS (with matching `GRANT SELECT/INSERT/UPDATE/DELETE ... TO authenticated` and `GRANT ALL ... TO service_role`):
+- `courses`: SELECT to authenticated (only `is_published` unless teacher/admin). Write: teacher/admin.
+- `course_teachers`: read by teacher/admin; write by admin only.
+- `course_enrollments`: user can read own rows; teacher/admin can read/write for their course.
+- `course_chapters`, `course_videos`: read requires `is_course_enrolled` (or teacher/admin) AND `is_published`. Write: teacher/admin.
+- `course_video_views`: user can insert/update own row; teacher/admin can read all rows for videos in their course.
 
-- Auth-gated (Bearer JWT verified via `getClaims`, like other AI functions).
-- Calls `claim_daily_feature('problemGenerator')` for entitlement (premium bypasses; free returns 429 with `upgrade: true`).
-- Accepts `{ fileBase64, mime, filename, count, language }`.
-- Uses Gemini via Lovable AI Gateway with multimodal input:
-  - PDF → `type: file` with `file_data: data:<mime>;base64,...`
-  - Image → `type: image_url` data URL
-  - TXT/DOCX → server-side text extraction (DOCX via `npm:mammoth`), passed as text
-- Model: `google/gemini-3-flash-preview` (default), structured output via `Output.object` with a small schema `{ problems: [{ statement, solution }] }` (no length constraints in schema — count enforced in prompt + clamped in code).
-- Prompt: "You are given a file of practice problems. Produce N NEW problems in the same subject, style, difficulty, notation, and language as the source. Include a full step-by-step solution for each. Do not repeat the originals."
-- Response: `{ problems: [...] }`. Handles 429/402 with clear messages.
+Seed row: one `courses` row with slug `french`.
 
-## Client integration
+## Edge functions
 
-- `ProblemGenerator.tsx` invokes the function with `supabase.functions.invoke`.
-- Auto-detects language of file name / content for RTL layout (fallback to app language).
-- Persists last-generated batch in `localStorage` (`app_problem_gen_last_v1`) so users don't lose progress on reload.
-- Uses `handleAiError` from `src/lib/upgradeToast.ts` for the 429 upgrade nudge.
+All three use standard CORS + JWT verified in-code, and require `is_course_teacher` (checked server-side) except the tracking one.
 
-## Access
+1. `bunny-create-video` — teacher-only. Body: `{ chapter_id, title }`. Calls Bunny `POST /library/{lib}/videos` to create a video, inserts a `course_videos` row (unpublished), and returns `{ video_id, bunny_guid, upload_url, upload_headers }` where `upload_url` = `https://video.bunnycdn.com/library/{lib}/videos/{guid}` and headers include `AccessKey`. Client uploads the file directly to Bunny (PUT).
+2. `bunny-finalize-video` — teacher-only. Body: `{ video_id }`. Fetches metadata from Bunny (`GET /library/{lib}/videos/{guid}`) to store `duration_sec` and `thumbnail_url`, sets `is_published = true`.
+3. `course-track-view` — enrolled-user-only. Body: `{ video_id, percent }`. Upserts `course_video_views`: sets `opened_at` on first call, updates `last_seen_at`, keeps `max_percent = greatest(old, new)`, sets `completed = true` when ≥ 90.
 
-- **Premium only**, consistent with other AI tools. Gate at both the frontend nav entry (lock badge for free users) and the edge function (`claim_daily_feature` returns false for non-premium on this feature).
+Playback uses Bunny's iframe embed: `https://iframe.mediadelivery.net/embed/{lib}/{guid}` — no server call needed. Library must be set to "public" or "token-auth"; for v1 we go with public embed + our RLS gating who sees the GUID.
+
+## Frontend
+
+New pages under `src/pages/`:
+
+- `Courses.tsx` — `/courses`. Grid of published courses the user is enrolled in (plus a locked card for others). Card → course detail.
+- `CourseDetail.tsx` — `/courses/:slug`. Lists chapters as accordions; each chapter shows its videos with title, duration, watched % badge. Click → player.
+- `CoursePlayer.tsx` — `/courses/:slug/v/:videoId`. Renders Bunny iframe, pings `course-track-view` on load (open) and every ~15 s / on `pagehide` with current percent (using the iframe player.js postMessage API — falls back to just "opened" if postMessage unavailable).
+- `CourseAdmin.tsx` — `/admin/courses/:slug`. Only rendered if `is_course_teacher`. Three tabs:
+  - **Students**: count + searchable table of enrolled users, add/remove by email.
+  - **Chapters**: create/rename/reorder/delete chapters.
+  - **Videos**: per chapter — upload new video (title input → calls `bunny-create-video`, uploads file to returned URL with progress bar, calls `bunny-finalize-video`), rename, delete, reorder, and a "Viewers" popover per video showing every enrolled user + their `max_percent` / opened status.
+
+Nav integration:
+- Add a new **"الدورات / Courses"** group to `BottomGroupNav.tsx` (Icon: `GraduationCap`) with the single item `courses` for now. Register `courses` as a `MainMenuChoice` in `MainMenu.tsx` and route it to `Courses.tsx`. Add routes in `App.tsx`.
+- Teacher admin entry point: link on `Courses.tsx` course card ("Manage") shown only if `is_course_teacher` (checked via `course_teachers` select).
+
+Styling reuses existing semantic tokens (`bg-card`, `text-foreground`, `text-primary`, etc.) so it matches the user's theme, per the ParentFollow refactor precedent.
+
+## Defaults chosen
+
+- Upload cap: 2 GB per video, mp4/mov/webm. Direct PUT to Bunny (no tus for v1).
+- "Completed" threshold: 90 % watched.
+- Only global admins can appoint teachers (via a small "Teachers" section inside `CourseAdmin.tsx` visible to admins only).
+
+## Out of scope for this pass
+
+- Per-user Bunny token-signed playback URLs (can be added later if piracy becomes a concern).
+- Quizzes, comments, certificates.
+- Additional courses beyond French (schema already supports them; just insert rows).
 
 ## Technical notes
 
-- Reuse existing PDF text extraction helper if present (`src/lib/fileText.ts`); otherwise send the file as base64 to Gemini which reads PDFs directly.
-- No new DB tables required.
-- No new secrets — uses existing `LOVABLE_API_KEY`.
-- Follow existing edge function patterns: CORS headers from `npm:@supabase/supabase-js@2/cors`, Zod validation on body, structured JSON error responses.
-
-## Files to add / edit
-
-- add `src/pages/ProblemGenerator.tsx`
-- add `supabase/functions/generate-similar-problems/index.ts`
-- edit `src/App.tsx` — lazy route + `MainMenuChoice` union
-- edit `src/pages/MainMenu.tsx` (type export) if `MainMenuChoice` lives there
-- edit `src/components/BottomGroupNav.tsx` — add to All Tools group
+- Bunny Stream REST base: `https://video.bunnycdn.com` with header `AccessKey: {BUNNY_STREAM_API_KEY}`.
+- We never expose `BUNNY_STREAM_API_KEY` to the client; only the per-upload URL + `AccessKey` header value is returned, scoped to that single video PUT (Bunny doesn't offer scoped upload keys, so we accept this — teacher-only endpoint mitigates risk).
+- All new `public` tables ship with GRANTs in the same migration per project rules.
