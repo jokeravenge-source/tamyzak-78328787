@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, Upload, Sparkles, Loader2, FileText, RotateCw, ClipboardCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type AppLanguage } from "@/components/LanguageGate";
@@ -78,9 +78,6 @@ const Essay = ({ language, onBack }: { language: AppLanguage; onBack: () => void
   const [keyFile, setKeyFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GradeResult | null>(null);
-  const userRef = useRef<HTMLInputElement>(null);
-  const keyRef = useRef<HTMLInputElement>(null);
-
   const pickUser = (f: File | null) => {
     if (!f) return;
     if (f.size > MAX_BYTES) { toast.error(t.tooBig); return; }
