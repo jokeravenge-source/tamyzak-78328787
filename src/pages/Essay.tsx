@@ -135,35 +135,42 @@ const Essay = ({ language, onBack }: { language: AppLanguage; onBack: () => void
 
   const restart = () => { setResult(null); setUserFile(null); setKeyFile(null); };
 
-  const DropBox = ({ file, onPick, hint, inputRef, accept, onClear }: {
-    file: File | null; onPick: () => void; hint: string; inputRef: React.RefObject<HTMLInputElement>; accept: string; onClear: () => void;
+  const DropBox = ({ file, id, hint, accept, onChange, onClear }: {
+    file: File | null; id: string; hint: string; accept: string;
+    onChange: (f: File | null) => void; onClear: () => void;
   }) => (
-    <div
-      onClick={onPick}
-      className="cursor-pointer border-2 border-dashed border-primary/30 hover:border-primary rounded-2xl p-6 text-center transition relative"
+    <label
+      htmlFor={id}
+      className="cursor-pointer border-2 border-dashed border-primary/30 hover:border-primary rounded-2xl p-6 text-center transition relative flex flex-col items-center gap-2"
     >
-      <input ref={inputRef} type="file" className="hidden" accept={accept}
-        onChange={(e) => { if (inputRef === userRef) pickUser(e.target.files?.[0] ?? null); else pickKey(e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
+      <input
+        id={id}
+        type="file"
+        className="sr-only"
+        accept={accept}
+        onChange={(e) => { onChange(e.target.files?.[0] ?? null); e.currentTarget.value = ""; }}
+      />
       {file ? (
-        <div className="flex flex-col items-center gap-2">
+        <>
           <FileText className="w-9 h-9 text-primary" />
           <p className="font-medium text-sm truncate max-w-full">{file.name}</p>
           <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
           <button
-            onClick={(e) => { e.stopPropagation(); onClear(); }}
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClear(); }}
             className="absolute top-2 right-2 w-7 h-7 rounded-full bg-secondary/70 hover:bg-secondary flex items-center justify-center"
           >
             <X className="w-3.5 h-3.5" />
           </button>
-        </div>
+        </>
       ) : (
-        <div className="flex flex-col items-center gap-2">
+        <>
           <Upload className="w-9 h-9 text-primary" />
           <p className="font-medium">{t.pick}</p>
           <p className="text-xs text-muted-foreground">{hint}</p>
-        </div>
+        </>
       )}
-    </div>
+    </label>
   );
 
   return (
@@ -189,15 +196,17 @@ const Essay = ({ language, onBack }: { language: AppLanguage; onBack: () => void
           <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur p-6 md:p-8 space-y-6 animate-fade-up">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-semibold block mb-2">{t.userBox}</label>
-                <DropBox file={userFile} onPick={() => userRef.current?.click()} hint={t.userHint} inputRef={userRef}
+                <div className="text-sm font-semibold block mb-2">{t.userBox}</div>
+                <DropBox file={userFile} id="essay-user-file" hint={t.userHint}
                   accept=".pdf,.docx,.txt,image/*,application/pdf,text/plain"
+                  onChange={pickUser}
                   onClear={() => setUserFile(null)} />
               </div>
               <div>
-                <label className="text-sm font-semibold block mb-2">{t.keyBox}</label>
-                <DropBox file={keyFile} onPick={() => keyRef.current?.click()} hint={t.keyHint} inputRef={keyRef}
+                <div className="text-sm font-semibold block mb-2">{t.keyBox}</div>
+                <DropBox file={keyFile} id="essay-key-file" hint={t.keyHint}
                   accept=".pdf,application/pdf"
+                  onChange={pickKey}
                   onClear={() => setKeyFile(null)} />
               </div>
             </div>
