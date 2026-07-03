@@ -275,6 +275,18 @@ const App = () => {
     localStorage.setItem(MENU_STORAGE_KEY, choice);
     setMenuChoice(choice);
   };
+  // Deep-link support: ?menu=courses (or any other MenuChoice) opens that section directly.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const m = params.get("menu");
+    if (m) {
+      chooseMenu(m as MenuChoice);
+      params.delete("menu");
+      const qs = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+  }, []);
   const handleBasicsSelect = (c: BasicsChoice) => {
     if (c === "biologyDrawings") {
       chooseMenu("biologyDrawings");
