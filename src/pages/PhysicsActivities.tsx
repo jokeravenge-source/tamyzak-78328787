@@ -1,76 +1,65 @@
 import { Suspense, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Grid, Environment, Html } from "@react-three/drei";
-import { ArrowLeft, Atom, RotateCcw, Play, Pause } from "lucide-react";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { OrbitControls, Grid, Environment, Html, Text } from "@react-three/drei";
+import { ArrowLeft, Atom, RotateCcw, Zap } from "lucide-react";
 import * as THREE from "three";
 import type { AppLanguage } from "@/components/LanguageGate";
 
-type ActivityKey = "pendulum" | "projectile" | "incline" | "spring" | "orbit";
-
 const copy = {
   en: {
-    title: "Physics Activities",
-    subtitle: "Interactive 3D experiments — drag to rotate, scroll to zoom, tweak values and hit play.",
+    title: "Physics Activity",
+    subtitle:
+      "An isolated charged capacitor connected to a voltmeter. Slide the dielectric in — the voltmeter reading drops. Pull it out — the reading rises.",
     back: "Back",
-    pick: "Pick an activity",
     controls: "Controls",
-    play: "Play",
-    pause: "Pause",
     reset: "Reset",
-    activities: {
-      pendulum: { name: "Pendulum", desc: "Simple gravity pendulum. Adjust length and gravity." },
-      projectile: { name: "Projectile Motion", desc: "Launch a ball with initial speed and angle." },
-      incline: { name: "Inclined Plane", desc: "Slide a block down a ramp with friction." },
-      spring: { name: "Mass on a Spring", desc: "Simple harmonic motion of a spring-mass system." },
-      orbit: { name: "Planet Orbit", desc: "A tiny planet orbiting a star — change speed and radius." },
-    },
+    activityName: "Capacitor & Dielectric",
     labels: {
-      length: "Length (m)",
-      gravity: "Gravity (m/s²)",
-      speed: "Initial speed (m/s)",
-      angle: "Angle (°)",
-      angleRamp: "Ramp angle (°)",
-      friction: "Friction",
-      mass: "Mass (kg)",
-      k: "Spring stiffness k (N/m)",
-      amplitude: "Amplitude (m)",
-      orbitR: "Orbit radius",
-      orbitSpeed: "Orbit speed",
+      insertion: "Dielectric insertion",
+      kappa: "Dielectric constant κ",
+      v0: "Initial voltage V₀ (V)",
+      voltage: "Voltmeter reading",
+      hint: "Drag the blue slab left / right, or use the slider.",
+      inside: "inside",
+      outside: "outside",
     },
   },
   ar: {
-    title: "أنشطة الفيزياء",
-    subtitle: "تجارب ثلاثية الأبعاد تفاعلية — اسحب للتدوير، مرّر للتكبير، غيّر القيم واضغط تشغيل.",
+    title: "نشاط فيزيائي",
+    subtitle:
+      "مكثف معزول مشحون موصول بفولتمتر. أدخل العازل بين اللوحين فتنخفض قراءة الفولتمتر، وأخرجه فترتفع القراءة.",
     back: "رجوع",
-    pick: "اختر نشاطاً",
     controls: "الإعدادات",
-    play: "تشغيل",
-    pause: "إيقاف",
     reset: "إعادة",
-    activities: {
-      pendulum: { name: "البندول", desc: "بندول جاذبية بسيط. غيّر الطول والجاذبية." },
-      projectile: { name: "المقذوفات", desc: "اقذف كرة بسرعة وزاوية ابتدائية." },
-      incline: { name: "المستوى المائل", desc: "أنزلق كتلة على منحدر مع الاحتكاك." },
-      spring: { name: "كتلة على نابض", desc: "حركة توافقية بسيطة لنظام نابض وكتلة." },
-      orbit: { name: "مدار الكواكب", desc: "كوكب صغير يدور حول نجم — غيّر السرعة ونصف القطر." },
-    },
+    activityName: "مكثف وعازل",
     labels: {
-      length: "الطول (م)",
-      gravity: "الجاذبية (م/ث²)",
-      speed: "السرعة الابتدائية (م/ث)",
-      angle: "الزاوية (°)",
-      angleRamp: "زاوية المنحدر (°)",
-      friction: "الاحتكاك",
-      mass: "الكتلة (كغ)",
-      k: "صلابة النابض k (ن/م)",
-      amplitude: "السعة (م)",
-      orbitR: "نصف القطر",
-      orbitSpeed: "سرعة المدار",
+      insertion: "مقدار إدخال العازل",
+      kappa: "ثابت العازل κ",
+      v0: "الجهد الابتدائي V₀ (فولت)",
+      voltage: "قراءة الفولتمتر",
+      hint: "اسحب اللوح الأزرق يميناً / يساراً، أو استخدم شريط التمرير.",
+      inside: "بالداخل",
+      outside: "بالخارج",
     },
   },
 } as const;
 
-// ---------- shared 3D helpers ----------
+// ------- geometry constants -------
+const PLATE_W = 3; // x
+const PLATE_H = 2; // y (vertical size of plate)
+const PLATE_T = 0.08; // thickness
+const GAP = 0.9; // z distance between plates centers
+const SLAB_W = PLATE_W * 0.9;
+const SLAB_H = PLATE_H * 0.9;
+const SLAB_T = GAP * 0.7;
+// insertion f=0 -> slab fully out to the right, f=1 -> centered in gap
+const SLAB_X_OUT = PLATE_W * 1.15;
+const SLAB_X_IN = 0;
+const xForInsertion = (f: number) => SLAB_X_OUT + (SLAB_X_IN - SLAB_X_OUT) * f;
+const insertionForX = (x: number) => {
+  const f = (x - SLAB_X_OUT) / (SLAB_X_IN - SLAB_X_OUT);
+  return Math.max(0, Math.min(1, f));
+};
 
 const FloorGrid = () => (
   <Grid
@@ -83,287 +72,262 @@ const FloorGrid = () => (
     sectionColor="#64748b"
     fadeDistance={30}
     infiniteGrid
-    position={[0, -0.01, 0]}
+    position={[0, -1.4, 0]}
   />
 );
 
-// ---------- Pendulum ----------
+// ------- Voltmeter (3D dial in the scene) -------
 
-const Pendulum = ({
-  length,
-  gravity,
-  playing,
-  resetKey,
+const Voltmeter = ({
+  voltage,
+  vMax,
+  position,
+  label,
 }: {
-  length: number;
-  gravity: number;
-  playing: boolean;
-  resetKey: number;
+  voltage: number;
+  vMax: number;
+  position: [number, number, number];
+  label: string;
 }) => {
-  const theta = useRef(Math.PI / 4);
-  const omega = useRef(0);
-  const group = useRef<THREE.Group>(null);
-
-  useMemo(() => {
-    theta.current = Math.PI / 4;
-    omega.current = 0;
-  }, [resetKey]);
+  const needle = useRef<THREE.Group>(null);
+  const current = useRef(0);
 
   useFrame((_s, dt) => {
-    if (!playing) return;
-    const step = Math.min(dt, 1 / 30);
-    const alpha = -(gravity / length) * Math.sin(theta.current);
-    omega.current += alpha * step;
-    omega.current *= 0.999;
-    theta.current += omega.current * step;
-    if (group.current) group.current.rotation.z = theta.current;
+    // smoothly ease needle toward target voltage
+    current.current += (voltage - current.current) * Math.min(1, dt * 6);
+    if (needle.current) {
+      // sweep from -60° (left, 0V) to +60° (right, vMax)
+      const frac = Math.max(0, Math.min(1, current.current / vMax));
+      const angle = THREE.MathUtils.degToRad(-60 + frac * 120);
+      needle.current.rotation.z = angle;
+    }
   });
 
-  const bobY = -length;
+  // tick marks
+  const ticks = useMemo(() => {
+    const arr: { angle: number; big: boolean; value: number }[] = [];
+    for (let i = 0; i <= 10; i++) {
+      arr.push({
+        angle: THREE.MathUtils.degToRad(-60 + (i / 10) * 120),
+        big: i % 2 === 0,
+        value: (i / 10) * vMax,
+      });
+    }
+    return arr;
+  }, [vMax]);
+
   return (
-    <group position={[0, 3, 0]}>
+    <group position={position}>
+      {/* body */}
       <mesh>
-        <cylinderGeometry args={[1.5, 1.5, 0.1, 32]} />
-        <meshStandardMaterial color="#1e293b" />
+        <cylinderGeometry args={[1.1, 1.1, 0.25, 48]} />
+        <meshStandardMaterial color="#0f172a" metalness={0.4} roughness={0.5} />
       </mesh>
-      <group ref={group}>
-        <mesh position={[0, bobY / 2, 0]}>
-          <cylinderGeometry args={[0.03, 0.03, length, 8]} />
-          <meshStandardMaterial color="#94a3b8" />
+      {/* dial face */}
+      <mesh position={[0, 0.13, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[1.0, 48]} />
+        <meshStandardMaterial color="#f8fafc" />
+      </mesh>
+      {/* ticks */}
+      {ticks.map((t, i) => (
+        <group key={i} position={[0, 0.14, 0]} rotation={[0, 0, t.angle]}>
+          <mesh position={[0, 0.85, 0]}>
+            <boxGeometry args={[t.big ? 0.05 : 0.03, t.big ? 0.16 : 0.09, 0.01]} />
+            <meshStandardMaterial color="#0f172a" />
+          </mesh>
+        </group>
+      ))}
+      {/* label V */}
+      <Text
+        position={[0, 0.14, -0.55]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        fontSize={0.22}
+        color="#0f172a"
+        anchorX="center"
+        anchorY="middle"
+      >
+        V
+      </Text>
+      {/* needle */}
+      <group ref={needle} position={[0, 0.15, 0]}>
+        <mesh position={[0, 0.45, 0]}>
+          <boxGeometry args={[0.05, 0.9, 0.02]} />
+          <meshStandardMaterial color="#ef4444" />
         </mesh>
-        <mesh position={[0, bobY, 0]} castShadow>
-          <sphereGeometry args={[0.35, 32, 32]} />
-          <meshStandardMaterial color="#3b82f6" metalness={0.4} roughness={0.3} />
+        <mesh>
+          <cylinderGeometry args={[0.09, 0.09, 0.05, 24]} />
+          <meshStandardMaterial color="#1e293b" />
         </mesh>
       </group>
+      {/* under-label */}
+      <Text
+        position={[0, -0.15, 1.35]}
+        fontSize={0.22}
+        color="#e2e8f0"
+        anchorX="center"
+        anchorY="middle"
+      >
+        {label}
+      </Text>
     </group>
   );
 };
 
-// ---------- Projectile ----------
+// ------- Capacitor scene -------
 
-const Projectile = ({
-  speed,
-  angleDeg,
-  gravity,
-  playing,
-  resetKey,
+const Wire = ({
+  from,
+  to,
+  color = "#f59e0b",
 }: {
-  speed: number;
-  angleDeg: number;
-  gravity: number;
-  playing: boolean;
-  resetKey: number;
+  from: [number, number, number];
+  to: [number, number, number];
+  color?: string;
 }) => {
-  const t = useRef(0);
-  const landed = useRef(false);
-  const ball = useRef<THREE.Mesh>(null);
+  const curve = useMemo(() => {
+    const start = new THREE.Vector3(...from);
+    const end = new THREE.Vector3(...to);
+    const mid = start.clone().add(end).multiplyScalar(0.5);
+    mid.y -= 0.6;
+    return new THREE.CatmullRomCurve3([start, mid, end]);
+  }, [from, to]);
 
-  useMemo(() => {
-    t.current = 0;
-    landed.current = false;
-  }, [resetKey, speed, angleDeg, gravity]);
+  const geom = useMemo(() => new THREE.TubeGeometry(curve, 40, 0.035, 8, false), [curve]);
 
-  useFrame((_s, dt) => {
-    if (!playing || landed.current) return;
-    t.current += Math.min(dt, 1 / 30);
-    const rad = (angleDeg * Math.PI) / 180;
-    const vx = speed * Math.cos(rad);
-    const vy = speed * Math.sin(rad);
-    const x = vx * t.current;
-    const y = vy * t.current - 0.5 * gravity * t.current * t.current;
-    if (y <= 0 && t.current > 0.05) {
-      landed.current = true;
-      if (ball.current) ball.current.position.set(x, 0.25, 0);
-      return;
+  return (
+    <mesh geometry={geom}>
+      <meshStandardMaterial color={color} metalness={0.5} roughness={0.4} />
+    </mesh>
+  );
+};
+
+const CapacitorScene = ({
+  insertion,
+  setInsertion,
+}: {
+  insertion: number;
+  setInsertion: (f: number) => void;
+}) => {
+  const slabRef = useRef<THREE.Group>(null);
+  const dragging = useRef(false);
+  const dragOffset = useRef(0);
+  const { gl } = useThree();
+
+  useFrame(() => {
+    if (slabRef.current) {
+      const targetX = xForInsertion(insertion);
+      // smooth
+      slabRef.current.position.x += (targetX - slabRef.current.position.x) * 0.25;
     }
-    if (ball.current) ball.current.position.set(x, y + 0.25, 0);
   });
+
+  const dragPlane = useMemo(
+    () => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
+    []
+  );
+
+  const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    dragging.current = true;
+    dragOffset.current = xForInsertion(insertion) - e.point.x;
+    (e.target as Element)?.setPointerCapture?.(e.pointerId);
+    gl.domElement.style.cursor = "grabbing";
+  };
+
+  const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (!dragging.current) return;
+    // project pointer onto y=0 plane
+    const hit = new THREE.Vector3();
+    e.ray.intersectPlane(dragPlane, hit);
+    const nextX = hit.x + dragOffset.current;
+    setInsertion(insertionForX(nextX));
+  };
+
+  const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
+    dragging.current = false;
+    (e.target as Element)?.releasePointerCapture?.(e.pointerId);
+    gl.domElement.style.cursor = "auto";
+  };
+
+  const plateZ = GAP / 2;
 
   return (
     <group>
-      <mesh position={[0, 0.05, 0]}>
-        <boxGeometry args={[0.8, 0.1, 0.8]} />
-        <meshStandardMaterial color="#f59e0b" />
+      {/* Left plate (positive) */}
+      <mesh position={[0, 0, -plateZ]} castShadow receiveShadow>
+        <boxGeometry args={[PLATE_W, PLATE_H, PLATE_T]} />
+        <meshStandardMaterial color="#fbbf24" metalness={0.85} roughness={0.25} />
       </mesh>
-      <mesh ref={ball} position={[0, 0.25, 0]} castShadow>
-        <sphereGeometry args={[0.25, 24, 24]} />
-        <meshStandardMaterial color="#ef4444" />
+      <Text
+        position={[0, PLATE_H / 2 + 0.25, -plateZ]}
+        fontSize={0.35}
+        color="#fbbf24"
+        anchorX="center"
+        anchorY="middle"
+      >
+        +
+      </Text>
+      {/* Right plate (negative) */}
+      <mesh position={[0, 0, plateZ]} castShadow receiveShadow>
+        <boxGeometry args={[PLATE_W, PLATE_H, PLATE_T]} />
+        <meshStandardMaterial color="#cbd5e1" metalness={0.85} roughness={0.25} />
       </mesh>
+      <Text
+        position={[0, PLATE_H / 2 + 0.25, plateZ]}
+        fontSize={0.35}
+        color="#94a3b8"
+        anchorX="center"
+        anchorY="middle"
+      >
+        −
+      </Text>
+
+      {/* Dielectric slab (draggable) */}
+      <group
+        ref={slabRef}
+        position={[xForInsertion(insertion), 0, 0]}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerOut={handlePointerUp}
+      >
+        <mesh castShadow>
+          <boxGeometry args={[SLAB_W, SLAB_H, SLAB_T]} />
+          <meshPhysicalMaterial
+            color="#38bdf8"
+            transparent
+            opacity={0.55}
+            roughness={0.15}
+            metalness={0.1}
+            transmission={0.6}
+            thickness={0.4}
+            clearcoat={1}
+          />
+        </mesh>
+        {/* subtle edge */}
+        <mesh>
+          <boxGeometry args={[SLAB_W + 0.01, SLAB_H + 0.01, SLAB_T + 0.01]} />
+          <meshBasicMaterial color="#0ea5e9" wireframe />
+        </mesh>
+        <Text
+          position={[0, SLAB_H / 2 + 0.22, 0]}
+          fontSize={0.22}
+          color="#38bdf8"
+          anchorX="center"
+          anchorY="middle"
+        >
+          κ
+        </Text>
+      </group>
+
+      {/* Wires from plates to voltmeter above */}
+      <Wire from={[-PLATE_W / 2, PLATE_H / 2, -plateZ]} to={[-1.1, 2.6, 0]} color="#fbbf24" />
+      <Wire from={[PLATE_W / 2, PLATE_H / 2, plateZ]} to={[1.1, 2.6, 0]} color="#e2e8f0" />
     </group>
   );
 };
 
-// ---------- Inclined plane ----------
-
-const Incline = ({
-  angleDeg,
-  friction,
-  gravity,
-  playing,
-  resetKey,
-}: {
-  angleDeg: number;
-  friction: number;
-  gravity: number;
-  playing: boolean;
-  resetKey: number;
-}) => {
-  const s = useRef(0);
-  const v = useRef(0);
-  const block = useRef<THREE.Mesh>(null);
-  const rampLen = 8;
-  const rad = (angleDeg * Math.PI) / 180;
-
-  useMemo(() => {
-    s.current = 0;
-    v.current = 0;
-  }, [resetKey, angleDeg, friction]);
-
-  useFrame((_st, dt) => {
-    if (!playing) return;
-    const step = Math.min(dt, 1 / 30);
-    const a = gravity * (Math.sin(rad) - friction * Math.cos(rad));
-    if (a > 0) {
-      v.current += a * step;
-      s.current += v.current * step;
-    }
-    if (s.current > rampLen) s.current = rampLen;
-    if (block.current) {
-      const x = -rampLen / 2 * Math.cos(rad) + s.current * Math.cos(rad);
-      const y = rampLen / 2 * Math.sin(rad) - s.current * Math.sin(rad) + 0.3;
-      block.current.position.set(x, y, 0);
-      block.current.rotation.z = -rad;
-    }
-  });
-
-  return (
-    <group>
-      <mesh rotation={[0, 0, rad]} position={[0, 0, 0]}>
-        <boxGeometry args={[rampLen, 0.2, 3]} />
-        <meshStandardMaterial color="#334155" />
-      </mesh>
-      <mesh ref={block} castShadow>
-        <boxGeometry args={[0.7, 0.7, 0.7]} />
-        <meshStandardMaterial color="#22c55e" />
-      </mesh>
-    </group>
-  );
-};
-
-// ---------- Spring / SHM ----------
-
-const Spring = ({
-  k,
-  mass,
-  amplitude,
-  playing,
-  resetKey,
-}: {
-  k: number;
-  mass: number;
-  amplitude: number;
-  playing: boolean;
-  resetKey: number;
-}) => {
-  const t = useRef(0);
-  const box = useRef<THREE.Mesh>(null);
-  const coil = useRef<THREE.Mesh>(null);
-
-  useMemo(() => {
-    t.current = 0;
-  }, [resetKey]);
-
-  useFrame((_s, dt) => {
-    if (!playing) return;
-    t.current += Math.min(dt, 1 / 30);
-    const omega = Math.sqrt(k / Math.max(mass, 0.01));
-    const x = amplitude * Math.cos(omega * t.current);
-    if (box.current) box.current.position.y = x;
-    if (coil.current) {
-      const len = 3 + x;
-      coil.current.scale.y = len / 3;
-      coil.current.position.y = len / 2 + 1;
-    }
-  });
-
-  return (
-    <group position={[0, 0, 0]}>
-      <mesh position={[0, 5, 0]}>
-        <boxGeometry args={[3, 0.2, 1]} />
-        <meshStandardMaterial color="#1e293b" />
-      </mesh>
-      <mesh ref={coil} position={[0, 2.5, 0]}>
-        <cylinderGeometry args={[0.15, 0.15, 3, 12]} />
-        <meshStandardMaterial color="#94a3b8" wireframe />
-      </mesh>
-      <mesh ref={box} position={[0, 0, 0]} castShadow>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="#8b5cf6" metalness={0.3} roughness={0.4} />
-      </mesh>
-    </group>
-  );
-};
-
-// ---------- Orbit ----------
-
-const Orbit = ({
-  radius,
-  speed,
-  playing,
-  resetKey,
-}: {
-  radius: number;
-  speed: number;
-  playing: boolean;
-  resetKey: number;
-}) => {
-  const t = useRef(0);
-  const planet = useRef<THREE.Mesh>(null);
-
-  useMemo(() => {
-    t.current = 0;
-  }, [resetKey]);
-
-  useFrame((_s, dt) => {
-    if (!playing) return;
-    t.current += Math.min(dt, 1 / 30) * speed;
-    if (planet.current) {
-      planet.current.position.set(
-        Math.cos(t.current) * radius,
-        0,
-        Math.sin(t.current) * radius,
-      );
-    }
-  });
-
-  const orbitPoints = useMemo(() => {
-    const pts: THREE.Vector3[] = [];
-    for (let i = 0; i <= 64; i++) {
-      const a = (i / 64) * Math.PI * 2;
-      pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
-    }
-    return pts;
-  }, [radius]);
-
-  const orbitGeom = useMemo(() => new THREE.BufferGeometry().setFromPoints(orbitPoints), [orbitPoints]);
-
-  return (
-    <group>
-      <mesh>
-        <sphereGeometry args={[0.9, 32, 32]} />
-        <meshStandardMaterial color="#f59e0b" emissive="#f97316" emissiveIntensity={0.6} />
-      </mesh>
-      <primitive object={new THREE.Line(orbitGeom, new THREE.LineBasicMaterial({ color: "#475569" }))} />
-      <mesh ref={planet} castShadow>
-        <sphereGeometry args={[0.35, 24, 24]} />
-        <meshStandardMaterial color="#3b82f6" />
-      </mesh>
-    </group>
-  );
-};
-
-// ---------- Scene wrapper ----------
+// ------- Small UI slider -------
 
 const Slider = ({
   label,
@@ -372,6 +336,7 @@ const Slider = ({
   max,
   step,
   onChange,
+  suffix,
 }: {
   label: string;
   value: number;
@@ -379,11 +344,15 @@ const Slider = ({
   max: number;
   step: number;
   onChange: (v: number) => void;
+  suffix?: string;
 }) => (
   <label className="block">
     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
       <span>{label}</span>
-      <span className="text-foreground font-mono">{value.toFixed(2)}</span>
+      <span className="font-mono text-foreground">
+        {value.toFixed(step < 1 ? 2 : 0)}
+        {suffix ?? ""}
+      </span>
     </div>
     <input
       type="range"
@@ -391,11 +360,13 @@ const Slider = ({
       max={max}
       step={step}
       value={value}
-      onChange={(e) => onChange(parseFloat(e.currentTarget.value))}
+      onChange={(e) => onChange(parseFloat(e.target.value))}
       className="w-full accent-primary"
     />
   </label>
 );
+
+// ------- Page -------
 
 const PhysicsActivities = ({
   language,
@@ -406,84 +377,20 @@ const PhysicsActivities = ({
 }) => {
   const isRTL = language === "ar";
   const t = copy[language];
-  const [activity, setActivity] = useState<ActivityKey>("pendulum");
-  const [playing, setPlaying] = useState(true);
-  const [resetKey, setResetKey] = useState(0);
 
-  // per-activity params
-  const [length, setLength] = useState(2);
-  const [gravity, setGravity] = useState(9.81);
-  const [speed, setSpeed] = useState(8);
-  const [angle, setAngle] = useState(45);
-  const [rampAngle, setRampAngle] = useState(25);
-  const [friction, setFriction] = useState(0.1);
-  const [k, setK] = useState(20);
-  const [mass, setMass] = useState(1);
-  const [amplitude, setAmplitude] = useState(1.2);
-  const [orbitR, setOrbitR] = useState(3);
-  const [orbitSpeed, setOrbitSpeed] = useState(1);
+  const [insertion, setInsertion] = useState(0); // 0 outside, 1 fully inside
+  const [kappa, setKappa] = useState(3);
+  const [v0, setV0] = useState(10);
 
-  const reset = () => setResetKey((v) => v + 1);
+  // Isolated capacitor: Q constant. C = C0 * (1 + (κ-1) f)
+  // V = Q / C = V0 / (1 + (κ-1) f)
+  const voltage = v0 / (1 + (kappa - 1) * insertion);
 
-  const renderScene = () => {
-    switch (activity) {
-      case "pendulum":
-        return <Pendulum length={length} gravity={gravity} playing={playing} resetKey={resetKey} />;
-      case "projectile":
-        return <Projectile speed={speed} angleDeg={angle} gravity={gravity} playing={playing} resetKey={resetKey} />;
-      case "incline":
-        return <Incline angleDeg={rampAngle} friction={friction} gravity={gravity} playing={playing} resetKey={resetKey} />;
-      case "spring":
-        return <Spring k={k} mass={mass} amplitude={amplitude} playing={playing} resetKey={resetKey} />;
-      case "orbit":
-        return <Orbit radius={orbitR} speed={orbitSpeed} playing={playing} resetKey={resetKey} />;
-    }
+  const reset = () => {
+    setInsertion(0);
+    setKappa(3);
+    setV0(10);
   };
-
-  const renderControls = () => {
-    switch (activity) {
-      case "pendulum":
-        return (
-          <>
-            <Slider label={t.labels.length} value={length} min={0.5} max={5} step={0.1} onChange={setLength} />
-            <Slider label={t.labels.gravity} value={gravity} min={1} max={25} step={0.1} onChange={setGravity} />
-          </>
-        );
-      case "projectile":
-        return (
-          <>
-            <Slider label={t.labels.speed} value={speed} min={1} max={20} step={0.1} onChange={setSpeed} />
-            <Slider label={t.labels.angle} value={angle} min={5} max={85} step={1} onChange={setAngle} />
-            <Slider label={t.labels.gravity} value={gravity} min={1} max={25} step={0.1} onChange={setGravity} />
-          </>
-        );
-      case "incline":
-        return (
-          <>
-            <Slider label={t.labels.angleRamp} value={rampAngle} min={5} max={60} step={1} onChange={setRampAngle} />
-            <Slider label={t.labels.friction} value={friction} min={0} max={0.8} step={0.01} onChange={setFriction} />
-            <Slider label={t.labels.gravity} value={gravity} min={1} max={25} step={0.1} onChange={setGravity} />
-          </>
-        );
-      case "spring":
-        return (
-          <>
-            <Slider label={t.labels.k} value={k} min={1} max={80} step={1} onChange={setK} />
-            <Slider label={t.labels.mass} value={mass} min={0.1} max={5} step={0.1} onChange={setMass} />
-            <Slider label={t.labels.amplitude} value={amplitude} min={0.2} max={2} step={0.1} onChange={setAmplitude} />
-          </>
-        );
-      case "orbit":
-        return (
-          <>
-            <Slider label={t.labels.orbitR} value={orbitR} min={1.5} max={6} step={0.1} onChange={setOrbitR} />
-            <Slider label={t.labels.orbitSpeed} value={orbitSpeed} min={0.1} max={4} step={0.05} onChange={setOrbitSpeed} />
-          </>
-        );
-    }
-  };
-
-  const activityList: ActivityKey[] = ["pendulum", "projectile", "incline", "spring", "orbit"];
 
   return (
     <main dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-background pb-28">
@@ -507,43 +414,15 @@ const PhysicsActivities = ({
             >
               {t.title}
             </h1>
-            <p className="text-muted-foreground text-sm">{t.subtitle}</p>
+            <p className="text-muted-foreground text-sm max-w-2xl">{t.subtitle}</p>
           </div>
         </header>
 
-        {/* Activity picker */}
-        <div className="mb-4">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">{t.pick}</p>
-          <div className="flex flex-wrap gap-2">
-            {activityList.map((k) => {
-              const meta = t.activities[k];
-              const active = k === activity;
-              return (
-                <button
-                  key={k}
-                  onClick={() => {
-                    setActivity(k);
-                    setResetKey((v) => v + 1);
-                  }}
-                  className={`px-3 py-2 rounded-xl text-sm border transition-all ${
-                    active
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-border bg-card text-muted-foreground hover:border-primary/40"
-                  }`}
-                >
-                  {meta.name}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">{t.activities[activity].desc}</p>
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
           <div className="relative rounded-2xl overflow-hidden border border-border bg-black h-[420px] md:h-[560px]">
-            <Canvas shadows camera={{ position: [6, 5, 8], fov: 50 }} dpr={[1, 1.5]}>
+            <Canvas shadows camera={{ position: [5, 4, 7], fov: 50 }} dpr={[1, 1.5]}>
               <color attach="background" args={["#0b1220"]} />
-              <ambientLight intensity={0.4} />
+              <ambientLight intensity={0.5} />
               <directionalLight
                 position={[6, 10, 4]}
                 intensity={1.1}
@@ -552,7 +431,13 @@ const PhysicsActivities = ({
                 shadow-mapSize-height={1024}
               />
               <Suspense fallback={<Html center><span className="text-white text-sm">Loading…</span></Html>}>
-                {renderScene()}
+                <CapacitorScene insertion={insertion} setInsertion={setInsertion} />
+                <Voltmeter
+                  voltage={voltage}
+                  vMax={v0}
+                  position={[0, 2.9, 0]}
+                  label={`${voltage.toFixed(2)} V`}
+                />
                 <Environment preset="city" />
               </Suspense>
               <FloorGrid />
@@ -560,33 +445,66 @@ const PhysicsActivities = ({
                 enableDamping
                 dampingFactor={0.1}
                 minDistance={3}
-                maxDistance={30}
+                maxDistance={20}
                 target={[0, 1, 0]}
+                makeDefault
               />
             </Canvas>
+
+            {/* readout overlay */}
+            <div className="absolute top-3 left-3 rounded-xl bg-black/50 backdrop-blur-sm border border-white/10 px-3 py-2 text-white text-xs">
+              <div className="flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5 text-primary" />
+                <span className="uppercase tracking-widest text-white/60">{t.labels.voltage}</span>
+              </div>
+              <div className="font-mono text-lg font-semibold">{voltage.toFixed(2)} V</div>
+              <div className="text-white/60">
+                {insertion > 0.05 ? t.labels.inside : t.labels.outside}
+              </div>
+            </div>
           </div>
 
           <aside className="rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">{t.controls}</p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPlaying((p) => !p)}
-                  className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border bg-secondary/50 text-xs font-semibold hover:border-primary/40 transition-colors"
-                >
-                  {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                  {playing ? t.pause : t.play}
-                </button>
-                <button
-                  onClick={reset}
-                  className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border bg-secondary/50 text-xs font-semibold hover:border-primary/40 transition-colors"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  {t.reset}
-                </button>
-              </div>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                {t.activityName}
+              </p>
+              <button
+                onClick={reset}
+                className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border bg-secondary/50 text-xs font-semibold hover:border-primary/40 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {t.reset}
+              </button>
             </div>
-            <div className="space-y-4">{renderControls()}</div>
+            <p className="text-xs text-muted-foreground mb-4">{t.labels.hint}</p>
+            <div className="space-y-4">
+              <Slider
+                label={t.labels.insertion}
+                value={insertion}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={setInsertion}
+              />
+              <Slider
+                label={t.labels.kappa}
+                value={kappa}
+                min={1}
+                max={10}
+                step={0.1}
+                onChange={setKappa}
+              />
+              <Slider
+                label={t.labels.v0}
+                value={v0}
+                min={1}
+                max={20}
+                step={0.5}
+                onChange={setV0}
+                suffix=" V"
+              />
+            </div>
           </aside>
         </div>
       </div>
