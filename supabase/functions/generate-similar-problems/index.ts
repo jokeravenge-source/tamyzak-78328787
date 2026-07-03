@@ -25,7 +25,9 @@ Deno.serve(async (req) => {
     }
 
     const hasText = typeof text === "string" && text.trim().length > 0;
-    const hasImage = typeof image_url === "string" && image_url.startsWith("http");
+    const hasImage =
+      typeof image_url === "string" &&
+      (image_url.startsWith("http") || image_url.startsWith("data:image/"));
     if (!hasText && !hasImage) {
       return new Response(JSON.stringify({ error: "Missing source text or image" }), {
         status: 400,
