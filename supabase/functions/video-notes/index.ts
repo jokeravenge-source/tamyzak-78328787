@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
           "X-Lovable-AIG-SDK": "vercel-ai-sdk",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-3.5-flash",
           messages: [{ role: "system", content: sys }, { role: "user", content: userMsg }],
           tools: [{
             type: "function",
@@ -184,9 +184,12 @@ Deno.serve(async (req) => {
     // Try Lovable AI Gateway first (multiple models for fallback on quota/overload),
     // then fall back to direct Gemini if available.
     const lovableModels = [
-      "google/gemini-2.5-flash",
-      "google/gemini-2.5-flash-lite",
       "google/gemini-3-flash-preview",
+      "google/gemini-3.5-flash",
+      "google/gemini-2.5-flash",
+      "google/gemini-3.1-flash-lite",
+      "google/gemini-2.5-flash-lite",
+      "google/gemini-2.5-pro",
     ];
     const geminiDirectModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastGeminiError: any = null;
