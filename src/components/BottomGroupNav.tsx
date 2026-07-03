@@ -70,6 +70,12 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     ],
   },
   {
+    titleEn: "Courses", titleAr: "الدورات",
+    items: [
+      { key: "courses", labelEn: "All Courses", labelAr: "كل الدورات", Icon: GraduationCap },
+    ],
+  },
+  {
     titleEn: "All Tools", titleAr: "كل الأدوات",
     items: [
       { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
@@ -96,6 +102,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Study: Layers,
   Progress: Target,
   Community: Users,
+  Courses: GraduationCap,
   "All Tools": Wrench,
   Account: Settings,
 };
