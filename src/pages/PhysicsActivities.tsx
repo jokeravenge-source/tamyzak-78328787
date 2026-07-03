@@ -1,71 +1,53 @@
-import { Suspense, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense, useRef, useState } from "react";
+import { Canvas, useFrame, ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, Grid, Environment, Html } from "@react-three/drei";
-import { ArrowLeft, Atom, RotateCcw, Play, Pause } from "lucide-react";
+import { ArrowLeft, Atom, RotateCcw } from "lucide-react";
 import * as THREE from "three";
 import type { AppLanguage } from "@/components/LanguageGate";
 
-type ActivityKey = "pendulum" | "projectile" | "incline" | "spring" | "orbit";
+type ActivityKey = "capacitor";
 
 const copy = {
   en: {
     title: "Physics Activities",
-    subtitle: "Interactive 3D experiments — drag to rotate, scroll to zoom, tweak values and hit play.",
+    subtitle: "Interactive 3D experiments — drag to rotate the camera, drag the dielectric to slide it in and out.",
     back: "Back",
     pick: "Pick an activity",
     controls: "Controls",
-    play: "Play",
-    pause: "Pause",
     reset: "Reset",
     activities: {
-      pendulum: { name: "Pendulum", desc: "Simple gravity pendulum. Adjust length and gravity." },
-      projectile: { name: "Projectile Motion", desc: "Launch a ball with initial speed and angle." },
-      incline: { name: "Inclined Plane", desc: "Slide a block down a ramp with friction." },
-      spring: { name: "Mass on a Spring", desc: "Simple harmonic motion of a spring-mass system." },
-      orbit: { name: "Planet Orbit", desc: "A tiny planet orbiting a star — change speed and radius." },
+      capacitor: {
+        name: "Capacitor & Dielectric",
+        desc: "An isolated charged parallel-plate capacitor connected to a voltmeter. Slide the dielectric slab into the gap — the voltmeter reading drops. Pull it out — the reading rises again.",
+      },
     },
     labels: {
-      length: "Length (m)",
-      gravity: "Gravity (m/s²)",
-      speed: "Initial speed (m/s)",
-      angle: "Angle (°)",
-      angleRamp: "Ramp angle (°)",
-      friction: "Friction",
-      mass: "Mass (kg)",
-      k: "Spring stiffness k (N/m)",
-      amplitude: "Amplitude (m)",
-      orbitR: "Orbit radius",
-      orbitSpeed: "Orbit speed",
+      insertion: "Dielectric insertion",
+      kappa: "Dielectric constant κ",
+      v0: "Initial voltage V₀ (V)",
+      voltage: "Voltmeter reading",
+      hint: "Tip: drag the blue slab left/right, or use the slider below.",
     },
   },
   ar: {
     title: "أنشطة الفيزياء",
-    subtitle: "تجارب ثلاثية الأبعاد تفاعلية — اسحب للتدوير، مرّر للتكبير، غيّر القيم واضغط تشغيل.",
+    subtitle: "تجارب ثلاثية الأبعاد تفاعلية — اسحب لتدوير الكاميرا، واسحب العازل لإدخاله وإخراجه من المكثف.",
     back: "رجوع",
     pick: "اختر نشاطاً",
     controls: "الإعدادات",
-    play: "تشغيل",
-    pause: "إيقاف",
     reset: "إعادة",
     activities: {
-      pendulum: { name: "البندول", desc: "بندول جاذبية بسيط. غيّر الطول والجاذبية." },
-      projectile: { name: "المقذوفات", desc: "اقذف كرة بسرعة وزاوية ابتدائية." },
-      incline: { name: "المستوى المائل", desc: "أنزلق كتلة على منحدر مع الاحتكاك." },
-      spring: { name: "كتلة على نابض", desc: "حركة توافقية بسيطة لنظام نابض وكتلة." },
-      orbit: { name: "مدار الكواكب", desc: "كوكب صغير يدور حول نجم — غيّر السرعة ونصف القطر." },
+      capacitor: {
+        name: "مكثف وعازل",
+        desc: "مكثف بلوحين متوازيين مشحون ومعزول موصول بفولتمتر. أدخل العازل بين اللوحين فتنخفض قراءة الفولتمتر، وأخرجه فترتفع القراءة مرة أخرى.",
+      },
     },
     labels: {
-      length: "الطول (م)",
-      gravity: "الجاذبية (م/ث²)",
-      speed: "السرعة الابتدائية (م/ث)",
-      angle: "الزاوية (°)",
-      angleRamp: "زاوية المنحدر (°)",
-      friction: "الاحتكاك",
-      mass: "الكتلة (كغ)",
-      k: "صلابة النابض k (ن/م)",
-      amplitude: "السعة (م)",
-      orbitR: "نصف القطر",
-      orbitSpeed: "سرعة المدار",
+      insertion: "مقدار إدخال العازل",
+      kappa: "ثابت العازل κ",
+      v0: "الجهد الابتدائي V₀ (فولت)",
+      voltage: "قراءة الفولتمتر",
+      hint: "تلميح: اسحب اللوح الأزرق يميناً ويساراً، أو استخدم شريط التمرير أدناه.",
     },
   },
 } as const;
