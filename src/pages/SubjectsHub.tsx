@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap, RefreshCw, BookText, Beaker, Sigma, Atom as AtomIcon, FileQuestion, Volume2, Timer, TrendingDown, Repeat, FileText, Feather, Type, Music, Brain, HeartPulse, Table2, Sparkles as SparklesIcon, Languages, GaugeCircle, ListTodo, ClipboardList, Wand2, MessageCircle, BookHeart, Speech, PenTool } from "lucide-react";
+import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap, RefreshCw, BookText, Beaker, Sigma, Atom as AtomIcon, FileQuestion, Volume2, Timer, TrendingDown, Repeat, FileText, Feather, Type, Music, Brain, HeartPulse, Table2, Sparkles as SparklesIcon, Languages, GaugeCircle, ListTodo, ClipboardList, Wand2, MessageCircle, BookHeart, Speech, PenTool, Boxes } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -37,6 +37,7 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
     code: "physics", en: "Physics", ar: "الفيزياء", Icon: Atom,
     tools: [
       { key: "subjectTutor", en: "AI Tutor", ar: "المعلم الذكي", Icon: Bot },
+      { key: "physicsActivities", en: "Activities", ar: "الأنشطة", Icon: Boxes },
       { key: "physicsProblemSolver", en: "Problem Solver", ar: "حل المسائل", Icon: Calculator },
       { key: "physicsQuickMcq", en: "Quick MCQ", ar: "اختبار سريع", Icon: Zap },
       { key: "physicsLaws", en: "Laws & Units", ar: "قوانين ووحدات", Icon: Ruler },
