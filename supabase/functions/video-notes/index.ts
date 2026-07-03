@@ -95,7 +95,11 @@ Deno.serve(async (req) => {
       const userMsg = `TRANSCRIPT:\n${transcriptText}\n\nGenerate ${n} flashcards.`;
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+        headers: {
+          "Content-Type": "application/json",
+          "Lovable-API-Key": LOVABLE_API_KEY,
+          "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+        },
         body: JSON.stringify({
           model: "google/gemini-2.5-flash",
           messages: [{ role: "system", content: sys }, { role: "user", content: userMsg }],
@@ -226,7 +230,8 @@ Deno.serve(async (req) => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+              "Lovable-API-Key": LOVABLE_API_KEY,
+              "X-Lovable-AIG-SDK": "vercel-ai-sdk",
             },
             body: JSON.stringify({
               model,

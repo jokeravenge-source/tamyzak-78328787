@@ -112,6 +112,28 @@ type Part = { title: string; notes: string };
 type Card = { q: string; a: string };
 type MCQItem = { question: string; choices: string[]; answer_index: number; explanation: string; hint?: string };
 
+const readFunctionError = async (error: any, fallback: string) => {
+  const response = error?.context;
+  if (response && typeof response.clone === "function") {
+    try {
+      const payload = await response.clone().json();
+      const message = payload?.error || payload?.message || fallback;
+      return {
+        message: String(message),
+        retryable: payload?.retryable === true || (response.status >= 500 && payload?.retryable !== false),
+        retryAfter: Number(payload?.retryAfter || 0),
+      };
+    } catch { /* fall through */ }
+  }
+
+  const raw = error?.message || fallback;
+  return {
+    message: /non-2xx/i.test(raw) ? fallback : String(raw),
+    retryable: false,
+    retryAfter: 0,
+  };
+};
+
 const STORAGE_KEY = "video_notes_state_v1";
 type Persisted = {
   url: string;
@@ -193,15 +215,23 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     try {
       const maxAttempts = 4;
       let lastErr: any = null;
+      let lastRetryAfter = 0;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         if (attempt === 1) setStatus({ kind: "working", message: t.working });
         const { data, error } = await supabase.functions.invoke("video-notes", {
           body: { url: url.trim(), language },
         });
-        if (error) { lastErr = error; }
+        let retryable = false;
+        if (error) {
+          const details = await readFunctionError(error, t.failed);
+          lastErr = new Error(details.message);
+          retryable = details.retryable;
+          lastRetryAfter = details.retryAfter;
+        }
         else if ((data as any)?.error) {
           lastErr = new Error((data as any).message || (data as any).error);
-          if ((data as any).retryable === false) break;
+          retryable = (data as any).retryable === true;
+          lastRetryAfter = Number((data as any)?.retryAfter || 0);
         } else if ((data as any)?.notes) {
           setNotes((data as any).notes);
           const ps = Array.isArray((data as any).parts) ? (data as any).parts as Part[] : [];
@@ -214,9 +244,10 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         } else {
           lastErr = new Error(t.failed);
         }
+        if (!retryable) break;
         if (attempt < maxAttempts) {
           setStatus({ kind: "retrying", attempt: attempt + 1, max: maxAttempts });
-          const retryAfterMs = Number((data as any)?.retryAfter || 0) * 1000;
+          const retryAfterMs = lastRetryAfter * 1000;
           const delay = Math.max(retryAfterMs, Math.min(8000, 600 * 2 ** (attempt - 1)) + Math.random() * 250);
           await new Promise((r) => setTimeout(r, delay));
         }
