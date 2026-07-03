@@ -59,6 +59,7 @@ const PhysicsProblemSolver = lazy(() => import("./pages/PhysicsProblemSolver"));
 const ProblemGenerator = lazy(() => import("./pages/ProblemGenerator"));
 const FrenchSynonyms = lazy(() => import("./pages/FrenchSynonyms"));
 const FrenchAntonyms = lazy(() => import("./pages/FrenchAntonyms"));
+const Courses = lazy(() => import("./pages/Courses"));
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
@@ -247,7 +248,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "courses";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
@@ -430,6 +431,8 @@ const App = () => {
         <FrenchSynonyms language={language} onBack={resetMenu} />
       ) : menuChoice === "frenchAntonyms" ? (
         <FrenchAntonyms language={language} onBack={resetMenu} />
+      ) : menuChoice === "courses" ? (
+        <Courses language={language} onBack={resetMenu} />
       ) : menuChoice === "companion" ? (
         <main className="min-h-screen bg-background pb-28">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
