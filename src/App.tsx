@@ -69,6 +69,7 @@ import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 import SearchFAB from "./components/SearchFAB";
 import ExcellenceCompanion from "./components/ExcellenceCompanion";
 import TelegramGate from "./components/TelegramGate";
+import TelegramChannelGate from "./components/TelegramChannelGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
 
@@ -149,6 +150,7 @@ const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [tgVerified, setTgVerified] = useState(false);
   const [tgLoading, setTgLoading] = useState(false);
+  const [channelVerified, setChannelVerified] = useState(false);
   const [authRole, setAuthRole] = useState<AuthRole | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null) : null)
   );
