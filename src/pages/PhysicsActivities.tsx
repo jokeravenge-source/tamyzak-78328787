@@ -204,9 +204,11 @@ const Wire = ({
 const CapacitorScene = ({
   insertion,
   setInsertion,
+  setDragging,
 }: {
   insertion: number;
   setInsertion: (f: number) => void;
+  setDragging: (v: boolean) => void;
 }) => {
   const slabRef = useRef<THREE.Group>(null);
   const dragging = useRef(false);
@@ -229,6 +231,7 @@ const CapacitorScene = ({
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     dragging.current = true;
+    setDragging(true);
     dragOffset.current = xForInsertion(insertion) - e.point.x;
     (e.target as Element)?.setPointerCapture?.(e.pointerId);
     gl.domElement.style.cursor = "grabbing";
@@ -245,6 +248,7 @@ const CapacitorScene = ({
 
   const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
     dragging.current = false;
+    setDragging(false);
     (e.target as Element)?.releasePointerCapture?.(e.pointerId);
     gl.domElement.style.cursor = "auto";
   };
@@ -381,6 +385,7 @@ const PhysicsActivities = ({
   const [insertion, setInsertion] = useState(0); // 0 outside, 1 fully inside
   const [kappa, setKappa] = useState(3);
   const [v0, setV0] = useState(10);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Isolated capacitor: Q constant. C = C0 * (1 + (κ-1) f)
   // V = Q / C = V0 / (1 + (κ-1) f)
@@ -431,7 +436,7 @@ const PhysicsActivities = ({
                 shadow-mapSize-height={1024}
               />
               <Suspense fallback={<Html center><span className="text-white text-sm">Loading…</span></Html>}>
-                <CapacitorScene insertion={insertion} setInsertion={setInsertion} />
+                <CapacitorScene insertion={insertion} setInsertion={setInsertion} setDragging={setIsDragging} />
                 <Voltmeter
                   voltage={voltage}
                   vMax={v0}
@@ -448,6 +453,7 @@ const PhysicsActivities = ({
                 maxDistance={20}
                 target={[0, 1, 0]}
                 makeDefault
+                enabled={!isDragging}
               />
             </Canvas>
 
