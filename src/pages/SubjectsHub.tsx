@@ -7,7 +7,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
 import { TOOL_PLACEHOLDER_KEY } from "@/pages/ToolPlaceholder";
 
-const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam", "frenchSynonyms", "frenchAntonyms"]);
+const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam", "frenchSynonyms", "frenchAntonyms", "physicsActivities"]);
 
 type SubjectKey = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic" | "islamic" | "revision";
 
