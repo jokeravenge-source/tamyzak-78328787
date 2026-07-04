@@ -359,13 +359,13 @@ const App = () => {
       <PointsAwardOverlay language={language ?? "en"} />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
-      {authed && language && authRole !== "admin" && tgVerified && (
+      {authed && language && authRole !== "admin" && tgVerified && channelVerified && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && (
+      {authed && language && authRole !== "admin" && tgVerified && channelVerified && (
         <CompanionWelcomeTrigger />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && (
+      {authed && language && authRole !== "admin" && tgVerified && channelVerified && (
         <BottomGroupNav
           language={language}
           active={(menuChoice as any) ?? "basics"}
@@ -373,7 +373,7 @@ const App = () => {
         />
       )}
       <PageTransition
-        routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${tgVerified ? "tg" : "notg"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
+        routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${tgVerified ? "tg" : "notg"}|${channelVerified ? "ch" : "noch"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
       >
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
@@ -397,6 +397,8 @@ const App = () => {
         ) : (
           <TelegramGate language={language} onVerified={() => setTgVerified(true)} />
         )
+      ) : authRole !== "admin" && !channelVerified ? (
+        <TelegramChannelGate language={language} onVerified={() => setChannelVerified(true)} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
           language={language}
