@@ -804,23 +804,23 @@ const spermatogenesis: DiagramDef = {
       /* Row 1 — spermatogonium */
       cell(50, 6, 3.6, "c1"),
       pair(50, 6, "d1", 0.9),
-      arrow(50, 10, 50, 14, "a1"),
+      arrow(50, 9.8, 50, 13.8, "a1"),
 
       /* Row 2 — primary spermatocyte (bigger, 2 XX-pairs) */
       cell(50, 19, 5, "c2"),
       xx(47, 19, "d2a", RED, BLUE, 1.3),
-      arrow(46, 24, 36, 30, "a2l"),
-      arrow(54, 24, 64, 30, "a2r"),
+      arrow(46.5, 22.7, 35, 29.6, "a2l"),
+      arrow(53.5, 22.7, 65, 29.6, "a2r"),
 
       /* Row 3 — two secondary spermatocytes */
       cell(35, 34, 4.2, "c3a"),
       xx(33, 34, "d3a", RED, RED, 1.1),
       cell(65, 34, 4.2, "c3b"),
       xx(63, 34, "d3b", BLUE, BLUE, 1.1),
-      arrow(31, 38, 22, 44, "a3a"),
-      arrow(39, 38, 45, 44, "a3b"),
-      arrow(61, 38, 55, 44, "a3c"),
-      arrow(69, 38, 78, 44, "a3d"),
+      arrow(32, 37.6, 18, 44.6, "a3a"),
+      arrow(38, 37.6, 41, 44.6, "a3b"),
+      arrow(62, 37.6, 59, 44.6, "a3c"),
+      arrow(68, 37.6, 82, 44.6, "a3d"),
 
       /* Row 4 — four spermatids */
       cell(18, 48, 3.2, "c4a"), pair(18, 48, "d4a", 0.75),
@@ -830,10 +830,10 @@ const spermatogenesis: DiagramDef = {
 
       /* Transition line + arrows */
       h("line", { x1: 6, y1: 57, x2: 94, y2: 57, stroke: BRK, strokeWidth: 0.45, opacity: 0.75 }),
-      arrow(18, 52, 18, 60, "a5a"),
-      arrow(41, 52, 41, 60, "a5b"),
-      arrow(59, 52, 59, 60, "a5c"),
-      arrow(82, 52, 82, 60, "a5d"),
+      arrow(18, 51.4, 18, 60.6, "a5a"),
+      arrow(41, 51.4, 41, 60.6, "a5b"),
+      arrow(59, 51.4, 59, 60.6, "a5c"),
+      arrow(82, 51.4, 82, 60.6, "a5d"),
 
       /* Row 5 — mature sperm */
       sperm(18, 63, "s1"),
