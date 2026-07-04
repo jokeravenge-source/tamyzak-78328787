@@ -63,6 +63,7 @@ const ToolPlaceholder = lazy(() => import("./pages/ToolPlaceholder"));
 const PhysicsActivities = lazy(() => import("./pages/PhysicsActivities"));
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
+import OAuthConsent from "./pages/OAuthConsent";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 import SearchFAB from "./components/SearchFAB";
@@ -109,6 +110,19 @@ const App = () => {
           <Toaster />
           <Sonner />
           <ParentFollow token={followMatch[1]} />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  // OAuth consent route for MCP clients — intercept before any auth gating
+  if (typeof window !== "undefined" && window.location.pathname === "/.lovable/oauth/consent") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <OAuthConsent />
         </TooltipProvider>
       </QueryClientProvider>
     );
