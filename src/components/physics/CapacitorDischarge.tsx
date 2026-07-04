@@ -270,9 +270,9 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
 
             <div className="grid grid-cols-2 gap-2 mb-4">
               <button
-                onClick={() => mode !== "charged" && toggleSwitch()}
+                onClick={() => mode === "discharging" && toggleSwitch()}
                 className={`h-10 rounded-lg text-xs font-semibold border transition-all ${
-                  mode === "charged"
+                  mode === "charged" || mode === "charging"
                     ? "bg-primary/15 border-primary text-primary"
                     : "border-border text-muted-foreground hover:border-primary/40"
                 }`}
