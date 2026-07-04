@@ -387,24 +387,48 @@ const CircuitSVG = ({
       </defs>
 
       {/* ---- CHARGE loop (left): battery -> K pos1 -> capacitor ---- */}
-      {/* wire battery top -> switch pivot */}
-      <path d="M 90 90 L 90 60 L 250 60" stroke="url(#wire)" strokeWidth="3" fill="none" />
-      {/* switch pivot to plate A top (position 1) - highlighted when charged */}
-      <path
-        d="M 250 60 L 400 60 L 400 130"
-        stroke={mode === "charged" ? "#fbbf24" : "#475569"}
-        strokeWidth="3"
-        fill="none"
-        opacity={mode === "charged" ? 1 : 0.35}
-      />
-      {/* wire battery bottom -> plate B bottom */}
-      <path
-        d="M 90 220 L 90 280 L 400 280 L 400 200"
-        stroke={mode === "charged" ? "#fbbf24" : "#475569"}
-        strokeWidth="3"
-        fill="none"
-        opacity={mode === "charged" ? 1 : 0.35}
-      />
+      {(() => {
+        const chargeActive = mode === "charging" || mode === "charged";
+        const chargeColor = chargeActive ? "#fbbf24" : "#475569";
+        const chargeOpacity = chargeActive ? 1 : 0.35;
+        return (
+          <>
+            <path d="M 90 90 L 90 60 L 250 60" stroke={chargeColor} strokeWidth="3" fill="none" opacity={chargeOpacity} />
+            <path d="M 250 60 L 400 60 L 400 130" stroke={chargeColor} strokeWidth="3" fill="none" opacity={chargeOpacity} />
+            <path d="M 90 220 L 90 280 L 400 280 L 400 200" stroke={chargeColor} strokeWidth="3" fill="none" opacity={chargeOpacity} />
+          </>
+        );
+      })()}
+
+      {/* Electrons animating along the charge loop (top wire + bottom wire, opposite directions) */}
+      {mode === "charging" &&
+        [0, 0.25, 0.5, 0.75].map((d, i) => (
+          <g key={`chg-top-${i}`}>
+            {/* top wire: electrons flow from plate A → switch → battery + terminal (i.e., right → left) */}
+            <circle r="4.5" fill="#38bdf8">
+              <animateMotion
+                dur="1.6s"
+                repeatCount="indefinite"
+                begin={`${d}s`}
+                path="M 400 130 L 400 60 L 90 60 L 90 90"
+              />
+            </circle>
+          </g>
+        ))}
+      {mode === "charging" &&
+        [0, 0.25, 0.5, 0.75].map((d, i) => (
+          <g key={`chg-bot-${i}`}>
+            {/* bottom wire: electrons flow from battery − terminal → plate B (left → right) */}
+            <circle r="4.5" fill="#38bdf8">
+              <animateMotion
+                dur="1.6s"
+                repeatCount="indefinite"
+                begin={`${d}s`}
+                path="M 90 220 L 90 280 L 400 280 L 400 200"
+              />
+            </circle>
+          </g>
+        ))}
 
       {/* Battery */}
       <Tooltip>
@@ -431,7 +455,7 @@ const CircuitSVG = ({
             {/* pivot */}
             <circle cx="250" cy="60" r="5" fill="#e2e8f0" />
             {/* contact 1 (charge) */}
-            <circle cx="290" cy="60" r="5" fill={mode === "charged" ? "#fbbf24" : "#475569"} />
+            <circle cx="290" cy="60" r="5" fill={mode === "charged" || mode === "charging" ? "#fbbf24" : "#475569"} />
             {/* contact 2 (discharge) - lower toward capacitor top */}
             <circle cx="290" cy="90" r="5" fill={mode === "discharging" ? "#f59e0b" : "#475569"} />
             {/* lever */}
@@ -442,8 +466,8 @@ const CircuitSVG = ({
               strokeWidth="4"
               strokeLinecap="round"
               animate={{
-                x2: mode === "charged" ? 290 : 290,
-                y2: mode === "charged" ? 60 : 90,
+                x2: 290,
+                y2: mode === "discharging" ? 90 : 60,
               }}
               transition={{ type: "spring", stiffness: 260, damping: 18 }}
             />
