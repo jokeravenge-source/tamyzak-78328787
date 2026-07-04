@@ -746,10 +746,10 @@ const spermatogenesis: DiagramDef = {
     { id: "sec",   label: { en: "Secondary spermatocyte", ar: "خلية نطفية ثانوية" },  ax: 35, ay: 34, lx: 2,  ly: 42, lw: 26 },
     { id: "std",   label: { en: "Spermatids",             ar: "أرومات النطفة" },      ax: 18, ay: 48, lx: 2,  ly: 62, lw: 26 },
     { id: "sperm", label: { en: "Mature sperm",           ar: "نطفة ناضجة" },         ax: 18, ay: 66, lx: 2,  ly: 84, lw: 26 },
-    // Right side — process brackets
-    { id: "m1",    label: { en: "Meiosis I",              ar: "انقسام اختزالي أول" }, ax: 62, ay: 24, lx: 72, ly: 28, lw: 26 },
-    { id: "m2",    label: { en: "Meiosis II",             ar: "انقسام اختزالي ثاني" },ax: 75, ay: 41, lx: 72, ly: 52, lw: 26 },
-    { id: "trans", label: { en: "Spermiogenesis",         ar: "عملية التحول النطفي" },ax: 85, ay: 57, lx: 72, ly: 72, lw: 26 },
+    // Process brackets — drop zones live in the left-column gaps so they don't collide with the on-canvas brackets
+    { id: "m1",    label: { en: "Meiosis I",              ar: "انقسام اختزالي أول" }, ax: 76, ay: 20, lx: 2,  ly: 32, lw: 26 },
+    { id: "m2",    label: { en: "Meiosis II",             ar: "انقسام اختزالي ثاني" },ax: 90, ay: 37, lx: 2,  ly: 52, lw: 26 },
+    { id: "trans", label: { en: "Spermiogenesis",         ar: "عملية التحول النطفي" },ax: 94, ay: 57, lx: 2,  ly: 76, lw: 26 },
   ],
   art: (() => {
     const RIM  = "hsl(0 0% 20%)";
@@ -844,9 +844,9 @@ const spermatogenesis: DiagramDef = {
       sperm(59, 63, "s3"),
       sperm(82, 63, "s4"),
 
-      /* Right brackets for meiosis I & II */
-      bracket(70, 15, 27, "brk1"),
-      bracket(84, 30, 46, "brk2"),
+      /* Right-side brackets for meiosis I & II — placed outside the cell columns */
+      bracket(76, 13, 27, "brk1"),
+      bracket(90, 29, 46, "brk2"),
     );
   })(),
 };
