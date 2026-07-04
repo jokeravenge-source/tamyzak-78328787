@@ -246,6 +246,13 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
                       strokeDasharray="3 3"
                     />
                   )}
+                  {mode === "charging" && (
+                    <ReferenceLine
+                      x={+Math.min(elapsed, 5 * tau).toFixed(3)}
+                      stroke="#38bdf8"
+                      strokeDasharray="3 3"
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
