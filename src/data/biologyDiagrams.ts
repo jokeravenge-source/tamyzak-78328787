@@ -926,81 +926,99 @@ const maleRepro: DiagramDef = {
   title: { en: "Male Reproductive System", ar: "الجهاز التناسلي الذكري" },
   aspect: "4/3",
   parts: [
-    // Left-side labels
-    { id: "vas",    label: { en: "Vas deferens",        ar: "قناة ناقلة" },       ax: 30, ay: 18, lx: 2,  ly: 14, lw: 24 },
-    { id: "ejac",   label: { en: "Ejaculatory duct",    ar: "القناة القاذفة" },   ax: 47, ay: 20, lx: 2,  ly: 28, lw: 24 },
-    { id: "cowp",   label: { en: "Cowper's glands",     ar: "غدد كوبر" },         ax: 45, ay: 30, lx: 2,  ly: 42, lw: 24 },
-    { id: "epid",   label: { en: "Epididymis",          ar: "بريخ" },             ax: 22, ay: 52, lx: 2,  ly: 56, lw: 24 },
-    { id: "testis", label: { en: "Testis",              ar: "خصية" },             ax: 28, ay: 62, lx: 2,  ly: 72, lw: 24 },
+    // Left-side labels — anchor on the actual structure
+    { id: "vas",    label: { en: "Vas deferens",        ar: "قناة ناقلة" },       ax: 18, ay: 30, lx: 2,  ly: 18, lw: 24 },
+    { id: "ejac",   label: { en: "Ejaculatory duct",    ar: "القناة القاذفة" },   ax: 47, ay: 21, lx: 2,  ly: 32, lw: 24 },
+    { id: "cowp",   label: { en: "Cowper's glands",     ar: "غدد كوبر" },         ax: 44, ay: 30, lx: 2,  ly: 44, lw: 24 },
+    { id: "epid",   label: { en: "Epididymis",          ar: "بريخ" },             ax: 21, ay: 55, lx: 2,  ly: 58, lw: 24 },
+    { id: "testis", label: { en: "Testis",              ar: "خصية" },             ax: 28, ay: 66, lx: 2,  ly: 72, lw: 24 },
     // Right-side labels
-    { id: "semv",   label: { en: "Seminal vesicle",     ar: "حويصلة منوية" },     ax: 60, ay: 16, lx: 76, ly: 12, lw: 22 },
-    { id: "prost",  label: { en: "Prostate",            ar: "غدة البروستات" },    ax: 54, ay: 24, lx: 76, ly: 28, lw: 22 },
-    { id: "penis",  label: { en: "Penis",               ar: "القضيب" },           ax: 54, ay: 40, lx: 76, ly: 46, lw: 22 },
-    { id: "semt",   label: { en: "Seminiferous tubules", ar: "نبيبات منوية" },    ax: 68, ay: 58, lx: 76, ly: 68, lw: 22 },
+    { id: "semv",   label: { en: "Seminal vesicle",     ar: "حويصلة منوية" },     ax: 60, ay: 17, lx: 76, ly: 10, lw: 22 },
+    { id: "prost",  label: { en: "Prostate",            ar: "غدة البروستات" },    ax: 55, ay: 25, lx: 76, ly: 26, lw: 22 },
+    { id: "penis",  label: { en: "Penis",               ar: "القضيب" },           ax: 55, ay: 40, lx: 76, ly: 46, lw: 22 },
+    { id: "semt",   label: { en: "Seminiferous tubules", ar: "نبيبات منوية" },    ax: 74, ay: 60, lx: 76, ly: 66, lw: 22 },
   ],
   art: (() => {
-    const OUT = "hsl(15 40% 25%)";
-    const PINK = "hsl(0 50% 65%)";
-    const PINK_D = "hsl(0 45% 42%)";
-    const YEL = "hsl(42 78% 58%)";
-    const YEL_D = "hsl(32 65% 38%)";
-    const TAN = "hsl(18 48% 62%)";
-    const TUBE = "hsl(20 40% 32%)";
-    // Lumpy cluster for seminal vesicle
+    const OUT = "hsl(12 45% 22%)";
+    const RED = "hsl(4 60% 60%)";
+    const RED_D = "hsl(4 55% 38%)";
+    const RED_DK = "hsl(0 55% 40%)";     // prostate — darker
+    const YEL = "hsl(42 82% 58%)";
+    const YEL_D = "hsl(30 65% 35%)";
+    const TAN = "hsl(18 50% 65%)";
+    const TAN_D = "hsl(15 40% 40%)";
+    const TUBE = "hsl(18 35% 30%)";
+    // Lumpy grape-cluster used for seminal vesicles
     const lumps = (cx: number, cy: number, keyBase: string) =>
-      ([[-3,-2,2,1.6],[-1,-3,1.8,1.4],[1,-2,2,1.6],[3,-1,1.6,1.4],
-        [-2,0,1.8,1.4],[0,1,2,1.6],[2,1,1.8,1.4],
-        [-3,2,1.6,1.3],[1,2.5,1.8,1.4]] as const)
+      ([[-3.2,-2,2,1.7],[-1,-3,1.9,1.5],[1.2,-2.5,2,1.7],[3.2,-1,1.7,1.4],
+        [-2.2,0.2,1.9,1.5],[0.2,0.8,2.1,1.7],[2.4,1,1.9,1.5],
+        [-2.8,2.4,1.7,1.4],[0.4,2.8,1.9,1.5],[2.6,2.6,1.6,1.3]] as const)
         .map(([dx,dy,rx,ry], i) => h("ellipse", {
           key: `${keyBase}${i}`, cx: cx+dx, cy: cy+dy, rx, ry, fill: YEL, stroke: YEL_D, strokeWidth: 0.3,
         }));
     return h(Fragment, null,
-      // Bladder (context, unlabeled)
+      // Ureters (context, unlabeled) coming down from top corners into bladder top
+      h("path", { d: "M22 1 Q26 6 36 10", fill: "none", stroke: TUBE, strokeWidth: 0.55 }),
+      h("path", { d: "M78 1 Q74 6 64 10", fill: "none", stroke: TUBE, strokeWidth: 0.55 }),
+      // BLADDER — large red dome at top center
       h("path", {
-        d: "M38 2 Q38 0.5 50 0.5 Q62 0.5 62 2 L64 10 Q64 13 50 13 Q36 13 36 10 Z",
-        fill: "hsl(0 40% 72%)", stroke: OUT, strokeWidth: 0.4,
+        d: "M36 4 Q36 2 42 2 L58 2 Q64 2 64 4 Q68 10 65 15 Q60 20 50 20 Q40 20 35 15 Q32 10 36 4 Z",
+        fill: RED, stroke: RED_D, strokeWidth: 0.55,
       }),
-      // Vas deferens (curved tubes from each testis up to bladder sides)
-      h("path", { d: "M28 55 Q22 42 26 28 Q28 20 34 14 Q37 12 39 12", fill: "none", stroke: TUBE, strokeWidth: 0.75 }),
-      h("path", { d: "M72 55 Q78 42 74 28 Q72 20 66 14 Q63 12 61 12", fill: "none", stroke: TUBE, strokeWidth: 0.75 }),
-      // Seminal vesicles (yellow lumpy sacs on either side)
-      ...lumps(40, 16, "svL"),
-      ...lumps(60, 16, "svR"),
-      // Ejaculatory duct hint (short lines joining vesicles to prostate)
-      h("line", { x1: 47, y1: 18, x2: 47, y2: 24, stroke: TUBE, strokeWidth: 0.5 }),
-      h("line", { x1: 53, y1: 18, x2: 53, y2: 24, stroke: TUBE, strokeWidth: 0.5 }),
-      // Prostate (rounded pink bulb)
-      h("ellipse", { cx: 50, cy: 24, rx: 7, ry: 5, fill: PINK, stroke: PINK_D, strokeWidth: 0.5 }),
-      h("path", { d: "M45 24 Q50 26 55 24", fill: "none", stroke: PINK_D, strokeWidth: 0.35, opacity: 0.7 }),
-      // Cowper's glands (two small yellow circles below prostate)
-      h("circle", { cx: 46, cy: 30, r: 1.4, fill: YEL, stroke: YEL_D, strokeWidth: 0.3 }),
-      h("circle", { cx: 54, cy: 30, r: 1.4, fill: YEL, stroke: YEL_D, strokeWidth: 0.3 }),
-      // Penis shaft (tan vertical)
+      // Bladder highlight/shading
+      h("path", { d: "M40 5 Q45 3 55 3 Q60 4 62 6", fill: "none", stroke: "hsl(4 80% 82%)", strokeWidth: 0.5, opacity: 0.7 }),
+      // VAS DEFERENS — long tubes looping from testes up around bladder, joining behind at prostate
+      h("path", { d: "M25 56 Q 14 40 17 22 Q 20 12 34 12 Q 39 14 41 17", fill: "none", stroke: TUBE, strokeWidth: 0.85 }),
+      h("path", { d: "M75 56 Q 86 40 83 22 Q 80 12 66 12 Q 61 14 59 17", fill: "none", stroke: TUBE, strokeWidth: 0.85 }),
+      // SEMINAL VESICLES — yellow lumpy sacs flanking the base of bladder / top of prostate
+      ...lumps(40, 17, "svL"),
+      ...lumps(60, 17, "svR"),
+      // EJACULATORY DUCT — short tubes from seminal vesicles down into prostate top
+      h("line", { x1: 47, y1: 20, x2: 48, y2: 24, stroke: TUBE, strokeWidth: 0.55 }),
+      h("line", { x1: 53, y1: 20, x2: 52, y2: 24, stroke: TUBE, strokeWidth: 0.55 }),
+      // PROSTATE — darker rounded gland directly below bladder
+      h("ellipse", { cx: 50, cy: 25, rx: 6.5, ry: 4.2, fill: RED_DK, stroke: OUT, strokeWidth: 0.5 }),
+      h("path", { d: "M44 25 Q50 27 56 25", fill: "none", stroke: "hsl(0 60% 25%)", strokeWidth: 0.35, opacity: 0.6 }),
+      // COWPER'S GLANDS — 2 small yellow bulbs on either side just below prostate
+      h("circle", { cx: 44, cy: 30, r: 1.5, fill: YEL, stroke: YEL_D, strokeWidth: 0.3 }),
+      h("circle", { cx: 56, cy: 30, r: 1.5, fill: YEL, stroke: YEL_D, strokeWidth: 0.3 }),
+      // Small ducts from Cowper's to urethra
+      h("line", { x1: 45.4, y1: 30.4, x2: 48, y2: 31, stroke: TUBE, strokeWidth: 0.3 }),
+      h("line", { x1: 54.6, y1: 30.4, x2: 52, y2: 31, stroke: TUBE, strokeWidth: 0.3 }),
+      // PENIS — vertical tan shaft below prostate
       h("path", {
-        d: "M46 29 Q46 28 47 28 L53 28 Q54 28 54 29 L54 47 Q54 48 53 48 L47 48 Q46 48 46 47 Z",
-        fill: TAN, stroke: OUT, strokeWidth: 0.45,
+        d: "M46 29 Q46 28.2 47 28.2 L53 28.2 Q54 28.2 54 29 L54 48 Q54 49 53 49 L47 49 Q46 49 46 48 Z",
+        fill: TAN, stroke: TAN_D, strokeWidth: 0.5,
       }),
-      // Urethra hint
-      h("line", { x1: 50, y1: 30, x2: 50, y2: 47, stroke: PINK_D, strokeWidth: 0.3, opacity: 0.5 }),
-      // Left testis (whole, external view)
-      h("ellipse", { cx: 28, cy: 60, rx: 5, ry: 6, fill: PINK, stroke: PINK_D, strokeWidth: 0.5 }),
-      // Epididymis (C-shaped tube on top of left testis)
+      // Urethra line inside penis
+      h("line", { x1: 50, y1: 30, x2: 50, y2: 48, stroke: "hsl(0 40% 35%)", strokeWidth: 0.35, opacity: 0.55 }),
+      // Glans hint
+      h("ellipse", { cx: 50, cy: 49, rx: 4, ry: 1.4, fill: "hsl(10 55% 55%)", stroke: TAN_D, strokeWidth: 0.35 }),
+      // Scrotal connection lines (light) from vas base to testes
+      h("path", { d: "M25 56 Q 26 60 28 62", fill: "none", stroke: TUBE, strokeWidth: 0.5, opacity: 0.7 }),
+      h("path", { d: "M75 56 Q 74 60 72 62", fill: "none", stroke: TUBE, strokeWidth: 0.5, opacity: 0.7 }),
+      // LEFT TESTIS (whole external view) with epididymis wrapping it
+      h("ellipse", { cx: 28, cy: 64, rx: 5.5, ry: 6.5, fill: RED, stroke: RED_D, strokeWidth: 0.5 }),
+      // subtle shading
+      h("ellipse", { cx: 30, cy: 66, rx: 2.5, ry: 3.5, fill: "hsl(4 65% 48%)", opacity: 0.35 }),
+      // EPIDIDYMIS — thick C-tube on top-left of testis
       h("path", {
-        d: "M23 54 Q19 55 20 60 Q22 66 27 65",
-        fill: "none", stroke: TUBE, strokeWidth: 1.1, strokeLinecap: "round",
+        d: "M22 57 Q 18 58 19 63 Q 20 69 26 69",
+        fill: "none", stroke: "hsl(15 35% 35%)", strokeWidth: 1.4, strokeLinecap: "round",
       }),
-      // Right testis (cross-section revealing seminiferous tubules — radial coiled pattern)
-      h("circle", { cx: 68, cy: 58, r: 6, fill: "hsl(0 55% 72%)", stroke: PINK_D, strokeWidth: 0.55 }),
-      ...Array.from({ length: 16 }, (_, i) => {
-        const a = (i / 16) * Math.PI * 2;
+      // RIGHT TESTIS — cross-section revealing seminiferous tubules (radial "orange slice" pattern)
+      h("circle", { cx: 72, cy: 62, r: 6.5, fill: "hsl(0 55% 72%)", stroke: RED_D, strokeWidth: 0.6 }),
+      ...Array.from({ length: 20 }, (_, i) => {
+        const a = (i / 20) * Math.PI * 2;
         return h("line", {
           key: `sf${i}`,
-          x1: 68 + Math.cos(a) * 0.8, y1: 58 + Math.sin(a) * 0.8,
-          x2: 68 + Math.cos(a) * 5.6, y2: 58 + Math.sin(a) * 5.6,
-          stroke: PINK_D, strokeWidth: 0.28,
+          x1: 72 + Math.cos(a) * 1, y1: 62 + Math.sin(a) * 1,
+          x2: 72 + Math.cos(a) * 6.1, y2: 62 + Math.sin(a) * 6.1,
+          stroke: RED_D, strokeWidth: 0.28,
         });
       }),
-      h("circle", { cx: 68, cy: 58, r: 1, fill: PINK_D }),
+      // rete testis center
+      h("circle", { cx: 72, cy: 62, r: 1.2, fill: RED_D }),
     );
   })(),
 };
