@@ -740,16 +740,16 @@ const spermatogenesis: DiagramDef = {
   title: { en: "Spermatogenesis", ar: "تكوين النطف" },
   aspect: "3/4",
   parts: [
-    // Row labels on the left
-    { id: "spg",   label: { en: "Spermatogonium",         ar: "سلائف النطفة" },       ax: 50, ay: 6,  lx: 2,  ly: 4,  lw: 26 },
-    { id: "pri",   label: { en: "Primary spermatocyte",   ar: "خلية نطفية أولية" },   ax: 50, ay: 19, lx: 2,  ly: 22, lw: 26 },
-    { id: "sec",   label: { en: "Secondary spermatocyte", ar: "خلية نطفية ثانوية" },  ax: 35, ay: 34, lx: 2,  ly: 42, lw: 26 },
-    { id: "std",   label: { en: "Spermatids",             ar: "أرومات النطفة" },      ax: 18, ay: 48, lx: 2,  ly: 62, lw: 26 },
-    { id: "sperm", label: { en: "Mature sperm",           ar: "نطفة ناضجة" },         ax: 18, ay: 66, lx: 2,  ly: 84, lw: 26 },
-    // Process brackets — drop zones live in the left-column gaps so they don't collide with the on-canvas brackets
-    { id: "m1",    label: { en: "Meiosis I",              ar: "انقسام اختزالي أول" }, ax: 76, ay: 20, lx: 2,  ly: 32, lw: 26 },
-    { id: "m2",    label: { en: "Meiosis II",             ar: "انقسام اختزالي ثاني" },ax: 90, ay: 37, lx: 2,  ly: 52, lw: 26 },
-    { id: "trans", label: { en: "Spermiogenesis",         ar: "عملية التحول النطفي" },ax: 94, ay: 57, lx: 2,  ly: 76, lw: 26 },
+    // Row labels on the left column
+    { id: "spg",   label: { en: "Spermatogonium",         ar: "سلائف النطفة" },       ax: 40, ay: 6,  lx: 2,  ly: 4,  lw: 26 },
+    { id: "pri",   label: { en: "Primary spermatocyte",   ar: "خلية نطفية أولية" },   ax: 40, ay: 19, lx: 2,  ly: 22, lw: 26 },
+    { id: "sec",   label: { en: "Secondary spermatocyte", ar: "خلية نطفية ثانوية" },  ax: 26, ay: 34, lx: 2,  ly: 42, lw: 26 },
+    { id: "std",   label: { en: "Spermatids",             ar: "أرومات النطفة" },      ax: 10, ay: 48, lx: 2,  ly: 62, lw: 26 },
+    { id: "sperm", label: { en: "Mature sperm",           ar: "نطفة ناضجة" },         ax: 10, ay: 66, lx: 2,  ly: 84, lw: 26 },
+    // Process brackets & drop zones on the right column, short arrows to nearby anchors
+    { id: "m1",    label: { en: "Meiosis I",              ar: "انقسام اختزالي أول" }, ax: 72, ay: 20, lx: 74, ly: 22, lw: 24 },
+    { id: "m2",    label: { en: "Meiosis II",             ar: "انقسام اختزالي ثاني" },ax: 72, ay: 37, lx: 74, ly: 48, lw: 24 },
+    { id: "trans", label: { en: "Spermiogenesis",         ar: "عملية التحول النطفي" },ax: 72, ay: 57, lx: 74, ly: 74, lw: 24 },
   ],
   art: (() => {
     const RIM  = "hsl(0 0% 20%)";
@@ -805,48 +805,48 @@ const spermatogenesis: DiagramDef = {
 
     return h(Fragment, null,
       /* Row 1 — spermatogonium */
-      cell(50, 6, 3.6, "c1"),
-      pair(50, 6, "d1", 0.9),
-      arrow(50, 9.8, 50, 13.8, "a1", 0),
+      cell(40, 6, 3.6, "c1"),
+      pair(40, 6, "d1", 0.9),
+      arrow(40, 9.8, 40, 13.8, "a1", 0),
 
       /* Row 2 — primary spermatocyte (bigger, 2 XX-pairs) */
-      cell(50, 19, 5, "c2"),
-      xx(47, 19, "d2a", RED, BLUE, 1.3),
-      arrow(46.5, 22.7, 35, 29.6, "a2l", 1),
-      arrow(53.5, 22.7, 65, 29.6, "a2r", 1),
+      cell(40, 19, 5, "c2"),
+      xx(37, 19, "d2a", RED, BLUE, 1.3),
+      arrow(36.5, 22.7, 26, 29.6, "a2l", 1),
+      arrow(43.5, 22.7, 54, 29.6, "a2r", 1),
 
       /* Row 3 — two secondary spermatocytes */
-      cell(35, 34, 4.2, "c3a"),
-      xx(33, 34, "d3a", RED, RED, 1.1),
-      cell(65, 34, 4.2, "c3b"),
-      xx(63, 34, "d3b", BLUE, BLUE, 1.1),
-      arrow(32, 37.6, 18, 44.6, "a3a", 2),
-      arrow(38, 37.6, 41, 44.6, "a3b", 2),
-      arrow(62, 37.6, 59, 44.6, "a3c", 2),
-      arrow(68, 37.6, 82, 44.6, "a3d", 2),
+      cell(26, 34, 4.2, "c3a"),
+      xx(24, 34, "d3a", RED, RED, 1.1),
+      cell(54, 34, 4.2, "c3b"),
+      xx(52, 34, "d3b", BLUE, BLUE, 1.1),
+      arrow(23, 37.6, 10, 44.6, "a3a", 2),
+      arrow(29, 37.6, 32, 44.6, "a3b", 2),
+      arrow(51, 37.6, 48, 44.6, "a3c", 2),
+      arrow(57, 37.6, 68, 44.6, "a3d", 2),
 
       /* Row 4 — four spermatids */
-      cell(18, 48, 3.2, "c4a"), pair(18, 48, "d4a", 0.75),
-      cell(41, 48, 3.2, "c4b"), pair(41, 48, "d4b", 0.75),
-      cell(59, 48, 3.2, "c4c"), pair(59, 48, "d4c", 0.75),
-      cell(82, 48, 3.2, "c4d"), pair(82, 48, "d4d", 0.75),
+      cell(10, 48, 3.2, "c4a"), pair(10, 48, "d4a", 0.75),
+      cell(32, 48, 3.2, "c4b"), pair(32, 48, "d4b", 0.75),
+      cell(48, 48, 3.2, "c4c"), pair(48, 48, "d4c", 0.75),
+      cell(68, 48, 3.2, "c4d"), pair(68, 48, "d4d", 0.75),
 
       /* Transition line + arrows */
-      h("line", { x1: 6, y1: 57, x2: 94, y2: 57, stroke: BRK, strokeWidth: 0.45, opacity: 0.75 }),
-      arrow(18, 51.4, 18, 60.6, "a5a", 3),
-      arrow(41, 51.4, 41, 60.6, "a5b", 3),
-      arrow(59, 51.4, 59, 60.6, "a5c", 3),
-      arrow(82, 51.4, 82, 60.6, "a5d", 3),
+      h("line", { x1: 4, y1: 57, x2: 70, y2: 57, stroke: BRK, strokeWidth: 0.45, opacity: 0.75 }),
+      arrow(10, 51.4, 10, 60.6, "a5a", 3),
+      arrow(32, 51.4, 32, 60.6, "a5b", 3),
+      arrow(48, 51.4, 48, 60.6, "a5c", 3),
+      arrow(68, 51.4, 68, 60.6, "a5d", 3),
 
       /* Row 5 — mature sperm */
-      sperm(18, 63, "s1"),
-      sperm(41, 63, "s2"),
-      sperm(59, 63, "s3"),
-      sperm(82, 63, "s4"),
+      sperm(10, 63, "s1"),
+      sperm(32, 63, "s2"),
+      sperm(48, 63, "s3"),
+      sperm(68, 63, "s4"),
 
-      /* Right-side brackets for meiosis I & II — placed outside the cell columns */
-      bracket(76, 13, 27, "brk1"),
-      bracket(90, 29, 46, "brk2"),
+      /* Right-side brackets for meiosis I & II — sit in the right margin */
+      bracket(72, 13, 27, "brk1"),
+      bracket(72, 29, 46, "brk2"),
     );
   })(),
 };
