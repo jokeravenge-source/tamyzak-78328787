@@ -187,6 +187,7 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
               electronDelays={electronDelays}
               loopDuration={loopDuration}
               tips={t.tips}
+              chargeLevel={V / V0}
             />
             {/* readouts */}
             <div className="absolute top-3 left-3 rounded-xl bg-black/60 backdrop-blur border border-white/10 px-3 py-2 text-xs text-white space-y-0.5">
@@ -358,6 +359,7 @@ const CircuitSVG = ({
   electronDelays,
   loopDuration,
   tips,
+  chargeLevel,
 }: {
   mode: Mode;
   needleAngle: number;
@@ -365,6 +367,7 @@ const CircuitSVG = ({
   onToggle: () => void;
   electronDelays: number[];
   loopDuration: number;
+  chargeLevel: number;
   tips: { battery: string; switch: string; capacitor: string; galvano: string; lamp: string };
 }) => {
   // Discharge loop path: start at plate B (top-right of capacitor) → up → right → down through G & L2 → left back to plate A
