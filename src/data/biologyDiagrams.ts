@@ -852,6 +852,52 @@ const spermatogenesis: DiagramDef = {
 };
 
 
+/* Human sperm anatomy (ch3) */
+const spermAnatomy: DiagramDef = {
+  id: "ch3-sperm-anatomy",
+  title: { en: "Human Sperm", ar: "نطفة الإنسان" },
+  aspect: "3/4",
+  parts: [
+    { id: "head", label: { en: "Head",       ar: "الرأس" },        ax: 54, ay: 9,  lx: 62, ly: 6,  lw: 26 },
+    { id: "neck", label: { en: "Neck",       ar: "العنق" },        ax: 52, ay: 17, lx: 62, ly: 20, lw: 26 },
+    { id: "mid",  label: { en: "Midpiece",   ar: "قطعة وسطية" },   ax: 53, ay: 24, lx: 62, ly: 34, lw: 26 },
+    { id: "tail", label: { en: "Tail",       ar: "ذيل" },          ax: 54, ay: 52, lx: 62, ly: 60, lw: 26 },
+  ],
+  art: (() => {
+    const OUT = "hsl(220 40% 25%)";
+    const HEAD_FILL = "hsl(255 45% 62%)";
+    const HEAD_CAP = "hsl(30 75% 55%)";
+    const MID = "hsl(30 75% 55%)";
+    const TAIL = "hsl(220 40% 35%)";
+    return h(Fragment, null,
+      // Acrosome cap (top curve over head)
+      h("path", {
+        d: "M44 5 Q50 2 56 5 Q56 9 50 10 Q44 9 44 5 Z",
+        fill: HEAD_CAP, stroke: OUT, strokeWidth: 0.35,
+      }),
+      // Head (pear/oval body)
+      h("path", {
+        d: "M44 7 Q50 6 56 7 Q58 12 54 15 L46 15 Q42 12 44 7 Z",
+        fill: HEAD_FILL, stroke: OUT, strokeWidth: 0.4,
+      }),
+      // Neck (thin connector)
+      h("rect", { x: 49, y: 15, width: 2, height: 3, fill: HEAD_CAP, stroke: OUT, strokeWidth: 0.25 }),
+      // Midpiece (short striped cylinder)
+      h("rect", { x: 48, y: 18, width: 4, height: 8, rx: 0.6, fill: MID, stroke: OUT, strokeWidth: 0.3 }),
+      ...Array.from({ length: 7 }, (_, i) => h("line", {
+        key: `ms${i}`, x1: 48, y1: 19 + i, x2: 52, y2: 19 + i,
+        stroke: "hsl(20 60% 30%)", strokeWidth: 0.2,
+      })),
+      // Tail (long wavy flagellum)
+      h("path", {
+        d: "M50 26 Q46 34 50 42 Q54 50 50 58 Q46 66 50 72",
+        fill: "none", stroke: TAIL, strokeWidth: 0.9, strokeLinecap: "round",
+      }),
+    );
+  })(),
+};
+
+
 export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
   1: [bacteria, animalCell, plantCell, plasmaMembrane, mitochondrion, chloroplast, chromosome],
   3: [fruit, binaryFission, seedTypes, spermatogenesis, spermAnatomy],
