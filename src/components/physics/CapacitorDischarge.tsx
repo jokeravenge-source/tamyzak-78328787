@@ -517,10 +517,7 @@ const CircuitSVG = ({
                   fontSize="14"
                   fontWeight="700"
                   animate={{
-                    opacity:
-                      mode === "charged"
-                        ? 1
-                        : Math.max(0, 1 - (i + 1) * 0.05 * Math.min(20, needleAngle === 0 ? 20 : Math.abs(needleAngle) / 3)),
+                    opacity: Math.max(0, Math.min(1, chargeLevel - i * 0.05)),
                   }}
                 >
                   +
@@ -535,10 +532,7 @@ const CircuitSVG = ({
                   fontSize="14"
                   fontWeight="700"
                   animate={{
-                    opacity:
-                      mode === "charged"
-                        ? 1
-                        : Math.max(0, 1 - (i + 1) * 0.05 * Math.min(20, needleAngle === 0 ? 20 : Math.abs(needleAngle) / 3)),
+                    opacity: Math.max(0, Math.min(1, chargeLevel - i * 0.05)),
                   }}
                 >
                   −
