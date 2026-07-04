@@ -737,6 +737,6 @@ const seedTypes: DiagramDef = {
 export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
 
   1: [bacteria, animalCell, plantCell, plasmaMembrane, mitochondrion, chloroplast, chromosome],
-  3: [fruit, binaryFission, seedTypes],
+  3: [fruit, binaryFission, seedTypes, spermatogenesis],
 };
 
