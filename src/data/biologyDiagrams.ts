@@ -858,10 +858,10 @@ const spermAnatomy: DiagramDef = {
   title: { en: "Human Sperm", ar: "نطفة الإنسان" },
   aspect: "3/4",
   parts: [
-    { id: "head", label: { en: "Head",       ar: "الرأس" },        ax: 54, ay: 9,  lx: 62, ly: 6,  lw: 26 },
-    { id: "neck", label: { en: "Neck",       ar: "العنق" },        ax: 52, ay: 17, lx: 62, ly: 20, lw: 26 },
-    { id: "mid",  label: { en: "Midpiece",   ar: "قطعة وسطية" },   ax: 53, ay: 24, lx: 62, ly: 34, lw: 26 },
-    { id: "tail", label: { en: "Tail",       ar: "ذيل" },          ax: 54, ay: 52, lx: 62, ly: 60, lw: 26 },
+    { id: "head", label: { en: "Head",       ar: "الرأس" },        ax: 52, ay: 11, lx: 62, ly: 8,  lw: 28 },
+    { id: "neck", label: { en: "Neck",       ar: "العنق" },        ax: 47, ay: 18, lx: 62, ly: 22, lw: 28 },
+    { id: "mid",  label: { en: "Midpiece",   ar: "قطعة وسطية" },   ax: 48, ay: 22, lx: 62, ly: 36, lw: 28 },
+    { id: "tail", label: { en: "Tail",       ar: "ذيل" },          ax: 48, ay: 52, lx: 62, ly: 62, lw: 28 },
   ],
   art: (() => {
     const OUT = "hsl(220 45% 25%)";
