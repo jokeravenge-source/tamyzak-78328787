@@ -91,6 +91,7 @@ function stripPlanBlock(text: string): string {
 }
 
 const INTRO_DONE_KEY = "app_companion_intro_v1";
+const PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
 
 const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLanguage; embedded?: boolean }) => {
   const [open, setOpen] = useState(embedded);
@@ -150,7 +151,10 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
   };
 
   const finishIntro = () => {
-    try { localStorage.setItem(INTRO_DONE_KEY, "1"); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(INTRO_DONE_KEY, "1");
+      localStorage.setItem(PLANNED_WEEK_KEY, getISOWeek());
+    } catch { /* ignore */ }
     setIntro(false);
     setOpen(false);
     reset();
@@ -225,7 +229,10 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
     window.dispatchEvent(new Event("app:todos-changed"));
     pushTodos(merged);
     setApproved(true);
-    try { localStorage.setItem(INTRO_DONE_KEY, "1"); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(INTRO_DONE_KEY, "1");
+      localStorage.setItem(PLANNED_WEEK_KEY, getISOWeek());
+    } catch { /* ignore */ }
   };
 
   const panel = (
