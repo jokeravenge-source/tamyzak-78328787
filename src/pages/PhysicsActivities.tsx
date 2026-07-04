@@ -4,6 +4,8 @@ import { OrbitControls, Grid, Environment, Html, Text } from "@react-three/drei"
 import { ArrowLeft, Atom, RotateCcw, Zap } from "lucide-react";
 import * as THREE from "three";
 import type { AppLanguage } from "@/components/LanguageGate";
+import CapacitorDischarge from "@/components/physics/CapacitorDischarge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const copy = {
   en: {
