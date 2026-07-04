@@ -740,3 +740,117 @@ export const CHAPTER_DIAGRAMS: Record<number, DiagramDef[]> = {
   3: [fruit, binaryFission, seedTypes, spermatogenesis],
 };
 
+/* Spermatogenesis (ch3) */
+const spermatogenesis: DiagramDef = {
+  id: "ch3-spermatogenesis",
+  title: { en: "Spermatogenesis", ar: "تكوين النطف" },
+  aspect: "3/4",
+  parts: [
+    // Row labels on the left
+    { id: "spg",   label: { en: "Spermatogonium",         ar: "سلائف النطفة" },       ax: 50, ay: 6,  lx: 2,  ly: 4,  lw: 26 },
+    { id: "pri",   label: { en: "Primary spermatocyte",   ar: "خلية نطفية أولية" },   ax: 50, ay: 19, lx: 2,  ly: 22, lw: 26 },
+    { id: "sec",   label: { en: "Secondary spermatocyte", ar: "خلية نطفية ثانوية" },  ax: 35, ay: 34, lx: 2,  ly: 42, lw: 26 },
+    { id: "std",   label: { en: "Spermatids",             ar: "أرومات النطفة" },      ax: 18, ay: 48, lx: 2,  ly: 62, lw: 26 },
+    { id: "sperm", label: { en: "Mature sperm",           ar: "نطفة ناضجة" },         ax: 18, ay: 66, lx: 2,  ly: 84, lw: 26 },
+    // Right side — process brackets
+    { id: "m1",    label: { en: "Meiosis I",              ar: "انقسام اختزالي أول" }, ax: 62, ay: 24, lx: 72, ly: 28, lw: 26 },
+    { id: "m2",    label: { en: "Meiosis II",             ar: "انقسام اختزالي ثاني" },ax: 75, ay: 41, lx: 72, ly: 52, lw: 26 },
+    { id: "trans", label: { en: "Spermiogenesis",         ar: "عملية التحول النطفي" },ax: 85, ay: 57, lx: 72, ly: 72, lw: 26 },
+  ],
+  art: (() => {
+    const RIM  = "hsl(0 0% 20%)";
+    const FILL = "hsl(0 65% 88%)";
+    const RED  = "hsl(0 70% 45%)";
+    const BLUE = "hsl(215 75% 45%)";
+    const ARR  = "hsl(0 0% 25%)";
+    const BRK  = "hsl(210 70% 50%)";
+
+    // Cell circle with pink fill
+    const cell = (cx: number, cy: number, r: number, key: string) =>
+      h("circle", { key, cx, cy, r, fill: FILL, stroke: RIM, strokeWidth: 0.5 });
+
+    // A pair of tiny squiggle chromosomes (one red, one blue)
+    const pair = (cx: number, cy: number, key: string, scale = 1) => h("g", { key },
+      h("path", { d: `M ${cx-1.2*scale} ${cy-1.4*scale} q 0.4 0.8 0 1.6 q -0.4 0.8 0 1.6`,
+        fill: "none", stroke: RED, strokeWidth: 0.55*scale, strokeLinecap: "round" }),
+      h("path", { d: `M ${cx+1.2*scale} ${cy-1.4*scale} q -0.4 0.8 0 1.6 q 0.4 0.8 0 1.6`,
+        fill: "none", stroke: BLUE, strokeWidth: 0.55*scale, strokeLinecap: "round" }),
+    );
+
+    // XX-shape chromosomes (crossed pair) — used for primary/secondary
+    const xx = (cx: number, cy: number, key: string, color1 = RED, color2 = BLUE, size = 1.6) => h("g", { key },
+      h("line", { x1: cx-size, y1: cy-size, x2: cx+size, y2: cy+size, stroke: color1, strokeWidth: 0.7, strokeLinecap: "round" }),
+      h("line", { x1: cx-size, y1: cy+size, x2: cx+size, y2: cy-size, stroke: color1, strokeWidth: 0.7, strokeLinecap: "round" }),
+      h("line", { x1: cx+size*1.6, y1: cy-size, x2: cx+size*3.6, y2: cy+size, stroke: color2, strokeWidth: 0.7, strokeLinecap: "round" }),
+      h("line", { x1: cx+size*1.6, y1: cy+size, x2: cx+size*3.6, y2: cy-size, stroke: color2, strokeWidth: 0.7, strokeLinecap: "round" }),
+    );
+
+    const arrow = (x1: number, y1: number, x2: number, y2: number, key: string) => h("g", { key },
+      h("line", { x1, y1, x2, y2, stroke: ARR, strokeWidth: 0.45 }),
+      h("path", {
+        d: `M ${x2-1.2} ${y2-1.4} L ${x2} ${y2} L ${x2+1.2} ${y2-1.4} Z`,
+        fill: ARR, transform: `rotate(${Math.atan2(y2-y1, x2-x1)*180/Math.PI - 90} ${x2} ${y2})`,
+      }),
+    );
+
+    // Small sperm (head + tail)
+    const sperm = (cx: number, cy: number, key: string) => h("g", { key },
+      h("ellipse", { cx, cy, rx: 1.4, ry: 2.2, fill: FILL, stroke: RIM, strokeWidth: 0.45 }),
+      h("path", { d: `M ${cx} ${cy+2.2} q -1.6 2.4 0 4.8 q 1.6 2.4 0 4.8`,
+        fill: "none", stroke: RIM, strokeWidth: 0.45, strokeLinecap: "round" }),
+    );
+
+    // Right-side bracket "]" spanning y1..y2 at x
+    const bracket = (x: number, y1: number, y2: number, key: string) => h("path", {
+      key, d: `M ${x-1.4} ${y1} L ${x} ${y1} L ${x} ${y2} L ${x-1.4} ${y2}`,
+      fill: "none", stroke: BRK, strokeWidth: 0.55, strokeLinecap: "round",
+    });
+
+    return h(Fragment, null,
+      /* Row 1 — spermatogonium */
+      cell(50, 6, 3.6, "c1"),
+      pair(50, 6, "d1", 0.9),
+      arrow(50, 10, 50, 14, "a1"),
+
+      /* Row 2 — primary spermatocyte (bigger, 2 XX-pairs) */
+      cell(50, 19, 5, "c2"),
+      xx(47, 19, "d2a", RED, BLUE, 1.3),
+      arrow(46, 24, 36, 30, "a2l"),
+      arrow(54, 24, 64, 30, "a2r"),
+
+      /* Row 3 — two secondary spermatocytes */
+      cell(35, 34, 4.2, "c3a"),
+      xx(33, 34, "d3a", RED, RED, 1.1),
+      cell(65, 34, 4.2, "c3b"),
+      xx(63, 34, "d3b", BLUE, BLUE, 1.1),
+      arrow(31, 38, 22, 44, "a3a"),
+      arrow(39, 38, 45, 44, "a3b"),
+      arrow(61, 38, 55, 44, "a3c"),
+      arrow(69, 38, 78, 44, "a3d"),
+
+      /* Row 4 — four spermatids */
+      cell(18, 48, 3.2, "c4a"), pair(18, 48, "d4a", 0.75),
+      cell(41, 48, 3.2, "c4b"), pair(41, 48, "d4b", 0.75),
+      cell(59, 48, 3.2, "c4c"), pair(59, 48, "d4c", 0.75),
+      cell(82, 48, 3.2, "c4d"), pair(82, 48, "d4d", 0.75),
+
+      /* Transition line + arrows */
+      h("line", { x1: 6, y1: 57, x2: 94, y2: 57, stroke: BRK, strokeWidth: 0.45, opacity: 0.75 }),
+      arrow(18, 52, 18, 60, "a5a"),
+      arrow(41, 52, 41, 60, "a5b"),
+      arrow(59, 52, 59, 60, "a5c"),
+      arrow(82, 52, 82, 60, "a5d"),
+
+      /* Row 5 — mature sperm */
+      sperm(18, 63, "s1"),
+      sperm(41, 63, "s2"),
+      sperm(59, 63, "s3"),
+      sperm(82, 63, "s4"),
+
+      /* Right brackets for meiosis I & II */
+      bracket(70, 15, 27, "brk1"),
+      bracket(84, 30, 46, "brk2"),
+    );
+  })(),
+};
+
