@@ -858,40 +858,62 @@ const spermAnatomy: DiagramDef = {
   title: { en: "Human Sperm", ar: "نطفة الإنسان" },
   aspect: "3/4",
   parts: [
-    { id: "head", label: { en: "Head",       ar: "الرأس" },        ax: 54, ay: 9,  lx: 62, ly: 6,  lw: 26 },
-    { id: "neck", label: { en: "Neck",       ar: "العنق" },        ax: 52, ay: 17, lx: 62, ly: 20, lw: 26 },
-    { id: "mid",  label: { en: "Midpiece",   ar: "قطعة وسطية" },   ax: 53, ay: 24, lx: 62, ly: 34, lw: 26 },
-    { id: "tail", label: { en: "Tail",       ar: "ذيل" },          ax: 54, ay: 52, lx: 62, ly: 60, lw: 26 },
+    { id: "head", label: { en: "Head",       ar: "الرأس" },        ax: 52, ay: 11, lx: 62, ly: 8,  lw: 28 },
+    { id: "neck", label: { en: "Neck",       ar: "العنق" },        ax: 47, ay: 18, lx: 62, ly: 22, lw: 28 },
+    { id: "mid",  label: { en: "Midpiece",   ar: "قطعة وسطية" },   ax: 48, ay: 22, lx: 62, ly: 36, lw: 28 },
+    { id: "tail", label: { en: "Tail",       ar: "ذيل" },          ax: 48, ay: 52, lx: 62, ly: 62, lw: 28 },
   ],
   art: (() => {
-    const OUT = "hsl(220 40% 25%)";
-    const HEAD_FILL = "hsl(255 45% 62%)";
-    const HEAD_CAP = "hsl(30 75% 55%)";
-    const MID = "hsl(30 75% 55%)";
-    const TAIL = "hsl(220 40% 35%)";
+    const OUT = "hsl(220 45% 25%)";
+    const HEAD_FILL = "hsl(255 42% 60%)";
+    const HEAD_SHADE = "hsl(255 45% 45%)";
+    const CAP = "hsl(25 80% 58%)";
+    const CAP_DARK = "hsl(18 70% 40%)";
+    const TAIL = "hsl(215 40% 45%)";
+    // Sperm centered around x=45 (labels live on right).
     return h(Fragment, null,
-      // Acrosome cap (top curve over head)
+      // HEAD — spade/heart shape: wide rounded shoulders at top, narrows to point at neck
       h("path", {
-        d: "M44 5 Q50 2 56 5 Q56 9 50 10 Q44 9 44 5 Z",
-        fill: HEAD_CAP, stroke: OUT, strokeWidth: 0.35,
+        d: "M38 9 Q38 5 42 5 Q45 5.5 45 7 Q45 5.5 48 5 Q52 5 52 9 Q52 14 45 17 Q38 14 38 9 Z",
+        fill: HEAD_FILL, stroke: OUT, strokeWidth: 0.5, strokeLinejoin: "round",
       }),
-      // Head (pear/oval body)
+      // Head inner shading (subtle depth on lower half)
       h("path", {
-        d: "M44 7 Q50 6 56 7 Q58 12 54 15 L46 15 Q42 12 44 7 Z",
-        fill: HEAD_FILL, stroke: OUT, strokeWidth: 0.4,
+        d: "M40 12 Q45 14 50 12 Q49 15 45 17 Q41 15 40 12 Z",
+        fill: HEAD_SHADE, opacity: 0.35,
       }),
-      // Neck (thin connector)
-      h("rect", { x: 49, y: 15, width: 2, height: 3, fill: HEAD_CAP, stroke: OUT, strokeWidth: 0.25 }),
-      // Midpiece (short striped cylinder)
-      h("rect", { x: 48, y: 18, width: 4, height: 8, rx: 0.6, fill: MID, stroke: OUT, strokeWidth: 0.3 }),
-      ...Array.from({ length: 7 }, (_, i) => h("line", {
-        key: `ms${i}`, x1: 48, y1: 19 + i, x2: 52, y2: 19 + i,
-        stroke: "hsl(20 60% 30%)", strokeWidth: 0.2,
+      // ACROSOME CAP — orange cap hugging top of head (inverted U)
+      h("path", {
+        d: "M38 9 Q38 5 42 5 Q45 5.5 45 7 Q45 5.5 48 5 Q52 5 52 9 Q52 10.5 51 11 Q48 9.5 45 10 Q42 9.5 39 11 Q38 10.5 38 9 Z",
+        fill: CAP, stroke: CAP_DARK, strokeWidth: 0.4, strokeLinejoin: "round",
+      }),
+      // Tiny highlight on cap
+      h("path", { d: "M40 7 Q42 6 44 7", fill: "none", stroke: "hsl(45 90% 85%)", strokeWidth: 0.35, opacity: 0.7 }),
+      // NECK — narrow pinch between head point and midpiece
+      h("path", {
+        d: "M43.5 17 L46.5 17 L46.2 19 L43.8 19 Z",
+        fill: HEAD_SHADE, stroke: OUT, strokeWidth: 0.35,
+      }),
+      // MIDPIECE — short orange striped cylinder just below neck
+      h("path", {
+        d: "M43 19 L47 19 Q47.6 19 47.6 19.5 L47.6 25.5 Q47.6 26 47 26 L43 26 Q42.4 26 42.4 25.5 L42.4 19.5 Q42.4 19 43 19 Z",
+        fill: CAP, stroke: CAP_DARK, strokeWidth: 0.4,
+      }),
+      // Mitochondrial spiral bands on midpiece
+      ...Array.from({ length: 8 }, (_, i) => h("path", {
+        key: `mb${i}`,
+        d: `M42.6 ${19.6 + i * 0.8} Q45 ${19.2 + i * 0.8} 47.4 ${19.6 + i * 0.8}`,
+        fill: "none", stroke: CAP_DARK, strokeWidth: 0.28,
       })),
-      // Tail (long wavy flagellum)
+      // TAIL — long slender wavy flagellum, tapers to a fine tip
       h("path", {
-        d: "M50 26 Q46 34 50 42 Q54 50 50 58 Q46 66 50 72",
+        d: "M45 26 C 40 34, 50 42, 45 50 C 40 58, 50 66, 45 74",
         fill: "none", stroke: TAIL, strokeWidth: 0.9, strokeLinecap: "round",
+      }),
+      // Tail highlight (thinner lighter parallel to suggest volume)
+      h("path", {
+        d: "M45 26 C 40 34, 50 42, 45 50 C 40 58, 50 66, 45 74",
+        fill: "none", stroke: "hsl(215 55% 70%)", strokeWidth: 0.35, strokeLinecap: "round", opacity: 0.7,
       }),
     );
   })(),
