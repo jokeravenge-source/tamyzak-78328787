@@ -77,13 +77,13 @@ const copy = {
   },
 } as const;
 
-type Mode = "charged" | "discharging";
+type Mode = "charging" | "charged" | "discharging";
 
 const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
   const isRTL = language === "ar";
   const t = copy[language];
 
-  const [mode, setMode] = useState<Mode>("charged");
+  const [mode, setMode] = useState<Mode>("charging");
   const [R, setR] = useState(4); // ohms
   const [V0, setV0] = useState(9); // volts
   const C = 0.25; // farads (visual)
@@ -94,30 +94,50 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
   const [elapsed, setElapsed] = useState(0);
   const rafRef = useRef<number>();
 
-  // animation loop while discharging
+  // animation loop while charging or discharging
   useEffect(() => {
-    if (mode !== "discharging" || t0 === null) return;
+    if ((mode !== "discharging" && mode !== "charging") || t0 === null) return;
     const step = () => {
       const now = performance.now();
-      setElapsed((now - t0) / 1000);
+      const e = (now - t0) / 1000;
+      setElapsed(e);
+      if (mode === "charging" && e > 5 * tau) {
+        setMode("charged");
+        setT0(null);
+        return;
+      }
       rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [mode, t0]);
+  }, [mode, t0, tau]);
 
-  const I = mode === "discharging" ? I0 * Math.exp(-elapsed / tau) : 0;
-  const V = mode === "discharging" ? V0 * Math.exp(-elapsed / tau) : V0;
+  const I =
+    mode === "discharging"
+      ? I0 * Math.exp(-elapsed / tau)
+      : mode === "charging"
+        ? I0 * Math.exp(-elapsed / tau)
+        : 0;
+  const V =
+    mode === "discharging"
+      ? V0 * Math.exp(-elapsed / tau)
+      : mode === "charging"
+        ? V0 * (1 - Math.exp(-elapsed / tau))
+        : V0;
   const brightness =
     mode === "discharging"
       ? Math.min(1, (I * I * R) / (I0 * I0 * R)) // normalized power
       : 0;
 
-  // Galvanometer needle: -60° full left, 0° center. Sharp kick then decay.
+  // Galvanometer needle: -60° full left (discharge), +60° full right (charging).
   const needleAngle =
-    mode === "discharging" ? -60 * (I / I0) : 0;
+    mode === "discharging"
+      ? -60 * (I / I0)
+      : mode === "charging"
+        ? 60 * (I / I0)
+        : 0;
 
   // Chart data: build once when config changes
   const chartData = useMemo(() => {
@@ -130,22 +150,23 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
   }, [I0, tau]);
 
   const toggleSwitch = () => {
-    if (mode === "charged") {
-      setMode("discharging");
+    if (mode === "discharging") {
+      // back to charge loop → run charging animation
+      setMode("charging");
       setElapsed(0);
       setT0(performance.now());
     } else {
-      // back to charged
-      setMode("charged");
-      setT0(null);
+      // charging or charged → start discharge
+      setMode("discharging");
       setElapsed(0);
+      setT0(performance.now());
     }
   };
 
   const reset = () => {
-    setMode("charged");
-    setT0(null);
+    setMode("charging");
     setElapsed(0);
+    setT0(performance.now());
   };
 
   // 5 electrons circulating on the discharge loop while active
@@ -166,6 +187,7 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
               electronDelays={electronDelays}
               loopDuration={loopDuration}
               tips={t.tips}
+              chargeLevel={V / V0}
             />
             {/* readouts */}
             <div className="absolute top-3 left-3 rounded-xl bg-black/60 backdrop-blur border border-white/10 px-3 py-2 text-xs text-white space-y-0.5">
@@ -225,6 +247,13 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
                       strokeDasharray="3 3"
                     />
                   )}
+                  {mode === "charging" && (
+                    <ReferenceLine
+                      x={+Math.min(elapsed, 5 * tau).toFixed(3)}
+                      stroke="#38bdf8"
+                      strokeDasharray="3 3"
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -249,9 +278,9 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
 
             <div className="grid grid-cols-2 gap-2 mb-4">
               <button
-                onClick={() => mode !== "charged" && toggleSwitch()}
+                onClick={() => mode === "discharging" && toggleSwitch()}
                 className={`h-10 rounded-lg text-xs font-semibold border transition-all ${
-                  mode === "charged"
+                  mode === "charged" || mode === "charging"
                     ? "bg-primary/15 border-primary text-primary"
                     : "border-border text-muted-foreground hover:border-primary/40"
                 }`}
@@ -330,6 +359,7 @@ const CircuitSVG = ({
   electronDelays,
   loopDuration,
   tips,
+  chargeLevel,
 }: {
   mode: Mode;
   needleAngle: number;
@@ -337,6 +367,7 @@ const CircuitSVG = ({
   onToggle: () => void;
   electronDelays: number[];
   loopDuration: number;
+  chargeLevel: number;
   tips: { battery: string; switch: string; capacitor: string; galvano: string; lamp: string };
 }) => {
   // Discharge loop path: start at plate B (top-right of capacitor) → up → right → down through G & L2 → left back to plate A
@@ -359,24 +390,48 @@ const CircuitSVG = ({
       </defs>
 
       {/* ---- CHARGE loop (left): battery -> K pos1 -> capacitor ---- */}
-      {/* wire battery top -> switch pivot */}
-      <path d="M 90 90 L 90 60 L 250 60" stroke="url(#wire)" strokeWidth="3" fill="none" />
-      {/* switch pivot to plate A top (position 1) - highlighted when charged */}
-      <path
-        d="M 250 60 L 400 60 L 400 130"
-        stroke={mode === "charged" ? "#fbbf24" : "#475569"}
-        strokeWidth="3"
-        fill="none"
-        opacity={mode === "charged" ? 1 : 0.35}
-      />
-      {/* wire battery bottom -> plate B bottom */}
-      <path
-        d="M 90 220 L 90 280 L 400 280 L 400 200"
-        stroke={mode === "charged" ? "#fbbf24" : "#475569"}
-        strokeWidth="3"
-        fill="none"
-        opacity={mode === "charged" ? 1 : 0.35}
-      />
+      {(() => {
+        const chargeActive = mode === "charging" || mode === "charged";
+        const chargeColor = chargeActive ? "#fbbf24" : "#475569";
+        const chargeOpacity = chargeActive ? 1 : 0.35;
+        return (
+          <>
+            <path d="M 90 90 L 90 60 L 250 60" stroke={chargeColor} strokeWidth="3" fill="none" opacity={chargeOpacity} />
+            <path d="M 250 60 L 400 60 L 400 130" stroke={chargeColor} strokeWidth="3" fill="none" opacity={chargeOpacity} />
+            <path d="M 90 220 L 90 280 L 400 280 L 400 200" stroke={chargeColor} strokeWidth="3" fill="none" opacity={chargeOpacity} />
+          </>
+        );
+      })()}
+
+      {/* Electrons animating along the charge loop (top wire + bottom wire, opposite directions) */}
+      {mode === "charging" &&
+        [0, 0.25, 0.5, 0.75].map((d, i) => (
+          <g key={`chg-top-${i}`}>
+            {/* top wire: electrons flow from plate A → switch → battery + terminal (i.e., right → left) */}
+            <circle r="4.5" fill="#38bdf8">
+              <animateMotion
+                dur="1.6s"
+                repeatCount="indefinite"
+                begin={`${d}s`}
+                path="M 400 130 L 400 60 L 90 60 L 90 90"
+              />
+            </circle>
+          </g>
+        ))}
+      {mode === "charging" &&
+        [0, 0.25, 0.5, 0.75].map((d, i) => (
+          <g key={`chg-bot-${i}`}>
+            {/* bottom wire: electrons flow from battery − terminal → plate B (left → right) */}
+            <circle r="4.5" fill="#38bdf8">
+              <animateMotion
+                dur="1.6s"
+                repeatCount="indefinite"
+                begin={`${d}s`}
+                path="M 90 220 L 90 280 L 400 280 L 400 200"
+              />
+            </circle>
+          </g>
+        ))}
 
       {/* Battery */}
       <Tooltip>
@@ -403,7 +458,7 @@ const CircuitSVG = ({
             {/* pivot */}
             <circle cx="250" cy="60" r="5" fill="#e2e8f0" />
             {/* contact 1 (charge) */}
-            <circle cx="290" cy="60" r="5" fill={mode === "charged" ? "#fbbf24" : "#475569"} />
+            <circle cx="290" cy="60" r="5" fill={mode === "charged" || mode === "charging" ? "#fbbf24" : "#475569"} />
             {/* contact 2 (discharge) - lower toward capacitor top */}
             <circle cx="290" cy="90" r="5" fill={mode === "discharging" ? "#f59e0b" : "#475569"} />
             {/* lever */}
@@ -414,8 +469,8 @@ const CircuitSVG = ({
               strokeWidth="4"
               strokeLinecap="round"
               animate={{
-                x2: mode === "charged" ? 290 : 290,
-                y2: mode === "charged" ? 60 : 90,
+                x2: 290,
+                y2: mode === "discharging" ? 90 : 60,
               }}
               transition={{ type: "spring", stiffness: 260, damping: 18 }}
             />
@@ -462,10 +517,7 @@ const CircuitSVG = ({
                   fontSize="14"
                   fontWeight="700"
                   animate={{
-                    opacity:
-                      mode === "charged"
-                        ? 1
-                        : Math.max(0, 1 - (i + 1) * 0.05 * Math.min(20, needleAngle === 0 ? 20 : Math.abs(needleAngle) / 3)),
+                    opacity: Math.max(0, Math.min(1, chargeLevel - i * 0.05)),
                   }}
                 >
                   +
@@ -480,10 +532,7 @@ const CircuitSVG = ({
                   fontSize="14"
                   fontWeight="700"
                   animate={{
-                    opacity:
-                      mode === "charged"
-                        ? 1
-                        : Math.max(0, 1 - (i + 1) * 0.05 * Math.min(20, needleAngle === 0 ? 20 : Math.abs(needleAngle) / 3)),
+                    opacity: Math.max(0, Math.min(1, chargeLevel - i * 0.05)),
                   }}
                 >
                   −
