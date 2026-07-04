@@ -73,12 +73,24 @@ import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
-const COMPANION_INTRO_KEY = "app_companion_intro_v1";
+const COMPANION_PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
 
+function currentISOWeek(d = new Date()): string {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${date.getUTCFullYear()}-W${weekNo}`;
+}
+
+// Force-open the Excellence Companion on the user's first visit ever AND at the
+// start of every new week, so they always chat to build a weekly plan.
 const CompanionWelcomeTrigger = () => {
   useEffect(() => {
     try {
-      if (localStorage.getItem(COMPANION_INTRO_KEY) === "1") return;
+      const stored = localStorage.getItem(COMPANION_PLANNED_WEEK_KEY);
+      if (stored === currentISOWeek()) return;
     } catch { /* ignore */ }
     const id = window.setTimeout(() => {
       window.dispatchEvent(new Event("app:welcome-excellence-companion"));
