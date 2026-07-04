@@ -69,6 +69,7 @@ import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 import SearchFAB from "./components/SearchFAB";
 import ExcellenceCompanion from "./components/ExcellenceCompanion";
 import TelegramGate from "./components/TelegramGate";
+import TelegramChannelGate from "./components/TelegramChannelGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
 
@@ -149,6 +150,7 @@ const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [tgVerified, setTgVerified] = useState(false);
   const [tgLoading, setTgLoading] = useState(false);
+  const [channelVerified, setChannelVerified] = useState(false);
   const [authRole, setAuthRole] = useState<AuthRole | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null) : null)
   );
@@ -357,13 +359,13 @@ const App = () => {
       <PointsAwardOverlay language={language ?? "en"} />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
-      {authed && language && authRole !== "admin" && tgVerified && (
+      {authed && language && authRole !== "admin" && tgVerified && channelVerified && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && (
+      {authed && language && authRole !== "admin" && tgVerified && channelVerified && (
         <CompanionWelcomeTrigger />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && (
+      {authed && language && authRole !== "admin" && tgVerified && channelVerified && (
         <BottomGroupNav
           language={language}
           active={(menuChoice as any) ?? "basics"}
@@ -371,7 +373,7 @@ const App = () => {
         />
       )}
       <PageTransition
-        routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${tgVerified ? "tg" : "notg"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
+        routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${tgVerified ? "tg" : "notg"}|${channelVerified ? "ch" : "noch"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
       >
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
@@ -395,6 +397,8 @@ const App = () => {
         ) : (
           <TelegramGate language={language} onVerified={() => setTgVerified(true)} />
         )
+      ) : authRole !== "admin" && !channelVerified ? (
+        <TelegramChannelGate language={language} onVerified={() => setChannelVerified(true)} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
           language={language}
