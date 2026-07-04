@@ -4,6 +4,8 @@ import { OrbitControls, Grid, Environment, Html, Text } from "@react-three/drei"
 import { ArrowLeft, Atom, RotateCcw, Zap } from "lucide-react";
 import * as THREE from "three";
 import type { AppLanguage } from "@/components/LanguageGate";
+import CapacitorDischarge from "@/components/physics/CapacitorDischarge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const copy = {
   en: {
@@ -423,6 +425,17 @@ const PhysicsActivities = ({
           </div>
         </header>
 
+        <Tabs defaultValue="dielectric" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="dielectric">
+              {isRTL ? "المكثف والعازل" : "Capacitor & Dielectric"}
+            </TabsTrigger>
+            <TabsTrigger value="discharge">
+              {isRTL ? "تفريغ المكثف" : "Discharging a Capacitor"}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dielectric">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
           <div className="relative rounded-2xl overflow-hidden border border-border bg-black h-[420px] md:h-[560px]">
             <Canvas shadows camera={{ position: [5, 4, 7], fov: 50 }} dpr={[1, 1.5]}>
@@ -513,6 +526,12 @@ const PhysicsActivities = ({
             </div>
           </aside>
         </div>
+          </TabsContent>
+
+          <TabsContent value="discharge">
+            <CapacitorDischarge language={language} />
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   );
