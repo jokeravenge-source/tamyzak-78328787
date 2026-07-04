@@ -77,13 +77,13 @@ const copy = {
   },
 } as const;
 
-type Mode = "charged" | "discharging";
+type Mode = "charging" | "charged" | "discharging";
 
 const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
   const isRTL = language === "ar";
   const t = copy[language];
 
-  const [mode, setMode] = useState<Mode>("charged");
+  const [mode, setMode] = useState<Mode>("charging");
   const [R, setR] = useState(4); // ohms
   const [V0, setV0] = useState(9); // volts
   const C = 0.25; // farads (visual)
@@ -94,30 +94,50 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
   const [elapsed, setElapsed] = useState(0);
   const rafRef = useRef<number>();
 
-  // animation loop while discharging
+  // animation loop while charging or discharging
   useEffect(() => {
-    if (mode !== "discharging" || t0 === null) return;
+    if ((mode !== "discharging" && mode !== "charging") || t0 === null) return;
     const step = () => {
       const now = performance.now();
-      setElapsed((now - t0) / 1000);
+      const e = (now - t0) / 1000;
+      setElapsed(e);
+      if (mode === "charging" && e > 5 * tau) {
+        setMode("charged");
+        setT0(null);
+        return;
+      }
       rafRef.current = requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [mode, t0]);
+  }, [mode, t0, tau]);
 
-  const I = mode === "discharging" ? I0 * Math.exp(-elapsed / tau) : 0;
-  const V = mode === "discharging" ? V0 * Math.exp(-elapsed / tau) : V0;
+  const I =
+    mode === "discharging"
+      ? I0 * Math.exp(-elapsed / tau)
+      : mode === "charging"
+        ? I0 * Math.exp(-elapsed / tau)
+        : 0;
+  const V =
+    mode === "discharging"
+      ? V0 * Math.exp(-elapsed / tau)
+      : mode === "charging"
+        ? V0 * (1 - Math.exp(-elapsed / tau))
+        : V0;
   const brightness =
     mode === "discharging"
       ? Math.min(1, (I * I * R) / (I0 * I0 * R)) // normalized power
       : 0;
 
-  // Galvanometer needle: -60° full left, 0° center. Sharp kick then decay.
+  // Galvanometer needle: -60° full left (discharge), +60° full right (charging).
   const needleAngle =
-    mode === "discharging" ? -60 * (I / I0) : 0;
+    mode === "discharging"
+      ? -60 * (I / I0)
+      : mode === "charging"
+        ? 60 * (I / I0)
+        : 0;
 
   // Chart data: build once when config changes
   const chartData = useMemo(() => {
@@ -130,22 +150,23 @@ const CapacitorDischarge = ({ language }: { language: AppLanguage }) => {
   }, [I0, tau]);
 
   const toggleSwitch = () => {
-    if (mode === "charged") {
-      setMode("discharging");
+    if (mode === "discharging") {
+      // back to charge loop → run charging animation
+      setMode("charging");
       setElapsed(0);
       setT0(performance.now());
     } else {
-      // back to charged
-      setMode("charged");
-      setT0(null);
+      // charging or charged → start discharge
+      setMode("discharging");
       setElapsed(0);
+      setT0(performance.now());
     }
   };
 
   const reset = () => {
-    setMode("charged");
-    setT0(null);
+    setMode("charging");
     setElapsed(0);
+    setT0(performance.now());
   };
 
   // 5 electrons circulating on the discharge loop while active
