@@ -189,7 +189,9 @@ const SubjectsHub = ({
   const current = SUBJECTS.find((s) => s.code === open);
   const { isPremium } = useSubscription();
   const handleToolClick = (t: Tool) => {
-    const free = t.placeholder ? false : FREE_TOOLS.has(t.key);
+    // Placeholder ("Coming Soon") tools are open to everyone — they just show
+    // an in-development page, so there's no reason to gate them behind premium.
+    const free = t.placeholder ? true : FREE_TOOLS.has(t.key);
     if (!free && !isPremium) {
       toast.error(isRTL ? "هذه الأداة متاحة للمشتركين في البريميوم فقط." : "This tool is available for Premium members only.");
       onSelect("premium" as MainMenuChoice);
@@ -307,8 +309,9 @@ const SubjectsHub = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {current.tools.map((t) => {
                   const Icon = t.Icon;
-                  const free = t.placeholder ? false : FREE_TOOLS.has(t.key);
+                  const free = t.placeholder ? true : FREE_TOOLS.has(t.key);
                   const locked = !free && !isPremium;
+                  const comingSoon = !!t.placeholder;
                   return (
                     <motion.button
                       key={`${t.key}:${t.en}`}
@@ -316,12 +319,18 @@ const SubjectsHub = ({
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleToolClick(t)}
                       className={`group relative bg-card p-5 border rounded-2xl text-left transition-all ${
-                        locked
+                        comingSoon
+                          ? "border-border/60 hover:border-sky-400/60"
+                          : locked
                           ? "border-border/60 hover:border-amber-400/60"
                           : "border-border hover:border-primary/40 hover:shadow-[var(--shadow-card)]"
                       }`}
                     >
-                      {locked && (
+                      {comingSoon ? (
+                        <span className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-sky-400/15 text-sky-600 border border-sky-400/30`}>
+                          {isRTL ? "قريباً" : "COMING SOON"}
+                        </span>
+                      ) : locked && (
                         <span className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-400/15 text-amber-600 border border-amber-400/30`}>
                           <Lock className="w-3 h-3" />
                           {isRTL ? "بريميوم" : "PREMIUM"}
@@ -331,8 +340,8 @@ const SubjectsHub = ({
                         <Icon className="w-5 h-5 text-primary group-hover:text-primary-foreground transition-colors" />
                       </div>
                       <h5 className="font-bold text-base mb-3">{isRTL ? t.ar : t.en}</h5>
-                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${locked ? "text-amber-600" : "text-primary"}`}>
-                        {locked ? (isRTL ? "ترقية للفتح" : "Upgrade to unlock") : (isRTL ? "افتح" : "Open")}
+                      <span className={`inline-flex items-center gap-1 text-xs font-semibold ${comingSoon ? "text-sky-600" : locked ? "text-amber-600" : "text-primary"}`}>
+                        {comingSoon ? (isRTL ? "معاينة" : "Preview") : locked ? (isRTL ? "ترقية للفتح" : "Upgrade to unlock") : (isRTL ? "افتح" : "Open")}
                         <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
                       </span>
                     </motion.button>
