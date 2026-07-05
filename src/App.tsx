@@ -143,6 +143,18 @@ const App = () => {
     );
   }
 
+  if (typeof window !== "undefined" && window.location.pathname === "/welcome") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Welcome />
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
 
   useEffect(() => {
     applyTheme(getInitialTheme());
