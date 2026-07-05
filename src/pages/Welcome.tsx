@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import tamayzakLogo from "@/assets/tamayzak-logo.jpg.asset.json";
 
 const CREAM = "#F7F4EC";
 const NAVY = "#183A72";
@@ -165,18 +166,14 @@ const Welcome = () => {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="mt-2 mb-6 flex flex-col items-center"
+        className="mt-2 mb-2 flex flex-col items-center"
       >
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: NAVY }}
-        >
-          <svg viewBox="0 0 32 32" className="w-8 h-8" fill="none">
-            <path d="M8 8 h16 M16 8 v16" stroke={CREAM} strokeWidth="3" strokeLinecap="round" />
-            <path d="M22 20 A6 6 0 1 1 28 14" stroke={CREAM} strokeWidth="2.5" strokeLinecap="round" fill="none" />
-          </svg>
-        </div>
-        <span className="mt-2 text-sm tracking-wide" style={{ color: NAVY }}>Tamayzak</span>
+        <img
+          src={tamayzakLogo.url}
+          alt="Tamayzak"
+          className="w-32 h-32 object-contain select-none"
+          draggable={false}
+        />
       </motion.div>
 
       {/* Step content */}
