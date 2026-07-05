@@ -6,7 +6,7 @@ import {
   NotebookPen, FileText, HelpCircle, Network, Headphones, Video, Youtube,
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown, Atom, FlaskConical, Leaf, Languages as LangIcon, Moon,
-  Home, Palette, Heart, Wrench, Wand2,
+  Home, Palette, Heart, Wrench, Wand2, GraduationCap as CoursesIcon,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -24,6 +24,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
   {
     titleEn: "Subjects", titleAr: "المواد",
     items: [
+      { key: "ourCourses", labelEn: "Our Courses", labelAr: "دوراتنا", Icon: CoursesIcon },
       { key: "subjectsHub", labelEn: "All Subjects", labelAr: "كل المواد", Icon: BookOpen },
       { key: "subjectsHub", labelEn: "Physics", labelAr: "الفيزياء", Icon: Atom, subject: "physics" },
       { key: "subjectsHub", labelEn: "Chemistry", labelAr: "الكيمياء", Icon: FlaskConical, subject: "chemistry" },
