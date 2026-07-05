@@ -21,69 +21,75 @@ const Star = ({ x, y, size = 6, delay = 0 }: { x: string; y: string; size?: numb
   </motion.svg>
 );
 
-const DoorwayIllustration = () => (
-  <motion.div
-    initial={{ y: 24, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
-    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-    className="relative w-full max-w-[360px] mx-auto aspect-[4/3]"
-  >
-    <svg viewBox="0 0 400 300" className="w-full h-full" fill="none">
-      {/* Crescent moon */}
-      <path d="M330 55 A22 22 0 1 1 308 33 A17 17 0 1 0 330 55 Z" fill={NAVY} />
+const DoorwayIllustration = () => {
+  const MID_NAVY = "#254B8A";
+  const LIGHT = "#7A9AC8";
+  return (
+    <motion.div
+      initial={{ y: 24, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      className="relative w-full max-w-[380px] mx-auto aspect-[5/4]"
+    >
+      <svg viewBox="0 0 400 320" className="w-full h-full" fill="none">
+        {/* Crescent moon (upper-right of doorway) */}
+        <path d="M262 90 A16 16 0 1 1 246 74 A12 12 0 1 0 262 90 Z" fill={NAVY} />
 
-      {/* Rounded landscape hills */}
-      <path d="M0 220 Q60 190 120 210 T240 205 T400 215 L400 300 L0 300 Z" fill={NAVY} />
-      <rect x="20" y="235" width="70" height="10" rx="5" fill={BLUE_SOFT} opacity="0.55" />
-      <rect x="110" y="248" width="120" height="10" rx="5" fill={BLUE_SOFT} opacity="0.4" />
-      <rect x="260" y="238" width="90" height="10" rx="5" fill={BLUE_SOFT} opacity="0.55" />
-      <rect x="40" y="262" width="140" height="8" rx="4" fill={CREAM} opacity="0.35" />
-      <rect x="220" y="268" width="150" height="8" rx="4" fill={CREAM} opacity="0.35" />
+        {/* Radial glow behind doorway */}
+        <motion.circle
+          cx="200" cy="160" r="70"
+          fill={LIGHT}
+          initial={{ opacity: 0.25 }}
+          animate={{ opacity: [0.2, 0.45, 0.2] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.circle
+          cx="200" cy="160" r="45"
+          fill={BLUE_SOFT}
+          initial={{ opacity: 0.35 }}
+          animate={{ opacity: [0.35, 0.6, 0.35] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+        />
 
-      {/* Curved path */}
-      <path
-        d="M200 295 Q210 260 195 235 Q180 210 200 190"
-        stroke={CREAM}
-        strokeWidth="10"
-        strokeLinecap="round"
-        fill="none"
-      />
+        {/* Doorway arch — navy outline, inner glow */}
+        <path d="M170 230 L170 160 A30 30 0 0 1 230 160 L230 230 Z" fill={NAVY} />
+        <path d="M180 228 L180 162 A20 20 0 0 1 220 162 L220 228 Z" fill={BLUE_SOFT} />
+        <path d="M190 226 L190 164 A10 10 0 0 1 210 164 L210 226 Z" fill={CREAM} />
 
-      {/* Doorway glow */}
-      <motion.ellipse
-        cx="200"
-        cy="175"
-        rx="55"
-        ry="18"
-        fill={BLUE_SOFT}
-        initial={{ opacity: 0.3 }}
-        animate={{ opacity: [0.25, 0.55, 0.25] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      />
+        {/* Ground band — big navy strip */}
+        <rect x="0" y="228" width="400" height="60" fill={NAVY} />
 
-      {/* Doorway arch */}
-      <path
-        d="M175 195 L175 145 A25 25 0 0 1 225 145 L225 195 Z"
-        fill={NAVY}
-      />
-      <path
-        d="M183 192 L183 148 A17 17 0 0 1 217 148 L217 192 Z"
-        fill={BLUE_SOFT}
-      />
-      <path
-        d="M191 190 L191 150 A9 9 0 0 1 209 150 L209 190 Z"
-        fill={CREAM}
-      />
-    </svg>
+        {/* Floating rounded bars — light blue stripes on top of band */}
+        <rect x="14" y="240" width="70" height="10" rx="5" fill={LIGHT} />
+        <rect x="100" y="240" width="40" height="10" rx="5" fill={LIGHT} opacity="0.7" />
+        <rect x="260" y="240" width="55" height="10" rx="5" fill={LIGHT} />
+        <rect x="330" y="240" width="45" height="10" rx="5" fill={LIGHT} opacity="0.7" />
+        <rect x="30" y="258" width="120" height="10" rx="5" fill={MID_NAVY} />
+        <rect x="170" y="258" width="60" height="10" rx="5" fill={MID_NAVY} opacity="0.8" />
+        <rect x="250" y="258" width="130" height="10" rx="5" fill={MID_NAVY} />
+        <rect x="60" y="276" width="90" height="10" rx="5" fill={LIGHT} opacity="0.6" />
+        <rect x="230" y="276" width="110" height="10" rx="5" fill={LIGHT} opacity="0.6" />
 
-    {/* Twinkling stars overlay */}
-    <Star x="12%" y="18%" size={8} delay={0} />
-    <Star x="82%" y="28%" size={6} delay={0.4} />
-    <Star x="22%" y="42%" size={5} delay={0.8} />
-    <Star x="72%" y="12%" size={7} delay={1.2} />
-    <Star x="48%" y="8%" size={5} delay={1.6} />
-  </motion.div>
-);
+        {/* Curved white path from bottom-center up to doorway */}
+        <path
+          d="M200 315 Q214 285 196 260 Q182 240 200 228"
+          stroke={CREAM}
+          strokeWidth="14"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+
+      {/* Twinkling stars */}
+      <Star x="12%" y="10%" size={8} delay={0} />
+      <Star x="86%" y="14%" size={6} delay={0.4} />
+      <Star x="22%" y="30%" size={5} delay={0.8} />
+      <Star x="80%" y="42%" size={5} delay={1.2} />
+      <Star x="48%" y="6%" size={5} delay={1.6} />
+      <Star x="8%" y="48%" size={5} delay={0.6} />
+    </motion.div>
+  );
+};
 
 const CheckerIllustration = () => (
   <motion.div
@@ -115,38 +121,6 @@ const CheckerIllustration = () => (
   </motion.div>
 );
 
-const ProgressIllustration = () => (
-  <motion.div
-    initial={{ y: 24, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
-    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-    className="relative w-full max-w-[360px] mx-auto aspect-[4/3]"
-  >
-    <svg viewBox="0 0 400 300" className="w-full h-full" fill="none">
-      <path d="M340 55 A20 20 0 1 1 320 35 A15 15 0 1 0 340 55 Z" fill={NAVY} />
-      {/* Bar chart */}
-      <rect x="110" y="180" width="40" height="70" rx="10" fill={BLUE_SOFT} />
-      <rect x="170" y="140" width="40" height="110" rx="10" fill={NAVY} opacity="0.7" />
-      <rect x="230" y="100" width="40" height="150" rx="10" fill={NAVY} />
-      {/* Rising arrow */}
-      <path
-        d="M100 210 Q170 170 250 90"
-        stroke={NAVY}
-        strokeWidth="5"
-        strokeLinecap="round"
-        fill="none"
-        strokeDasharray="0 1"
-      />
-      <path d="M240 82 L258 88 L252 106" stroke={NAVY} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      {/* Ground */}
-      <rect x="80" y="252" width="220" height="6" rx="3" fill={NAVY} />
-    </svg>
-    <Star x="14%" y="20%" size={7} delay={0.2} />
-    <Star x="82%" y="24%" size={5} delay={0.8} />
-    <Star x="10%" y="58%" size={5} delay={1.3} />
-  </motion.div>
-);
-
 type Step = {
   illustration: JSX.Element;
   title: string;
@@ -165,12 +139,6 @@ const STEPS: Step[] = [
     illustration: <CheckerIllustration />,
     title: "المصحّح الذكي",
     subtitle: "ارفع إجاباتك، وسيقارنها الذكاء الاصطناعي بالنموذجية ويمنحك درجتك خلال ثوانٍ.",
-    primary: "التالي",
-  },
-  {
-    illustration: <ProgressIllustration />,
-    title: "تقدّم واضح كل يوم",
-    subtitle: "تابع نقاط قوتك، عالج أخطاءك، وارتقِ بمستواك خطوة بخطوة.",
     primary: "ابدأ الآن",
   },
 ];
