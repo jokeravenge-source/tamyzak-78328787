@@ -203,6 +203,36 @@ export type Database = {
           },
         ]
       }
+      course_exams: {
+        Row: {
+          answer_path: string
+          course_id: string
+          created_at: string
+          created_by: string | null
+          exam_path: string
+          id: string
+          title: string
+        }
+        Insert: {
+          answer_path: string
+          course_id: string
+          created_at?: string
+          created_by?: string | null
+          exam_path: string
+          id?: string
+          title: string
+        }
+        Update: {
+          answer_path?: string
+          course_id?: string
+          created_at?: string
+          created_by?: string | null
+          exam_path?: string
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       course_teachers: {
         Row: {
           course_id: string
