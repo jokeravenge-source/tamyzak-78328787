@@ -479,6 +479,8 @@ const App = () => {
         <ToolPlaceholder language={language} onBack={resetMenu} />
       ) : menuChoice === "physicsActivities" ? (
         <PhysicsActivities language={language} onBack={resetMenu} />
+      ) : menuChoice === "ourCourses" ? (
+        <OurCourses language={language} onBack={resetMenu} />
       ) : menuChoice === "companion" ? (
         <main className="min-h-screen bg-background pb-28">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
