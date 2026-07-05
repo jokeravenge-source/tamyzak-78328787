@@ -251,7 +251,9 @@ Deno.serve(async (req) => {
           if (!res.ok) {
             lastGeminiError = { status: res.status, payload, text, model: `lovable:${model}` };
             console.error("Lovable AI error", res.status, model, text);
-            if (res.status === 429 || res.status === 402 || res.status === 503) continue;
+            // 402 = workspace out of AI credits. Retrying other models won't help — stop immediately.
+            if (res.status === 402) break;
+            if (res.status === 429 || res.status === 503) continue;
             break;
           }
           const toolCall = payload?.choices?.[0]?.message?.tool_calls?.[0];
@@ -330,9 +332,14 @@ Deno.serve(async (req) => {
     if (!notes.trim() && lastGeminiError) {
       const quota = lastGeminiError.status === 429 || lastGeminiError.payload?.error?.status === "RESOURCE_EXHAUSTED";
       const overloaded = lastGeminiError.status === 503 || lastGeminiError.payload?.error?.status === "UNAVAILABLE";
+      const paymentRequired = lastGeminiError.status === 402;
       const retryAfter = getRetryAfterSeconds(lastGeminiError.payload);
       const disabledOrDaily = isDailyOrDisabledQuota(lastGeminiError.payload);
-      const friendly = overloaded
+      const friendly = paymentRequired
+        ? (lang0 === "ar"
+          ? "نفد رصيد الذكاء الاصطناعي في هذا التطبيق. يرجى إبلاغ المسؤول لإعادة الشحن."
+          : "The app's AI credits have run out. Please contact the owner to top up.")
+        : overloaded
         ? (lang0 === "ar"
           ? "الذكاء الاصطناعي مزدحم حالياً. حاول مرة أخرى بعد قليل."
           : "The AI is overloaded right now. Please try again in a moment.")
@@ -349,7 +356,7 @@ Deno.serve(async (req) => {
         retryable: overloaded || (quota && !disabledOrDaily && retryAfter > 0),
         retryAfter,
         quota,
-      });
+      }, paymentRequired ? 402 : 200);
     }
 
     if (!notes.trim()) {
