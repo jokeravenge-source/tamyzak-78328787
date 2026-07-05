@@ -61,6 +61,7 @@ const FrenchSynonyms = lazy(() => import("./pages/FrenchSynonyms"));
 const FrenchAntonyms = lazy(() => import("./pages/FrenchAntonyms"));
 const ToolPlaceholder = lazy(() => import("./pages/ToolPlaceholder"));
 const PhysicsActivities = lazy(() => import("./pages/PhysicsActivities"));
+const OurCourses = lazy(() => import("./pages/OurCourses"));
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
 import OAuthConsent from "./pages/OAuthConsent";
