@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const CREAM = "#F7F4EC";
@@ -20,7 +21,7 @@ const Star = ({ x, y, size = 6, delay = 0 }: { x: string; y: string; size?: numb
   </motion.svg>
 );
 
-const HeroIllustration = () => (
+const DoorwayIllustration = () => (
   <motion.div
     initial={{ y: 24, opacity: 0 }}
     animate={{ y: 0, opacity: 1 }}
@@ -84,8 +85,107 @@ const HeroIllustration = () => (
   </motion.div>
 );
 
+const CheckerIllustration = () => (
+  <motion.div
+    initial={{ y: 24, opacity: 0 }}
+    animate={{ y: 0, opacity: 1 }}
+    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+    className="relative w-full max-w-[360px] mx-auto aspect-[4/3]"
+  >
+    <svg viewBox="0 0 400 300" className="w-full h-full" fill="none">
+      <path d="M330 50 A20 20 0 1 1 310 30 A15 15 0 1 0 330 50 Z" fill={NAVY} />
+      {/* Paper */}
+      <rect x="130" y="60" width="150" height="180" rx="16" fill={NAVY} />
+      <rect x="145" y="82" width="90" height="8" rx="4" fill={CREAM} />
+      <rect x="145" y="102" width="120" height="8" rx="4" fill={BLUE_SOFT} />
+      <rect x="145" y="122" width="70" height="8" rx="4" fill={CREAM} />
+      <rect x="145" y="150" width="110" height="8" rx="4" fill={BLUE_SOFT} />
+      <rect x="145" y="170" width="80" height="8" rx="4" fill={CREAM} />
+      {/* Check badge */}
+      <circle cx="270" cy="90" r="26" fill={CREAM} stroke={NAVY} strokeWidth="4" />
+      <path d="M258 90 L268 100 L284 82" stroke={NAVY} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      {/* AI tag */}
+      <rect x="180" y="205" width="50" height="24" rx="6" fill={CREAM} />
+      <text x="205" y="222" textAnchor="middle" fontSize="13" fontWeight="700" fill={NAVY}>AI</text>
+    </svg>
+    <Star x="10%" y="22%" size={7} delay={0} />
+    <Star x="88%" y="60%" size={6} delay={0.6} />
+    <Star x="20%" y="72%" size={5} delay={1.1} />
+    <Star x="78%" y="18%" size={5} delay={1.5} />
+  </motion.div>
+);
+
+const ProgressIllustration = () => (
+  <motion.div
+    initial={{ y: 24, opacity: 0 }}
+    animate={{ y: 0, opacity: 1 }}
+    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+    className="relative w-full max-w-[360px] mx-auto aspect-[4/3]"
+  >
+    <svg viewBox="0 0 400 300" className="w-full h-full" fill="none">
+      <path d="M340 55 A20 20 0 1 1 320 35 A15 15 0 1 0 340 55 Z" fill={NAVY} />
+      {/* Bar chart */}
+      <rect x="110" y="180" width="40" height="70" rx="10" fill={BLUE_SOFT} />
+      <rect x="170" y="140" width="40" height="110" rx="10" fill={NAVY} opacity="0.7" />
+      <rect x="230" y="100" width="40" height="150" rx="10" fill={NAVY} />
+      {/* Rising arrow */}
+      <path
+        d="M100 210 Q170 170 250 90"
+        stroke={NAVY}
+        strokeWidth="5"
+        strokeLinecap="round"
+        fill="none"
+        strokeDasharray="0 1"
+      />
+      <path d="M240 82 L258 88 L252 106" stroke={NAVY} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      {/* Ground */}
+      <rect x="80" y="252" width="220" height="6" rx="3" fill={NAVY} />
+    </svg>
+    <Star x="14%" y="20%" size={7} delay={0.2} />
+    <Star x="82%" y="24%" size={5} delay={0.8} />
+    <Star x="10%" y="58%" size={5} delay={1.3} />
+  </motion.div>
+);
+
+type Step = {
+  illustration: JSX.Element;
+  title: string;
+  subtitle: string;
+  primary: string;
+};
+
+const STEPS: Step[] = [
+  {
+    illustration: <DoorwayIllustration />,
+    title: "تميّزك يبدأ من هنا",
+    subtitle: "اجعل الذكاء الاصطناعي شريكك في الدراسة، التصحيح، والتعلّم بطريقة أذكى.",
+    primary: "التالي",
+  },
+  {
+    illustration: <CheckerIllustration />,
+    title: "المصحّح الذكي",
+    subtitle: "ارفع إجاباتك، وسيقارنها الذكاء الاصطناعي بالنموذجية ويمنحك درجتك خلال ثوانٍ.",
+    primary: "التالي",
+  },
+  {
+    illustration: <ProgressIllustration />,
+    title: "تقدّم واضح كل يوم",
+    subtitle: "تابع نقاط قوتك، عالج أخطاءك، وارتقِ بمستواك خطوة بخطوة.",
+    primary: "ابدأ الآن",
+  },
+];
+
 const Welcome = () => {
   const navigate = useNavigate();
+  const [step, setStep] = useState(0);
+  const current = STEPS[step];
+  const isLast = step === STEPS.length - 1;
+
+  const next = () => {
+    if (isLast) navigate("/");
+    else setStep((s) => s + 1);
+  };
+
   return (
     <main
       dir="rtl"
@@ -111,30 +211,31 @@ const Welcome = () => {
         <span className="mt-2 text-sm tracking-wide" style={{ color: NAVY }}>Tamayzak</span>
       </motion.div>
 
-      {/* Hero */}
-      <HeroIllustration />
-
-      {/* Title */}
-      <motion.h1
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
-        className="mt-8 text-center text-[34px] leading-[1.15] font-extrabold"
-        style={{ color: NAVY }}
-      >
-        تميّزك يبدأ من هنا
-      </motion.h1>
-
-      {/* Subtitle */}
-      <motion.p
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.25, ease: "easeOut" }}
-        className="mt-4 text-center text-[15px] leading-relaxed max-w-[320px]"
-        style={{ color: NAVY_SOFT }}
-      >
-        اجعل الذكاء الاصطناعي شريكك في الدراسة، التصحيح، والتعلّم بطريقة أذكى.
-      </motion.p>
+      {/* Step content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -24 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="w-full flex flex-col items-center"
+        >
+          {current.illustration}
+          <h1
+            className="mt-8 text-center text-[32px] leading-[1.15] font-extrabold"
+            style={{ color: NAVY }}
+          >
+            {current.title}
+          </h1>
+          <p
+            className="mt-4 text-center text-[15px] leading-relaxed max-w-[320px]"
+            style={{ color: NAVY_SOFT }}
+          >
+            {current.subtitle}
+          </p>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Spacer */}
       <div className="flex-1 min-h-6" />
@@ -147,19 +248,29 @@ const Welcome = () => {
         className="w-full max-w-[360px] space-y-3"
       >
         <button
-          onClick={() => navigate("/")}
+          onClick={next}
           className="w-full h-14 rounded-[24px] text-[17px] font-semibold active:scale-[0.98] transition-transform"
           style={{ backgroundColor: NAVY, color: CREAM }}
         >
-          ابدأ الآن
+          {current.primary}
         </button>
-        <button
-          onClick={() => navigate("/")}
-          className="w-full h-14 rounded-[24px] text-[17px] font-semibold active:scale-[0.98] transition-transform border-2"
-          style={{ borderColor: NAVY, color: NAVY, backgroundColor: "transparent" }}
-        >
-          لدي حساب
-        </button>
+        {isLast ? (
+          <button
+            onClick={() => navigate("/")}
+            className="w-full h-14 rounded-[24px] text-[17px] font-semibold active:scale-[0.98] transition-transform border-2"
+            style={{ borderColor: NAVY, color: NAVY, backgroundColor: "transparent" }}
+          >
+            لدي حساب
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate("/")}
+            className="w-full h-12 text-[14px] font-medium"
+            style={{ color: NAVY_SOFT, backgroundColor: "transparent" }}
+          >
+            تخطّي
+          </button>
+        )}
       </motion.div>
 
       {/* Pagination */}
@@ -168,10 +279,26 @@ const Welcome = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.5 }}
         className="mt-6 flex items-center gap-2"
+        role="tablist"
+        aria-label="onboarding steps"
       >
-        <span className="h-2 w-6 rounded-full" style={{ backgroundColor: NAVY }} />
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: BLUE_SOFT }} />
-        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: BLUE_SOFT }} />
+        {STEPS.map((_, i) => {
+          const active = i === step;
+          return (
+            <button
+              key={i}
+              onClick={() => setStep(i)}
+              aria-label={`Step ${i + 1}`}
+              aria-selected={active}
+              role="tab"
+              className="h-2 rounded-full transition-all"
+              style={{
+                width: active ? 24 : 8,
+                backgroundColor: active ? NAVY : BLUE_SOFT,
+              }}
+            />
+          );
+        })}
       </motion.div>
     </main>
   );
