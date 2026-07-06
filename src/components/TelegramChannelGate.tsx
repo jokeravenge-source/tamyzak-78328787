@@ -93,7 +93,7 @@ export default function TelegramChannelGate({ language, onVerified }: Props) {
               {t.open}
             </a>
             <button
-              onClick={() => check(false)}
+              onClick={() => check()}
               disabled={checking}
               className="w-full h-11 rounded-xl border border-white/10 bg-background font-medium flex items-center justify-center gap-2 hover:border-primary/40 transition disabled:opacity-60"
             >
