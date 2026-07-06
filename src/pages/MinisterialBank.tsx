@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma, FileText, Loader2, RefreshCw, Printer } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
 import { ministerialChemCh2 } from "@/data/ministerialChemCh2";
 import { ministerialChemCh3 } from "@/data/ministerialChemCh3";
@@ -57,6 +59,15 @@ const copy = {
     backToQuestion: "Back to question",
     gotIt: "I got it right",
     gotItWrong: "I got it wrong",
+    generateExam: "Generate Full Exam",
+    generateExamSub: "AI-generated ministerial-style paper for this chapter",
+    generating: "Generating exam...",
+    regenerate: "Regenerate",
+    showAnswers: "Show model answers",
+    hideAnswers: "Hide answers",
+    answersTitle: "Model Answers",
+    print: "Print",
+    genError: "Could not generate exam. Please try again.",
   },
   ar: {
     badge: "بنك الوزاريات",
@@ -78,6 +89,15 @@ const copy = {
     backToQuestion: "العودة إلى السؤال",
     gotIt: "إجابتي صحيحة",
     gotItWrong: "إجابتي خاطئة",
+    generateExam: "توليد امتحان كامل",
+    generateExamSub: "امتحان وزاري بنمط الأصلية لهذا الفصل بالذكاء الاصطناعي",
+    generating: "جاري توليد الامتحان...",
+    regenerate: "توليد امتحان جديد",
+    showAnswers: "عرض الإجابات النموذجية",
+    hideAnswers: "إخفاء الإجابات",
+    answersTitle: "الإجابات النموذجية",
+    print: "طباعة",
+    genError: "تعذّر توليد الامتحان، حاول مرة أخرى.",
   },
 } as const;
 
@@ -88,9 +108,17 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [reviewing, setReviewing] = useState(false);
+  const [examOpen, setExamOpen] = useState(false);
+  const [examLoading, setExamLoading] = useState(false);
+  const [examText, setExamText] = useState<string>("");
+  const [examAnswers, setExamAnswers] = useState<string>("");
+  const [showAnswers, setShowAnswers] = useState(false);
+  const [examChapter, setExamChapter] = useState<{ subject: BankSubject; n: number } | null>(null);
 
   const back = () => {
-    if (reviewing) {
+    if (examOpen) {
+      setExamOpen(false);
+    } else if (reviewing) {
       setReviewing(false);
     } else if (chapterN !== null) {
       setChapterN(null);
@@ -100,6 +128,36 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
       setSubject(null);
     } else {
       onBack();
+    }
+  };
+
+  const generateExam = async (subj: BankSubject, n: number) => {
+    setExamOpen(true);
+    setExamLoading(true);
+    setExamText("");
+    setExamAnswers("");
+    setShowAnswers(false);
+    setExamChapter({ subject: subj, n });
+    const ch = getChaptersForSubject(subj).find((c) => c.n === n);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-ministerial-exam", {
+        body: {
+          subject: subj,
+          chapterN: n,
+          chapterTitleAr: ch?.arTitle ?? "",
+          chapterTitleEn: ch?.title ?? "",
+          language,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setExamText((data as any)?.exam ?? "");
+      setExamAnswers((data as any)?.answers ?? "");
+    } catch (e: any) {
+      toast({ title: t.genError, description: e?.message ?? "", variant: "destructive" });
+      setExamOpen(false);
+    } finally {
+      setExamLoading(false);
     }
   };
 
