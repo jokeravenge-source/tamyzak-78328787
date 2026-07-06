@@ -250,38 +250,105 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
           {chapters.map((c, i) => {
             const isAvailable = !c.locked;
             return (
-              <button
+              <div
                 key={c.n}
-                onClick={() => isAvailable && setChapterN(c.n)}
-                disabled={c.locked}
                 style={{ animationDelay: `${i * 70}ms` }}
-                className={`group relative text-left rounded-3xl p-6 h-56 border backdrop-blur overflow-hidden transition-all duration-500 animate-fade-up ${
+                className={`group relative rounded-3xl border backdrop-blur overflow-hidden transition-all duration-500 animate-fade-up ${
                   isAvailable
-                    ? "border-primary/40 bg-secondary/40 hover:-translate-y-2 hover:border-primary cursor-pointer shadow-lg hover:shadow-[var(--shadow-glow)]"
-                    : "border-white/5 bg-secondary/20 opacity-60 cursor-not-allowed"
+                    ? "border-primary/40 bg-secondary/40 hover:border-primary shadow-lg hover:shadow-[var(--shadow-glow)]"
+                    : "border-white/5 bg-secondary/20 opacity-60"
                 }`}
               >
                 {isAvailable && (
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
+                  <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
                 )}
-                <div className="relative z-10 flex items-start justify-between">
-                  <span className={`text-6xl font-bold font-mono leading-none ${isAvailable ? "gradient-text" : "text-muted-foreground/40"}`}>
-                    {String(c.n).padStart(2, "0")}
-                  </span>
-                  {c.locked ? (
-                    <Lock className="w-4 h-4 text-muted-foreground/60" />
-                  ) : (
-                    <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
-                  )}
-                </div>
-                <div className="relative z-10 absolute bottom-6 left-6 right-6">
-                  <h3 className={`text-lg font-semibold ${language === "ar" ? "text-center" : ""} ${isAvailable ? "text-foreground" : "text-muted-foreground"}`}>
-                    {language === "ar" ? c.arTitle : c.title}
-                  </h3>
-                </div>
-              </button>
+                <button
+                  onClick={() => isAvailable && setChapterN(c.n)}
+                  disabled={c.locked}
+                  className={`relative z-10 w-full text-left p-6 h-56 flex flex-col ${
+                    isAvailable ? "cursor-pointer" : "cursor-not-allowed"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <span className={`text-6xl font-bold font-mono leading-none ${isAvailable ? "gradient-text" : "text-muted-foreground/40"}`}>
+                      {String(c.n).padStart(2, "0")}
+                    </span>
+                    {c.locked ? (
+                      <Lock className="w-4 h-4 text-muted-foreground/60" />
+                    ) : (
+                      <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+                    )}
+                  </div>
+                  <div className="mt-auto">
+                    <h3 className={`text-lg font-semibold ${language === "ar" ? "text-center" : ""} ${isAvailable ? "text-foreground" : "text-muted-foreground"}`}>
+                      {language === "ar" ? c.arTitle : c.title}
+                    </h3>
+                  </div>
+                </button>
+                {isAvailable && subject && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      generateExam(subject, c.n);
+                    }}
+                    className="relative z-10 w-full h-11 border-t border-primary/20 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium inline-flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    {t.generateExam}
+                  </button>
+                )}
+              </div>
             );
           })}
+        </section>
+      ) : examOpen ? (
+        <section className="max-w-3xl mx-auto mt-12 z-10 relative animate-fade-up">
+          {examLoading ? (
+            <div className="rounded-3xl p-14 border border-primary/40 bg-secondary/40 backdrop-blur text-center">
+              <Loader2 className="w-10 h-10 mx-auto mb-4 text-primary animate-spin" />
+              <p className="text-muted-foreground">{t.generating}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-end gap-2 print:hidden">
+                <button
+                  onClick={() => examChapter && generateExam(examChapter.subject, examChapter.n)}
+                  className="h-10 px-4 rounded-xl border border-primary/40 bg-secondary/40 backdrop-blur text-sm text-foreground hover:border-primary transition-all inline-flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" /> {t.regenerate}
+                </button>
+                <button
+                  onClick={() => setShowAnswers((v) => !v)}
+                  className="h-10 px-4 rounded-xl border border-primary/40 bg-primary/10 text-sm text-primary hover:bg-primary/20 transition-all inline-flex items-center gap-2"
+                >
+                  <Eye className="w-4 h-4" /> {showAnswers ? t.hideAnswers : t.showAnswers}
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="h-10 px-4 rounded-xl border border-white/10 bg-secondary/40 backdrop-blur text-sm text-foreground hover:border-primary/40 transition-all inline-flex items-center gap-2"
+                >
+                  <Printer className="w-4 h-4" /> {t.print}
+                </button>
+              </div>
+              <article
+                dir="rtl"
+                className="rounded-3xl p-8 md:p-10 border border-primary/40 bg-white text-neutral-900 shadow-xl leading-loose whitespace-pre-wrap font-serif text-[15px] md:text-base print:border-0 print:shadow-none print:bg-white print:text-black"
+                style={{ fontFamily: "'Amiri','Scheherazade New','Traditional Arabic',serif" }}
+              >
+                {examText}
+              </article>
+              {showAnswers && examAnswers && (
+                <article
+                  dir="rtl"
+                  className="rounded-3xl p-8 md:p-10 border border-emerald-400/40 bg-emerald-50 text-neutral-900 shadow-xl leading-loose whitespace-pre-wrap font-serif text-[15px] md:text-base"
+                  style={{ fontFamily: "'Amiri','Scheherazade New','Traditional Arabic',serif" }}
+                >
+                  <div className="text-emerald-700 font-bold mb-4 text-lg">{t.answersTitle}</div>
+                  {examAnswers}
+                </article>
+              )}
+            </div>
+          )}
         </section>
       ) : (
         hasQuestionBank && current ? (
