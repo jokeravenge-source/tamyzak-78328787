@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Send, RefreshCw, CheckCircle2 } from "lucide-react";
 import type { AppLanguage } from "./LanguageGate";
