@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap, RefreshCw, BookText, Beaker, Sigma, Atom as AtomIcon, FileQuestion, Volume2, Timer, TrendingDown, Repeat, FileText, Feather, Type, Music, Brain, HeartPulse, Table2, Sparkles as SparklesIcon, Languages, GaugeCircle, ListTodo, ClipboardList, Wand2, MessageCircle, BookHeart, Speech, PenTool, Boxes } from "lucide-react";
+import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap, RefreshCw, BookText, Beaker, Sigma, Atom as AtomIcon, FileQuestion, Volume2, Timer, TrendingDown, Repeat, FileText, Feather, Type, Music, Brain, HeartPulse, Table2, Sparkles as SparklesIcon, Languages, GaugeCircle, ListTodo, ClipboardList, Wand2, MessageCircle, BookHeart, Speech, PenTool, Boxes, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
