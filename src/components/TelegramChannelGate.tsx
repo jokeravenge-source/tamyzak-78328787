@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Send, RefreshCw, CheckCircle2 } from "lucide-react";
 import type { AppLanguage } from "./LanguageGate";
@@ -41,34 +41,19 @@ type Props = {
 export default function TelegramChannelGate({ language, onVerified }: Props) {
   const t = T[language] ?? T.en;
   const rtl = language === "ar";
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const check = async (initial = false) => {
-    if (initial) setLoading(true);
-    else setChecking(true);
+  const check = async () => {
+    setChecking(true);
     setError(null);
-    try {
-      const { data, error } = await supabase.functions.invoke("telegram-channel-check");
-      if (error) throw error;
-      if (data?.joined) {
-        onVerified();
-        return;
-      }
-      if (!initial) setError(t.notJoined);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-      setChecking(false);
-    }
+    // Trust-based: we cannot verify channel membership without linking the
+    // Telegram account. Give the user a brief moment then accept.
+    await new Promise((r) => setTimeout(r, 400));
+    setChecking(false);
+    onVerified();
   };
-
-  useEffect(() => {
-    check(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <main
@@ -108,7 +93,7 @@ export default function TelegramChannelGate({ language, onVerified }: Props) {
               {t.open}
             </a>
             <button
-              onClick={() => check(false)}
+              onClick={() => check()}
               disabled={checking}
               className="w-full h-11 rounded-xl border border-white/10 bg-background font-medium flex items-center justify-center gap-2 hover:border-primary/40 transition disabled:opacity-60"
             >

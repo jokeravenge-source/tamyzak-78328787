@@ -374,13 +374,13 @@ const App = () => {
       <PointsAwardOverlay language={language ?? "en"} />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
-      {authed && language && authRole !== "admin" && tgVerified && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && (
         <CompanionWelcomeTrigger />
       )}
-      {authed && language && authRole !== "admin" && tgVerified && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && (
         <BottomGroupNav
           language={language}
           active={(menuChoice as any) ?? "basics"}
@@ -388,7 +388,7 @@ const App = () => {
         />
       )}
       <PageTransition
-        routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${tgVerified ? "tg" : "notg"}|${channelVerified ? "ch" : "noch"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
+        routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${channelVerified ? "ch" : "noch"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
       >
       {!authRole ? (
         <RoleGate onSelect={chooseRole} />
@@ -404,14 +404,6 @@ const App = () => {
         <Auth onAuthed={() => setAuthed(true)} onGoAdmin={() => chooseRole("admin")} />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
-      ) : authRole !== "admin" && !tgVerified ? (
-        tgLoading ? (
-          <main className="min-h-screen flex items-center justify-center">
-            <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-          </main>
-        ) : (
-          <TelegramGate language={language} onVerified={() => setTgVerified(true)} />
-        )
       ) : authRole !== "admin" && !channelVerified ? (
         <TelegramChannelGate language={language} onVerified={() => setChannelVerified(true)} />
       ) : !menuChoice || menuChoice === "basics" ? (
