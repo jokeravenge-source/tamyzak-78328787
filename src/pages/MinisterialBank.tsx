@@ -152,6 +152,10 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
   const [examAnswers, setExamAnswers] = useState<string>("");
   const [showAnswers, setShowAnswers] = useState(false);
   const [examChapter, setExamChapter] = useState<{ subject: BankSubject; n: number } | null>(null);
+  const [studentText, setStudentText] = useState<string>("");
+  const [studentImages, setStudentImages] = useState<string[]>([]);
+  const [grading, setGrading] = useState(false);
+  const [gradeResult, setGradeResult] = useState<any>(null);
 
   const back = () => {
     if (examOpen) {
@@ -176,6 +180,9 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
     setExamAnswers("");
     setShowAnswers(false);
     setExamChapter({ subject: subj, n });
+    setStudentText("");
+    setStudentImages([]);
+    setGradeResult(null);
     const ch = getChaptersForSubject(subj).find((c) => c.n === n);
     try {
       const { data, error } = await supabase.functions.invoke("generate-ministerial-exam", {
@@ -196,6 +203,52 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
       setExamOpen(false);
     } finally {
       setExamLoading(false);
+    }
+  };
+
+  const handleImagesSelected = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    const next: string[] = [];
+    for (const file of Array.from(files).slice(0, 10)) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ title: t.imageTooLarge, variant: "destructive" });
+        continue;
+      }
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      next.push(dataUrl);
+    }
+    setStudentImages((prev) => [...prev, ...next].slice(0, 10));
+  };
+
+  const submitGrading = async () => {
+    if (!studentText.trim() && !studentImages.length) {
+      toast({ title: t.provideAnswer, variant: "destructive" });
+      return;
+    }
+    setGrading(true);
+    setGradeResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("grade-ministerial-exam", {
+        body: {
+          examText,
+          modelAnswers: examAnswers,
+          studentText: studentText.trim(),
+          studentImages,
+          language,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setGradeResult(data);
+    } catch (e: any) {
+      toast({ title: t.gradeError, description: e?.message ?? "", variant: "destructive" });
+    } finally {
+      setGrading(false);
     }
   };
 
