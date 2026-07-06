@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import tamayzakLogo from "@/assets/tamayzak-logo.png.asset.json";
 
 const CREAM = "#F7F4EC";
@@ -92,8 +91,6 @@ const DoorwayIllustration = () => {
 };
 
 const Welcome = () => {
-  const navigate = useNavigate();
-
   return (
     <main
       dir="rtl"
@@ -148,7 +145,7 @@ const Welcome = () => {
         className="w-full max-w-[360px]"
       >
         <button
-          onClick={() => navigate("/")}
+          onClick={() => { window.location.href = "/"; }}
           className="w-full h-14 rounded-[24px] text-[17px] font-semibold active:scale-[0.98] transition-transform"
           style={{ backgroundColor: NAVY, color: CREAM }}
         >
