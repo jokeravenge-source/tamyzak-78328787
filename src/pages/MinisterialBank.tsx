@@ -341,54 +341,36 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
           {chapters.map((c, i) => {
             const isAvailable = !c.locked;
             return (
-              <div
+              <button
                 key={c.n}
+                onClick={() => isAvailable && setChapterN(c.n)}
+                disabled={c.locked}
                 style={{ animationDelay: `${i * 70}ms` }}
-                className={`group relative rounded-3xl border backdrop-blur overflow-hidden transition-all duration-500 animate-fade-up ${
+                className={`group relative text-left rounded-3xl p-6 h-56 border backdrop-blur overflow-hidden transition-all duration-500 animate-fade-up ${
                   isAvailable
-                    ? "border-primary/40 bg-secondary/40 hover:border-primary shadow-lg hover:shadow-[var(--shadow-glow)]"
-                    : "border-white/5 bg-secondary/20 opacity-60"
+                    ? "border-primary/40 bg-secondary/40 hover:-translate-y-2 hover:border-primary cursor-pointer shadow-lg hover:shadow-[var(--shadow-glow)]"
+                    : "border-white/5 bg-secondary/20 opacity-60 cursor-not-allowed"
                 }`}
               >
                 {isAvailable && (
-                  <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
                 )}
-                <button
-                  onClick={() => isAvailable && setChapterN(c.n)}
-                  disabled={c.locked}
-                  className={`relative z-10 w-full text-left p-6 h-56 flex flex-col ${
-                    isAvailable ? "cursor-pointer" : "cursor-not-allowed"
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <span className={`text-6xl font-bold font-mono leading-none ${isAvailable ? "gradient-text" : "text-muted-foreground/40"}`}>
-                      {String(c.n).padStart(2, "0")}
-                    </span>
-                    {c.locked ? (
-                      <Lock className="w-4 h-4 text-muted-foreground/60" />
-                    ) : (
-                      <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
-                    )}
-                  </div>
-                  <div className="mt-auto">
-                    <h3 className={`text-lg font-semibold ${language === "ar" ? "text-center" : ""} ${isAvailable ? "text-foreground" : "text-muted-foreground"}`}>
-                      {language === "ar" ? c.arTitle : c.title}
-                    </h3>
-                  </div>
-                </button>
-                {isAvailable && subject && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      generateExam(subject, c.n);
-                    }}
-                    className="relative z-10 w-full h-11 border-t border-primary/20 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium inline-flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <FileText className="w-4 h-4" />
-                    {t.generateExam}
-                  </button>
-                )}
-              </div>
+                <div className="relative z-10 flex items-start justify-between">
+                  <span className={`text-6xl font-bold font-mono leading-none ${isAvailable ? "gradient-text" : "text-muted-foreground/40"}`}>
+                    {String(c.n).padStart(2, "0")}
+                  </span>
+                  {c.locked ? (
+                    <Lock className="w-4 h-4 text-muted-foreground/60" />
+                  ) : (
+                    <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+                  )}
+                </div>
+                <div className="relative z-10 absolute bottom-6 left-6 right-6">
+                  <h3 className={`text-lg font-semibold ${language === "ar" ? "text-center" : ""} ${isAvailable ? "text-foreground" : "text-muted-foreground"}`}>
+                    {language === "ar" ? c.arTitle : c.title}
+                  </h3>
+                </div>
+              </button>
             );
           })}
         </section>
