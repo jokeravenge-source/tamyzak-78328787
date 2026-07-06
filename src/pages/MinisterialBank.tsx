@@ -469,6 +469,21 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
             </section>
           ) : (
             <section className="max-w-3xl mx-auto mt-12 z-10 relative animate-fade-up space-y-5">
+              {subject && chapterN !== null && (
+                <button
+                  onClick={() => generateExam(subject, chapterN)}
+                  className="w-full rounded-2xl p-4 border border-primary/40 bg-primary/10 hover:bg-primary/20 transition-all inline-flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                    <GraduationCap className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0 text-start">
+                    <div className="text-sm font-semibold text-foreground">{t.generateExam}</div>
+                    <div className="text-xs text-muted-foreground truncate">{t.generateExamSub}</div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-primary shrink-0" />
+                </button>
+              )}
               <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-muted-foreground">
                 <span>{t.question} {qIndex + 1} {t.of} {questions.length}</span>
               </div>
@@ -510,7 +525,7 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
             </section>
           )
         ) : (
-        <section className="max-w-3xl mx-auto mt-14 md:mt-20 z-10 relative animate-fade-up">
+        <section className="max-w-3xl mx-auto mt-14 md:mt-20 z-10 relative animate-fade-up space-y-5">
           <div className="rounded-3xl p-10 border border-primary/40 bg-secondary/40 backdrop-blur text-center">
             <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center bg-primary/15">
               <ScrollText className="w-8 h-8 text-primary" />
@@ -518,6 +533,21 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
             <h3 className="text-2xl font-semibold text-foreground mb-2">{t.soon}</h3>
             <p className="text-muted-foreground">{t.soonBody}</p>
           </div>
+          {subject && chapterN !== null && (
+            <button
+              onClick={() => generateExam(subject, chapterN)}
+              className="w-full rounded-3xl p-6 border border-primary/40 bg-primary/10 hover:bg-primary/20 transition-all inline-flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1 text-start">
+                <div className="text-lg font-semibold text-foreground">{t.tryExam}</div>
+                <div className="text-sm text-muted-foreground">{t.tryExamSub}</div>
+              </div>
+              <ArrowRight className="w-5 h-5 text-primary" />
+            </button>
+          )}
         </section>
         )
       )}
