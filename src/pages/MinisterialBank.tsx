@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma, FileText, Loader2, RefreshCw, Printer } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma, FileText, Loader2, RefreshCw, Printer, Upload, GraduationCap, ImagePlus, Trash2 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +68,25 @@ const copy = {
     answersTitle: "Model Answers",
     print: "Print",
     genError: "Could not generate exam. Please try again.",
+    uploadTitle: "Upload your answer for AI grading",
+    uploadHint: "Type your answers below, or upload photos of your answer sheet. The AI will grade using the ministerial marking scheme.",
+    addImages: "Add answer images",
+    typeAnswers: "Type your answers here (or leave empty and upload images)",
+    submitForGrading: "Grade my answers",
+    grading: "Grading your answers...",
+    resultTitle: "Grading Result",
+    totalScore: "Total score",
+    overallFeedback: "Overall feedback",
+    strengths: "Strengths",
+    improvements: "To improve",
+    perQuestion: "Per-question breakdown",
+    notAttempted: "Not attempted",
+    correction: "Correction",
+    gradeError: "Could not grade the answers. Please try again.",
+    provideAnswer: "Please type or upload your answer first.",
+    imageTooLarge: "One of the images is too large (max 5MB).",
+    tryExam: "Take a new AI-generated exam",
+    tryExamSub: "Get a full ministerial-style paper for this chapter and let the AI grade your answers.",
   },
   ar: {
     badge: "بنك الوزاريات",
@@ -98,6 +117,25 @@ const copy = {
     answersTitle: "الإجابات النموذجية",
     print: "طباعة",
     genError: "تعذّر توليد الامتحان، حاول مرة أخرى.",
+    uploadTitle: "ارفع إجابتك ليصححها الذكاء الاصطناعي",
+    uploadHint: "اكتب إجاباتك في الأسفل، أو ارفع صوراً من دفترك. سيصحّح الذكاء الاصطناعي وفق معايير التصحيح الوزاري.",
+    addImages: "إضافة صور الإجابة",
+    typeAnswers: "اكتب إجاباتك هنا (أو اتركها فارغة وارفع صوراً)",
+    submitForGrading: "صحّح إجاباتي",
+    grading: "جاري تصحيح إجاباتك...",
+    resultTitle: "نتيجة التصحيح",
+    totalScore: "المجموع الكلي",
+    overallFeedback: "الملاحظة العامة",
+    strengths: "نقاط القوة",
+    improvements: "نقاط للتحسين",
+    perQuestion: "التصحيح لكل سؤال",
+    notAttempted: "لم يُحل",
+    correction: "التصحيح",
+    gradeError: "تعذّر تصحيح الإجابات، حاول مرة أخرى.",
+    provideAnswer: "الرجاء كتابة إجابتك أو رفع صور أولاً.",
+    imageTooLarge: "إحدى الصور كبيرة جداً (الحد 5MB).",
+    tryExam: "خذ امتحاناً وزارياً جديداً بالذكاء الاصطناعي",
+    tryExamSub: "احصل على ورقة وزارية كاملة لهذا الفصل ودع الذكاء الاصطناعي يصحّح إجاباتك.",
   },
 } as const;
 
