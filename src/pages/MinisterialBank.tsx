@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma, FileText, Loader2, RefreshCw, Printer } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
 import { ministerialChemCh2 } from "@/data/ministerialChemCh2";
 import { ministerialChemCh3 } from "@/data/ministerialChemCh3";
@@ -57,6 +59,15 @@ const copy = {
     backToQuestion: "Back to question",
     gotIt: "I got it right",
     gotItWrong: "I got it wrong",
+    generateExam: "Generate Full Exam",
+    generateExamSub: "AI-generated ministerial-style paper for this chapter",
+    generating: "Generating exam...",
+    regenerate: "Regenerate",
+    showAnswers: "Show model answers",
+    hideAnswers: "Hide answers",
+    answersTitle: "Model Answers",
+    print: "Print",
+    genError: "Could not generate exam. Please try again.",
   },
   ar: {
     badge: "بنك الوزاريات",
@@ -78,6 +89,15 @@ const copy = {
     backToQuestion: "العودة إلى السؤال",
     gotIt: "إجابتي صحيحة",
     gotItWrong: "إجابتي خاطئة",
+    generateExam: "توليد امتحان كامل",
+    generateExamSub: "امتحان وزاري بنمط الأصلية لهذا الفصل بالذكاء الاصطناعي",
+    generating: "جاري توليد الامتحان...",
+    regenerate: "توليد امتحان جديد",
+    showAnswers: "عرض الإجابات النموذجية",
+    hideAnswers: "إخفاء الإجابات",
+    answersTitle: "الإجابات النموذجية",
+    print: "طباعة",
+    genError: "تعذّر توليد الامتحان، حاول مرة أخرى.",
   },
 } as const;
 
@@ -88,9 +108,17 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [reviewing, setReviewing] = useState(false);
+  const [examOpen, setExamOpen] = useState(false);
+  const [examLoading, setExamLoading] = useState(false);
+  const [examText, setExamText] = useState<string>("");
+  const [examAnswers, setExamAnswers] = useState<string>("");
+  const [showAnswers, setShowAnswers] = useState(false);
+  const [examChapter, setExamChapter] = useState<{ subject: BankSubject; n: number } | null>(null);
 
   const back = () => {
-    if (reviewing) {
+    if (examOpen) {
+      setExamOpen(false);
+    } else if (reviewing) {
       setReviewing(false);
     } else if (chapterN !== null) {
       setChapterN(null);
@@ -100,6 +128,36 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
       setSubject(null);
     } else {
       onBack();
+    }
+  };
+
+  const generateExam = async (subj: BankSubject, n: number) => {
+    setExamOpen(true);
+    setExamLoading(true);
+    setExamText("");
+    setExamAnswers("");
+    setShowAnswers(false);
+    setExamChapter({ subject: subj, n });
+    const ch = getChaptersForSubject(subj).find((c) => c.n === n);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-ministerial-exam", {
+        body: {
+          subject: subj,
+          chapterN: n,
+          chapterTitleAr: ch?.arTitle ?? "",
+          chapterTitleEn: ch?.title ?? "",
+          language,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setExamText((data as any)?.exam ?? "");
+      setExamAnswers((data as any)?.answers ?? "");
+    } catch (e: any) {
+      toast({ title: t.genError, description: e?.message ?? "", variant: "destructive" });
+      setExamOpen(false);
+    } finally {
+      setExamLoading(false);
     }
   };
 
@@ -192,38 +250,105 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
           {chapters.map((c, i) => {
             const isAvailable = !c.locked;
             return (
-              <button
+              <div
                 key={c.n}
-                onClick={() => isAvailable && setChapterN(c.n)}
-                disabled={c.locked}
                 style={{ animationDelay: `${i * 70}ms` }}
-                className={`group relative text-left rounded-3xl p-6 h-56 border backdrop-blur overflow-hidden transition-all duration-500 animate-fade-up ${
+                className={`group relative rounded-3xl border backdrop-blur overflow-hidden transition-all duration-500 animate-fade-up ${
                   isAvailable
-                    ? "border-primary/40 bg-secondary/40 hover:-translate-y-2 hover:border-primary cursor-pointer shadow-lg hover:shadow-[var(--shadow-glow)]"
-                    : "border-white/5 bg-secondary/20 opacity-60 cursor-not-allowed"
+                    ? "border-primary/40 bg-secondary/40 hover:border-primary shadow-lg hover:shadow-[var(--shadow-glow)]"
+                    : "border-white/5 bg-secondary/20 opacity-60"
                 }`}
               >
                 {isAvailable && (
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
+                  <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: "var(--gradient-primary)", mixBlendMode: "overlay" }} />
                 )}
-                <div className="relative z-10 flex items-start justify-between">
-                  <span className={`text-6xl font-bold font-mono leading-none ${isAvailable ? "gradient-text" : "text-muted-foreground/40"}`}>
-                    {String(c.n).padStart(2, "0")}
-                  </span>
-                  {c.locked ? (
-                    <Lock className="w-4 h-4 text-muted-foreground/60" />
-                  ) : (
-                    <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
-                  )}
-                </div>
-                <div className="relative z-10 absolute bottom-6 left-6 right-6">
-                  <h3 className={`text-lg font-semibold ${language === "ar" ? "text-center" : ""} ${isAvailable ? "text-foreground" : "text-muted-foreground"}`}>
-                    {language === "ar" ? c.arTitle : c.title}
-                  </h3>
-                </div>
-              </button>
+                <button
+                  onClick={() => isAvailable && setChapterN(c.n)}
+                  disabled={c.locked}
+                  className={`relative z-10 w-full text-left p-6 h-56 flex flex-col ${
+                    isAvailable ? "cursor-pointer" : "cursor-not-allowed"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <span className={`text-6xl font-bold font-mono leading-none ${isAvailable ? "gradient-text" : "text-muted-foreground/40"}`}>
+                      {String(c.n).padStart(2, "0")}
+                    </span>
+                    {c.locked ? (
+                      <Lock className="w-4 h-4 text-muted-foreground/60" />
+                    ) : (
+                      <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+                    )}
+                  </div>
+                  <div className="mt-auto">
+                    <h3 className={`text-lg font-semibold ${language === "ar" ? "text-center" : ""} ${isAvailable ? "text-foreground" : "text-muted-foreground"}`}>
+                      {language === "ar" ? c.arTitle : c.title}
+                    </h3>
+                  </div>
+                </button>
+                {isAvailable && subject && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      generateExam(subject, c.n);
+                    }}
+                    className="relative z-10 w-full h-11 border-t border-primary/20 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium inline-flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    {t.generateExam}
+                  </button>
+                )}
+              </div>
             );
           })}
+        </section>
+      ) : examOpen ? (
+        <section className="max-w-3xl mx-auto mt-12 z-10 relative animate-fade-up">
+          {examLoading ? (
+            <div className="rounded-3xl p-14 border border-primary/40 bg-secondary/40 backdrop-blur text-center">
+              <Loader2 className="w-10 h-10 mx-auto mb-4 text-primary animate-spin" />
+              <p className="text-muted-foreground">{t.generating}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-end gap-2 print:hidden">
+                <button
+                  onClick={() => examChapter && generateExam(examChapter.subject, examChapter.n)}
+                  className="h-10 px-4 rounded-xl border border-primary/40 bg-secondary/40 backdrop-blur text-sm text-foreground hover:border-primary transition-all inline-flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" /> {t.regenerate}
+                </button>
+                <button
+                  onClick={() => setShowAnswers((v) => !v)}
+                  className="h-10 px-4 rounded-xl border border-primary/40 bg-primary/10 text-sm text-primary hover:bg-primary/20 transition-all inline-flex items-center gap-2"
+                >
+                  <Eye className="w-4 h-4" /> {showAnswers ? t.hideAnswers : t.showAnswers}
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="h-10 px-4 rounded-xl border border-white/10 bg-secondary/40 backdrop-blur text-sm text-foreground hover:border-primary/40 transition-all inline-flex items-center gap-2"
+                >
+                  <Printer className="w-4 h-4" /> {t.print}
+                </button>
+              </div>
+              <article
+                dir="rtl"
+                className="rounded-3xl p-8 md:p-10 border border-primary/40 bg-white text-neutral-900 shadow-xl leading-loose whitespace-pre-wrap font-serif text-[15px] md:text-base print:border-0 print:shadow-none print:bg-white print:text-black"
+                style={{ fontFamily: "'Amiri','Scheherazade New','Traditional Arabic',serif" }}
+              >
+                {examText}
+              </article>
+              {showAnswers && examAnswers && (
+                <article
+                  dir="rtl"
+                  className="rounded-3xl p-8 md:p-10 border border-emerald-400/40 bg-emerald-50 text-neutral-900 shadow-xl leading-loose whitespace-pre-wrap font-serif text-[15px] md:text-base"
+                  style={{ fontFamily: "'Amiri','Scheherazade New','Traditional Arabic',serif" }}
+                >
+                  <div className="text-emerald-700 font-bold mb-4 text-lg">{t.answersTitle}</div>
+                  {examAnswers}
+                </article>
+              )}
+            </div>
+          )}
         </section>
       ) : (
         hasQuestionBank && current ? (
