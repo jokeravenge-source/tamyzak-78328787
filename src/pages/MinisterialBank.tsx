@@ -420,6 +420,132 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
                   {examAnswers}
                 </article>
               )}
+
+              {/* Upload / Grading section */}
+              <div className="rounded-3xl p-6 md:p-8 border border-primary/40 bg-secondary/40 backdrop-blur space-y-4 print:hidden">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Upload className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">{t.uploadTitle}</h3>
+                    <p className="text-xs text-muted-foreground">{t.uploadHint}</p>
+                  </div>
+                </div>
+
+                <Textarea
+                  value={studentText}
+                  onChange={(e) => setStudentText(e.target.value)}
+                  placeholder={t.typeAnswers}
+                  className="min-h-[140px] rounded-2xl bg-background/60 border-white/10 text-base"
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                />
+
+                {studentImages.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {studentImages.map((src, i) => (
+                      <div key={i} className="relative group aspect-square rounded-xl overflow-hidden border border-white/10">
+                        <img src={src} alt={`answer ${i + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => setStudentImages((prev) => prev.filter((_, idx) => idx !== i))}
+                          className="absolute top-1 right-1 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="remove"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <label className="flex-1 h-11 rounded-xl border border-white/10 bg-background/60 text-foreground hover:border-primary/40 transition-all inline-flex items-center justify-center gap-2 cursor-pointer text-sm">
+                    <ImagePlus className="w-4 h-4" /> {t.addImages}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        handleImagesSelected(e.target.files);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                  <button
+                    onClick={submitGrading}
+                    disabled={grading}
+                    className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {grading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GraduationCap className="w-4 h-4" />}
+                    {grading ? t.grading : t.submitForGrading}
+                  </button>
+                </div>
+              </div>
+
+              {gradeResult && (
+                <div className="rounded-3xl p-6 md:p-8 border border-primary/40 bg-secondary/60 backdrop-blur space-y-5 print:hidden">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-foreground">{t.resultTitle}</h3>
+                    <div className="text-right">
+                      <div className="text-xs uppercase tracking-widest text-muted-foreground">{t.totalScore}</div>
+                      <div className="text-3xl font-bold gradient-text">
+                        {Math.round(Number(gradeResult.total) || 0)} / {Number(gradeResult.graded_out_of) || 100}
+                      </div>
+                    </div>
+                  </div>
+
+                  {gradeResult.overall_feedback && (
+                    <div>
+                      <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">{t.overallFeedback}</div>
+                      <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap">{gradeResult.overall_feedback}</p>
+                    </div>
+                  )}
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {Array.isArray(gradeResult.strengths) && gradeResult.strengths.length > 0 && (
+                      <div className="rounded-2xl p-4 border border-emerald-400/30 bg-emerald-500/10">
+                        <div className="text-xs uppercase tracking-widest text-emerald-300 mb-2">{t.strengths}</div>
+                        <ul className="list-disc ms-5 space-y-1 text-foreground/90 text-sm">
+                          {gradeResult.strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {Array.isArray(gradeResult.improvements) && gradeResult.improvements.length > 0 && (
+                      <div className="rounded-2xl p-4 border border-amber-400/30 bg-amber-500/10">
+                        <div className="text-xs uppercase tracking-widest text-amber-300 mb-2">{t.improvements}</div>
+                        <ul className="list-disc ms-5 space-y-1 text-foreground/90 text-sm">
+                          {gradeResult.improvements.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {Array.isArray(gradeResult.per_question) && gradeResult.per_question.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="text-xs uppercase tracking-widest text-muted-foreground">{t.perQuestion}</div>
+                      {gradeResult.per_question.map((q: any) => (
+                        <div key={q.n} className="rounded-2xl p-4 border border-white/10 bg-background/40">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-semibold text-foreground">
+                              {language === "ar" ? `س${q.n}` : `Q${q.n}`}
+                              {q.attempted === false && <span className="ms-2 text-xs text-muted-foreground">({t.notAttempted})</span>}
+                            </div>
+                            <div className="text-sm font-mono text-primary">{Math.round(Number(q.score) || 0)} / 20</div>
+                          </div>
+                          {q.feedback && <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">{q.feedback}</p>}
+                          {q.corrections && (
+                            <div className="mt-2 pt-2 border-t border-white/5">
+                              <div className="text-xs uppercase tracking-widest text-emerald-400/80 mb-1">{t.correction}</div>
+                              <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{q.corrections}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </section>
