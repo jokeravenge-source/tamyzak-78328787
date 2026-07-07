@@ -1,87 +1,51 @@
-# Expand Subject Tools
+# Activate the Laser Physics course
 
-Add a large set of new study tools to every subject in `src/pages/SubjectsHub.tsx`. Each new tool routes through the existing `MainMenuChoice` dispatch in `src/App.tsx` and reuses existing infrastructure (AI Gateway edge functions, flashcards engine, MCQ engine, etc.). Free tier stays the same; new tools default to Premium-locked via the existing `FREE_TOOLS` set.
+Right now every course card on Our Courses shows "Coming soon" and the CTA is locked. This plan unlocks only the **Laser** course while leaving the others as "Coming soon", and wires the full learn-flow behind it.
 
-## New tools per subject
+## What the user will see
 
-Each tool below is a new entry in the subject's `tools` array with an icon, EN/AR label, and a `MainMenuChoice` key. Tools marked **(reuse)** wire to an existing page with a preset subject; tools marked **(new page)** need a lightweight new route + page component.
+On the Laser card:
 
-### Physics
-- Formula Sheet **(new page)** — searchable chapter-indexed formulas
-- Unit Converter **(new page)** — SI ↔ common units
-- Concept Explainer **(reuse SubjectTutor preset)**
-- Past Paper Solver **(reuse PhysicsProblemSolver preset)**
-- Diagram Reader **(new page)** — upload circuit/diagram, AI explains
-- Mistake Journal **(new page)** — log wrong answers, spaced review
+- The CTA changes from "Coming soon" (locked) to **"Open course"** (active gradient button).
+- Clicking it opens a full-screen course view listing every exam an admin has uploaded to the `laser` course (from the existing `course_exams` table + `course-exams` storage bucket).
+- Each exam row shows: title, upload date, and two buttons — **View exam PDF** (opens a signed URL in a new tab) and **Solve & grade**.
+- **Solve & grade** opens a panel with:
+  - An "Add answer photos" uploader (multiple images, max 10, 5MB each — same limits as the existing Exam Generator).
+  - A "Grade my answers" button.
+  - After grading: a result card identical in style to the Exam Generator (total score, overall feedback, strengths, improvements, per-question breakdown), plus the existing **"Not satisfied? Send to a real teacher"** flow that forwards everything to `@soveforcejoin-bot`.
 
-### Chemistry
-- Periodic Table **(new page)** — interactive element info
-- Reaction Balancer **(new page)** — AI balances equations
-- Nomenclature Trainer **(new page)** — IUPAC naming drills
-- Lab Safety Cards **(reuse flashcards preset)**
-- Quick MCQ **(reuse generic MCQ preset)**
-- Molar Mass Calculator **(new page)**
+Other courses (Genetics, Organic, Space Geometry, Nuclear) keep their "Coming soon" state unchanged.
 
-### Biology
-- Anatomy Explorer **(new page)** — labeled body-system diagrams
-- Term Glossary **(reuse flashcards preset)**
-- Life-Cycle Diagrams **(reuse BiologyDrawings preset)**
-- Quick MCQ **(reuse)**
-- Case Study Analyzer **(reuse SubjectTutor preset)**
-- Mnemonics Pack **(new page)**
+## Technical changes
 
-### English
-- Grammar Drills **(new page)** — tenses, articles, prepositions
-- Vocabulary Builder **(reuse flashcards preset)**
-- Reading Comprehension **(new page)** — AI passage + questions
-- Pronunciation Coach **(reuse tts-speak)**
-- Writing Feedback **(reuse Essay preset)**
-- Idioms & Phrasal Verbs **(reuse flashcards preset)**
+### 1. `src/pages/OurCourses.tsx`
+- Add an `active: boolean` field to the `Course` type; set `active: true` only on the `laser` course.
+- Replace the locked CTA with a conditional: active courses render an "Open course" button that calls `setOpenCourse(c)`; inactive courses keep the current locked "Coming soon" button.
+- Render a new `<CourseRunner course={openCourse} … />` modal when `openCourse` is set.
 
-### French
-- Conjugation Trainer **(new page)** — verbs across tenses
-- Dictée (Dictation) **(new page)** — TTS + typed answer check
-- Grammar Rules **(reuse flashcards preset)**
-- Reading Passages **(new page)**
-- Translation Practice **(reuse SubjectTutor preset)**
-- Pronunciation Coach **(reuse tts-speak)**
+### 2. New component `CourseRunner` (same file)
+- Fetches signed URLs for each exam's `exam_path` and `answer_path` from the `course-exams` bucket via `supabase.storage.from('course-exams').createSignedUrl(path, 3600)`.
+- Local state: `selectedExam`, `studentImages: string[]`, `grading`, `gradeResult`, plus the human-grader state (`showHumanForm`, `tgUsername`, `humanReason`, `sendingHuman`, `humanSent`) — mirroring the Exam Generator so we reuse its UX.
+- Calls a new edge function `grade-course-exam` (below) for OCR grading, and reuses the existing `send-to-human-grader` function for the "send to a real teacher" button.
 
-### Arabic
-- Grammar (النحو) Drills **(new page)**
-- Balaghah Cards **(reuse flashcards preset)**
-- Diacritics (تشكيل) Trainer **(new page)** — AI adds/checks tashkeel
-- Poetry Meter Analyzer **(reuse PoemsChecker)**
-- Composition Feedback **(reuse Essay preset)**
-- Word Roots Explorer **(new page)**
+### 3. New edge function `supabase/functions/grade-course-exam/index.ts`
+- Input: `{ examPath, answerPath, studentImages: string[] (data URLs), language }`.
+- Uses `SUPABASE_SERVICE_ROLE_KEY` to download both PDFs from the private `course-exams` bucket, converts each to base64.
+- Calls Lovable AI Gateway (`google/gemini-2.5-flash`) with a multimodal message that contains:
+  - The exam PDF as a `file` block (`data:application/pdf;base64,...`).
+  - The answer-key PDF as a `file` block.
+  - Each student image as an `image_url` block.
+  - A system prompt reusing the ministerial-grader voice from `grade-ministerial-exam` (100 marks, best 5-of-6, per-question feedback in Arabic/English, JSON response).
+- Returns the same JSON shape the current grading UI already renders (`total`, `graded_out_of`, `per_question`, `overall_feedback`, `strengths`, `improvements`), so no result-rendering code needs to change.
+- Registered in `supabase/config.toml` with `verify_jwt = false` and gated by the shared `claimFeature(req, "essay")` entitlement (same as `grade-ministerial-exam`).
 
-### Islamic
-- Tajweed Rules **(reuse flashcards preset)**
-- Hadith Explorer **(reuse HadithChecker)**
-- Fiqh Q&A **(reuse SubjectTutor preset)**
-- Seerah Timeline **(new page)**
-- Duaa Memorizer **(reuse flashcards preset)**
-- Surah Audio Player **(reuse IslamicSurahs)**
+### 4. `send-to-human-grader` reuse
+- No change to the function itself; `CourseRunner` will pass `subject: "Physics — Laser course"` and `chapter: <exam title>` so the grader group sees which course/exam the paper belongs to.
 
-### Revision (new subject card)
-- Full Exam Simulator **(new page)** — timed mixed MCQ
-- Weakness Report **(new page)** — analyzes wrong answers
-- Spaced Repetition Queue **(new page)**
-- Cheatsheet Generator **(reuse ai-notes-generate)**
+## Files touched
 
-## Technical section
+- `src/pages/OurCourses.tsx` — activate laser CTA, add `CourseRunner` component.
+- `supabase/functions/grade-course-exam/index.ts` — new.
+- `supabase/config.toml` — register the new function.
 
-1. **`src/pages/MainMenu.tsx`** — extend `MainMenuChoice` union with all new keys (e.g. `physicsFormulaSheet`, `chemPeriodicTable`, `frenchConjugation`, `revisionExamSim`, …).
-2. **`src/pages/SubjectsHub.tsx`** — add tool entries in each subject's `tools` array; add the `revision` subject entry.
-3. **`src/App.tsx`** — for each new key, either:
-   - Map to an existing page component with a subject preset (via `localStorage.app_subject_v1`), or
-   - Lazy-import a new placeholder page under `src/pages/` that renders a "Coming soon" scaffold using the existing card/tutor patterns so nothing breaks.
-4. **New page scaffolds** (minimal, consistent styling) for the "(new page)" tools listed above. Each is a single-file page reusing shadcn components; AI-backed ones call existing edge functions where possible (`subject-agent`, `generate-mcq`, `ai-notes-generate`, `tts-speak`) — no new edge functions in this pass.
-5. **Free vs Premium** — leave `FREE_TOOLS` unchanged so new tools are Premium-locked by default (matches current behavior).
-6. No backend/schema changes.
-
-## Out of scope
-- New edge functions or DB tables
-- Full implementations of every new page (scaffolds only; can be fleshed out in follow-ups)
-- Design system changes
-
-Confirm and I'll build it. If you'd rather I fully implement a subset (say, pick 2 subjects to build end-to-end now), tell me which.
+No database schema changes, no new secrets, no changes to the other four courses.
