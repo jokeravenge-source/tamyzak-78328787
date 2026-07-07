@@ -682,22 +682,35 @@ function CourseRunner({
           )
         ) : (
           <div className="space-y-5">
-            <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-              <FileText className="w-5 h-5 text-primary shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold truncate">{selected.title}</div>
-                <div className="text-xs text-muted-foreground">{isAr ? "افتح ورقة الامتحان واحل على ورقتك، ثم صوّر واسحب هنا." : "Open the exam PDF, solve on paper, then upload photos below."}</div>
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+              <div className="flex items-center gap-3 p-4 border-b border-border">
+                <FileText className="w-5 h-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate">{selected.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isAr ? "اقرأ الامتحان أدناه، حلّه على ورقة، ثم ارفع الصور." : "Read the exam below, solve on paper, then upload photos."}
+                  </div>
+                </div>
+                {examUrl && (
+                  <a
+                    href={examUrl}
+                    download={`${selected.title}.pdf`}
+                    className="h-9 px-3 rounded-lg border border-border bg-secondary text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-secondary/70"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    {isAr ? "تحميل PDF" : "Download PDF"}
+                  </a>
+                )}
               </div>
-              {examUrl && (
-                <a
-                  href={examUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="h-9 px-3 rounded-lg border border-border bg-secondary text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-secondary/70"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  {isAr ? "عرض الامتحان" : "View exam"}
-                </a>
+              {examUrl ? (
+                <object data={examUrl} type="application/pdf" className="w-full h-[70vh] bg-muted">
+                  <iframe src={examUrl} title={selected.title} className="w-full h-[70vh]" />
+                </object>
+              ) : (
+                <div className="h-40 flex items-center justify-center text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  {isAr ? "جاري تحميل الامتحان..." : "Loading exam..."}
+                </div>
               )}
             </div>
 
