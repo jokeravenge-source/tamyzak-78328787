@@ -47,6 +47,17 @@ const copy = {
     gradeError: "Could not grade the answers. Please try again.",
     provideAnswer: "Please type or upload your answer first.",
     imageTooLarge: "One of the images is too large (max 5MB).",
+    notSatisfied: "Not satisfied with the AI grading?",
+    notSatisfiedHint: "Send your paper to a real human teacher for review. Reply arrives in Telegram.",
+    sendToHuman: "Send to a real teacher",
+    tgUsernameLabel: "Your Telegram username (without @)",
+    tgUsernamePh: "e.g. ali_2007",
+    reasonLabel: "Optional note to the teacher",
+    reasonPh: "Why do you think the AI grade is wrong?",
+    sending: "Sending...",
+    sent: "Sent to human grader. They will contact you on Telegram.",
+    sendErr: "Could not send. Please try again.",
+    invalidTg: "Please enter a valid Telegram username.",
   },
   ar: {
     badge: "مولّد الامتحانات الذكي",
@@ -77,6 +88,17 @@ const copy = {
     gradeError: "تعذّر تصحيح الإجابات، حاول مرة أخرى.",
     provideAnswer: "الرجاء كتابة إجابتك أو رفع صور أولاً.",
     imageTooLarge: "إحدى الصور كبيرة جداً (الحد 5MB).",
+    notSatisfied: "غير راضٍ عن تصحيح الذكاء الاصطناعي؟",
+    notSatisfiedHint: "أرسل ورقتك ليصححها مدرّس حقيقي — الجواب يصلك عبر تيليغرام.",
+    sendToHuman: "أرسل لمدرّس حقيقي",
+    tgUsernameLabel: "اسم مستخدم تيليغرام (بدون @)",
+    tgUsernamePh: "مثال: ali_2007",
+    reasonLabel: "ملاحظة اختيارية للمدرّس",
+    reasonPh: "لماذا تعتقد أن تصحيح الذكاء غير صحيح؟",
+    sending: "جاري الإرسال...",
+    sent: "تم الإرسال إلى المدرّس. سيتواصل معك عبر تيليغرام.",
+    sendErr: "تعذّر الإرسال، حاول مرة أخرى.",
+    invalidTg: "الرجاء إدخال اسم مستخدم تيليغرام صحيح.",
   },
 } as const;
 
@@ -95,6 +117,11 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const [studentImages, setStudentImages] = useState<string[]>([]);
   const [grading, setGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState<any>(null);
+  const [showHumanForm, setShowHumanForm] = useState(false);
+  const [tgUsername, setTgUsername] = useState("");
+  const [humanReason, setHumanReason] = useState("");
+  const [sendingHuman, setSendingHuman] = useState(false);
+  const [humanSent, setHumanSent] = useState(false);
 
   useEffect(() => {
     try {
@@ -170,6 +197,8 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
     }
     setGrading(true);
     setGradeResult(null);
+    setShowHumanForm(false);
+    setHumanSent(false);
     try {
       const { data, error } = await supabase.functions.invoke("grade-ministerial-exam", {
         body: {
@@ -187,6 +216,38 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
       toast({ title: t.gradeError, description: e?.message ?? "", variant: "destructive" });
     } finally {
       setGrading(false);
+    }
+  };
+
+  const sendToHuman = async () => {
+    const uname = tgUsername.trim().replace(/^@+/, "");
+    if (!/^[A-Za-z0-9_]{4,32}$/.test(uname)) {
+      toast({ title: t.invalidTg, variant: "destructive" });
+      return;
+    }
+    setSendingHuman(true);
+    try {
+      const ch = subject ? getChaptersForSubject(subject).find((c) => c.n === chapterN) : null;
+      const { data, error } = await supabase.functions.invoke("send-to-human-grader", {
+        body: {
+          telegramUsername: uname,
+          subject: subject ? (language === "ar" ? subjectMeta?.ar : subjectMeta?.en) : "",
+          chapter: ch ? (language === "ar" ? ch.arTitle : ch.title) : "",
+          examText,
+          studentText: studentText.trim(),
+          studentImages,
+          aiScore: gradeResult ? `${Math.round(Number(gradeResult.total) || 0)} / ${Number(gradeResult.graded_out_of) || 100}` : "",
+          reason: humanReason.trim(),
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setHumanSent(true);
+      toast({ title: t.sent });
+    } catch (e: any) {
+      toast({ title: t.sendErr, description: e?.message ?? "", variant: "destructive" });
+    } finally {
+      setSendingHuman(false);
     }
   };
 
@@ -440,6 +501,68 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
                       ))}
                     </div>
                   )}
+
+                  <div className="mt-2 rounded-2xl p-4 border border-amber-400/30 bg-amber-500/10">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-foreground">{t.notSatisfied}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{t.notSatisfiedHint}</div>
+                      </div>
+                      {!showHumanForm && !humanSent && (
+                        <button
+                          onClick={() => setShowHumanForm(true)}
+                          className="h-9 px-3 rounded-lg text-xs font-semibold bg-amber-400/90 text-black hover:bg-amber-300 transition"
+                        >
+                          {t.sendToHuman}
+                        </button>
+                      )}
+                    </div>
+
+                    {showHumanForm && !humanSent && (
+                      <div className="mt-4 space-y-3">
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">{t.tgUsernameLabel}</label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground text-sm">@</span>
+                            <input
+                              value={tgUsername}
+                              onChange={(e) => setTgUsername(e.target.value)}
+                              placeholder={t.tgUsernamePh}
+                              maxLength={32}
+                              dir="ltr"
+                              className="flex-1 h-10 px-3 rounded-lg border border-white/10 bg-background/60 text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">{t.reasonLabel}</label>
+                          <Textarea
+                            value={humanReason}
+                            onChange={(e) => setHumanReason(e.target.value)}
+                            placeholder={t.reasonPh}
+                            maxLength={500}
+                            className="min-h-[80px] rounded-xl bg-background/60 border-white/10 text-sm"
+                            dir={language === "ar" ? "rtl" : "ltr"}
+                          />
+                        </div>
+                        <button
+                          onClick={sendToHuman}
+                          disabled={sendingHuman}
+                          className="w-full h-11 rounded-xl bg-amber-400 text-black font-semibold hover:bg-amber-300 transition inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                        >
+                          {sendingHuman ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          {sendingHuman ? t.sending : t.sendToHuman}
+                        </button>
+                      </div>
+                    )}
+
+                    {humanSent && (
+                      <div className="mt-3 text-sm text-emerald-300">✓ {t.sent}</div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

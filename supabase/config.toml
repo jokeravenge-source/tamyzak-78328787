@@ -43,3 +43,6 @@ verify_jwt = false
 
 [functions.parent-follow-view]
 verify_jwt = false
+
+[functions.send-to-human-grader]
+verify_jwt = false
