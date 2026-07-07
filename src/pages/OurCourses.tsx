@@ -510,3 +510,352 @@ function ManageModal({
 }
 
 export default OurCourses;
+
+function CourseRunner({
+  course,
+  isAr,
+  exams,
+  onClose,
+}: {
+  course: Course;
+  isAr: boolean;
+  exams: ExamRow[];
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState<ExamRow | null>(null);
+  const [examUrl, setExamUrl] = useState<string | null>(null);
+  const [studentImages, setStudentImages] = useState<string[]>([]);
+  const [grading, setGrading] = useState(false);
+  const [gradeResult, setGradeResult] = useState<any>(null);
+  const [showHumanForm, setShowHumanForm] = useState(false);
+  const [tgUsername, setTgUsername] = useState("");
+  const [humanReason, setHumanReason] = useState("");
+  const [sendingHuman, setSendingHuman] = useState(false);
+  const [humanSent, setHumanSent] = useState(false);
+
+  useEffect(() => {
+    if (!selected) { setExamUrl(null); return; }
+    (async () => {
+      const { data } = await supabase.storage.from("course-exams").createSignedUrl(selected.exam_path, 3600);
+      setExamUrl(data?.signedUrl ?? null);
+    })();
+    setStudentImages([]);
+    setGradeResult(null);
+    setShowHumanForm(false);
+    setHumanSent(false);
+  }, [selected]);
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const next: string[] = [];
+    for (const file of Array.from(files).slice(0, 10)) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(isAr ? "إحدى الصور كبيرة جداً (الحد 5MB)" : "Image too large (max 5MB)");
+        continue;
+      }
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(file);
+      });
+      next.push(dataUrl);
+    }
+    setStudentImages((prev) => [...prev, ...next].slice(0, 10));
+  };
+
+  const grade = async () => {
+    if (!selected) return;
+    if (!studentImages.length) {
+      toast.error(isAr ? "ارفع صور ورقتك أولاً" : "Upload photos of your answer first");
+      return;
+    }
+    setGrading(true);
+    setGradeResult(null);
+    setShowHumanForm(false);
+    setHumanSent(false);
+    try {
+      const { data, error } = await supabase.functions.invoke("grade-course-exam", {
+        body: {
+          examPath: selected.exam_path,
+          answerPath: selected.answer_path,
+          studentImages,
+          examTitle: selected.title,
+          language: isAr ? "ar" : "en",
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setGradeResult(data);
+    } catch (e: any) {
+      toast.error(e?.message ?? (isAr ? "تعذّر التصحيح" : "Grading failed"));
+    } finally {
+      setGrading(false);
+    }
+  };
+
+  const sendToHuman = async () => {
+    if (!selected) return;
+    const uname = tgUsername.trim().replace(/^@+/, "");
+    if (!/^[A-Za-z0-9_]{4,32}$/.test(uname)) {
+      toast.error(isAr ? "اسم مستخدم تيليغرام غير صالح" : "Invalid Telegram username");
+      return;
+    }
+    setSendingHuman(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-to-human-grader", {
+        body: {
+          telegramUsername: uname,
+          subject: isAr ? `دورة الليزر - ${course.titleAr}` : `Laser course - ${course.titleEn}`,
+          chapter: selected.title,
+          studentImages,
+          aiScore: gradeResult
+            ? `${Math.round(Number(gradeResult.total) || 0)} / ${Number(gradeResult.graded_out_of) || 100}`
+            : "",
+          reason: humanReason.trim(),
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setHumanSent(true);
+      toast.success(isAr ? "تم الإرسال إلى المدرّس" : "Sent to the human grader");
+    } catch (e: any) {
+      toast.error(e?.message ?? (isAr ? "تعذّر الإرسال" : "Send failed"));
+    } finally {
+      setSendingHuman(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-background overflow-y-auto" dir={isAr ? "rtl" : "ltr"}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={selected ? () => setSelected(null) : onClose}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary"
+          >
+            <ArrowLeft className={`w-4 h-4 ${isAr ? "rotate-180" : ""}`} />
+            {isAr ? "رجوع" : "Back"}
+          </button>
+          <button onClick={onClose} className="w-9 h-9 rounded-lg hover:bg-secondary flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="mb-6">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary/80 mb-1">
+            <Zap className="w-3.5 h-3.5" />
+            {isAr ? "دورة" : "Course"}
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold">{isAr ? course.titleAr : course.titleEn}</h1>
+          <p className="mt-1 text-muted-foreground text-sm">{isAr ? course.descAr : course.descEn}</p>
+        </div>
+
+        {!selected ? (
+          exams.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">
+              {isAr ? "لا توجد امتحانات بعد لهذه الدورة." : "No exams available for this course yet."}
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {exams.map((e) => (
+                <li key={e.id} className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-[140px]">
+                    <div className="font-semibold">{e.title}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {new Date(e.created_at).toLocaleDateString(isAr ? "ar" : "en")}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelected(e)}
+                    className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                    {isAr ? "حلّ وصحّح" : "Solve & grade"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : (
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+              <FileText className="w-5 h-5 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold truncate">{selected.title}</div>
+                <div className="text-xs text-muted-foreground">{isAr ? "افتح ورقة الامتحان واحل على ورقتك، ثم صوّر واسحب هنا." : "Open the exam PDF, solve on paper, then upload photos below."}</div>
+              </div>
+              {examUrl && (
+                <a
+                  href={examUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="h-9 px-3 rounded-lg border border-border bg-secondary text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-secondary/70"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  {isAr ? "عرض الامتحان" : "View exam"}
+                </a>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-semibold">{isAr ? "ارفع صور إجابتك" : "Upload your answer photos"}</div>
+                  <div className="text-xs text-muted-foreground">{isAr ? "حتى 10 صور، 5MB لكل صورة." : "Up to 10 photos, 5MB each."}</div>
+                </div>
+              </div>
+
+              {studentImages.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {studentImages.map((src, i) => (
+                    <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-border">
+                      <img src={src} alt={`answer ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => setStudentImages((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-1 right-1 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <label className="flex-1 h-11 rounded-xl border border-dashed border-border bg-background hover:bg-secondary/40 inline-flex items-center justify-center gap-2 cursor-pointer text-sm font-medium">
+                  <ImagePlus className="w-4 h-4" />
+                  {isAr ? "إضافة صور" : "Add photos"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      handleFiles(e.target.files);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                <button
+                  onClick={grade}
+                  disabled={grading}
+                  className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-60"
+                >
+                  {grading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GraduationCap className="w-4 h-4" />}
+                  {grading ? (isAr ? "جاري التصحيح..." : "Grading...") : (isAr ? "صحّح إجابتي" : "Grade my answer")}
+                </button>
+              </div>
+            </div>
+
+            {gradeResult && (
+              <div className="rounded-2xl border border-border bg-card p-5 space-y-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold">{isAr ? "نتيجة التصحيح" : "Grading result"}</h3>
+                  <div className="text-right">
+                    <div className="text-[11px] uppercase tracking-widest text-muted-foreground">{isAr ? "المجموع" : "Total"}</div>
+                    <div className="text-3xl font-bold text-primary">
+                      {Math.round(Number(gradeResult.total) || 0)} / {Number(gradeResult.graded_out_of) || 100}
+                    </div>
+                  </div>
+                </div>
+                {gradeResult.overall_feedback && (
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{gradeResult.overall_feedback}</p>
+                )}
+                {Array.isArray(gradeResult.per_question) && gradeResult.per_question.length > 0 && (
+                  <div className="space-y-2">
+                    {gradeResult.per_question.map((q: any) => (
+                      <div key={q.n} className="rounded-xl border border-border bg-background p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="font-semibold">{isAr ? `س${q.n}` : `Q${q.n}`}</div>
+                          <div className="text-sm font-mono text-primary">{Math.round(Number(q.score) || 0)} / 20</div>
+                        </div>
+                        {q.feedback && <p className="text-sm whitespace-pre-wrap">{q.feedback}</p>}
+                        {q.corrections && (
+                          <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{q.corrections}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-amber-400/20 text-amber-500 flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold">{isAr ? "غير راضٍ عن التصحيح؟" : "Not satisfied with the AI grading?"}</div>
+                      <div className="text-xs text-muted-foreground">{isAr ? "أرسل ورقتك لمدرّس حقيقي عبر تيليغرام." : "Send your paper to a real teacher via Telegram."}</div>
+                    </div>
+                    {!showHumanForm && !humanSent && (
+                      <button
+                        onClick={() => setShowHumanForm(true)}
+                        className="h-9 px-3 rounded-lg text-xs font-semibold bg-amber-400 text-black hover:bg-amber-300"
+                      >
+                        {isAr ? "أرسل لمدرّس" : "Send to teacher"}
+                      </button>
+                    )}
+                  </div>
+
+                  {showHumanForm && !humanSent && (
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">
+                          {isAr ? "اسم مستخدم تيليغرام (بدون @)" : "Telegram username (without @)"}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground text-sm">@</span>
+                          <input
+                            value={tgUsername}
+                            onChange={(e) => setTgUsername(e.target.value)}
+                            placeholder="ali_2007"
+                            maxLength={32}
+                            dir="ltr"
+                            className="flex-1 h-10 px-3 rounded-lg border border-border bg-background text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">
+                          {isAr ? "ملاحظة اختيارية" : "Optional note"}
+                        </label>
+                        <Textarea
+                          value={humanReason}
+                          onChange={(e) => setHumanReason(e.target.value)}
+                          maxLength={500}
+                          className="min-h-[70px] rounded-lg text-sm"
+                          dir={isAr ? "rtl" : "ltr"}
+                        />
+                      </div>
+                      <button
+                        onClick={sendToHuman}
+                        disabled={sendingHuman}
+                        className="w-full h-11 rounded-xl bg-amber-400 text-black font-semibold hover:bg-amber-300 inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                      >
+                        {sendingHuman ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        {sendingHuman ? (isAr ? "جاري الإرسال..." : "Sending...") : (isAr ? "إرسال" : "Send")}
+                      </button>
+                    </div>
+                  )}
+
+                  {humanSent && (
+                    <div className="mt-3 text-sm text-emerald-500">
+                      ✓ {isAr ? "تم الإرسال. سيتواصل معك المدرّس عبر تيليغرام." : "Sent. The teacher will contact you on Telegram."}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
