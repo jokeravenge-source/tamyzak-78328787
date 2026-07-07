@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const AI_MODEL = "google/gemini-2.5-flash";
+const OCR_MODEL = "google/gemini-2.5-pro";
+const GRADE_MODEL = "google/gemini-2.5-pro";
 const MAX_IMAGES = 10;
 
 async function pdfToDataUrl(supabase: ReturnType<typeof createClient>, path: string): Promise<string | null> {
@@ -69,26 +70,85 @@ Deno.serve(async (req) => {
     const answerPdf = answerPath ? await pdfToDataUrl(admin, answerPath) : null;
 
     const isAr = language !== "en";
+
+    // ===== STEP 1: OCR the student's handwritten answer photos into plain text =====
+    const ocrSystem = isAr
+      ? `أنت محرك OCR متخصص في قراءة أوراق امتحانات الفيزياء بخط اليد باللغة العربية والرموز الرياضية والفيزيائية. مهمتك الوحيدة هي استخراج كل ما هو مكتوب على الصور حرفياً، بأمانة تامة، مع الحفاظ على ترتيب القراءة وأرقام الأسئلة والمعادلات والوحدات.
+
+قواعد صارمة:
+- انسخ ما هو مكتوب فقط، بدون شرح أو تصحيح أو إضافة.
+- ابدأ كل سؤال بسطر: "السؤال N:" حيث N هو رقم السؤال كما ظهر في ورقة الطالب.
+- اكتب المعادلات بصيغة نصية واضحة (مثال: E = h*f، λ = c/f).
+- إذا كان جزء من الكلام غير مقروء تماماً، اكتب مكانه: [غير مقروء].
+- لا تُخرج JSON ولا Markdown، فقط النص المُستخرج.`
+      : `You are an OCR engine specialized in reading handwritten physics exam papers with math and physics symbols. Your only job is to transcribe exactly what is written on the images, verbatim, preserving reading order, question numbers, equations, and units.
+
+Strict rules:
+- Transcribe only what is written; do NOT explain, correct, or add anything.
+- Start each question with a line: "Question N:" where N is the question number as written by the student.
+- Write equations as clear text (e.g., E = h*f, λ = c/f).
+- If a portion is truly unreadable, write [unreadable] in place.
+- Do NOT output JSON or Markdown, only the transcribed text.`;
+
+    const ocrContent: unknown[] = [
+      { type: "text", text: isAr
+          ? "استخرج نص إجابات الطالب من هذه الصور حرفياً، مرتبة حسب رقم السؤال."
+          : "Transcribe the student's answers from these images verbatim, ordered by question number." },
+    ];
+    for (const url of images) ocrContent.push({ type: "image_url", image_url: { url } });
+
+    const ocrRes = await fetch(AI_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: OCR_MODEL,
+        messages: [
+          { role: "system", content: ocrSystem },
+          { role: "user", content: ocrContent },
+        ],
+      }),
+    });
+    if (!ocrRes.ok) {
+      const errText = await ocrRes.text();
+      const status = ocrRes.status === 429 || ocrRes.status === 402 ? ocrRes.status : 500;
+      const msg = ocrRes.status === 429 ? "Rate limit. Try again shortly."
+        : ocrRes.status === 402 ? "AI credits exhausted."
+        : `OCR error: ${errText.slice(0, 300)}`;
+      return new Response(JSON.stringify({ error: msg }), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const ocrData = await ocrRes.json();
+    const transcript = String(ocrData.choices?.[0]?.message?.content ?? "").trim();
+
+    // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
     const systemPrompt = isAr
       ? `أنت مصحّح وزاري عراقي خبير للسادس الإعدادي في مادة الفيزياء (فصل الليزر). لديك ورقة الامتحان بصيغة PDF وورقة الإجابة النموذجية بصيغة PDF، وصور خط يد الطالب. صحّح بدقة وفق معايير التصحيح الحقيقية: كل سؤال 20 درجة، وتحتسب أفضل 5 أسئلة من 6.
 
 تعليمات التصحيح الإلزامية:
-- اقرأ (OCR) خط اليد بعناية، مع مراعاة الخط الرديء والنص العربي والرموز الرياضية والفيزيائية.
-- قارن كل إجابة مع ورقة الإجابة النموذجية الرسمية.
+- لديك نص إجابات الطالب مستخرج مسبقاً بواسطة OCR (مُرفق في رسالة المستخدم). اعتمد عليه كمصدر رئيسي لإجابات الطالب.
+- قارن كل إجابة (النص المستخرج) مع ورقة الإجابة النموذجية الرسمية سؤالاً بسؤال.
 - امنح درجة جزئية عندما يكون الاستدلال أو الحل صحيحاً جزئياً.
-- إذا كانت إجابة سؤال ما غير مقروءة أو ملتبسة، ضع "attempted": true و "score": null واكتب في feedback: "يحتاج مراجعة يدوية". لا توقف تصحيح بقية الأسئلة بسبب ذلك.
+- إذا احتوى النص على [غير مقروء] أو كان مبهماً، ضع "attempted": true و "score": null واكتب في feedback: "يحتاج مراجعة يدوية". لا توقف تصحيح بقية الأسئلة.
+- الصور مرفقة أيضاً كمرجع للرسومات والرموز التي قد تفقد أثناء الـ OCR.
 - اشرح الأخطاء بلطف بلغة عربية واضحة.`
       : `You are an expert Iraqi ministerial grader for 6th-grade physics (Laser chapter). You have the exam PDF, the model-answer PDF, and photos of the student's handwriting. Grade strictly using the real marking scheme: each question out of 20, best 5 of 6 count.
 
 Mandatory grading instructions:
-- OCR the handwritten text carefully, accounting for messy handwriting and Arabic script, math, and physics symbols.
-- Compare each answer against the official answer key.
+- You are given the student's answers already transcribed by an OCR pass (attached in the user message). Treat this transcript as the primary source of the student's answers.
+- Compare each transcribed answer against the official answer key, question by question.
 - Award partial credit where reasoning or working is partially correct.
-- If a question's handwriting is unreadable or ambiguous, set "attempted": true, "score": null, and put "needs manual review" in feedback. Do NOT block grading the rest of the questions.
+- If the transcript contains [unreadable] or is ambiguous, set "attempted": true, "score": null, and put "needs manual review" in feedback. Do NOT block grading the rest.
+- The raw photos are also attached as a visual reference for diagrams and symbols that OCR may lose.
 - Explain mistakes kindly.`;
 
-    const userText = `The exam PDF, model-answer PDF (if any), and ${images.length} photo(s) of the student's handwritten answers are attached.
-${examTitle ? `Exam title: ${examTitle}\n` : ""}OCR the images (Arabic + math + physics symbols) and grade against the model answers.
+    const userText = `The exam PDF, model-answer PDF (if any), the student's OCR transcript, and ${images.length} original photo(s) are attached.
+${examTitle ? `Exam title: ${examTitle}\n` : ""}
+===== STUDENT OCR TRANSCRIPT (primary source) =====
+${transcript || "[empty transcript]"}
+===== END TRANSCRIPT =====
+
+Grade each question by comparing the transcript above against the model-answer PDF. Use the photos only as a visual fallback for diagrams/symbols.
 
 Return ONLY valid JSON (no markdown fences) with this exact shape:
 {
@@ -117,7 +177,7 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: AI_MODEL,
+        model: GRADE_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content },
@@ -150,7 +210,8 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
       const m = String(raw).match(/\{[\s\S]*\}/);
       if (m) { try { parsed = JSON.parse(m[0]); } catch { /* keep */ } }
     }
-    return new Response(JSON.stringify(parsed), {
+    const out = (parsed && typeof parsed === "object") ? { ...(parsed as Record<string, unknown>), transcript } : { transcript };
+    return new Response(JSON.stringify(out), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
