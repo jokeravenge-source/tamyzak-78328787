@@ -692,14 +692,30 @@ function CourseRunner({
                   </div>
                 </div>
                 {examUrl && (
-                  <a
-                    href={examUrl}
-                    download={`${selected.title}.pdf`}
+                  <button
+                    onClick={async () => {
+                      try {
+                        const { data, error } = await supabase.storage
+                          .from("course-exams")
+                          .download(selected.exam_path);
+                        if (error || !data) throw error ?? new Error("download failed");
+                        const url = URL.createObjectURL(data);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `${selected.title}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        setTimeout(() => URL.revokeObjectURL(url), 1000);
+                      } catch (e: any) {
+                        toast.error(e?.message ?? (isAr ? "تعذّر التحميل" : "Download failed"));
+                      }
+                    }}
                     className="h-9 px-3 rounded-lg border border-border bg-secondary text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-secondary/70"
                   >
                     <ExternalLink className="w-4 h-4" />
                     {isAr ? "تحميل PDF" : "Download PDF"}
-                  </a>
+                  </button>
                 )}
               </div>
               {examUrl ? (
