@@ -70,8 +70,22 @@ Deno.serve(async (req) => {
 
     const isAr = language !== "en";
     const systemPrompt = isAr
-      ? `أنت مصحّح وزاري عراقي خبير للسادس الإعدادي في مادة الفيزياء (فصل الليزر). لديك ورقة الامتحان بصيغة PDF وورقة الإجابة النموذجية بصيغة PDF، وصور خط يد الطالب. صحّح بدقة وفق معايير التصحيح الحقيقية: كل سؤال 20 درجة، وتحتسب أفضل 5 أسئلة من 6. أعطِ درجة جزئية لكل فرع، واشرح الأخطاء بلطف بلغة عربية واضحة.`
-      : `You are an expert Iraqi ministerial grader for 6th-grade physics (Laser chapter). You have the exam PDF, the model-answer PDF, and photos of the student's handwriting. Grade strictly using the real marking scheme: each question out of 20, best 5 of 6 count. Give partial credit and explain mistakes kindly.`;
+      ? `أنت مصحّح وزاري عراقي خبير للسادس الإعدادي في مادة الفيزياء (فصل الليزر). لديك ورقة الامتحان بصيغة PDF وورقة الإجابة النموذجية بصيغة PDF، وصور خط يد الطالب. صحّح بدقة وفق معايير التصحيح الحقيقية: كل سؤال 20 درجة، وتحتسب أفضل 5 أسئلة من 6.
+
+تعليمات التصحيح الإلزامية:
+- اقرأ (OCR) خط اليد بعناية، مع مراعاة الخط الرديء والنص العربي والرموز الرياضية والفيزيائية.
+- قارن كل إجابة مع ورقة الإجابة النموذجية الرسمية.
+- امنح درجة جزئية عندما يكون الاستدلال أو الحل صحيحاً جزئياً.
+- إذا كانت إجابة سؤال ما غير مقروءة أو ملتبسة، ضع "attempted": true و "score": null واكتب في feedback: "يحتاج مراجعة يدوية". لا توقف تصحيح بقية الأسئلة بسبب ذلك.
+- اشرح الأخطاء بلطف بلغة عربية واضحة.`
+      : `You are an expert Iraqi ministerial grader for 6th-grade physics (Laser chapter). You have the exam PDF, the model-answer PDF, and photos of the student's handwriting. Grade strictly using the real marking scheme: each question out of 20, best 5 of 6 count.
+
+Mandatory grading instructions:
+- OCR the handwritten text carefully, accounting for messy handwriting and Arabic script, math, and physics symbols.
+- Compare each answer against the official answer key.
+- Award partial credit where reasoning or working is partially correct.
+- If a question's handwriting is unreadable or ambiguous, set "attempted": true, "score": null, and put "needs manual review" in feedback. Do NOT block grading the rest of the questions.
+- Explain mistakes kindly.`;
 
     const userText = `The exam PDF, model-answer PDF (if any), and ${images.length} photo(s) of the student's handwritten answers are attached.
 ${examTitle ? `Exam title: ${examTitle}\n` : ""}OCR the images (Arabic + math + physics symbols) and grade against the model answers.
