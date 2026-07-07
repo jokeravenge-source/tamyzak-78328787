@@ -150,6 +150,17 @@ Strict grading rules (mandatory):
 - If the transcript is only [unreadable], set attempted=true, score=null, feedback="needs manual review". Do NOT block the rest.
 - In feedback and corrections, explain exactly why each mark was lost.`;
 
+    const forcedRules = `
+
+MANDATORY OUTPUT RULES:
+- The exam always has exactly 6 questions numbered 1..6.
+- "per_question" MUST contain exactly 6 entries, one for each question, even if the student did not answer some. For unanswered questions set attempted=false and score=0.
+- Each question is out of 20. "graded_out_of" MUST be 100 (best 5 of 6 = 5 × 20).
+- "total" MUST equal the SUM OF THE TOP 5 SCORES among the 6 questions (ignoring any question with score=null). Never invent a higher total. Never write a total that does not match the per_question scores.
+- If all questions are 0, total = 0. Do NOT output 100 unless five questions truly scored 20 each.`;
+
+    const systemPromptFinal = systemPrompt + forcedRules;
+
     const userText = `The exam PDF, model-answer PDF (if any), the student's OCR transcript, and ${images.length} original photo(s) are attached.
 ${examTitle ? `Exam title: ${examTitle}\n` : ""}
 ===== STUDENT OCR TRANSCRIPT (primary source) =====
@@ -187,7 +198,7 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
       body: JSON.stringify({
         model: GRADE_MODEL,
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: systemPromptFinal },
           { role: "user", content },
         ],
         response_format: { type: "json_object" },
@@ -218,7 +229,41 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
       const m = String(raw).match(/\{[\s\S]*\}/);
       if (m) { try { parsed = JSON.parse(m[0]); } catch { /* keep */ } }
     }
-    const out = (parsed && typeof parsed === "object") ? { ...(parsed as Record<string, unknown>), transcript } : { transcript };
+
+    // Server-side normalization: enforce 6 questions and recompute total as best 5 of 6.
+    const obj = (parsed && typeof parsed === "object") ? { ...(parsed as Record<string, unknown>) } : {};
+    const rawQs = Array.isArray((obj as any).per_question) ? (obj as any).per_question : [];
+    const byN = new Map<number, any>();
+    for (const q of rawQs) {
+      const n = Number(q?.n);
+      if (Number.isFinite(n) && n >= 1 && n <= 6) byN.set(n, q);
+    }
+    const normalized = [] as any[];
+    for (let n = 1; n <= 6; n++) {
+      const q = byN.get(n);
+      if (q) {
+        const scoreNum = q.score === null || q.score === undefined ? null : Math.max(0, Math.min(20, Number(q.score)));
+        normalized.push({
+          n,
+          attempted: Boolean(q.attempted),
+          score: Number.isFinite(scoreNum as number) ? scoreNum : null,
+          feedback: String(q.feedback ?? ""),
+          corrections: String(q.corrections ?? ""),
+        });
+      } else {
+        normalized.push({ n, attempted: false, score: 0, feedback: isAr ? "لم يجب الطالب على هذا السؤال." : "Not answered.", corrections: "" });
+      }
+    }
+    const numericScores = normalized
+      .map((q) => (typeof q.score === "number" ? q.score : null))
+      .filter((s): s is number => typeof s === "number")
+      .sort((a, b) => b - a);
+    const total = numericScores.slice(0, 5).reduce((a, b) => a + b, 0);
+    (obj as any).per_question = normalized;
+    (obj as any).total = total;
+    (obj as any).graded_out_of = 100;
+
+    const out = { ...obj, transcript };
     return new Response(JSON.stringify(out), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
