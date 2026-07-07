@@ -47,6 +47,17 @@ const copy = {
     gradeError: "Could not grade the answers. Please try again.",
     provideAnswer: "Please type or upload your answer first.",
     imageTooLarge: "One of the images is too large (max 5MB).",
+    notSatisfied: "Not satisfied with the AI grading?",
+    notSatisfiedHint: "Send your paper to a real human teacher for review. Reply arrives in Telegram.",
+    sendToHuman: "Send to a real teacher",
+    tgUsernameLabel: "Your Telegram username (without @)",
+    tgUsernamePh: "e.g. ali_2007",
+    reasonLabel: "Optional note to the teacher",
+    reasonPh: "Why do you think the AI grade is wrong?",
+    sending: "Sending...",
+    sent: "Sent to human grader. They will contact you on Telegram.",
+    sendErr: "Could not send. Please try again.",
+    invalidTg: "Please enter a valid Telegram username.",
   },
   ar: {
     badge: "مولّد الامتحانات الذكي",
@@ -77,6 +88,17 @@ const copy = {
     gradeError: "تعذّر تصحيح الإجابات، حاول مرة أخرى.",
     provideAnswer: "الرجاء كتابة إجابتك أو رفع صور أولاً.",
     imageTooLarge: "إحدى الصور كبيرة جداً (الحد 5MB).",
+    notSatisfied: "غير راضٍ عن تصحيح الذكاء الاصطناعي؟",
+    notSatisfiedHint: "أرسل ورقتك ليصححها مدرّس حقيقي — الجواب يصلك عبر تيليغرام.",
+    sendToHuman: "أرسل لمدرّس حقيقي",
+    tgUsernameLabel: "اسم مستخدم تيليغرام (بدون @)",
+    tgUsernamePh: "مثال: ali_2007",
+    reasonLabel: "ملاحظة اختيارية للمدرّس",
+    reasonPh: "لماذا تعتقد أن تصحيح الذكاء غير صحيح؟",
+    sending: "جاري الإرسال...",
+    sent: "تم الإرسال إلى المدرّس. سيتواصل معك عبر تيليغرام.",
+    sendErr: "تعذّر الإرسال، حاول مرة أخرى.",
+    invalidTg: "الرجاء إدخال اسم مستخدم تيليغرام صحيح.",
   },
 } as const;
 
@@ -95,6 +117,11 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const [studentImages, setStudentImages] = useState<string[]>([]);
   const [grading, setGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState<any>(null);
+  const [showHumanForm, setShowHumanForm] = useState(false);
+  const [tgUsername, setTgUsername] = useState("");
+  const [humanReason, setHumanReason] = useState("");
+  const [sendingHuman, setSendingHuman] = useState(false);
+  const [humanSent, setHumanSent] = useState(false);
 
   useEffect(() => {
     try {
@@ -170,6 +197,8 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
     }
     setGrading(true);
     setGradeResult(null);
+    setShowHumanForm(false);
+    setHumanSent(false);
     try {
       const { data, error } = await supabase.functions.invoke("grade-ministerial-exam", {
         body: {
@@ -187,6 +216,38 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
       toast({ title: t.gradeError, description: e?.message ?? "", variant: "destructive" });
     } finally {
       setGrading(false);
+    }
+  };
+
+  const sendToHuman = async () => {
+    const uname = tgUsername.trim().replace(/^@+/, "");
+    if (!/^[A-Za-z0-9_]{4,32}$/.test(uname)) {
+      toast({ title: t.invalidTg, variant: "destructive" });
+      return;
+    }
+    setSendingHuman(true);
+    try {
+      const ch = subject ? getChaptersForSubject(subject).find((c) => c.n === chapterN) : null;
+      const { data, error } = await supabase.functions.invoke("send-to-human-grader", {
+        body: {
+          telegramUsername: uname,
+          subject: subject ? (language === "ar" ? subjectMeta?.ar : subjectMeta?.en) : "",
+          chapter: ch ? (language === "ar" ? ch.arTitle : ch.title) : "",
+          examText,
+          studentText: studentText.trim(),
+          studentImages,
+          aiScore: gradeResult ? `${Math.round(Number(gradeResult.total) || 0)} / ${Number(gradeResult.graded_out_of) || 100}` : "",
+          reason: humanReason.trim(),
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setHumanSent(true);
+      toast({ title: t.sent });
+    } catch (e: any) {
+      toast({ title: t.sendErr, description: e?.message ?? "", variant: "destructive" });
+    } finally {
+      setSendingHuman(false);
     }
   };
 
