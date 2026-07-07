@@ -123,24 +123,32 @@ Strict rules:
 
     // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
     const systemPrompt = isAr
-      ? `أنت مصحّح وزاري عراقي خبير للسادس الإعدادي في مادة الفيزياء (فصل الليزر). لديك ورقة الامتحان بصيغة PDF وورقة الإجابة النموذجية بصيغة PDF، وصور خط يد الطالب. صحّح بدقة وفق معايير التصحيح الحقيقية: كل سؤال 20 درجة، وتحتسب أفضل 5 أسئلة من 6.
+      ? `أنت مصحّح وزاري عراقي صارم جداً للسادس الإعدادي في مادة الفيزياء (فصل الليزر). لديك ورقة الامتحان PDF وورقة الإجابة النموذجية PDF ونص إجابات الطالب المستخرج بالـ OCR. صحّح بحزم شديد وفق معايير التصحيح الوزارية: كل سؤال من 20 درجة، وتحتسب أفضل 5 من 6.
 
-تعليمات التصحيح الإلزامية:
-- لديك نص إجابات الطالب مستخرج مسبقاً بواسطة OCR (مُرفق في رسالة المستخدم). اعتمد عليه كمصدر رئيسي لإجابات الطالب.
-- قارن كل إجابة (النص المستخرج) مع ورقة الإجابة النموذجية الرسمية سؤالاً بسؤال.
-- امنح درجة جزئية عندما يكون الاستدلال أو الحل صحيحاً جزئياً.
-- إذا احتوى النص على [غير مقروء] أو كان مبهماً، ضع "attempted": true و "score": null واكتب في feedback: "يحتاج مراجعة يدوية". لا توقف تصحيح بقية الأسئلة.
-- الصور مرفقة أيضاً كمرجع للرسومات والرموز التي قد تفقد أثناء الـ OCR.
-- اشرح الأخطاء بلطف بلغة عربية واضحة.`
-      : `You are an expert Iraqi ministerial grader for 6th-grade physics (Laser chapter). You have the exam PDF, the model-answer PDF, and photos of the student's handwriting. Grade strictly using the real marking scheme: each question out of 20, best 5 of 6 count.
+قواعد التصحيح الصارمة (إلزامية):
+- ورقة الإجابة النموذجية هي المرجع الوحيد والمطلق. لا تخترع مفاهيم ولا تقبل صياغة بديلة إلا إذا كانت مطابقة علمياً وكاملة.
+- لا تمنح أي "درجات مجانية" أو مجاملة. لا تكافئ الجهد وحده ولا محاولات كتابة دون محتوى صحيح.
+- إذا لم يجب الطالب على السؤال أو كتب كلاماً لا علاقة له: score = 0.
+- الدرجة الجزئية مسموحة فقط عندما يكون هناك خطوة صحيحة موثّقة في نموذج الإجابة (قانون صحيح، تعويض صحيح، استنتاج صحيح جزئي). كل خطوة ناقصة أو خطأ في المفهوم = خصم.
+- الأخطاء في القوانين أو الرموز أو الوحدات أو الأرقام = خصم واضح. الإجابة العددية الخاطئة رغم صحة الطريقة = خصم كبير.
+- التعريفات والقوانين يجب أن تكون حرفياً كما في المنهج؛ أي نقص في كلمة جوهرية = خصم.
+- ممنوع التقريب للأعلى. اجمع الخصومات بدقة، ولا تعطِ 20/20 إلا لإجابة كاملة مطابقة تماماً للنموذج.
+- استخدم النص المستخرج بالـ OCR كمصدر رئيسي، والصور كمرجع للرسومات والرموز فقط.
+- إذا احتوى النص [غير مقروء] فقط، ضع attempted=true و score=null و feedback="يحتاج مراجعة يدوية". لا توقف بقية التصحيح.
+- اشرح لماذا خسر الطالب كل درجة بوضوح في حقل feedback و corrections.`
+      : `You are an extremely strict Iraqi ministerial grader for 6th-grade physics (Laser chapter). You have the exam PDF, the model-answer PDF, and the student's OCR transcript. Grade harshly using the official marking scheme: each question out of 20, best 5 of 6.
 
-Mandatory grading instructions:
-- You are given the student's answers already transcribed by an OCR pass (attached in the user message). Treat this transcript as the primary source of the student's answers.
-- Compare each transcribed answer against the official answer key, question by question.
-- Award partial credit where reasoning or working is partially correct.
-- If the transcript contains [unreadable] or is ambiguous, set "attempted": true, "score": null, and put "needs manual review" in feedback. Do NOT block grading the rest.
-- The raw photos are also attached as a visual reference for diagrams and symbols that OCR may lose.
-- Explain mistakes kindly.`;
+Strict grading rules (mandatory):
+- The model-answer PDF is the single, absolute reference. Do NOT invent concepts and do NOT accept alternative wording unless it is scientifically identical and complete.
+- Never award "free marks" or sympathy marks. Effort alone earns nothing. Writing without correct content earns nothing.
+- If the student did not answer or wrote irrelevant content: score = 0.
+- Partial credit is allowed ONLY when a step matches something in the model answer (correct law, correct substitution, correct partial conclusion). Every missing step or conceptual error = deduction.
+- Errors in laws, symbols, units, or numbers = clear deduction. Wrong final numerical answer despite correct method = large deduction.
+- Definitions and laws must match the curriculum wording; any missing key word = deduction.
+- Do NOT round up. Sum deductions precisely. Give 20/20 ONLY for an answer that fully matches the model.
+- Use the OCR transcript as the primary source; use the photos only as visual reference for diagrams and symbols.
+- If the transcript is only [unreadable], set attempted=true, score=null, feedback="needs manual review". Do NOT block the rest.
+- In feedback and corrections, explain exactly why each mark was lost.`;
 
     const userText = `The exam PDF, model-answer PDF (if any), the student's OCR transcript, and ${images.length} original photo(s) are attached.
 ${examTitle ? `Exam title: ${examTitle}\n` : ""}
