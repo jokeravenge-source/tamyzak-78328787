@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Dna, FlaskConical, Box, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck } from "lucide-react";
+import { Dna, FlaskConical, Box, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import geneticsImg from "@/assets/course-genetics.jpg";
 import organicImg from "@/assets/course-organic.jpg";
 import geometryImg from "@/assets/course-geometry.jpg";
 import nuclearImg from "@/assets/course-nuclear.jpg";
+import laserImg from "@/assets/course-laser.jpg";
 
 type Course = {
   id: string;
@@ -60,6 +61,16 @@ const COURSES: Course[] = [
     Icon: Atom,
     accent: "0 85% 62%",
     cover: nuclearImg,
+  },
+  {
+    id: "laser",
+    titleAr: "الليزر (فيزياء)",
+    titleEn: "Physics: Laser",
+    descAr: "امتحانات على الليزر: الانبعاث المحفز، التوزيع المعكوس، المرنان وتطبيقات الليزر.",
+    descEn: "Exams on laser: stimulated emission, population inversion, resonators and applications.",
+    Icon: Zap,
+    accent: "330 90% 60%",
+    cover: laserImg,
   },
 ];
 
