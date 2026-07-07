@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Dna, FlaskConical, Box, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap } from "lucide-react";
+import { Dna, FlaskConical, Box, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send } from "lucide-react";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import geneticsImg from "@/assets/course-genetics.jpg";
@@ -19,6 +20,7 @@ type Course = {
   Icon: React.ComponentType<{ className?: string }>;
   accent: string;
   cover: string;
+  active?: boolean;
 };
 
 const COURSES: Course[] = [
@@ -71,6 +73,7 @@ const COURSES: Course[] = [
     Icon: Zap,
     accent: "330 90% 60%",
     cover: laserImg,
+    active: true,
   },
 ];
 
@@ -90,6 +93,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [examsByCourse, setExamsByCourse] = useState<Record<string, ExamRow[]>>({});
   const [uploadFor, setUploadFor] = useState<Course | null>(null);
   const [manageFor, setManageFor] = useState<Course | null>(null);
+  const [openCourse, setOpenCourse] = useState<Course | null>(null);
 
   const refresh = async () => {
     const { data } = await supabase
@@ -250,18 +254,31 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                     </span>
                   </div>
 
-                  {/* CTA (disabled — coming soon) */}
-                  <button
-                    disabled
-                    aria-disabled="true"
-                    className="mt-5 w-full h-10 rounded-xl text-sm font-bold text-white inline-flex items-center justify-center gap-2 cursor-not-allowed opacity-90"
-                    style={{
-                      background: `linear-gradient(135deg, hsl(${c.accent} / 0.55), hsl(${c.accent} / 0.35))`,
-                    }}
-                  >
-                    <Lock className="w-4 h-4" />
-                    {isAr ? "قريباً" : "Coming soon"}
-                  </button>
+                  {c.active ? (
+                    <button
+                      onClick={() => setOpenCourse(c)}
+                      className="mt-5 w-full h-10 rounded-xl text-sm font-bold text-white inline-flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]"
+                      style={{
+                        background: `linear-gradient(135deg, hsl(${c.accent}), hsl(${c.accent} / 0.75))`,
+                        boxShadow: `0 6px 18px -6px hsl(${c.accent} / 0.6)`,
+                      }}
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                      {isAr ? "افتح الدورة" : "Open course"}
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      aria-disabled="true"
+                      className="mt-5 w-full h-10 rounded-xl text-sm font-bold text-white inline-flex items-center justify-center gap-2 cursor-not-allowed opacity-90"
+                      style={{
+                        background: `linear-gradient(135deg, hsl(${c.accent} / 0.55), hsl(${c.accent} / 0.35))`,
+                      }}
+                    >
+                      <Lock className="w-4 h-4" />
+                      {isAr ? "قريباً" : "Coming soon"}
+                    </button>
+                  )}
 
                   {isAdmin && (
                     <div className="mt-2 grid grid-cols-2 gap-2">
@@ -303,6 +320,14 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           exams={examsByCourse[manageFor.id] ?? []}
           onClose={() => setManageFor(null)}
           onDelete={deleteExam}
+        />
+      )}
+      {openCourse && (
+        <CourseRunner
+          course={openCourse}
+          isAr={isAr}
+          exams={examsByCourse[openCourse.id] ?? []}
+          onClose={() => setOpenCourse(null)}
         />
       )}
     </main>
