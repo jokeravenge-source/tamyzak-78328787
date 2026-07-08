@@ -145,29 +145,20 @@ Strict rules:
     ];
     for (const url of images) ocrContent.push({ type: "image_url", image_url: { url } });
 
-    const ocrRes = await fetch(AI_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: OCR_MODEL,
-        messages: [
-          { role: "system", content: ocrSystem },
-          { role: "user", content: ocrContent },
-        ],
-      }),
+    const ocrResult = await callAiWithFallback(LOVABLE_API_KEY, OCR_MODELS, {
+      messages: [
+        { role: "system", content: ocrSystem },
+        { role: "user", content: ocrContent },
+      ],
     });
-    if (!ocrRes.ok) {
-      const errText = await ocrRes.text();
-      const status = ocrRes.status === 429 || ocrRes.status === 402 ? ocrRes.status : 500;
-      const msg = ocrRes.status === 429 ? "Rate limit. Try again shortly."
-        : ocrRes.status === 402 ? "AI credits exhausted."
-        : `OCR error: ${errText.slice(0, 300)}`;
-      return new Response(JSON.stringify({ error: msg }), {
+    if (!ocrResult.ok) {
+      const status = ocrResult.status === 402 ? 402 : 200;
+      return new Response(JSON.stringify({ error: `OCR failed: ${ocrResult.error}` }), {
         status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const ocrData = await ocrRes.json();
-    const transcript = String(ocrData.choices?.[0]?.message?.content ?? "").trim();
+    const transcript = String(ocrResult.data.choices?.[0]?.message?.content ?? "").trim();
+    console.log(`[grade-course-exam] OCR ok via ${ocrResult.model}`);
 
     // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
     const systemPrompt = isAr
@@ -237,40 +228,21 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
     if (answerPdf) content.push({ type: "file", file: { filename: "answer-key.pdf", file_data: answerPdf } });
     for (const url of images) content.push({ type: "image_url", image_url: { url } });
 
-    const res = await fetch(AI_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: GRADE_MODEL,
-        messages: [
-          { role: "system", content: systemPromptFinal },
-          { role: "user", content },
-        ],
-        response_format: { type: "json_object" },
-      }),
+    const gradeResult = await callAiWithFallback(LOVABLE_API_KEY, GRADE_MODELS, {
+      messages: [
+        { role: "system", content: systemPromptFinal },
+        { role: "user", content },
+      ],
+      response_format: { type: "json_object" },
     });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      if (res.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit. Try again shortly." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (res.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: `AI error: ${errText}` }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!gradeResult.ok) {
+      const status = gradeResult.status === 402 ? 402 : 200;
+      return new Response(JSON.stringify({ error: `Grading failed: ${gradeResult.error}` }), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const data = await res.json();
+    const data = gradeResult.data;
+    console.log(`[grade-course-exam] Grade ok via ${gradeResult.model}`);
     const raw = data.choices?.[0]?.message?.content ?? "{}";
     let parsed: unknown = {};
     try { parsed = JSON.parse(raw); } catch {
