@@ -61,7 +61,7 @@ async function callAiWithFallback(
   return { ok: false, status: lastStatus, error: lastErr || "All AI models failed." };
 }
 
-async function pdfToDataUrl(supabase: ReturnType<typeof createClient>, path: string): Promise<string | null> {
+async function pdfToDataUrl(supabase: { storage: ReturnType<typeof createClient>["storage"] }, path: string): Promise<string | null> {
   const { data, error } = await supabase.storage.from("course-exams").download(path);
   if (error || !data) return null;
   const buf = new Uint8Array(await data.arrayBuffer());
@@ -164,6 +164,10 @@ Strict rules:
     }
     const transcript = String(ocrResult.data.choices?.[0]?.message?.content ?? "").trim();
     console.log(`[grade-course-exam] OCR ok via ${ocrResult.model}`);
+    const transcriptLooksUnreadable =
+      !transcript ||
+      transcript.length < 120 ||
+      /\[(?:غير مقروء|unreadable)\]/i.test(transcript);
 
     // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
     const systemPrompt = isAr
@@ -177,7 +181,7 @@ Strict rules:
 - الأخطاء في القوانين أو الرموز أو الوحدات أو الأرقام = خصم واضح. الإجابة العددية الخاطئة رغم صحة الطريقة = خصم كبير.
 - التعريفات والقوانين يجب أن تكون حرفياً كما في المنهج؛ أي نقص في كلمة جوهرية = خصم.
 - ممنوع التقريب للأعلى. اجمع الخصومات بدقة، ولا تعطِ 20/20 إلا لإجابة كاملة مطابقة تماماً للنموذج.
-- استخدم النص المستخرج بالـ OCR كمصدر رئيسي، والصور كمرجع للرسومات والرموز فقط.
+- استخدم النص المستخرج بالـ OCR كمصدر التصحيح. لا تعيد تحليل الصور في مرحلة التصحيح حتى لا يتأخر الرد.
 - إذا احتوى النص [غير مقروء] فقط، ضع attempted=true و score=null و feedback="يحتاج مراجعة يدوية". لا توقف بقية التصحيح.
 - اشرح لماذا خسر الطالب كل درجة بوضوح في حقل feedback و corrections.`
       : `You are an extremely strict Iraqi ministerial grader for 6th-grade physics (Laser chapter). You have the exam PDF, the model-answer PDF, and the student's OCR transcript. Grade harshly using the official marking scheme: each question out of 20, best 5 of 6.
@@ -190,7 +194,7 @@ Strict grading rules (mandatory):
 - Errors in laws, symbols, units, or numbers = clear deduction. Wrong final numerical answer despite correct method = large deduction.
 - Definitions and laws must match the curriculum wording; any missing key word = deduction.
 - Do NOT round up. Sum deductions precisely. Give 20/20 ONLY for an answer that fully matches the model.
-- Use the OCR transcript as the primary source; use the photos only as visual reference for diagrams and symbols.
+- Use the OCR transcript as the grading source. Do not re-analyze the photos during grading so the response returns quickly.
 - If the transcript is only [unreadable], set attempted=true, score=null, feedback="needs manual review". Do NOT block the rest.
 - In feedback and corrections, explain exactly why each mark was lost.`;
 
@@ -205,13 +209,13 @@ MANDATORY OUTPUT RULES:
 
     const systemPromptFinal = systemPrompt + forcedRules;
 
-    const userText = `The exam PDF, model-answer PDF (if any), the student's OCR transcript, and ${images.length} original photo(s) are attached.
+    const userText = `The exam PDF, model-answer PDF (if any), and the student's OCR transcript are attached.
 ${examTitle ? `Exam title: ${examTitle}\n` : ""}
 ===== STUDENT OCR TRANSCRIPT (primary source) =====
 ${transcript || "[empty transcript]"}
 ===== END TRANSCRIPT =====
 
-Grade each question by comparing the transcript above against the model-answer PDF. Use the photos only as a visual fallback for diagrams/symbols.
+Grade each question by comparing the transcript above against the model-answer PDF.${transcriptLooksUnreadable ? " If the transcript is too unreadable to grade a question, mark that question for manual review instead of trying to infer it." : ""}
 
 Return ONLY valid JSON (no markdown fences) with this exact shape:
 {
@@ -231,7 +235,6 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
       { type: "file", file: { filename: "exam.pdf", file_data: examPdf } },
     ];
     if (answerPdf) content.push({ type: "file", file: { filename: "answer-key.pdf", file_data: answerPdf } });
-    for (const url of images) content.push({ type: "image_url", image_url: { url } });
 
     const gradeResult = await callAiWithFallback(LOVABLE_API_KEY, GRADE_MODELS, {
       messages: [

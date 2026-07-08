@@ -533,6 +533,31 @@ function CourseRunner({
   const [sendingHuman, setSendingHuman] = useState(false);
   const [humanSent, setHumanSent] = useState(false);
 
+  const prepareImageForGrading = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const original = String(reader.result);
+      const img = new Image();
+      img.onload = () => {
+        const maxSide = 1600;
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const width = Math.max(1, Math.round(img.width * scale));
+        const height = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve(original); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.78) || original);
+      };
+      img.onerror = () => resolve(original);
+      img.src = original;
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
   useEffect(() => {
     if (!selected) { setExamUrl(null); return; }
     (async () => {
@@ -553,12 +578,7 @@ function CourseRunner({
         toast.error(isAr ? "إحدى الصور كبيرة جداً (الحد 5MB)" : "Image too large (max 5MB)");
         continue;
       }
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(String(r.result));
-        r.onerror = () => reject(r.error);
-        r.readAsDataURL(file);
-      });
+      const dataUrl = await prepareImageForGrading(file);
       next.push(dataUrl);
     }
     setStudentImages((prev) => [...prev, ...next].slice(0, 10));
@@ -585,11 +605,10 @@ function CourseRunner({
         },
       });
       if (error) {
-        // supabase.functions.invoke throws a generic "non-2xx" error and loses the body.
-        // Try to read the real JSON error message from the response.
+        // Prefer the function's real JSON error over the generic "non-2xx" wrapper.
         let msg = error.message ?? "";
         try {
-          const resp = (error as any)?.context?.response;
+          const resp = (error as any)?.context?.response ?? (error as any)?.context;
           if (resp && typeof resp.json === "function") {
             const body = await resp.json();
             if (body?.error) msg = body.error;
@@ -598,7 +617,10 @@ function CourseRunner({
             if (txt) msg = txt;
           }
         } catch { /* ignore */ }
-        throw new Error(msg || (isAr ? "تعذّر التصحيح" : "Grading failed"));
+        const fallback = isAr
+          ? "تعذّر استلام نتيجة التصحيح. جرّب صوراً أوضح أو عدداً أقل من الصور."
+          : "Couldn't receive the grading result. Try clearer photos or fewer photos.";
+        throw new Error(/non-2xx/i.test(msg) ? fallback : (msg || fallback));
       }
       if ((data as any)?.error) throw new Error((data as any).error);
       setGradeResult(data);
