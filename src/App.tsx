@@ -67,6 +67,7 @@ const Welcome = lazy(() => import("./pages/Welcome"));
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
 import OAuthConsent from "./pages/OAuthConsent";
+import ResetPassword from "./pages/ResetPassword";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner";
 import { PremiumWelcomeOverlay } from "./components/PremiumWelcomeOverlay";
 import SearchFAB from "./components/SearchFAB";
@@ -139,6 +140,20 @@ const App = () => {
           <Toaster />
           <Sonner />
           <OAuthConsent />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  // Public password-reset landing — must run before any auth gate so the
+  // recovery link works even when the user is signed out.
+  if (typeof window !== "undefined" && window.location.pathname === "/reset-password") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <ResetPassword />
         </TooltipProvider>
       </QueryClientProvider>
     );
