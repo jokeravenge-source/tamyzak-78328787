@@ -584,7 +584,22 @@ function CourseRunner({
           language: isAr ? "ar" : "en",
         },
       });
-      if (error) throw error;
+      if (error) {
+        // supabase.functions.invoke throws a generic "non-2xx" error and loses the body.
+        // Try to read the real JSON error message from the response.
+        let msg = error.message ?? "";
+        try {
+          const resp = (error as any)?.context?.response;
+          if (resp && typeof resp.json === "function") {
+            const body = await resp.json();
+            if (body?.error) msg = body.error;
+          } else if (resp && typeof resp.text === "function") {
+            const txt = await resp.text();
+            if (txt) msg = txt;
+          }
+        } catch { /* ignore */ }
+        throw new Error(msg || (isAr ? "تعذّر التصحيح" : "Grading failed"));
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       setGradeResult(data);
     } catch (e: any) {
