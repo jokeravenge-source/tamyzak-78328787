@@ -61,7 +61,7 @@ async function callAiWithFallback(
   return { ok: false, status: lastStatus, error: lastErr || "All AI models failed." };
 }
 
-async function pdfToDataUrl(supabase: ReturnType<typeof createClient>, path: string): Promise<string | null> {
+async function pdfToDataUrl(supabase: { storage: ReturnType<typeof createClient>["storage"] }, path: string): Promise<string | null> {
   const { data, error } = await supabase.storage.from("course-exams").download(path);
   if (error || !data) return null;
   const buf = new Uint8Array(await data.arrayBuffer());
