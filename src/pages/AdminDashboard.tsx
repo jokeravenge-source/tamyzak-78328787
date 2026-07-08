@@ -273,6 +273,23 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
     );
   };
 
+  const [resetBusyId, setResetBusyId] = useState<string | null>(null);
+  const sendPasswordReset = async (u: UserRow) => {
+    if (!u.email) return toast.error("This user has no email on file.");
+    if (!confirm(`Send a password reset email to ${u.email}?`)) return;
+    setResetBusyId(u.user_id);
+    const { data, error } = await supabase.functions.invoke("admin-manage-users", {
+      body: {
+        action: "send_password_reset",
+        user_id: u.user_id,
+        redirect_to: `${window.location.origin}/reset-password`,
+      },
+    });
+    setResetBusyId(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error ?? "Failed");
+    toast.success(`Password reset email sent to ${u.email}`);
+  };
+
   // Per-user study sessions (admin can view + delete)
   type SessionRow = { id: string; subject: string; mission: string | null; duration_seconds: number; points: number; mission_completed: boolean; created_at: string };
   const [openSessionsFor, setOpenSessionsFor] = useState<string | null>(null);
