@@ -145,8 +145,8 @@ Strict rules:
 
     const ocrContent: unknown[] = [
       { type: "text", text: isAr
-          ? "استخرج نص إجابات الطالب من هذه الصور حرفياً، مرتبة حسب رقم السؤال."
-          : "Transcribe the student's answers from these images verbatim, ordered by question number." },
+          ? `مرفق ${images.length} صورة لأوراق إجابة الطالب. عالج كل صورة على حدة بالترتيب من الأولى إلى الأخيرة، ولا تتوقف بعد الصورة الأولى. لكل صورة اكتب أولاً سطراً: "===== الصفحة K من ${images.length} =====" ثم انسخ كل ما فيها من إجابات حرفياً، مع الحفاظ على أرقام الأسئلة كما كتبها الطالب. يجب أن تظهر جميع الصفحات في الناتج.`
+          : `You will receive ${images.length} images of the student's answer sheets. Process every image in order from first to last — do NOT stop after the first image. Before each image write a line: "===== Page K of ${images.length} =====" then transcribe everything on that page verbatim, preserving the question numbers the student wrote. All pages MUST appear in the output.` },
     ];
     for (const url of images) ocrContent.push({ type: "image_url", image_url: { url } });
 
