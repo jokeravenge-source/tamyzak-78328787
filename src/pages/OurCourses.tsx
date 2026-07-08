@@ -533,6 +533,31 @@ function CourseRunner({
   const [sendingHuman, setSendingHuman] = useState(false);
   const [humanSent, setHumanSent] = useState(false);
 
+  const prepareImageForGrading = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const original = String(reader.result);
+      const img = new Image();
+      img.onload = () => {
+        const maxSide = 1600;
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const width = Math.max(1, Math.round(img.width * scale));
+        const height = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve(original); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.78) || original);
+      };
+      img.onerror = () => resolve(original);
+      img.src = original;
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
   useEffect(() => {
     if (!selected) { setExamUrl(null); return; }
     (async () => {
@@ -553,12 +578,7 @@ function CourseRunner({
         toast.error(isAr ? "إحدى الصور كبيرة جداً (الحد 5MB)" : "Image too large (max 5MB)");
         continue;
       }
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(String(r.result));
-        r.onerror = () => reject(r.error);
-        r.readAsDataURL(file);
-      });
+      const dataUrl = await prepareImageForGrading(file);
       next.push(dataUrl);
     }
     setStudentImages((prev) => [...prev, ...next].slice(0, 10));
