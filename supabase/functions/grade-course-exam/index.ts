@@ -7,9 +7,57 @@ const corsHeaders = {
 };
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const OCR_MODEL = "google/gemini-2.5-pro";
-const GRADE_MODEL = "google/gemini-2.5-pro";
+const OCR_MODELS = [
+  "google/gemini-2.5-pro",
+  "google/gemini-3.1-pro-preview",
+  "google/gemini-2.5-flash",
+  "google/gemini-3.5-flash",
+  "openai/gpt-5",
+];
+const GRADE_MODELS = [
+  "google/gemini-2.5-pro",
+  "google/gemini-3.1-pro-preview",
+  "openai/gpt-5",
+  "google/gemini-2.5-flash",
+  "openai/gpt-5-mini",
+];
 const MAX_IMAGES = 10;
+
+// Try each model in order. Retries on 5xx and 429. Stops immediately on 402 (credits).
+async function callAiWithFallback(
+  apiKey: string,
+  models: string[],
+  body: Record<string, unknown>,
+): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
+  let lastErr = "";
+  let lastStatus = 500;
+  for (const model of models) {
+    try {
+      const res = await fetch(AI_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ ...body, model }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { ok: true, data, model };
+      }
+      const errText = await res.text();
+      lastStatus = res.status;
+      lastErr = errText.slice(0, 400);
+      // Terminal for billing — don't try other models.
+      if (res.status === 402) return { ok: false, status: 402, error: "AI credits exhausted." };
+      // For 429 / 5xx / model-unavailable, try next model.
+      console.warn(`[grade-course-exam] model ${model} failed (${res.status}): ${lastErr}`);
+      continue;
+    } catch (e) {
+      lastErr = String(e);
+      console.warn(`[grade-course-exam] model ${model} threw: ${lastErr}`);
+      continue;
+    }
+  }
+  return { ok: false, status: lastStatus, error: lastErr || "All AI models failed." };
+}
 
 async function pdfToDataUrl(supabase: ReturnType<typeof createClient>, path: string): Promise<string | null> {
   const { data, error } = await supabase.storage.from("course-exams").download(path);
