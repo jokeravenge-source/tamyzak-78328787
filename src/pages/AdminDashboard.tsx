@@ -787,6 +787,15 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                         {openSessionsFor === u.user_id ? "Hide sessions" : "Sessions"}
                       </button>
                       <button
+                        onClick={() => sendPasswordReset(u)}
+                        disabled={resetBusyId === u.user_id || !u.email}
+                        title={u.email ? "Email a password reset link to this user" : "No email on file"}
+                        className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-sm disabled:opacity-60"
+                      >
+                        {resetBusyId === u.user_id ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                        Reset password
+                      </button>
+                      <button
                         onClick={() => toggleBan(u)}
                         disabled={userActionId === u.user_id}
                         className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm disabled:opacity-60 ${u.banned ? "border border-primary/40 text-primary hover:bg-primary/10" : "border border-red-500/40 text-red-400 hover:bg-red-500/10"}`}
