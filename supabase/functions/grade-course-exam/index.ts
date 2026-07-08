@@ -7,9 +7,57 @@ const corsHeaders = {
 };
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const OCR_MODEL = "google/gemini-2.5-pro";
-const GRADE_MODEL = "google/gemini-2.5-pro";
+const OCR_MODELS = [
+  "google/gemini-2.5-pro",
+  "google/gemini-3.1-pro-preview",
+  "google/gemini-2.5-flash",
+  "google/gemini-3.5-flash",
+  "openai/gpt-5",
+];
+const GRADE_MODELS = [
+  "google/gemini-2.5-pro",
+  "google/gemini-3.1-pro-preview",
+  "openai/gpt-5",
+  "google/gemini-2.5-flash",
+  "openai/gpt-5-mini",
+];
 const MAX_IMAGES = 10;
+
+// Try each model in order. Retries on 5xx and 429. Stops immediately on 402 (credits).
+async function callAiWithFallback(
+  apiKey: string,
+  models: string[],
+  body: Record<string, unknown>,
+): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
+  let lastErr = "";
+  let lastStatus = 500;
+  for (const model of models) {
+    try {
+      const res = await fetch(AI_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ ...body, model }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return { ok: true, data, model };
+      }
+      const errText = await res.text();
+      lastStatus = res.status;
+      lastErr = errText.slice(0, 400);
+      // Terminal for billing — don't try other models.
+      if (res.status === 402) return { ok: false, status: 402, error: "AI credits exhausted." };
+      // For 429 / 5xx / model-unavailable, try next model.
+      console.warn(`[grade-course-exam] model ${model} failed (${res.status}): ${lastErr}`);
+      continue;
+    } catch (e) {
+      lastErr = String(e);
+      console.warn(`[grade-course-exam] model ${model} threw: ${lastErr}`);
+      continue;
+    }
+  }
+  return { ok: false, status: lastStatus, error: lastErr || "All AI models failed." };
+}
 
 async function pdfToDataUrl(supabase: ReturnType<typeof createClient>, path: string): Promise<string | null> {
   const { data, error } = await supabase.storage.from("course-exams").download(path);
@@ -97,29 +145,20 @@ Strict rules:
     ];
     for (const url of images) ocrContent.push({ type: "image_url", image_url: { url } });
 
-    const ocrRes = await fetch(AI_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: OCR_MODEL,
-        messages: [
-          { role: "system", content: ocrSystem },
-          { role: "user", content: ocrContent },
-        ],
-      }),
+    const ocrResult = await callAiWithFallback(LOVABLE_API_KEY, OCR_MODELS, {
+      messages: [
+        { role: "system", content: ocrSystem },
+        { role: "user", content: ocrContent },
+      ],
     });
-    if (!ocrRes.ok) {
-      const errText = await ocrRes.text();
-      const status = ocrRes.status === 429 || ocrRes.status === 402 ? ocrRes.status : 500;
-      const msg = ocrRes.status === 429 ? "Rate limit. Try again shortly."
-        : ocrRes.status === 402 ? "AI credits exhausted."
-        : `OCR error: ${errText.slice(0, 300)}`;
-      return new Response(JSON.stringify({ error: msg }), {
+    if (!ocrResult.ok) {
+      const status = ocrResult.status === 402 ? 402 : 200;
+      return new Response(JSON.stringify({ error: `OCR failed: ${ocrResult.error}` }), {
         status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const ocrData = await ocrRes.json();
-    const transcript = String(ocrData.choices?.[0]?.message?.content ?? "").trim();
+    const transcript = String(ocrResult.data.choices?.[0]?.message?.content ?? "").trim();
+    console.log(`[grade-course-exam] OCR ok via ${ocrResult.model}`);
 
     // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
     const systemPrompt = isAr
@@ -189,40 +228,21 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
     if (answerPdf) content.push({ type: "file", file: { filename: "answer-key.pdf", file_data: answerPdf } });
     for (const url of images) content.push({ type: "image_url", image_url: { url } });
 
-    const res = await fetch(AI_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: GRADE_MODEL,
-        messages: [
-          { role: "system", content: systemPromptFinal },
-          { role: "user", content },
-        ],
-        response_format: { type: "json_object" },
-      }),
+    const gradeResult = await callAiWithFallback(LOVABLE_API_KEY, GRADE_MODELS, {
+      messages: [
+        { role: "system", content: systemPromptFinal },
+        { role: "user", content },
+      ],
+      response_format: { type: "json_object" },
     });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      if (res.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit. Try again shortly." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (res.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: `AI error: ${errText}` }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!gradeResult.ok) {
+      const status = gradeResult.status === 402 ? 402 : 200;
+      return new Response(JSON.stringify({ error: `Grading failed: ${gradeResult.error}` }), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const data = await res.json();
+    const data = gradeResult.data;
+    console.log(`[grade-course-exam] Grade ok via ${gradeResult.model}`);
     const raw = data.choices?.[0]?.message?.content ?? "{}";
     let parsed: unknown = {};
     try { parsed = JSON.parse(raw); } catch {
