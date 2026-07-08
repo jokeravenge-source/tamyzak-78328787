@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen, Crown } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen, Crown, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -271,6 +271,23 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           : x,
       ),
     );
+  };
+
+  const [resetBusyId, setResetBusyId] = useState<string | null>(null);
+  const sendPasswordReset = async (u: UserRow) => {
+    if (!u.email) return toast.error("This user has no email on file.");
+    if (!confirm(`Send a password reset email to ${u.email}?`)) return;
+    setResetBusyId(u.user_id);
+    const { data, error } = await supabase.functions.invoke("admin-manage-users", {
+      body: {
+        action: "send_password_reset",
+        user_id: u.user_id,
+        redirect_to: `${window.location.origin}/reset-password`,
+      },
+    });
+    setResetBusyId(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error ?? "Failed");
+    toast.success(`Password reset email sent to ${u.email}`);
   };
 
   // Per-user study sessions (admin can view + delete)
@@ -768,6 +785,15 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
                       >
                         <Timer className="w-4 h-4" />
                         {openSessionsFor === u.user_id ? "Hide sessions" : "Sessions"}
+                      </button>
+                      <button
+                        onClick={() => sendPasswordReset(u)}
+                        disabled={resetBusyId === u.user_id || !u.email}
+                        title={u.email ? "Email a password reset link to this user" : "No email on file"}
+                        className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-sm disabled:opacity-60"
+                      >
+                        {resetBusyId === u.user_id ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                        Reset password
                       </button>
                       <button
                         onClick={() => toggleBan(u)}
