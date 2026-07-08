@@ -256,6 +256,43 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "send_password_reset") {
+      const targetId = String(body?.user_id || "");
+      const redirectTo = String(body?.redirect_to || "");
+      if (!targetId) {
+        return new Response(JSON.stringify({ error: "missing user_id" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const u = await getAuthUser(targetId);
+      const email = u?.email;
+      if (!email) {
+        return new Response(JSON.stringify({ error: "user_has_no_email" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Ask Auth to send a password recovery email using the standard template.
+      const r = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+        method: "POST",
+        headers: {
+          apikey: ANON,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          redirectTo ? { email, options: { redirectTo } } : { email },
+        ),
+      });
+      if (!r.ok) {
+        const txt = await r.text();
+        return new Response(JSON.stringify({ error: txt || "failed_to_send" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, email }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "unknown_action" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
