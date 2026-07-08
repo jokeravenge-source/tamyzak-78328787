@@ -8,18 +8,20 @@ const corsHeaders = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const OCR_MODELS = [
+  // Fast models first — OCR of handwriting works well on flash and is 3-5x quicker.
+  "google/gemini-3.5-flash",
+  "google/gemini-2.5-flash",
   "google/gemini-2.5-pro",
   "google/gemini-3.1-pro-preview",
-  "google/gemini-2.5-flash",
-  "google/gemini-3.5-flash",
-  "openai/gpt-5",
+  "openai/gpt-5-mini",
 ];
 const GRADE_MODELS = [
+  // Balanced: strong-but-fast first, pro only as fallback.
+  "google/gemini-3.5-flash",
   "google/gemini-2.5-pro",
   "google/gemini-3.1-pro-preview",
-  "openai/gpt-5",
-  "google/gemini-2.5-flash",
   "openai/gpt-5-mini",
+  "openai/gpt-5",
 ];
 const MAX_IMAGES = 10;
 
@@ -109,13 +111,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const examPdf = await pdfToDataUrl(admin, examPath);
+    // Download both PDFs in parallel to cut latency.
+    const [examPdf, answerPdf] = await Promise.all([
+      pdfToDataUrl(admin, examPath),
+      answerPath ? pdfToDataUrl(admin, answerPath) : Promise.resolve(null),
+    ]);
     if (!examPdf) {
       return new Response(JSON.stringify({ error: "Could not load the exam PDF." }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const answerPdf = answerPath ? await pdfToDataUrl(admin, answerPath) : null;
 
     const isAr = language !== "en";
 
