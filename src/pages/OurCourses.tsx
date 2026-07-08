@@ -605,11 +605,10 @@ function CourseRunner({
         },
       });
       if (error) {
-        // supabase.functions.invoke throws a generic "non-2xx" error and loses the body.
-        // Try to read the real JSON error message from the response.
+        // Prefer the function's real JSON error over the generic "non-2xx" wrapper.
         let msg = error.message ?? "";
         try {
-          const resp = (error as any)?.context?.response;
+          const resp = (error as any)?.context?.response ?? (error as any)?.context;
           if (resp && typeof resp.json === "function") {
             const body = await resp.json();
             if (body?.error) msg = body.error;
@@ -618,7 +617,10 @@ function CourseRunner({
             if (txt) msg = txt;
           }
         } catch { /* ignore */ }
-        throw new Error(msg || (isAr ? "تعذّر التصحيح" : "Grading failed"));
+        const fallback = isAr
+          ? "تعذّر استلام نتيجة التصحيح. جرّب صوراً أوضح أو عدداً أقل من الصور."
+          : "Couldn't receive the grading result. Try clearer photos or fewer photos.";
+        throw new Error(/non-2xx/i.test(msg) ? fallback : (msg || fallback));
       }
       if ((data as any)?.error) throw new Error((data as any).error);
       setGradeResult(data);
