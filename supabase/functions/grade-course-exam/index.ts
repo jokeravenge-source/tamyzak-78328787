@@ -24,6 +24,7 @@ const GRADE_MODELS = [
   "openai/gpt-5",
 ];
 const MAX_IMAGES = 10;
+const USE_PHOTOS_DURING_GRADING_MAX = 2;
 
 // Try each model in order. Retries on 5xx and 429. Stops immediately on 402 (credits).
 async function callAiWithFallback(
@@ -164,6 +165,10 @@ Strict rules:
     }
     const transcript = String(ocrResult.data.choices?.[0]?.message?.content ?? "").trim();
     console.log(`[grade-course-exam] OCR ok via ${ocrResult.model}`);
+    const shouldUsePhotosForGrading =
+      !transcript ||
+      transcript.length < 120 ||
+      /\[(?:غير مقروء|unreadable)\]/i.test(transcript);
 
     // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
     const systemPrompt = isAr
@@ -211,7 +216,7 @@ ${examTitle ? `Exam title: ${examTitle}\n` : ""}
 ${transcript || "[empty transcript]"}
 ===== END TRANSCRIPT =====
 
-Grade each question by comparing the transcript above against the model-answer PDF. Use the photos only as a visual fallback for diagrams/symbols.
+Grade each question by comparing the transcript above against the model-answer PDF.${shouldUsePhotosForGrading ? " Use the attached photos only as a visual fallback for unreadable handwriting, diagrams, or symbols." : " Do not wait on the original photos unless the transcript is unreadable."}
 
 Return ONLY valid JSON (no markdown fences) with this exact shape:
 {
@@ -231,7 +236,9 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
       { type: "file", file: { filename: "exam.pdf", file_data: examPdf } },
     ];
     if (answerPdf) content.push({ type: "file", file: { filename: "answer-key.pdf", file_data: answerPdf } });
-    for (const url of images) content.push({ type: "image_url", image_url: { url } });
+    if (shouldUsePhotosForGrading) {
+      for (const url of images.slice(0, USE_PHOTOS_DURING_GRADING_MAX)) content.push({ type: "image_url", image_url: { url } });
+    }
 
     const gradeResult = await callAiWithFallback(LOVABLE_API_KEY, GRADE_MODELS, {
       messages: [
