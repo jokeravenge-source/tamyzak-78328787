@@ -6,7 +6,7 @@ import {
   NotebookPen, FileText, HelpCircle, Network, Headphones, Video, Youtube,
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown, Atom, FlaskConical, Leaf, Languages as LangIcon, Moon,
-  Home, Palette, Heart, Wrench, Wand2, GraduationCap as CoursesIcon,
+  Home, Palette, Heart, Wrench, Wand2, GraduationCap as CoursesIcon, Users2,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -65,6 +65,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
   {
     titleEn: "Community", titleAr: "المجتمع",
     items: [
+      { key: "teachers", labelEn: "Our Teachers", labelAr: "مدرسينا", Icon: Users2 },
       { key: "news", labelEn: "News", labelAr: "الأخبار", Icon: Newspaper },
       { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
       { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
