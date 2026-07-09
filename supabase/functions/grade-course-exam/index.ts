@@ -8,40 +8,40 @@ const corsHeaders = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const OCR_MODELS = [
-  // Fast models first — OCR of handwriting works well on flash and is 3-5x quicker.
+  // Keep the chain short so one stalled upstream can't burn the whole edge budget.
   "google/gemini-3.5-flash",
   "google/gemini-2.5-flash",
-  "google/gemini-2.5-pro",
-  "google/gemini-3.1-pro-preview",
-  "openai/gpt-5-mini",
 ];
 const GRADE_MODELS = [
-  // Balanced: strong-but-fast first, pro only as fallback.
   "google/gemini-3.5-flash",
   "google/gemini-2.5-pro",
-  "google/gemini-3.1-pro-preview",
-  "openai/gpt-5-mini",
-  "openai/gpt-5",
 ];
 const MAX_IMAGES = 10;
+const OCR_TIMEOUT_MS = 60_000;
+const GRADE_TIMEOUT_MS = 90_000;
 
 // Try each model in order. Retries on 5xx and 429. Stops immediately on 402 (credits).
 async function callAiWithFallback(
   apiKey: string,
   models: string[],
   body: Record<string, unknown>,
+  perCallTimeoutMs: number,
 ): Promise<{ ok: true; data: any; model: string } | { ok: false; status: number; error: string }> {
   let lastErr = "";
   let lastStatus = 500;
   for (const model of models) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), perCallTimeoutMs);
     try {
       const res = await fetch(AI_URL, {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({ ...body, model }),
+        signal: controller.signal,
       });
       if (res.ok) {
         const data = await res.json();
+        clearTimeout(timer);
         return { ok: true, data, model };
       }
       const errText = await res.text();
@@ -53,9 +53,13 @@ async function callAiWithFallback(
       console.warn(`[grade-course-exam] model ${model} failed (${res.status}): ${lastErr}`);
       continue;
     } catch (e) {
-      lastErr = String(e);
-      console.warn(`[grade-course-exam] model ${model} threw: ${lastErr}`);
+      const aborted = (e as { name?: string })?.name === "AbortError";
+      lastErr = aborted ? `timeout after ${perCallTimeoutMs}ms` : String(e);
+      lastStatus = aborted ? 504 : lastStatus;
+      console.warn(`[grade-course-exam] model ${model} ${aborted ? "timed out" : "threw"}: ${lastErr}`);
       continue;
+    } finally {
+      clearTimeout(timer);
     }
   }
   return { ok: false, status: lastStatus, error: lastErr || "All AI models failed." };
@@ -155,7 +159,7 @@ Strict rules:
         { role: "system", content: ocrSystem },
         { role: "user", content: ocrContent },
       ],
-    });
+    }, OCR_TIMEOUT_MS);
     if (!ocrResult.ok) {
       const status = ocrResult.status === 402 ? 402 : 200;
       return new Response(JSON.stringify({ error: `OCR failed: ${ocrResult.error}` }), {
@@ -242,7 +246,7 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
         { role: "user", content },
       ],
       response_format: { type: "json_object" },
-    });
+    }, GRADE_TIMEOUT_MS);
     if (!gradeResult.ok) {
       const status = gradeResult.status === 402 ? 402 : 200;
       return new Response(JSON.stringify({ error: `Grading failed: ${gradeResult.error}` }), {
