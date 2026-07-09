@@ -16,7 +16,8 @@ const t = {
     role: "Instructor",
     subjectLabel: "Subject",
     chapter: "Chapter 1",
-    topics: "Topics",
+    topics: "Lectures",
+    lecture: "Lecture",
     openTopic: "Open",
     noSets: "No practice sets yet for this topic.",
     generateTitle: "Generate MCQs (Admin)",
@@ -50,7 +51,8 @@ const t = {
     role: "مدرّس",
     subjectLabel: "المادة",
     chapter: "الفصل الأول",
-    topics: "المواضيع",
+    topics: "المحاضرات",
+    lecture: "محاضرة",
     openTopic: "فتح",
     noSets: "لا توجد أسئلة تدريبية لهذا الموضوع بعد.",
     generateTitle: "توليد أسئلة (للمدير)",
@@ -275,19 +277,19 @@ function TopicsView({
 
       <h2 className="text-sm uppercase tracking-widest text-muted-foreground mb-3">{L.topics}</h2>
       <ul className="grid gap-2">
-        {(chapter?.topics ?? []).map((topic, i) => (
+        {Array.from({ length: 28 }, (_, idx) => idx + 1).map((n, i) => (
           <motion.li
-            key={topic.key}
+            key={n}
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.03 }}
+            transition={{ delay: i * 0.02 }}
           >
             <button
-              onClick={() => onOpen(topic.key)}
+              onClick={() => onOpen(`lecture-${n}`)}
               className="w-full flex items-center justify-between gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-colors text-start"
             >
               <span className="font-medium">
-                {topic[language]}
+                {L.lecture} {n}
               </span>
               <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
             </button>
@@ -314,7 +316,8 @@ function TopicView({
 }) {
   const subject = missionsData[teacher.subject];
   const chapter = subject?.chapters.find((c) => c.key === teacher.chapterKey);
-  const topic = chapter?.topics.find((tp) => tp.key === topicKey);
+  const lectureNum = /^lecture-(\d+)$/.exec(topicKey)?.[1];
+  const lectureLabel = lectureNum ? `${L.lecture} ${lectureNum}` : topicKey;
 
   const [sets, setSets] = useState<MCQSet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -356,7 +359,7 @@ function TopicView({
           {chapter?.[language]}
         </p>
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-          {topic?.[language] ?? topicKey}
+          {lectureLabel}
         </h1>
         <p className="text-xs text-muted-foreground">
           {language === "ar" ? teacher.nameAr : teacher.nameEn}
