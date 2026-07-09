@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, RefreshCw, Share2, Trophy, Clock, Target, Brain, Copy, Check, Link2, ListChecks, Flag } from "lucide-react";
+import { ArrowLeft, RefreshCw, Share2, Trophy, Clock, Target, Brain, Copy, Check, Link2, ListChecks, Flag, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const T = {
   en: {
@@ -18,6 +19,7 @@ const T = {
     enable: "Enable parent link", revoke: "Revoke link", copy: "Copy link", copied: "Copied!",
     accessCode: "Parent access code", accessCodeDesc: "Give your parent this 6-digit code. They'll need it after opening the link.",
     regenCode: "Generate new code",
+    premiumOnly: "Premium only", premiumDesc: "Parent follow-up is a Premium feature. Upgrade to share your progress with a parent.", upgrade: "Upgrade to Premium",
     min: "min",
     companion: "Excellence Companion", companionDesc: "Plan your week or work through a problem with AI.",
     todoToday: "Today's to-do list", todoDone: "done", todoOf: "of",
@@ -38,6 +40,7 @@ const T = {
     enable: "تفعيل رابط ولي الأمر", revoke: "إلغاء الرابط", copy: "نسخ الرابط", copied: "تم النسخ!",
     accessCode: "رمز دخول ولي الأمر", accessCodeDesc: "أعطِ ولي أمرك هذا الرمز المكوّن من 6 أرقام. سيحتاجه بعد فتح الرابط.",
     regenCode: "توليد رمز جديد",
+    premiumOnly: "للبريميوم فقط", premiumDesc: "متابعة ولي الأمر ميزة بريميوم. رقّ لمشاركة تقدمك مع ولي أمرك.", upgrade: "الترقية إلى البريميوم",
     min: "د",
     companion: "رفيق التميز", companionDesc: "نظّم أسبوعك أو حل مشكلتك مع الذكاء الاصطناعي.",
     todoToday: "قائمة مهام اليوم", todoDone: "مُنجز", todoOf: "من",
