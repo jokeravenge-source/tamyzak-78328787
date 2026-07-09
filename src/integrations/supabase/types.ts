@@ -1116,6 +1116,51 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_topic_videos: {
+        Row: {
+          approved: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          notes_parts: Json
+          teacher_id: string
+          title: string | null
+          topic_key: string
+          transcript: string | null
+          updated_at: string
+          video_id: string | null
+          youtube_url: string
+        }
+        Insert: {
+          approved?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes_parts?: Json
+          teacher_id: string
+          title?: string | null
+          topic_key: string
+          transcript?: string | null
+          updated_at?: string
+          video_id?: string | null
+          youtube_url: string
+        }
+        Update: {
+          approved?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes_parts?: Json
+          teacher_id?: string
+          title?: string | null
+          topic_key?: string
+          transcript?: string | null
+          updated_at?: string
+          video_id?: string | null
+          youtube_url?: string
+        }
+        Relationships: []
+      }
       telegram_notifications_sent: {
         Row: {
           id: string
