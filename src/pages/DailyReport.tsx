@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, RefreshCw, Share2, Trophy, Clock, Target, Brain, Copy, Check, Link2, ListChecks, Flag } from "lucide-react";
+import { ArrowLeft, RefreshCw, Share2, Trophy, Clock, Target, Brain, Copy, Check, Link2, ListChecks, Flag, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
+import { useSubscription } from "@/hooks/useSubscription";
+import type { MainMenuChoice } from "@/pages/MainMenu";
 
 const T = {
   en: {
@@ -18,6 +20,7 @@ const T = {
     enable: "Enable parent link", revoke: "Revoke link", copy: "Copy link", copied: "Copied!",
     accessCode: "Parent access code", accessCodeDesc: "Give your parent this 6-digit code. They'll need it after opening the link.",
     regenCode: "Generate new code",
+    premiumOnly: "Premium only", premiumDesc: "Parent follow-up is a Premium feature. Upgrade to share your progress with a parent.", upgrade: "Upgrade to Premium",
     min: "min",
     companion: "Excellence Companion", companionDesc: "Plan your week or work through a problem with AI.",
     todoToday: "Today's to-do list", todoDone: "done", todoOf: "of",
@@ -38,6 +41,7 @@ const T = {
     enable: "تفعيل رابط ولي الأمر", revoke: "إلغاء الرابط", copy: "نسخ الرابط", copied: "تم النسخ!",
     accessCode: "رمز دخول ولي الأمر", accessCodeDesc: "أعطِ ولي أمرك هذا الرمز المكوّن من 6 أرقام. سيحتاجه بعد فتح الرابط.",
     regenCode: "توليد رمز جديد",
+    premiumOnly: "للبريميوم فقط", premiumDesc: "متابعة ولي الأمر ميزة بريميوم. رقّ لمشاركة تقدمك مع ولي أمرك.", upgrade: "الترقية إلى البريميوم",
     min: "د",
     companion: "رفيق التميز", companionDesc: "نظّم أسبوعك أو حل مشكلتك مع الذكاء الاصطناعي.",
     todoToday: "قائمة مهام اليوم", todoDone: "مُنجز", todoOf: "من",
@@ -56,9 +60,10 @@ type Report = {
   todo_today?: { total: number; done: number; pending: string[]; pct: number };
 };
 
-export default function DailyReport({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
+export default function DailyReport({ language, onBack, onNav }: { language: AppLanguage; onBack: () => void; onNav?: (choice: MainMenuChoice) => void }) {
   const t = T[language];
   const ar = language === "ar";
+  const { isPremium, loading: subLoading } = useSubscription();
   const [report, setReport] = useState<Report | null>(null);
   const [meta, setMeta] = useState<{ days_to_exam: number | null; daily_target_minutes: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -292,7 +297,25 @@ export default function DailyReport({ language, onBack }: { language: AppLanguag
 
             {/* Parent link */}
             <Panel icon={Share2} title={t.parent} subtitle={t.parentDesc}>
-              {!token ? (
+              {subLoading ? (
+                <div className="h-10 w-40 bg-foreground/5 animate-pulse" />
+              ) : !isPremium ? (
+                <div className="border border-amber-400/40 bg-amber-500/5 p-4">
+                  <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-amber-500 font-semibold mb-2">
+                    <Crown className="w-3.5 h-3.5" />{t.premiumOnly}
+                  </div>
+                  <p className="text-sm text-foreground/90 mb-3">{t.premiumDesc}</p>
+                  {onNav && (
+                    <button
+                      onClick={() => onNav("premium")}
+                      className="h-10 px-5 text-xs font-semibold uppercase tracking-[0.14em] inline-flex items-center gap-2 clip-facet-badge text-white"
+                      style={{ background: "linear-gradient(110deg, #f59e0b, #fbbf24, #f59e0b)" }}
+                    >
+                      <Crown className="w-3.5 h-3.5" />{t.upgrade}
+                    </button>
+                  )}
+                </div>
+              ) : !token ? (
                 <button
                   onClick={enableLink}
                   className="h-10 px-5 bg-foreground text-background text-xs font-semibold uppercase tracking-[0.14em] inline-flex items-center gap-2 clip-facet-badge hover:opacity-90"
