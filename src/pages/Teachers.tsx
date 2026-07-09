@@ -246,7 +246,7 @@ function TopicsView({
 }: {
   teacher: Teacher;
   language: AppLanguage;
-  L: (typeof t)["en"];
+  L: Record<keyof (typeof t)["en"], string>;
   onOpen: (topicKey: string) => void;
 }) {
   const subject = missionsData[teacher.subject];
@@ -309,7 +309,7 @@ function TopicView({
   teacher: Teacher;
   topicKey: string;
   language: AppLanguage;
-  L: (typeof t)["en"];
+  L: Record<keyof (typeof t)["en"], string>;
   isAdmin: boolean;
 }) {
   const subject = missionsData[teacher.subject];
@@ -452,7 +452,7 @@ function GeneratorPanel({
   teacher: Teacher;
   topicKey: string;
   language: AppLanguage;
-  L: (typeof t)["en"];
+  L: Record<keyof (typeof t)["en"], string>;
   onCreated: (row: MCQSet) => void;
   onCancel: () => void;
 }) {
@@ -606,7 +606,7 @@ function PracticeModal({
 }: {
   set: MCQSet;
   language: AppLanguage;
-  L: (typeof t)["en"];
+  L: Record<keyof (typeof t)["en"], string>;
   onClose: () => void;
 }) {
   const [i, setI] = useState(0);
