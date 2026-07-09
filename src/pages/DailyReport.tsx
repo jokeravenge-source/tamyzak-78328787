@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
 import { useSubscription } from "@/hooks/useSubscription";
+import type { MainMenuChoice } from "@/pages/MainMenu";
 
 const T = {
   en: {
@@ -59,7 +60,7 @@ type Report = {
   todo_today?: { total: number; done: number; pending: string[]; pct: number };
 };
 
-export default function DailyReport({ language, onBack, onNav }: { language: AppLanguage; onBack: () => void; onNav?: (choice: string) => void }) {
+export default function DailyReport({ language, onBack, onNav }: { language: AppLanguage; onBack: () => void; onNav?: (choice: MainMenuChoice) => void }) {
   const t = T[language];
   const ar = language === "ar";
   const { isPremium, loading: subLoading } = useSubscription();
