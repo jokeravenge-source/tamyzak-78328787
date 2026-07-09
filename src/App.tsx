@@ -416,6 +416,12 @@ const App = () => {
         <AdminLogin onAuthed={() => setAuthed(true)} onBack={resetRole} />
       ) : authRole === "admin" && authed && isAdmin ? (
         <AdminDashboard onLogout={adminLogout} />
+      ) : authRole === "guest" ? (
+        <Teachers
+          language={language ?? "ar"}
+          onBack={resetRole}
+          isAdmin={false}
+        />
       ) : !authed ? (
         <Auth onAuthed={() => setAuthed(true)} onGoAdmin={() => chooseRole("admin")} />
       ) : !language ? (
