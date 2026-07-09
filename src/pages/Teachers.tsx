@@ -7,6 +7,7 @@ import ahmedAsset from "@/assets/teachers/ahmed-nadawi.jpg.asset.json";
 import { missionsData } from "@/data/missions";
 import { supabase } from "@/integrations/supabase/client";
 import { extractStudyMaterial } from "@/lib/fileText";
+import TeacherLectureVideos from "@/components/TeacherLectureVideos";
 
 const t = {
   en: {
@@ -439,6 +440,13 @@ function TopicView({
       {practice && (
         <PracticeModal set={practice} language={language} L={L} onClose={() => setPractice(null)} />
       )}
+
+      <TeacherLectureVideos
+        teacherId={teacher.id}
+        topicKey={topicKey}
+        language={language}
+        isAdmin={isAdmin}
+      />
     </motion.div>
   );
 }
