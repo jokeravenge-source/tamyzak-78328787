@@ -277,19 +277,19 @@ function TopicsView({
 
       <h2 className="text-sm uppercase tracking-widest text-muted-foreground mb-3">{L.topics}</h2>
       <ul className="grid gap-2">
-        {(chapter?.topics ?? []).map((topic, i) => (
+        {Array.from({ length: 28 }, (_, idx) => idx + 1).map((n, i) => (
           <motion.li
-            key={topic.key}
+            key={n}
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.03 }}
+            transition={{ delay: i * 0.02 }}
           >
             <button
-              onClick={() => onOpen(topic.key)}
+              onClick={() => onOpen(`lecture-${n}`)}
               className="w-full flex items-center justify-between gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-colors text-start"
             >
               <span className="font-medium">
-                {topic[language]}
+                {L.lecture} {n}
               </span>
               <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
             </button>
