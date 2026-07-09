@@ -506,7 +506,7 @@ const App = () => {
       ) : menuChoice === "examGenerator" ? (
         <ExamGenerator language={language} onBack={resetMenu} />
       ) : menuChoice === "teachers" ? (
-        <Teachers language={language} onBack={resetMenu} />
+        <Teachers language={language} onBack={resetMenu} isAdmin={isAdmin} />
       ) : menuChoice === "companion" ? (
         <main className="min-h-screen bg-background pb-28">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
