@@ -59,9 +59,10 @@ type Report = {
   todo_today?: { total: number; done: number; pending: string[]; pct: number };
 };
 
-export default function DailyReport({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
+export default function DailyReport({ language, onBack, onNav }: { language: AppLanguage; onBack: () => void; onNav?: (choice: string) => void }) {
   const t = T[language];
   const ar = language === "ar";
+  const { isPremium, loading: subLoading } = useSubscription();
   const [report, setReport] = useState<Report | null>(null);
   const [meta, setMeta] = useState<{ days_to_exam: number | null; daily_target_minutes: number } | null>(null);
   const [loading, setLoading] = useState(true);
