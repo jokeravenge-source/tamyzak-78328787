@@ -1086,6 +1086,36 @@ export type Database = {
           },
         ]
       }
+      teacher_topic_mcqs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          questions: Json
+          teacher_id: string
+          title: string
+          topic_key: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          questions: Json
+          teacher_id: string
+          title?: string
+          topic_key: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          questions?: Json
+          teacher_id?: string
+          title?: string
+          topic_key?: string
+        }
+        Relationships: []
+      }
       telegram_notifications_sent: {
         Row: {
           id: string
