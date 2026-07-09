@@ -104,11 +104,32 @@ Deno.serve(async (req) => {
     }
 
     const data = await res.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
+    const msg = data.choices?.[0]?.message;
+    const toolCall = msg?.tool_calls?.[0];
+    let parsed: any = null;
+    if (toolCall?.function?.arguments) {
+      try { parsed = JSON.parse(toolCall.function.arguments); } catch { /* fall through */ }
+    }
+    if (!parsed && typeof msg?.content === "string") {
+      const raw = msg.content.trim();
+      // Strip markdown code fences (```json ... ``` or ``` ``` `json ... ` ` ` variants)
+      const cleaned = raw
+        .replace(/^`+\s*`*\s*`*\s*json/i, "")
+        .replace(/^```json/i, "")
+        .replace(/^```/, "")
+        .replace(/```$/, "")
+        .replace(/`+\s*$/, "")
+        .trim();
+      const start = cleaned.indexOf("{");
+      const end = cleaned.lastIndexOf("}");
+      if (start !== -1 && end !== -1) {
+        try { parsed = JSON.parse(cleaned.slice(start, end + 1)); } catch { /* ignore */ }
+      }
+    }
+    if (!parsed || !Array.isArray(parsed.questions) || !parsed.questions.length) {
+      console.error("generate-mcq: no parseable questions", JSON.stringify(data).slice(0, 500));
       return new Response(JSON.stringify({ error: "No questions generated" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const parsed = JSON.parse(toolCall.function.arguments);
     // Shuffle choices per question so the correct answer is not biased to a single position
     if (parsed && Array.isArray(parsed.questions)) {
       parsed.questions = parsed.questions.map((q: any) => {
