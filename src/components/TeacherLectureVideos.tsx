@@ -259,7 +259,7 @@ function AdminAddVideo({
   teacherId: string;
   topicKey: string;
   language: AppLanguage;
-  T: typeof L["en"];
+  T: (typeof L)[AppLanguage];
   onCancel: () => void;
   onSaved: (v: LectureVideo) => void;
 }) {
@@ -385,7 +385,7 @@ function VideoNotesModal({
 }: {
   video: LectureVideo;
   language: AppLanguage;
-  T: typeof L["en"];
+  T: (typeof L)[AppLanguage];
   onClose: () => void;
 }) {
   const isRTL = language === "ar";
@@ -531,7 +531,7 @@ function VideoNotesModal({
 
 function PrettyBlocks({
   blocks, images, title, T,
-}: { blocks: PrettyBlock[]; images: PrettyImage[]; title: string; T: typeof L["en"] }) {
+}: { blocks: PrettyBlock[]; images: PrettyImage[]; title: string; T: (typeof L)[AppLanguage] }) {
   return (
     <div>
       <div className="mb-6 pb-4 border-b-4 border-fuchsia-500">
