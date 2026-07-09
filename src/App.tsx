@@ -465,7 +465,7 @@ const App = () => {
       ) : menuChoice === "englishIsqat" ? (
         <EnglishIsqat language={language} onBack={backToBasics} />
       ) : menuChoice === "report" ? (
-        <DailyReport language={language} onBack={resetMenu} />
+        <DailyReport language={language} onBack={resetMenu} onNav={chooseMenu} />
       ) : menuChoice === "notes" ? (
         <Notes language={language} onBack={resetMenu} />
       ) : menuChoice === "canvas" ? (
