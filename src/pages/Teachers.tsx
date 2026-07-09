@@ -316,7 +316,8 @@ function TopicView({
 }) {
   const subject = missionsData[teacher.subject];
   const chapter = subject?.chapters.find((c) => c.key === teacher.chapterKey);
-  const topic = chapter?.topics.find((tp) => tp.key === topicKey);
+  const lectureNum = /^lecture-(\d+)$/.exec(topicKey)?.[1];
+  const lectureLabel = lectureNum ? `${L.lecture} ${lectureNum}` : topicKey;
 
   const [sets, setSets] = useState<MCQSet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -358,7 +359,7 @@ function TopicView({
           {chapter?.[language]}
         </p>
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-          {topic?.[language] ?? topicKey}
+          {lectureLabel}
         </h1>
         <p className="text-xs text-muted-foreground">
           {language === "ar" ? teacher.nameAr : teacher.nameEn}
