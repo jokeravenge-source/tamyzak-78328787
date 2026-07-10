@@ -33,6 +33,7 @@ const COURSES: Course[] = [
     Icon: Sigma,
     accent: "220 85% 60%",
     cover: geometryImg,
+    active: true,
   },
   {
     id: "physics",
@@ -43,6 +44,7 @@ const COURSES: Course[] = [
     Icon: Atom,
     accent: "0 85% 62%",
     cover: nuclearImg,
+    active: true,
   },
   {
     id: "chemistry",
@@ -53,6 +55,7 @@ const COURSES: Course[] = [
     Icon: FlaskConical,
     accent: "150 75% 45%",
     cover: organicImg,
+    active: true,
   },
   {
     id: "biology",
@@ -63,6 +66,7 @@ const COURSES: Course[] = [
     Icon: Dna,
     accent: "270 85% 62%",
     cover: geneticsImg,
+    active: true,
   },
 ];
 
@@ -73,6 +77,7 @@ type ExamRow = {
   exam_path: string;
   answer_path: string;
   created_at: string;
+  chapter: string;
 };
 
 const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
@@ -87,7 +92,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const refresh = async () => {
     const { data } = await supabase
       .from("course_exams")
-      .select("id, course_id, title, exam_path, answer_path, created_at")
+      .select("id, course_id, title, exam_path, answer_path, created_at, chapter")
       .order("created_at", { ascending: false });
     const rows = (data ?? []) as ExamRow[];
     const cMap: Record<string, number> = {};
@@ -210,13 +215,14 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                     <Icon className="w-5 h-5 text-white drop-shadow" />
                   </div>
 
-                  {/* Coming soon pill */}
-                  <div className={`absolute ${isAr ? "right-3" : "left-3"} top-3`}>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/95 text-foreground shadow-md">
-                      <Sparkles className="w-3 h-3 text-primary" />
-                      {isAr ? "قريباً" : "Coming soon"}
-                    </span>
-                  </div>
+                  {!c.active && (
+                    <div className={`absolute ${isAr ? "right-3" : "left-3"} top-3`}>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/95 text-foreground shadow-md">
+                        <Sparkles className="w-3 h-3 text-primary" />
+                        {isAr ? "قريباً" : "Coming soon"}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Title on cover */}
                   <div className="absolute inset-x-0 bottom-0 p-4">
@@ -298,6 +304,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         <UploadModal
           course={uploadFor}
           isAr={isAr}
+          existingChapters={Array.from(new Set((examsByCourse[uploadFor.id] ?? []).map((e) => e.chapter).filter(Boolean)))}
           onClose={() => setUploadFor(null)}
           onDone={() => { setUploadFor(null); refresh(); }}
         />
@@ -326,15 +333,19 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
 function UploadModal({
   course,
   isAr,
+  existingChapters,
   onClose,
   onDone,
 }: {
   course: Course;
   isAr: boolean;
+  existingChapters: string[];
   onClose: () => void;
   onDone: () => void;
 }) {
   const [title, setTitle] = useState("");
+  const [chapter, setChapter] = useState<string>(existingChapters[0] ?? "");
+  const [newChapter, setNewChapter] = useState("");
   const [examFile, setExamFile] = useState<File | null>(null);
   const [ansFile, setAnsFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -342,6 +353,7 @@ function UploadModal({
   const ansRef = useRef<HTMLInputElement>(null);
 
   const submit = async () => {
+    const chapterFinal = (newChapter.trim() || chapter.trim() || "General");
     if (!title.trim() || !examFile || !ansFile) {
       toast.error(isAr ? "أكمل جميع الحقول" : "Fill all fields");
       return;
@@ -364,6 +376,7 @@ function UploadModal({
       const { error } = await supabase.from("course_exams").insert({
         course_id: course.id,
         title: title.trim(),
+        chapter: chapterFinal,
         exam_path: examPath,
         answer_path: ansPath,
         created_by: user.id,
@@ -400,6 +413,26 @@ function UploadModal({
           onChange={(e) => setTitle(e.target.value)}
           maxLength={120}
           placeholder={isAr ? "مثال: امتحان الفصل 1" : "e.g. Chapter 1 exam"}
+          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
+        />
+
+        <label className="block text-xs font-semibold mb-1">{isAr ? "الفصل" : "Chapter"}</label>
+        {existingChapters.length > 0 && (
+          <select
+            value={chapter}
+            onChange={(e) => setChapter(e.target.value)}
+            className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-2"
+          >
+            {existingChapters.map((ch) => (
+              <option key={ch} value={ch}>{ch}</option>
+            ))}
+          </select>
+        )}
+        <input
+          value={newChapter}
+          onChange={(e) => setNewChapter(e.target.value)}
+          maxLength={80}
+          placeholder={isAr ? "أو أضف فصلاً جديداً" : "Or add a new chapter"}
           className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
         />
 
@@ -477,21 +510,28 @@ function ManageModal({
             {isAr ? "لا توجد امتحانات بعد" : "No exams yet"}
           </p>
         ) : (
-          <ul className="space-y-2">
-            {exams.map((e) => (
-              <li key={e.id} className="flex items-center gap-2 p-3 rounded-lg border border-border bg-background">
-                <FileText className="w-4 h-4 text-primary shrink-0" />
-                <span className="flex-1 text-sm font-medium truncate">{e.title}</span>
-                <button
-                  onClick={() => onDelete(e)}
-                  className="w-8 h-8 rounded-lg hover:bg-destructive/10 text-destructive flex items-center justify-center"
-                  title={isAr ? "حذف" : "Delete"}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </li>
+          <div className="space-y-4">
+            {Array.from(new Set(exams.map((e) => e.chapter || "General"))).map((ch) => (
+              <div key={ch}>
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{ch}</div>
+                <ul className="space-y-2">
+                  {exams.filter((e) => (e.chapter || "General") === ch).map((e) => (
+                    <li key={e.id} className="flex items-center gap-2 p-3 rounded-lg border border-border bg-background">
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <span className="flex-1 text-sm font-medium truncate">{e.title}</span>
+                      <button
+                        onClick={() => onDelete(e)}
+                        className="w-8 h-8 rounded-lg hover:bg-destructive/10 text-destructive flex items-center justify-center"
+                        title={isAr ? "حذف" : "Delete"}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>
@@ -683,28 +723,37 @@ function CourseRunner({
               {isAr ? "لا توجد امتحانات بعد لهذه الدورة." : "No exams available for this course yet."}
             </div>
           ) : (
-            <ul className="space-y-3">
-              {exams.map((e) => (
-                <li key={e.id} className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-[140px]">
-                    <div className="font-semibold">{e.title}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {new Date(e.created_at).toLocaleDateString(isAr ? "ar" : "en")}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelected(e)}
-                    className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90"
-                  >
-                    <GraduationCap className="w-4 h-4" />
-                    {isAr ? "حلّ وصحّح" : "Solve & grade"}
-                  </button>
-                </li>
+            <div className="space-y-6">
+              {Array.from(new Set(exams.map((e) => e.chapter || "General"))).map((ch) => (
+                <section key={ch}>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-primary/80 mb-3 border-b border-border pb-2">
+                    {ch}
+                  </h2>
+                  <ul className="space-y-3">
+                    {exams.filter((e) => (e.chapter || "General") === ch).map((e) => (
+                      <li key={e.id} className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-[140px]">
+                          <div className="font-semibold">{e.title}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {new Date(e.created_at).toLocaleDateString(isAr ? "ar" : "en")}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setSelected(e)}
+                          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90"
+                        >
+                          <GraduationCap className="w-4 h-4" />
+                          {isAr ? "حلّ وصحّح" : "Solve & grade"}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               ))}
-            </ul>
+            </div>
           )
         ) : (
           <div className="space-y-5">
