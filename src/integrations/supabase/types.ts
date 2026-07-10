@@ -245,6 +245,7 @@ export type Database = {
       course_exams: {
         Row: {
           answer_path: string
+          chapter: string
           course_id: string
           created_at: string
           created_by: string | null
@@ -254,6 +255,7 @@ export type Database = {
         }
         Insert: {
           answer_path: string
+          chapter?: string
           course_id: string
           created_at?: string
           created_by?: string | null
@@ -263,6 +265,7 @@ export type Database = {
         }
         Update: {
           answer_path?: string
+          chapter?: string
           course_id?: string
           created_at?: string
           created_by?: string | null
