@@ -200,6 +200,25 @@ function NoteEditor({
   const [blocks, setBlocks] = useState<AdminNoteBlock[]>(row.blocks || []);
   const [busy, setBusy] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [bgUrl, setBgUrl] = useState<string | null>(row.background_image_url ?? null);
+  const [genBusy, setGenBusy] = useState(false);
+
+  const generateBackground = async () => {
+    const promptText = [title, ...blocks.map((b) => (b as any).text || (b as any).items?.join(", ") || "").filter(Boolean)].join(" — ").slice(0, 500);
+    if (!promptText.trim()) return toast.error("Add a title first");
+    setGenBusy(true);
+    try {
+      const { data, error } = await (supabase as any).functions.invoke("generate-note-image", { body: { prompt: promptText } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setBgUrl(data.dataUrl);
+      toast.success("Background generated");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate image");
+    } finally {
+      setGenBusy(false);
+    }
+  };
 
   const update = (i: number, next: AdminNoteBlock) =>
     setBlocks((b) => b.map((x, idx) => (idx === i ? next : x)));
@@ -225,6 +244,7 @@ function NoteEditor({
         blocks: blocks as any,
         cover_emoji: emoji,
         published,
+        background_image_url: bgUrl,
         created_by: u.user?.id,
       };
       const q = row.id
