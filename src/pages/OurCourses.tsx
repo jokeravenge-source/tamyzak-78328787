@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Dna, FlaskConical, Box, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send } from "lucide-react";
+import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -25,55 +25,45 @@ type Course = {
 
 const COURSES: Course[] = [
   {
-    id: "genetics",
-    titleAr: "علم الوراثة",
-    titleEn: "Genetics",
-    descAr: "امتحانات مركّزة على الحمض النووي، الطفرات وقوانين الوراثة.",
-    descEn: "Focused exams on DNA, mutations and laws of inheritance.",
-    Icon: Dna,
-    accent: "270 85% 62%",
-    cover: geneticsImg,
-  },
   {
-    id: "organic",
-    titleAr: "الكيمياء العضوية",
-    titleEn: "Organic Chemistry",
-    descAr: "امتحانات على الهيدروكربونات، المجاميع الوظيفية والتفاعلات.",
-    descEn: "Exams on hydrocarbons, functional groups and reactions.",
-    Icon: FlaskConical,
-    accent: "150 75% 45%",
-    cover: organicImg,
-  },
-  {
-    id: "space-geometry",
-    titleAr: "الهندسة الفضائية",
-    titleEn: "Space Geometry",
-    descAr: "امتحانات في المستويات، المجسمات والمسافات ثلاثية الأبعاد.",
-    descEn: "Exams on planes, solids and 3D distances.",
-    Icon: Box,
-    accent: "30 95% 55%",
+    id: "math",
+    titleAr: "الرياضيات",
+    titleEn: "Math",
+    descAr: "امتحانات شاملة في الرياضيات: التفاضل، التكامل والهندسة.",
+    descEn: "Comprehensive math exams: calculus, integration and geometry.",
+    Icon: Sigma,
+    accent: "220 85% 60%",
     cover: geometryImg,
   },
   {
-    id: "nuclear",
-    titleAr: "الفيزياء النووية",
-    titleEn: "Nuclear Physics",
-    descAr: "امتحانات على النواة، الاضمحلال الإشعاعي، الانشطار والاندماج.",
-    descEn: "Exams on the nucleus, radioactive decay, fission and fusion.",
+    id: "physics",
+    titleAr: "الفيزياء",
+    titleEn: "Physics",
+    descAr: "امتحانات في الفيزياء تغطي جميع الفصول الوزارية.",
+    descEn: "Physics exams covering all ministerial chapters.",
     Icon: Atom,
     accent: "0 85% 62%",
     cover: nuclearImg,
   },
   {
-    id: "laser",
-    titleAr: "الليزر (فيزياء)",
-    titleEn: "Physics: Laser",
-    descAr: "امتحانات على الليزر: الانبعاث المحفز، التوزيع المعكوس، المرنان وتطبيقات الليزر.",
-    descEn: "Exams on laser: stimulated emission, population inversion, resonators and applications.",
-    Icon: Zap,
-    accent: "330 90% 60%",
-    cover: laserImg,
-    active: true,
+    id: "chemistry",
+    titleAr: "الكيمياء",
+    titleEn: "Chemistry",
+    descAr: "امتحانات في الكيمياء العضوية واللاعضوية.",
+    descEn: "Organic and inorganic chemistry exams.",
+    Icon: FlaskConical,
+    accent: "150 75% 45%",
+    cover: organicImg,
+  },
+  {
+    id: "biology",
+    titleAr: "الأحياء",
+    titleEn: "Biology",
+    descAr: "امتحانات في الأحياء: الخلية، الأنسجة والوراثة.",
+    descEn: "Biology exams: cell, tissues and genetics.",
+    Icon: Dna,
+    accent: "270 85% 62%",
+    cover: geneticsImg,
   },
 ];
 
