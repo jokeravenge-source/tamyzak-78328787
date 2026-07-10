@@ -124,7 +124,7 @@ const AdminNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                   <div className="absolute inset-0 bg-background/85 backdrop-blur-sm" />
                 </>
               )}
-              <div className="relative bg-secondary/30 p-6 md:p-10">
+              <div className={`relative p-6 md:p-10 ${open.background_image_url ? "" : "bg-secondary/30"}`}>
                 <div className="text-6xl mb-4">{open.cover_emoji || "📘"}</div>
                 <h1 className="text-4xl md:text-5xl font-bold mb-8 text-foreground">
                   {open.title}
