@@ -296,10 +296,18 @@ function NoteEditor({
       </div>
 
       {showPreview ? (
-        <div className="rounded-2xl border border-white/10 bg-secondary/30 backdrop-blur p-6 md:p-10">
-          <div className="text-6xl mb-4">{emoji}</div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">{title}</h1>
-          <AdminNoteRenderer blocks={blocks} language="en" />
+        <div className="relative rounded-2xl border border-white/10 overflow-hidden">
+          {bgUrl && (
+            <>
+              <img src={bgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+            </>
+          )}
+          <div className="relative p-6 md:p-10">
+            <div className="text-6xl mb-4">{emoji}</div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">{title}</h1>
+            <AdminNoteRenderer blocks={blocks} language="en" />
+          </div>
         </div>
       ) : (
         <>
@@ -315,6 +323,37 @@ function NoteEditor({
               placeholder="Note title"
               className="w-full h-14 px-4 rounded-xl bg-background border border-white/10 text-2xl font-semibold"
             />
+            <div className="pt-2 border-t border-white/10">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <ImageIcon className="w-4 h-4 text-primary" />
+                  AI background image
+                </div>
+                <div className="flex items-center gap-2">
+                  {bgUrl && (
+                    <button
+                      onClick={() => setBgUrl(null)}
+                      className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Remove
+                    </button>
+                  )}
+                  <button
+                    onClick={generateBackground}
+                    disabled={genBusy}
+                    className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs disabled:opacity-60"
+                  >
+                    {genBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {bgUrl ? "Regenerate" : "Generate with AI"}
+                  </button>
+                </div>
+              </div>
+              {bgUrl && (
+                <div className="mt-3 rounded-xl overflow-hidden border border-white/10 aspect-[16/9] bg-black">
+                  <img src={bgUrl} alt="Background preview" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3">
