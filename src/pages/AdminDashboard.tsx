@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen, Crown, KeyRound } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen, Crown, KeyRound, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import AdminNotesTab from "@/components/AdminNotesTab";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -20,7 +21,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes";
   const [tab, setTab] = useState<Tab>("pending");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
