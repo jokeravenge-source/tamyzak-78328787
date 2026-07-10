@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notes: {
+        Row: {
+          blocks: Json
+          cover_emoji: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          published: boolean
+          template: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          blocks?: Json
+          cover_emoji?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published?: boolean
+          template?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          blocks?: Json
+          cover_emoji?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published?: boolean
+          template?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       advice_comments: {
         Row: {
           author_name: string
