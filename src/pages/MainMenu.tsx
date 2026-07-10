@@ -1,4 +1,4 @@
-import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, Sparkles, Lock, Bell, X, Compass, LineChart, Search, Youtube } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, Sparkles, Lock, Compass, LineChart, Search, Youtube, StickyNote } from "lucide-react";
 import { motion } from "framer-motion";
 import { type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
@@ -27,6 +27,7 @@ const copy = {
       essay: { title: "Al-Musahhih", subtitle: "Upload your answer sheet & the key — AI grades it." },
       report: { title: "Daily Report", subtitle: "AI insights on today's study + share progress with a parent." },
       youtube: { title: "YouTube Player", subtitle: "Watch any YouTube video inside the app without distractions." },
+      adminNotes: { title: "Study Notes", subtitle: "Beautiful study notes crafted by your instructors." },
     },
   },
   ar: {
@@ -49,11 +50,12 @@ const copy = {
       essay: { title: "مدرّب المقالات", subtitle: "ارفع ملفاً واحصل على أسئلة مقالية مُقيَّمة من 1 إلى 10." },
       report: { title: "تقريري اليومي", subtitle: "تحليل ذكي ليومك الدراسي ومشاركة تقدمك مع ولي الأمر." },
       youtube: { title: "مشغّل يوتيوب", subtitle: "شاهد أي فيديو يوتيوب داخل التطبيق بدون تشتيت." },
+      adminNotes: { title: "ملاحظات دراسية", subtitle: "ملاحظات جميلة أعدّها المدرّسون خصيصاً لك." },
     },
   },
 } as const;
 
-export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "leaderboard" | "news" | "premium" | "more" | "todo" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers";
+export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "leaderboard" | "news" | "premium" | "more" | "todo" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers" | "adminNotes";
 
 const MainMenu = ({
   language,
@@ -65,27 +67,6 @@ const MainMenu = ({
   onSelect: (choice: MainMenuChoice) => void;
 }) => {
   const text = copy[language];
-  type Notif = { id: string; title: string; body: string; link: string | null; created_at: string };
-  const [notifs, setNotifs] = useState<Notif[]>([]);
-  const READ_KEY = "notif_read_ids_v1";
-  const [readIds, setReadIds] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(READ_KEY) || "[]"); } catch { return []; }
-  });
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(10);
-      setNotifs((data ?? []) as Notif[]);
-    };
-    load();
-    const ch = supabase.channel("notifs").on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, load).subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, []);
-  const unread = notifs.filter((n) => !readIds.includes(n.id));
-  const dismiss = (id: string) => {
-    const next = [...readIds, id];
-    setReadIds(next);
-    localStorage.setItem(READ_KEY, JSON.stringify(next));
-  };
 
   const [username, setUsername] = useState<string>(() => localStorage.getItem("app_display_name_v1") || "");
   useEffect(() => {
@@ -113,6 +94,7 @@ const MainMenu = ({
     { key: "sessions", Icon: GraduationCap, locked: false, ...text.items.sessions },
     { key: "videoNotes", Icon: Headphones, locked: false, ...text.items.videoNotes },
     { key: "youtube" as const, Icon: Youtube, locked: false, ...text.items.youtube },
+    { key: "adminNotes" as const, Icon: StickyNote, locked: false, ...text.items.adminNotes },
   ];
 
   const openSearch = () => window.dispatchEvent(new Event("app:open-search"));
@@ -135,84 +117,6 @@ const MainMenu = ({
           <kbd className="hidden sm:inline-block text-[10px] text-muted-foreground border border-white/10 rounded px-1.5 py-0.5">⌘K</kbd>
         </button>
       </div>
-
-      {unread.length > 0 && (
-        <div className="max-w-6xl mx-auto mb-6 relative z-10 px-1">
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-            </span>
-            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              {language === "ar" ? "تنبيهات" : "Notifications"}
-            </span>
-            <span className="text-xs text-primary font-semibold">{unread.length}</span>
-          </div>
-          <div
-            className="flex flex-row flex-nowrap gap-4 overflow-x-auto overflow-y-hidden pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1"
-            style={{ scrollbarWidth: "thin", WebkitOverflowScrolling: "touch" }}
-          >
-            {unread.map((n) => {
-              const handleOpen = () => onSelect("news");
-              return (
-                <div
-                  key={n.id}
-                  onClick={handleOpen}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleOpen(); } }}
-                  className="group relative snap-start shrink-0 w-[18rem] sm:w-[20rem] h-36 overflow-hidden rounded-2xl border border-primary/30 animate-fade-up transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:border-primary/60 hover:shadow-[var(--shadow-glow)]"
-                  style={{ background: "var(--gradient-primary)" }}
-                >
-                  {/* decorative background image layer */}
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 opacity-40 mix-blend-overlay pointer-events-none"
-                    style={{
-                      backgroundImage:
-                        "radial-gradient(circle at 80% 20%, hsl(var(--primary-foreground) / 0.35) 0%, transparent 45%), radial-gradient(circle at 10% 90%, hsl(var(--accent) / 0.35) 0%, transparent 50%)",
-                    }}
-                  />
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 opacity-20 pointer-events-none"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(transparent 95%, hsl(var(--primary-foreground) / 0.4) 95%), linear-gradient(90deg, transparent 95%, hsl(var(--primary-foreground) / 0.4) 95%)",
-                      backgroundSize: "22px 22px",
-                    }}
-                  />
-                  {/* darkening overlay for text legibility */}
-                  <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/20 to-transparent pointer-events-none" />
-
-                  <button
-                    onClick={(e) => { e.stopPropagation(); dismiss(n.id); }}
-                    aria-label="Dismiss"
-                    className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-background/40 backdrop-blur flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:bg-background/70 transition"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-
-                  {/* icon top-left */}
-                  <div className="absolute top-3 left-3 z-10 w-10 h-10 rounded-xl bg-background/30 backdrop-blur-md ring-1 ring-primary-foreground/30 flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-primary-foreground" />
-                  </div>
-
-                  {/* title + subtitle below, bottom-aligned */}
-                  <div className="absolute inset-x-0 bottom-0 p-3.5 z-10">
-                    <h4 className="text-base font-bold text-primary-foreground line-clamp-1 drop-shadow">{n.title}</h4>
-                    {n.body && (
-                      <p className="text-xs text-primary-foreground/85 mt-0.5 whitespace-pre-wrap line-clamp-2 leading-relaxed drop-shadow">
-                        {n.body}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       <header className="text-center max-w-3xl mx-auto z-10 relative animate-fade-up">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">

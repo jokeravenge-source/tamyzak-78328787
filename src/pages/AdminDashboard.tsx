@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen, Crown, KeyRound } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen, Crown, KeyRound, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import AdminNotesTab from "@/components/AdminNotesTab";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -20,7 +21,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes";
   const [tab, setTab] = useState<Tab>("pending");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -574,9 +575,14 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           <button onClick={() => setTab("aifiles")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "aifiles" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <BookOpen className="w-4 h-4 inline mr-1.5" />AI Files
           </button>
+          <button onClick={() => setTab("notes")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "notes" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            <StickyNote className="w-4 h-4 inline mr-1.5" />Notes
+          </button>
         </div>
 
-        {tab === "flashcards" ? (
+        {tab === "notes" ? (
+          <AdminNotesTab />
+        ) : tab === "flashcards" ? (
           <div className="space-y-6">
             <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur space-y-3">
               <h3 className="font-semibold flex items-center gap-2"><Plus className="w-4 h-4 text-primary" /> Add flashcard</h3>
