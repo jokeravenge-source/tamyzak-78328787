@@ -1,4 +1,4 @@
-import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, Sparkles, Lock, Bell, X, Compass, LineChart, Search, Youtube } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, Sparkles, Lock, Compass, LineChart, Search, Youtube } from "lucide-react";
 import { motion } from "framer-motion";
 import { type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
@@ -65,27 +65,6 @@ const MainMenu = ({
   onSelect: (choice: MainMenuChoice) => void;
 }) => {
   const text = copy[language];
-  type Notif = { id: string; title: string; body: string; link: string | null; created_at: string };
-  const [notifs, setNotifs] = useState<Notif[]>([]);
-  const READ_KEY = "notif_read_ids_v1";
-  const [readIds, setReadIds] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(READ_KEY) || "[]"); } catch { return []; }
-  });
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(10);
-      setNotifs((data ?? []) as Notif[]);
-    };
-    load();
-    const ch = supabase.channel("notifs").on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, load).subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, []);
-  const unread = notifs.filter((n) => !readIds.includes(n.id));
-  const dismiss = (id: string) => {
-    const next = [...readIds, id];
-    setReadIds(next);
-    localStorage.setItem(READ_KEY, JSON.stringify(next));
-  };
 
   const [username, setUsername] = useState<string>(() => localStorage.getItem("app_display_name_v1") || "");
   useEffect(() => {
