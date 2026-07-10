@@ -46,6 +46,7 @@ export type Database = {
       }
       admin_notes: {
         Row: {
+          background_image_url: string | null
           blocks: Json
           cover_emoji: string | null
           created_at: string
@@ -57,6 +58,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          background_image_url?: string | null
           blocks?: Json
           cover_emoji?: string | null
           created_at?: string
@@ -68,6 +70,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          background_image_url?: string | null
           blocks?: Json
           cover_emoji?: string | null
           created_at?: string
