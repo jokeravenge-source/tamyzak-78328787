@@ -33,6 +33,7 @@ const COURSES: Course[] = [
     Icon: Sigma,
     accent: "220 85% 60%",
     cover: geometryImg,
+    active: true,
   },
   {
     id: "physics",
@@ -43,6 +44,7 @@ const COURSES: Course[] = [
     Icon: Atom,
     accent: "0 85% 62%",
     cover: nuclearImg,
+    active: true,
   },
   {
     id: "chemistry",
@@ -53,6 +55,7 @@ const COURSES: Course[] = [
     Icon: FlaskConical,
     accent: "150 75% 45%",
     cover: organicImg,
+    active: true,
   },
   {
     id: "biology",
@@ -63,6 +66,7 @@ const COURSES: Course[] = [
     Icon: Dna,
     accent: "270 85% 62%",
     cover: geneticsImg,
+    active: true,
   },
 ];
 
@@ -73,6 +77,7 @@ type ExamRow = {
   exam_path: string;
   answer_path: string;
   created_at: string;
+  chapter: string;
 };
 
 const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
@@ -87,7 +92,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const refresh = async () => {
     const { data } = await supabase
       .from("course_exams")
-      .select("id, course_id, title, exam_path, answer_path, created_at")
+      .select("id, course_id, title, exam_path, answer_path, created_at, chapter")
       .order("created_at", { ascending: false });
     const rows = (data ?? []) as ExamRow[];
     const cMap: Record<string, number> = {};
