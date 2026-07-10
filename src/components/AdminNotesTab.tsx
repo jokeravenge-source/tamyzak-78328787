@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Loader2, Eye, EyeOff, Save, X, FileText, ArrowUp, ArrowDown, Layout } from "lucide-react";
+import { Plus, Trash2, Loader2, Eye, EyeOff, Save, X, FileText, ArrowUp, ArrowDown, Layout, Sparkles, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -15,6 +15,7 @@ type NoteRow = {
   blocks: AdminNoteBlock[];
   cover_emoji: string | null;
   published: boolean;
+  background_image_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -62,6 +63,7 @@ export default function AdminNotesTab() {
       blocks: JSON.parse(JSON.stringify(tpl.blocks)),
       cover_emoji: "📘",
       published: false,
+      background_image_url: null,
       created_at: "",
       updated_at: "",
     });
