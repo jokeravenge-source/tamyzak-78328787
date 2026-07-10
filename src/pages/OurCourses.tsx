@@ -215,13 +215,14 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                     <Icon className="w-5 h-5 text-white drop-shadow" />
                   </div>
 
-                  {/* Coming soon pill */}
-                  <div className={`absolute ${isAr ? "right-3" : "left-3"} top-3`}>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/95 text-foreground shadow-md">
-                      <Sparkles className="w-3 h-3 text-primary" />
-                      {isAr ? "قريباً" : "Coming soon"}
-                    </span>
-                  </div>
+                  {!c.active && (
+                    <div className={`absolute ${isAr ? "right-3" : "left-3"} top-3`}>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/95 text-foreground shadow-md">
+                        <Sparkles className="w-3 h-3 text-primary" />
+                        {isAr ? "قريباً" : "Coming soon"}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Title on cover */}
                   <div className="absolute inset-x-0 bottom-0 p-4">
