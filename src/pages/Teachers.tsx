@@ -336,7 +336,13 @@ function TopicView({
     if (error) {
       toast.error(error.message);
     } else {
-      setSets((data ?? []) as unknown as MCQSet[]);
+      const all = (data ?? []) as unknown as MCQSet[];
+      const hasArabic = (s: string) => /[\u0600-\u06FF]/.test(s || "");
+      const filtered = all.filter((s) => {
+        const q = s.questions?.[0]?.question || "";
+        return language === "ar" ? hasArabic(q) : !hasArabic(q);
+      });
+      setSets(filtered);
     }
     setLoading(false);
   };
