@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Loader2, Eye, EyeOff, Save, X, FileText, ArrowUp, ArrowDown, Layout } from "lucide-react";
+import { Plus, Trash2, Loader2, Eye, EyeOff, Save, X, FileText, ArrowUp, ArrowDown, Layout, Sparkles, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -15,6 +15,7 @@ type NoteRow = {
   blocks: AdminNoteBlock[];
   cover_emoji: string | null;
   published: boolean;
+  background_image_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -62,6 +63,7 @@ export default function AdminNotesTab() {
       blocks: JSON.parse(JSON.stringify(tpl.blocks)),
       cover_emoji: "📘",
       published: false,
+      background_image_url: null,
       created_at: "",
       updated_at: "",
     });
@@ -198,6 +200,25 @@ function NoteEditor({
   const [blocks, setBlocks] = useState<AdminNoteBlock[]>(row.blocks || []);
   const [busy, setBusy] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [bgUrl, setBgUrl] = useState<string | null>(row.background_image_url ?? null);
+  const [genBusy, setGenBusy] = useState(false);
+
+  const generateBackground = async () => {
+    const promptText = [title, ...blocks.map((b) => (b as any).text || (b as any).items?.join(", ") || "").filter(Boolean)].join(" — ").slice(0, 500);
+    if (!promptText.trim()) return toast.error("Add a title first");
+    setGenBusy(true);
+    try {
+      const { data, error } = await (supabase as any).functions.invoke("generate-note-image", { body: { prompt: promptText } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setBgUrl(data.dataUrl);
+      toast.success("Background generated");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate image");
+    } finally {
+      setGenBusy(false);
+    }
+  };
 
   const update = (i: number, next: AdminNoteBlock) =>
     setBlocks((b) => b.map((x, idx) => (idx === i ? next : x)));
@@ -223,6 +244,7 @@ function NoteEditor({
         blocks: blocks as any,
         cover_emoji: emoji,
         published,
+        background_image_url: bgUrl,
         created_by: u.user?.id,
       };
       const q = row.id
@@ -274,10 +296,18 @@ function NoteEditor({
       </div>
 
       {showPreview ? (
-        <div className="rounded-2xl border border-white/10 bg-secondary/30 backdrop-blur p-6 md:p-10">
-          <div className="text-6xl mb-4">{emoji}</div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">{title}</h1>
-          <AdminNoteRenderer blocks={blocks} language="en" />
+        <div className="relative rounded-2xl border border-white/10 overflow-hidden">
+          {bgUrl && (
+            <>
+              <img src={bgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+            </>
+          )}
+          <div className="relative p-6 md:p-10">
+            <div className="text-6xl mb-4">{emoji}</div>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">{title}</h1>
+            <AdminNoteRenderer blocks={blocks} language="en" />
+          </div>
         </div>
       ) : (
         <>
@@ -293,6 +323,37 @@ function NoteEditor({
               placeholder="Note title"
               className="w-full h-14 px-4 rounded-xl bg-background border border-white/10 text-2xl font-semibold"
             />
+            <div className="pt-2 border-t border-white/10">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <ImageIcon className="w-4 h-4 text-primary" />
+                  AI background image
+                </div>
+                <div className="flex items-center gap-2">
+                  {bgUrl && (
+                    <button
+                      onClick={() => setBgUrl(null)}
+                      className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Remove
+                    </button>
+                  )}
+                  <button
+                    onClick={generateBackground}
+                    disabled={genBusy}
+                    className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-xs disabled:opacity-60"
+                  >
+                    {genBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {bgUrl ? "Regenerate" : "Generate with AI"}
+                  </button>
+                </div>
+              </div>
+              {bgUrl && (
+                <div className="mt-3 rounded-xl overflow-hidden border border-white/10 aspect-[16/9] bg-black">
+                  <img src={bgUrl} alt="Background preview" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3">
