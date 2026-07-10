@@ -13,6 +13,7 @@ type NoteRow = {
   title: string;
   blocks: AdminNoteBlock[];
   cover_emoji: string | null;
+  background_image_url: string | null;
   updated_at: string;
 };
 
@@ -26,7 +27,7 @@ const AdminNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     (async () => {
       const { data } = await (supabase as any)
         .from("admin_notes")
-        .select("id, title, blocks, cover_emoji, updated_at")
+        .select("id, title, blocks, cover_emoji, background_image_url, updated_at")
         .eq("published", true)
         .order("updated_at", { ascending: false });
       setRows((data ?? []) as NoteRow[]);
@@ -111,13 +112,25 @@ const AdminNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="rounded-3xl border border-white/10 bg-secondary/30 backdrop-blur p-6 md:p-10"
+              className="relative rounded-3xl border border-white/10 overflow-hidden"
             >
-              <div className="text-6xl mb-4">{open.cover_emoji || "📘"}</div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-8 text-foreground">
-                {open.title}
-              </h1>
-              <AdminNoteRenderer blocks={open.blocks} language={language} />
+              {open.background_image_url && (
+                <>
+                  <img
+                    src={open.background_image_url}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-background/85 backdrop-blur-sm" />
+                </>
+              )}
+              <div className="relative bg-secondary/30 p-6 md:p-10">
+                <div className="text-6xl mb-4">{open.cover_emoji || "📘"}</div>
+                <h1 className="text-4xl md:text-5xl font-bold mb-8 text-foreground">
+                  {open.title}
+                </h1>
+                <AdminNoteRenderer blocks={open.blocks} language={language} />
+              </div>
             </motion.article>
           )}
         </AnimatePresence>
