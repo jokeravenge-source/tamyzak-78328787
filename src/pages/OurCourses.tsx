@@ -304,6 +304,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         <UploadModal
           course={uploadFor}
           isAr={isAr}
+          existingChapters={Array.from(new Set((examsByCourse[uploadFor.id] ?? []).map((e) => e.chapter).filter(Boolean)))}
           onClose={() => setUploadFor(null)}
           onDone={() => { setUploadFor(null); refresh(); }}
         />
