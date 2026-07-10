@@ -416,6 +416,26 @@ function UploadModal({
           className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
         />
 
+        <label className="block text-xs font-semibold mb-1">{isAr ? "الفصل" : "Chapter"}</label>
+        {existingChapters.length > 0 && (
+          <select
+            value={chapter}
+            onChange={(e) => setChapter(e.target.value)}
+            className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-2"
+          >
+            {existingChapters.map((ch) => (
+              <option key={ch} value={ch}>{ch}</option>
+            ))}
+          </select>
+        )}
+        <input
+          value={newChapter}
+          onChange={(e) => setNewChapter(e.target.value)}
+          maxLength={80}
+          placeholder={isAr ? "أو أضف فصلاً جديداً" : "Or add a new chapter"}
+          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
+        />
+
         <label className="block text-xs font-semibold mb-1">{isAr ? "ملف الامتحان (PDF)" : "Exam PDF"}</label>
         <button
           type="button"
