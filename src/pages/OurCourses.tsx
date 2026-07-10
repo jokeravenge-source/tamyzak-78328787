@@ -333,15 +333,19 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
 function UploadModal({
   course,
   isAr,
+  existingChapters,
   onClose,
   onDone,
 }: {
   course: Course;
   isAr: boolean;
+  existingChapters: string[];
   onClose: () => void;
   onDone: () => void;
 }) {
   const [title, setTitle] = useState("");
+  const [chapter, setChapter] = useState<string>(existingChapters[0] ?? "");
+  const [newChapter, setNewChapter] = useState("");
   const [examFile, setExamFile] = useState<File | null>(null);
   const [ansFile, setAnsFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -349,6 +353,7 @@ function UploadModal({
   const ansRef = useRef<HTMLInputElement>(null);
 
   const submit = async () => {
+    const chapterFinal = (newChapter.trim() || chapter.trim() || "General");
     if (!title.trim() || !examFile || !ansFile) {
       toast.error(isAr ? "أكمل جميع الحقول" : "Fill all fields");
       return;
@@ -371,6 +376,7 @@ function UploadModal({
       const { error } = await supabase.from("course_exams").insert({
         course_id: course.id,
         title: title.trim(),
+        chapter: chapterFinal,
         exam_path: examPath,
         answer_path: ansPath,
         created_by: user.id,
