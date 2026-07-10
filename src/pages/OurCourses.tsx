@@ -510,21 +510,28 @@ function ManageModal({
             {isAr ? "لا توجد امتحانات بعد" : "No exams yet"}
           </p>
         ) : (
-          <ul className="space-y-2">
-            {exams.map((e) => (
-              <li key={e.id} className="flex items-center gap-2 p-3 rounded-lg border border-border bg-background">
-                <FileText className="w-4 h-4 text-primary shrink-0" />
-                <span className="flex-1 text-sm font-medium truncate">{e.title}</span>
-                <button
-                  onClick={() => onDelete(e)}
-                  className="w-8 h-8 rounded-lg hover:bg-destructive/10 text-destructive flex items-center justify-center"
-                  title={isAr ? "حذف" : "Delete"}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </li>
+          <div className="space-y-4">
+            {Array.from(new Set(exams.map((e) => e.chapter || "General"))).map((ch) => (
+              <div key={ch}>
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{ch}</div>
+                <ul className="space-y-2">
+                  {exams.filter((e) => (e.chapter || "General") === ch).map((e) => (
+                    <li key={e.id} className="flex items-center gap-2 p-3 rounded-lg border border-border bg-background">
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <span className="flex-1 text-sm font-medium truncate">{e.title}</span>
+                      <button
+                        onClick={() => onDelete(e)}
+                        className="w-8 h-8 rounded-lg hover:bg-destructive/10 text-destructive flex items-center justify-center"
+                        title={isAr ? "حذف" : "Delete"}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>
