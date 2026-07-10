@@ -723,28 +723,37 @@ function CourseRunner({
               {isAr ? "لا توجد امتحانات بعد لهذه الدورة." : "No exams available for this course yet."}
             </div>
           ) : (
-            <ul className="space-y-3">
-              {exams.map((e) => (
-                <li key={e.id} className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1 min-w-[140px]">
-                    <div className="font-semibold">{e.title}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {new Date(e.created_at).toLocaleDateString(isAr ? "ar" : "en")}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelected(e)}
-                    className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90"
-                  >
-                    <GraduationCap className="w-4 h-4" />
-                    {isAr ? "حلّ وصحّح" : "Solve & grade"}
-                  </button>
-                </li>
+            <div className="space-y-6">
+              {Array.from(new Set(exams.map((e) => e.chapter || "General"))).map((ch) => (
+                <section key={ch}>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-primary/80 mb-3 border-b border-border pb-2">
+                    {ch}
+                  </h2>
+                  <ul className="space-y-3">
+                    {exams.filter((e) => (e.chapter || "General") === ch).map((e) => (
+                      <li key={e.id} className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-[140px]">
+                          <div className="font-semibold">{e.title}</div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {new Date(e.created_at).toLocaleDateString(isAr ? "ar" : "en")}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setSelected(e)}
+                          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90"
+                        >
+                          <GraduationCap className="w-4 h-4" />
+                          {isAr ? "حلّ وصحّح" : "Solve & grade"}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               ))}
-            </ul>
+            </div>
           )
         ) : (
           <div className="space-y-5">
