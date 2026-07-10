@@ -25,7 +25,6 @@ type Course = {
 
 const COURSES: Course[] = [
   {
-  {
     id: "math",
     titleAr: "الرياضيات",
     titleEn: "Math",
