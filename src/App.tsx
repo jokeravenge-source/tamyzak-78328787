@@ -302,6 +302,28 @@ const App = () => {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  // Re-verify Telegram channel membership on load. Only unverify (show gate)
+  // if the check explicitly reports the user has left the channel.
+  useEffect(() => {
+    if (!authed || authRole === "admin") return;
+    if (!channelVerified) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("telegram-channel-check");
+        if (cancelled || error) return;
+        if (data && data.ok === true && data.joined === false) {
+          setChannelVerified(false);
+        }
+      } catch {
+        // Network/other errors: keep the user verified, don't nag.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authed, authRole]);
   const [language, setLanguage] = useState<AppLanguage | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(LANGUAGE_STORAGE_KEY) as AppLanguage | null) : null)
   );
