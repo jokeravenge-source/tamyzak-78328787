@@ -182,7 +182,6 @@ const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [tgVerified, setTgVerified] = useState(false);
   const [tgLoading, setTgLoading] = useState(false);
-  const [channelVerified, setChannelVerified] = useState(false);
   const CHANNEL_VERIFIED_STORAGE_KEY = "tg_channel_verified_v1";
   const [channelVerified, _setChannelVerified] = useState<boolean>(
     () => (typeof window !== "undefined" && localStorage.getItem(CHANNEL_VERIFIED_STORAGE_KEY) === "1")
