@@ -183,6 +183,17 @@ const App = () => {
   const [tgVerified, setTgVerified] = useState(false);
   const [tgLoading, setTgLoading] = useState(false);
   const [channelVerified, setChannelVerified] = useState(false);
+  const CHANNEL_VERIFIED_STORAGE_KEY = "tg_channel_verified_v1";
+  const [channelVerified, _setChannelVerified] = useState<boolean>(
+    () => (typeof window !== "undefined" && localStorage.getItem(CHANNEL_VERIFIED_STORAGE_KEY) === "1")
+  );
+  const setChannelVerified = (v: boolean) => {
+    _setChannelVerified(v);
+    if (typeof window !== "undefined") {
+      if (v) localStorage.setItem(CHANNEL_VERIFIED_STORAGE_KEY, "1");
+      else localStorage.removeItem(CHANNEL_VERIFIED_STORAGE_KEY);
+    }
+  };
   const [authRole, setAuthRole] = useState<AuthRole | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null) : null)
   );
