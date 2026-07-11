@@ -182,7 +182,17 @@ const App = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [tgVerified, setTgVerified] = useState(false);
   const [tgLoading, setTgLoading] = useState(false);
-  const [channelVerified, setChannelVerified] = useState(false);
+  const CHANNEL_VERIFIED_STORAGE_KEY = "tg_channel_verified_v1";
+  const [channelVerified, _setChannelVerified] = useState<boolean>(
+    () => (typeof window !== "undefined" && localStorage.getItem(CHANNEL_VERIFIED_STORAGE_KEY) === "1")
+  );
+  const setChannelVerified = (v: boolean) => {
+    _setChannelVerified(v);
+    if (typeof window !== "undefined") {
+      if (v) localStorage.setItem(CHANNEL_VERIFIED_STORAGE_KEY, "1");
+      else localStorage.removeItem(CHANNEL_VERIFIED_STORAGE_KEY);
+    }
+  };
   const [authRole, setAuthRole] = useState<AuthRole | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null) : null)
   );
@@ -292,6 +302,28 @@ const App = () => {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  // Re-verify Telegram channel membership on load. Only unverify (show gate)
+  // if the check explicitly reports the user has left the channel.
+  useEffect(() => {
+    if (!authed || authRole === "admin") return;
+    if (!channelVerified) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("telegram-channel-check");
+        if (cancelled || error) return;
+        if (data && data.ok === true && data.joined === false) {
+          setChannelVerified(false);
+        }
+      } catch {
+        // Network/other errors: keep the user verified, don't nag.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authed, authRole]);
   const [language, setLanguage] = useState<AppLanguage | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(LANGUAGE_STORAGE_KEY) as AppLanguage | null) : null)
   );
