@@ -175,6 +175,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           {COURSES.map((c, idx) => {
             const Icon = c.Icon;
             const examCount = counts[c.id] ?? 0;
+            const isReady = examCount > 0;
             return (
               <motion.article
                 key={c.id}
@@ -215,7 +216,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                     <Icon className="w-5 h-5 text-white drop-shadow" />
                   </div>
 
-                  {!c.active && (
+                  {!isReady && (
                     <div className={`absolute ${isAr ? "right-3" : "left-3"} top-3`}>
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/95 text-foreground shadow-md">
                         <Sparkles className="w-3 h-3 text-primary" />
@@ -249,7 +250,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                     </span>
                   </div>
 
-                  {c.active ? (
+                  {isReady ? (
                     <button
                       onClick={() => setOpenCourse(c)}
                       className="mt-5 w-full h-10 rounded-xl text-sm font-bold text-white inline-flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]"
@@ -259,7 +260,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                       }}
                     >
                       <ArrowRight className="w-4 h-4" />
-                      {isAr ? "افتح الدورة" : "Open course"}
+                      {isAr ? "ابدأ" : "Start"}
                     </button>
                   ) : (
                     <button
