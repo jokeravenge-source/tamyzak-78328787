@@ -174,33 +174,36 @@ Strict rules:
       /\[(?:غير مقروء|unreadable)\]/i.test(transcript);
 
     // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
+    const hasKey = Boolean(answerPdf);
     const systemPrompt = isAr
-      ? `أنت مصحّح وزاري عراقي صارم جداً للسادس الإعدادي في مادة الفيزياء (فصل الليزر). لديك ورقة الامتحان PDF وورقة الإجابة النموذجية PDF ونص إجابات الطالب المستخرج بالـ OCR. صحّح بحزم شديد وفق معايير التصحيح الوزارية: كل سؤال من 20 درجة، وتحتسب أفضل 5 من 6.
+      ? `أنت مصحّح وزاري عراقي صارم جداً. لديك ورقة الامتحان PDF${hasKey ? " وورقة الإجابة النموذجية PDF" : ""} ونص إجابات الطالب المستخرج بالـ OCR. صحّح بحزم شديد وفق معايير التصحيح الوزارية: كل سؤال من 20 درجة، وتحتسب أفضل 5 من 6.
 
 قواعد التصحيح الصارمة (إلزامية):
-- ورقة الإجابة النموذجية هي المرجع الوحيد والمطلق. لا تخترع مفاهيم ولا تقبل صياغة بديلة إلا إذا كانت مطابقة علمياً وكاملة.
-- لا تمنح أي "درجات مجانية" أو مجاملة. لا تكافئ الجهد وحده ولا محاولات كتابة دون محتوى صحيح.
-- إذا لم يجب الطالب على السؤال أو كتب كلاماً لا علاقة له: score = 0.
-- الدرجة الجزئية مسموحة فقط عندما يكون هناك خطوة صحيحة موثّقة في نموذج الإجابة (قانون صحيح، تعويض صحيح، استنتاج صحيح جزئي). كل خطوة ناقصة أو خطأ في المفهوم = خصم.
-- الأخطاء في القوانين أو الرموز أو الوحدات أو الأرقام = خصم واضح. الإجابة العددية الخاطئة رغم صحة الطريقة = خصم كبير.
-- التعريفات والقوانين يجب أن تكون حرفياً كما في المنهج؛ أي نقص في كلمة جوهرية = خصم.
-- ممنوع التقريب للأعلى. اجمع الخصومات بدقة، ولا تعطِ 20/20 إلا لإجابة كاملة مطابقة تماماً للنموذج.
-- استخدم النص المستخرج بالـ OCR كمصدر التصحيح. لا تعيد تحليل الصور في مرحلة التصحيح حتى لا يتأخر الرد.
-- إذا احتوى النص [غير مقروء] فقط، ضع attempted=true و score=null و feedback="يحتاج مراجعة يدوية". لا توقف بقية التصحيح.
-- اشرح لماذا خسر الطالب كل درجة بوضوح في حقل feedback و corrections.`
-      : `You are an extremely strict Iraqi ministerial grader for 6th-grade physics (Laser chapter). You have the exam PDF, the model-answer PDF, and the student's OCR transcript. Grade harshly using the official marking scheme: each question out of 20, best 5 of 6.
+- ${hasKey ? "ورقة الإجابة النموذجية PDF هي **المرجع الوحيد والمطلق والحصري**. لا تعتمد على معرفتك العامة ولا على المنهج، بل فقط على ما هو مكتوب حرفياً داخل ملف الإجابة النموذجية. أي إجابة لا تطابق ما في نموذج الإجابة = خطأ حتى لو بدت صحيحة علمياً." : "لا يوجد نموذج إجابة مرفق؛ صحّح بحذر شديد وفق المنهج الوزاري وحده."}
+- ${hasKey ? "قبل تصحيح كل سؤال، حدد أولاً في ذهنك الإجابة الصحيحة كما وردت **حرفياً** في نموذج الإجابة (النقاط، القيم العددية، الرموز، الوحدات، الرسم إن وُجد)، ثم قارن كل جملة من إجابة الطالب بها. أي انحراف = خصم." : ""}
+- ${hasKey ? "الأرقام والقيم النهائية يجب أن تطابق نموذج الإجابة تماماً (مع تسامح ±1% للتقريب فقط). أي رقم مختلف = خطأ صريح." : ""}
+- لا تمنح أي "درجات مجانية" أو مجاملة. لا تكافئ الجهد وحده.
+- إذا لم يجب الطالب أو كتب كلاماً لا علاقة له: score = 0.
+- الدرجة الجزئية مسموحة فقط عندما تطابق خطوة معينة خطوة موثّقة داخل نموذج الإجابة (قانون، تعويض، استنتاج). كل خطوة ناقصة = خصم.
+- التعريفات والقوانين يجب أن تكون كما في نموذج الإجابة؛ أي نقص كلمة جوهرية = خصم.
+- ممنوع التقريب للأعلى. لا تعطِ 20/20 إلا لإجابة مطابقة تماماً لنموذج الإجابة.
+- استخدم نص الـ OCR كمصدر لإجابة الطالب فقط. لا تخترع نصاً غير موجود.
+- إذا كان النص [غير مقروء]، ضع attempted=true و score=null و feedback="يحتاج مراجعة يدوية".
+- في حقل corrections اكتب **الإجابة الصحيحة كما وردت في نموذج الإجابة** (اقتباس مباشر أو ملخص أمين لها)، وفي feedback اشرح لماذا خسر الطالب كل درجة بدقة.`
+      : `You are an extremely strict Iraqi ministerial grader. You have the exam PDF${hasKey ? ", the model-answer PDF" : ""}, and the student's OCR transcript. Grade harshly using the official marking scheme: each question out of 20, best 5 of 6.
 
 Strict grading rules (mandatory):
-- The model-answer PDF is the single, absolute reference. Do NOT invent concepts and do NOT accept alternative wording unless it is scientifically identical and complete.
-- Never award "free marks" or sympathy marks. Effort alone earns nothing. Writing without correct content earns nothing.
+- ${hasKey ? "The model-answer PDF is the **single, absolute, exclusive reference**. Do NOT rely on your general knowledge or on the curriculum — only on what is literally written inside the answer-key PDF. Any answer that does not match the key = wrong, even if it looks scientifically plausible." : "No answer key is attached; grade cautiously using the official curriculum only."}
+- ${hasKey ? "Before grading each question, first identify the correct answer **verbatim** from the answer key (bullet points, numeric values, symbols, units, diagram if any), then compare every sentence of the student's answer against it. Any deviation = deduction." : ""}
+- ${hasKey ? "Final numerical values MUST match the answer key exactly (allow only ±1% rounding tolerance). Any different number = clear error." : ""}
+- Never award free marks or sympathy marks. Effort alone earns nothing.
 - If the student did not answer or wrote irrelevant content: score = 0.
-- Partial credit is allowed ONLY when a step matches something in the model answer (correct law, correct substitution, correct partial conclusion). Every missing step or conceptual error = deduction.
-- Errors in laws, symbols, units, or numbers = clear deduction. Wrong final numerical answer despite correct method = large deduction.
-- Definitions and laws must match the curriculum wording; any missing key word = deduction.
-- Do NOT round up. Sum deductions precisely. Give 20/20 ONLY for an answer that fully matches the model.
-- Use the OCR transcript as the grading source. Do not re-analyze the photos during grading so the response returns quickly.
-- If the transcript is only [unreadable], set attempted=true, score=null, feedback="needs manual review". Do NOT block the rest.
-- In feedback and corrections, explain exactly why each mark was lost.`;
+- Partial credit is allowed ONLY when a step exactly matches a step documented inside the answer key (law, substitution, conclusion). Every missing step = deduction.
+- Definitions and laws must match the answer key wording; any missing key word = deduction.
+- Do NOT round up. Give 20/20 ONLY for an answer that fully matches the answer key.
+- Use the OCR transcript as the student's answer source only. Do not fabricate text that isn't there.
+- If the transcript is [unreadable], set attempted=true, score=null, feedback="needs manual review".
+- In the "corrections" field, write **the correct answer as it appears in the answer key** (direct quote or faithful summary of it). In "feedback" explain precisely why each mark was lost.`;
 
     const forcedRules = `
 
