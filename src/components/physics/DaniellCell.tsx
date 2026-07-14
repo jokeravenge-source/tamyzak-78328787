@@ -1,7 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { RotateCcw, Power, Info, Zap, Circle } from "lucide-react";
+import { RotateCcw, Power, Info, Zap, Circle, CheckCircle2, XCircle, Lock, Plus } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
+
+// ---------- assembly parts ----------
+type PartId = "znElec" | "cuElec" | "znSol" | "cuSol" | "bridge" | "wire";
+const ALL_PARTS: PartId[] = ["znElec", "cuElec", "znSol", "cuSol", "bridge", "wire"];
+
+type Zone = { id: PartId; x: number; y: number; w: number; h: number };
+const ZONES: Zone[] = [
+  { id: "wire",   x: 170, y: 30,  w: 460, h: 95  },
+  { id: "bridge", x: 250, y: 145, w: 300, h: 100 },
+  { id: "znElec", x: 170, y: 130, w: 60,  h: 130 },
+  { id: "cuElec", x: 570, y: 130, w: 60,  h: 130 },
+  { id: "znSol",  x: 105, y: 275, w: 190, h: 180 },
+  { id: "cuSol",  x: 505, y: 275, w: 190, h: 180 },
+];
 
 // ---------- copy ----------
 const copy = {
@@ -33,6 +47,23 @@ const copy = {
       "06 · E°cell = E°(Cu²⁺/Cu) − E°(Zn²⁺/Zn) = +0.34 − (−0.76) = 1.10 V.",
     ],
     nernst: "E = 1.10 − (0.0592/2) · log ( [Zn²⁺] / [Cu²⁺] )",
+    build: "ASSEMBLY MODE",
+    buildDesc: "Drag each part into its correct place, then check your work.",
+    check: "Check assembly",
+    correct: "Perfect assembly — circuit is ready.",
+    wrong: "Some parts are misplaced. Fix the red slots.",
+    buildReset: "Reset build",
+    tray: "Parts tray",
+    trayEmpty: "All parts placed. Click Check.",
+    locked: "Assemble the cell to power it on",
+    parts: {
+      znElec: "Zn electrode",
+      cuElec: "Cu electrode",
+      znSol: "ZnSO₄ solution",
+      cuSol: "CuSO₄ solution",
+      bridge: "Salt bridge",
+      wire: "Wires + Voltmeter",
+    } as Record<PartId, string>,
   },
   ar: {
     heading: "خلية دانييل",
@@ -62,6 +93,23 @@ const copy = {
       "٠٦ · E°خلية = +0.34 − (−0.76) = 1.10 فولت.",
     ],
     nernst: "E = 1.10 − (0.0592/2) · log ( [Zn²⁺] / [Cu²⁺] )",
+    build: "وضع التركيب",
+    buildDesc: "اسحب كل قطعة إلى مكانها الصحيح ثم تحقّق من إجابتك.",
+    check: "تحقق من التركيب",
+    correct: "تركيب صحيح — الدائرة جاهزة.",
+    wrong: "بعض القطع في مكان خاطئ. صحّح الخانات الحمراء.",
+    buildReset: "إعادة التركيب",
+    tray: "صندوق القطع",
+    trayEmpty: "تم وضع كل القطع. اضغط تحقق.",
+    locked: "قم بتركيب الخلية أولاً لتشغيلها",
+    parts: {
+      znElec: "قطب الخارصين",
+      cuElec: "قطب النحاس",
+      znSol: "محلول ZnSO₄",
+      cuSol: "محلول CuSO₄",
+      bridge: "قنطرة ملحية",
+      wire: "أسلاك وفولتميتر",
+    } as Record<PartId, string>,
   },
 } as const;
 
