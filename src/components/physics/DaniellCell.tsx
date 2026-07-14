@@ -701,6 +701,68 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                 Cu²⁺ + 2e⁻ → Cu
               </text>
             </g>
+            </g>
+
+            {/* ============ Drop zones overlay (assembly mode) ============ */}
+            {!ready && ZONES.map((z) => {
+              const filledWith = placed[z.id];
+              const isCorrect = filledWith === z.id;
+              const isWrong = checked === "fail" && filledWith && filledWith !== z.id;
+              const isEmptyWrongCheck = checked === "fail" && !filledWith;
+              const isOver = dragOver === z.id;
+              return (
+                <foreignObject key={z.id} x={z.x} y={z.y} width={z.w} height={z.h}>
+                  <div
+                    // @ts-ignore
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(z.id); }}
+                    onDragLeave={() => setDragOver((d) => (d === z.id ? null : d))}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const pid = e.dataTransfer.getData("text/plain") as PartId;
+                      if (ALL_PARTS.includes(pid)) handleDrop(z.id, pid);
+                    }}
+                    style={{ width: "100%", height: "100%" }}
+                    className={`rounded-xl border-2 border-dashed flex items-center justify-center text-center px-2 transition-all
+                      ${isOver ? "border-amber-300 bg-amber-400/20 scale-[1.02]" : ""}
+                      ${!isOver && isCorrect ? "border-emerald-400 bg-emerald-500/15" : ""}
+                      ${!isOver && isWrong ? "border-red-500 bg-red-500/20 animate-pulse" : ""}
+                      ${!isOver && !filledWith && isEmptyWrongCheck ? "border-red-400/70 bg-red-500/10" : ""}
+                      ${!isOver && !filledWith && !isEmptyWrongCheck ? "border-white/40 bg-white/[0.05] hover:border-white/70 hover:bg-white/[0.08]" : ""}
+                      ${!isOver && filledWith && !isCorrect && !isWrong ? "border-sky-400/70 bg-sky-500/15" : ""}
+                    `}
+                  >
+                    {filledWith ? (
+                      <div
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("text/plain", filledWith);
+                          removeFromZone(z.id);
+                        }}
+                        className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none"
+                        title="Drag to move"
+                      >
+                        {isCorrect ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                        ) : isWrong ? (
+                          <XCircle className="w-3.5 h-3.5 text-red-300 shrink-0" />
+                        ) : null}
+                        <span className="text-[10px] md:text-xs font-black tracking-wide text-white drop-shadow">
+                          {t.parts[filledWith]}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-white/55">
+                        <Plus className="w-3.5 h-3.5" />
+                        <span className="text-[9px] uppercase tracking-[0.25em] font-bold">
+                          ?
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </foreignObject>
+              );
+            })}
           </svg>
 
           {/* Bottom equation ticker */}
