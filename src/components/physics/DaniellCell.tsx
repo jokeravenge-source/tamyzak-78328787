@@ -2,10 +2,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { RotateCcw, Power, Info, Zap, Circle, CheckCircle2, XCircle, Lock, Plus } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
+import znElecImg from "@/assets/parts/zn-electrode.png";
+import cuElecImg from "@/assets/parts/cu-electrode.png";
+import znSolImg from "@/assets/parts/znso4.png";
+import cuSolImg from "@/assets/parts/cuso4.png";
+import bridgeImg from "@/assets/parts/salt-bridge.png";
+import wireImg from "@/assets/parts/voltmeter.png";
 
 // ---------- assembly parts ----------
 type PartId = "znElec" | "cuElec" | "znSol" | "cuSol" | "bridge" | "wire";
 const ALL_PARTS: PartId[] = ["znElec", "cuElec", "znSol", "cuSol", "bridge", "wire"];
+
+const PART_IMG: Record<PartId, string> = {
+  znElec: znElecImg,
+  cuElec: cuElecImg,
+  znSol: znSolImg,
+  cuSol: cuSolImg,
+  bridge: bridgeImg,
+  wire: wireImg,
+};
 
 type Zone = { id: PartId; x: number; y: number; w: number; h: number };
 const ZONES: Zone[] = [
@@ -739,17 +754,21 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                           e.dataTransfer.setData("text/plain", filledWith);
                           removeFromZone(z.id);
                         }}
-                        className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none"
-                        title="Drag to move"
+                        className="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+                        title={t.parts[filledWith]}
                       >
-                        {isCorrect ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                        ) : isWrong ? (
-                          <XCircle className="w-3.5 h-3.5 text-red-300 shrink-0" />
-                        ) : null}
-                        <span className="text-[10px] md:text-xs font-black tracking-wide text-white drop-shadow">
-                          {t.parts[filledWith]}
-                        </span>
+                        <img
+                          src={PART_IMG[filledWith]}
+                          alt={t.parts[filledWith]}
+                          draggable={false}
+                          className="max-w-full max-h-full object-contain pointer-events-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
+                        />
+                        {isCorrect && (
+                          <CheckCircle2 className="absolute top-1 right-1 w-4 h-4 text-emerald-300 bg-emerald-900/70 rounded-full" />
+                        )}
+                        {isWrong && (
+                          <XCircle className="absolute top-1 right-1 w-4 h-4 text-red-300 bg-red-900/70 rounded-full" />
+                        )}
                       </div>
                     ) : (
                       <div className="flex items-center gap-1 text-white/55">
@@ -853,7 +872,7 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
           <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground font-bold mb-2">
             {t.tray}
           </p>
-          <div className="flex flex-wrap gap-2 min-h-[44px]">
+          <div className="flex flex-wrap gap-3 min-h-[80px]">
             {unplaced.length === 0 ? (
               <span className="text-xs text-muted-foreground italic self-center">{t.trayEmpty}</span>
             ) : (
@@ -862,9 +881,18 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                   key={p}
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
-                  className="px-3 py-2 rounded-lg border-2 border-primary/50 bg-primary/10 text-primary text-xs font-bold cursor-grab active:cursor-grabbing hover:border-primary hover:bg-primary/20 select-none transition-colors"
+                  title={t.parts[p]}
+                  className="group w-20 h-20 rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/5 to-primary/15 flex flex-col items-center justify-center p-1.5 cursor-grab active:cursor-grabbing hover:border-primary hover:scale-105 hover:shadow-lg select-none transition-all"
                 >
-                  {t.parts[p]}
+                  <img
+                    src={PART_IMG[p]}
+                    alt={t.parts[p]}
+                    draggable={false}
+                    className="w-12 h-12 object-contain pointer-events-none"
+                  />
+                  <span className="text-[9px] font-bold text-foreground/80 text-center leading-tight mt-0.5 line-clamp-1">
+                    {t.parts[p]}
+                  </span>
                 </div>
               ))
             )}
