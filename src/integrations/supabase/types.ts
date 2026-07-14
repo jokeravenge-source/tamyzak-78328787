@@ -275,6 +275,36 @@ export type Database = {
         }
         Relationships: []
       }
+      course_playlists: {
+        Row: {
+          course_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          playlist_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          playlist_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          playlist_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       course_teachers: {
         Row: {
           course_id: string

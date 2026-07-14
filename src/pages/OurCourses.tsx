@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send } from "lucide-react";
+import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -80,6 +80,26 @@ type ExamRow = {
   chapter: string;
 };
 
+type PlaylistRow = {
+  id: string;
+  course_id: string;
+  title: string;
+  playlist_id: string;
+  created_at: string;
+};
+
+function extractPlaylistId(input: string): string | null {
+  const s = input.trim();
+  if (!s) return null;
+  if (/^(PL|UU|LL|FL|RD|OL)[A-Za-z0-9_-]{10,}$/.test(s)) return s;
+  try {
+    const u = new URL(s.startsWith("http") ? s : `https://${s}`);
+    const list = u.searchParams.get("list");
+    if (list && /^[A-Za-z0-9_-]{10,}$/.test(list)) return list;
+  } catch { /* */ }
+  return null;
+}
+
 const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const isAr = language === "ar";
   const [isAdmin, setIsAdmin] = useState(false);
@@ -88,6 +108,8 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [uploadFor, setUploadFor] = useState<Course | null>(null);
   const [manageFor, setManageFor] = useState<Course | null>(null);
   const [openCourse, setOpenCourse] = useState<Course | null>(null);
+  const [playlistsByCourse, setPlaylistsByCourse] = useState<Record<string, PlaylistRow[]>>({});
+  const [addPlaylistFor, setAddPlaylistFor] = useState<Course | null>(null);
 
   const refresh = async () => {
     const { data } = await supabase
@@ -103,6 +125,15 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     });
     setCounts(cMap);
     setExamsByCourse(byCourse);
+    const { data: pls } = await (supabase as any)
+      .from("course_playlists")
+      .select("id, course_id, title, playlist_id, created_at")
+      .order("created_at", { ascending: false });
+    const plMap: Record<string, PlaylistRow[]> = {};
+    ((pls ?? []) as PlaylistRow[]).forEach((p) => {
+      (plMap[p.course_id] ??= []).push(p);
+    });
+    setPlaylistsByCourse(plMap);
   };
 
   useEffect(() => {
@@ -125,6 +156,14 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     if (!confirm(isAr ? "حذف هذا الامتحان؟" : "Delete this exam?")) return;
     await supabase.storage.from("course-exams").remove([exam.exam_path, exam.answer_path]);
     const { error } = await supabase.from("course_exams").delete().eq("id", exam.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(isAr ? "تم الحذف" : "Deleted");
+    refresh();
+  };
+
+  const deletePlaylist = async (pl: PlaylistRow) => {
+    if (!confirm(isAr ? "حذف قائمة التشغيل؟" : "Delete this playlist?")) return;
+    const { error } = await (supabase as any).from("course_playlists").delete().eq("id", pl.id);
     if (error) { toast.error(error.message); return; }
     toast.success(isAr ? "تم الحذف" : "Deleted");
     refresh();
@@ -277,7 +316,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                   )}
 
                   {isAdmin && (
-                    <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="mt-2 grid grid-cols-3 gap-2">
                       <button
                         onClick={() => setUploadFor(c)}
                         className="h-9 rounded-lg text-xs font-bold inline-flex items-center justify-center gap-1.5 bg-primary text-primary-foreground hover:opacity-90 transition"
@@ -291,6 +330,14 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                       >
                         <ShieldCheck className="w-3.5 h-3.5" />
                         {isAr ? "إدارة" : "Manage"} ({examCount})
+                      </button>
+                      <button
+                        onClick={() => setAddPlaylistFor(c)}
+                        className="h-9 rounded-lg text-xs font-bold inline-flex items-center justify-center gap-1.5 bg-secondary text-secondary-foreground hover:bg-secondary/80 transition"
+                        title={isAr ? "إضافة قائمة تشغيل" : "Add YouTube playlist"}
+                      >
+                        <Youtube className="w-3.5 h-3.5 text-[#ff0033]" />
+                        {isAr ? "قائمة" : "Playlist"}
                       </button>
                     </div>
                   )}
@@ -324,7 +371,18 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           course={openCourse}
           isAr={isAr}
           exams={examsByCourse[openCourse.id] ?? []}
+          playlists={playlistsByCourse[openCourse.id] ?? []}
+          isAdmin={isAdmin}
+          onDeletePlaylist={deletePlaylist}
           onClose={() => setOpenCourse(null)}
+        />
+      )}
+      {addPlaylistFor && (
+        <AddPlaylistModal
+          course={addPlaylistFor}
+          isAr={isAr}
+          onClose={() => setAddPlaylistFor(null)}
+          onDone={() => { setAddPlaylistFor(null); refresh(); }}
         />
       )}
     </main>
@@ -541,15 +599,115 @@ function ManageModal({
 
 export default OurCourses;
 
+function AddPlaylistModal({
+  course,
+  isAr,
+  onClose,
+  onDone,
+}: {
+  course: Course;
+  isAr: boolean;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    const pl = extractPlaylistId(url);
+    if (!title.trim() || !pl) {
+      toast.error(isAr ? "أدخل عنواناً ورابط قائمة تشغيل صحيح" : "Enter a title and a valid playlist URL");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await (supabase as any).from("course_playlists").insert({
+        course_id: course.id,
+        title: title.trim(),
+        playlist_id: pl,
+        created_by: user.id,
+      });
+      if (error) throw error;
+      toast.success(isAr ? "تمت الإضافة" : "Playlist added");
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        dir={isAr ? "rtl" : "ltr"}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-5"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold inline-flex items-center gap-2">
+            <Youtube className="w-5 h-5 text-[#ff0033]" />
+            {isAr ? `إضافة قائمة تشغيل - ${course.titleAr}` : `Add playlist - ${course.titleEn}`}
+          </h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <label className="block text-xs font-semibold mb-1">{isAr ? "العنوان" : "Title"}</label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={120}
+          placeholder={isAr ? "مثال: محاضرات الفصل 1" : "e.g. Chapter 1 lectures"}
+          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
+        />
+
+        <label className="block text-xs font-semibold mb-1">{isAr ? "رابط قائمة تشغيل يوتيوب" : "YouTube playlist URL"}</label>
+        <input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://youtube.com/playlist?list=PL..."
+          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-2"
+          dir="ltr"
+        />
+        <p className="text-[11px] text-muted-foreground mb-4">
+          {isAr
+            ? "ألصق رابط قائمة تشغيل يوتيوب أو معرّف القائمة (مثال: PLxxxxxx)."
+            : "Paste a YouTube playlist URL or ID (e.g. PLxxxxxx)."}
+        </p>
+
+        <button
+          onClick={submit}
+          disabled={busy}
+          className="w-full h-10 rounded-xl bg-primary text-primary-foreground font-bold text-sm inline-flex items-center justify-center gap-2 disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          {isAr ? "إضافة" : "Add"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CourseRunner({
   course,
   isAr,
   exams,
+  playlists,
+  isAdmin,
+  onDeletePlaylist,
   onClose,
 }: {
   course: Course;
   isAr: boolean;
   exams: ExamRow[];
+  playlists: PlaylistRow[];
+  isAdmin: boolean;
+  onDeletePlaylist: (pl: PlaylistRow) => void;
   onClose: () => void;
 }) {
   const [selected, setSelected] = useState<ExamRow | null>(null);
@@ -719,7 +877,45 @@ function CourseRunner({
         </div>
 
         {!selected ? (
-          exams.length === 0 ? (
+          <>
+            {playlists.length > 0 && (
+              <section className="mb-8">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-primary/80 mb-3 border-b border-border pb-2 flex items-center gap-2">
+                  <ListVideo className="w-4 h-4" />
+                  {isAr ? "قوائم تشغيل يوتيوب" : "YouTube playlists"}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {playlists.map((pl) => (
+                    <div key={pl.id} className="rounded-2xl border border-border bg-card overflow-hidden">
+                      <div className="flex items-center gap-2 p-3 border-b border-border">
+                        <Youtube className="w-4 h-4 text-[#ff0033] shrink-0" />
+                        <div className="flex-1 min-w-0 font-semibold text-sm truncate">{pl.title}</div>
+                        {isAdmin && (
+                          <button
+                            onClick={() => onDeletePlaylist(pl)}
+                            className="w-8 h-8 rounded-lg hover:bg-destructive/10 text-destructive flex items-center justify-center"
+                            title={isAr ? "حذف" : "Delete"}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="aspect-video bg-black">
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(pl.playlist_id)}&rel=0&modestbranding=1`}
+                          title={pl.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          className="w-full h-full"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+            {exams.length === 0 ? (
             <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">
               {isAr ? "لا توجد امتحانات بعد لهذه الدورة." : "No exams available for this course yet."}
             </div>
@@ -755,7 +951,8 @@ function CourseRunner({
                 </section>
               ))}
             </div>
-          )
+            )}
+          </>
         ) : (
           <div className="space-y-5">
             <div className="rounded-2xl border border-border bg-card overflow-hidden">
