@@ -1,7 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { RotateCcw, Power, Info, Zap, Circle } from "lucide-react";
+import { RotateCcw, Power, Info, Zap, Circle, CheckCircle2, XCircle, Lock, Plus } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
+
+// ---------- assembly parts ----------
+type PartId = "znElec" | "cuElec" | "znSol" | "cuSol" | "bridge" | "wire";
+const ALL_PARTS: PartId[] = ["znElec", "cuElec", "znSol", "cuSol", "bridge", "wire"];
+
+type Zone = { id: PartId; x: number; y: number; w: number; h: number };
+const ZONES: Zone[] = [
+  { id: "wire",   x: 170, y: 30,  w: 460, h: 95  },
+  { id: "bridge", x: 250, y: 145, w: 300, h: 100 },
+  { id: "znElec", x: 170, y: 130, w: 60,  h: 130 },
+  { id: "cuElec", x: 570, y: 130, w: 60,  h: 130 },
+  { id: "znSol",  x: 105, y: 275, w: 190, h: 180 },
+  { id: "cuSol",  x: 505, y: 275, w: 190, h: 180 },
+];
 
 // ---------- copy ----------
 const copy = {
@@ -33,6 +47,23 @@ const copy = {
       "06 · E°cell = E°(Cu²⁺/Cu) − E°(Zn²⁺/Zn) = +0.34 − (−0.76) = 1.10 V.",
     ],
     nernst: "E = 1.10 − (0.0592/2) · log ( [Zn²⁺] / [Cu²⁺] )",
+    build: "ASSEMBLY MODE",
+    buildDesc: "Drag each part into its correct place, then check your work.",
+    check: "Check assembly",
+    correct: "Perfect assembly — circuit is ready.",
+    wrong: "Some parts are misplaced. Fix the red slots.",
+    buildReset: "Reset build",
+    tray: "Parts tray",
+    trayEmpty: "All parts placed. Click Check.",
+    locked: "Assemble the cell to power it on",
+    parts: {
+      znElec: "Zn electrode",
+      cuElec: "Cu electrode",
+      znSol: "ZnSO₄ solution",
+      cuSol: "CuSO₄ solution",
+      bridge: "Salt bridge",
+      wire: "Wires + Voltmeter",
+    } as Record<PartId, string>,
   },
   ar: {
     heading: "خلية دانييل",
@@ -62,6 +93,23 @@ const copy = {
       "٠٦ · E°خلية = +0.34 − (−0.76) = 1.10 فولت.",
     ],
     nernst: "E = 1.10 − (0.0592/2) · log ( [Zn²⁺] / [Cu²⁺] )",
+    build: "وضع التركيب",
+    buildDesc: "اسحب كل قطعة إلى مكانها الصحيح ثم تحقّق من إجابتك.",
+    check: "تحقق من التركيب",
+    correct: "تركيب صحيح — الدائرة جاهزة.",
+    wrong: "بعض القطع في مكان خاطئ. صحّح الخانات الحمراء.",
+    buildReset: "إعادة التركيب",
+    tray: "صندوق القطع",
+    trayEmpty: "تم وضع كل القطع. اضغط تحقق.",
+    locked: "قم بتركيب الخلية أولاً لتشغيلها",
+    parts: {
+      znElec: "قطب الخارصين",
+      cuElec: "قطب النحاس",
+      znSol: "محلول ZnSO₄",
+      cuSol: "محلول CuSO₄",
+      bridge: "قنطرة ملحية",
+      wire: "أسلاك وفولتميتر",
+    } as Record<PartId, string>,
   },
 } as const;
 
@@ -77,11 +125,51 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
   const rafRef = useRef<number>();
   const startRef = useRef<number>(0);
 
+  // assembly state
+  const emptyPlaced: Record<PartId, PartId | null> = {
+    znElec: null, cuElec: null, znSol: null, cuSol: null, bridge: null, wire: null,
+  };
+  const [placed, setPlaced] = useState<Record<PartId, PartId | null>>(emptyPlaced);
+  const [checked, setChecked] = useState<null | "ok" | "fail">(null);
+  const [dragOver, setDragOver] = useState<PartId | null>(null);
+
+  const allFilled = ALL_PARTS.every((z) => placed[z] !== null);
+  const allCorrect = ALL_PARTS.every((z) => placed[z] === z);
+  const ready = checked === "ok" && allCorrect;
+  const unplaced = ALL_PARTS.filter((p) => !Object.values(placed).includes(p));
+
+  const handleDrop = (zoneId: PartId, partId: PartId) => {
+    setPlaced((prev) => {
+      // if the part is currently placed elsewhere, remove it from that slot
+      const next = { ...prev };
+      (Object.keys(next) as PartId[]).forEach((k) => {
+        if (next[k] === partId) next[k] = null;
+      });
+      next[zoneId] = partId;
+      return next;
+    });
+    setChecked(null);
+    setDragOver(null);
+  };
+  const removeFromZone = (zoneId: PartId) => {
+    setPlaced((prev) => ({ ...prev, [zoneId]: null }));
+    setChecked(null);
+  };
+  const resetBuild = () => {
+    setPlaced(emptyPlaced);
+    setChecked(null);
+    setClosed(false);
+  };
+  const runCheck = () => {
+    if (!allFilled) return;
+    setChecked(allCorrect ? "ok" : "fail");
+  };
+
   const E0 = 1.10;
   const emf = E0 - (0.0592 / 2) * Math.log10(znC / cuC);
 
   useEffect(() => {
-    if (!closed) return;
+    if (!closed || !ready) return;
     startRef.current = performance.now() - elapsed * 1000;
     const step = () => {
       const e = (performance.now() - startRef.current) / 1000;
@@ -91,7 +179,7 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
     rafRef.current = requestAnimationFrame(step);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [closed]);
+  }, [closed, ready]);
 
   const reactionExtent = Math.min(1, (elapsed * emf) / 40);
   const znDelta = reactionExtent * 40;
@@ -280,6 +368,8 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
               </radialGradient>
             </defs>
 
+            {/* ============ assembleable content — dims until assembled ============ */}
+            <g style={{ opacity: ready ? 1 : 0.14, transition: "opacity 500ms ease" }} pointerEvents={ready ? "auto" : "none"}>
             {/* baseline / stage floor */}
             <line x1="80" y1="480" x2="720" y2="480" stroke="#ffffff" strokeOpacity="0.08" strokeWidth="1" strokeDasharray="4 6" />
             <ellipse cx="200" cy="480" rx="130" ry="8" fill="#000" opacity="0.5" />
@@ -611,6 +701,68 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                 Cu²⁺ + 2e⁻ → Cu
               </text>
             </g>
+            </g>
+
+            {/* ============ Drop zones overlay (assembly mode) ============ */}
+            {!ready && ZONES.map((z) => {
+              const filledWith = placed[z.id];
+              const isCorrect = filledWith === z.id;
+              const isWrong = checked === "fail" && filledWith && filledWith !== z.id;
+              const isEmptyWrongCheck = checked === "fail" && !filledWith;
+              const isOver = dragOver === z.id;
+              return (
+                <foreignObject key={z.id} x={z.x} y={z.y} width={z.w} height={z.h}>
+                  <div
+                    // @ts-ignore
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(z.id); }}
+                    onDragLeave={() => setDragOver((d) => (d === z.id ? null : d))}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const pid = e.dataTransfer.getData("text/plain") as PartId;
+                      if (ALL_PARTS.includes(pid)) handleDrop(z.id, pid);
+                    }}
+                    style={{ width: "100%", height: "100%" }}
+                    className={`rounded-xl border-2 border-dashed flex items-center justify-center text-center px-2 transition-all
+                      ${isOver ? "border-amber-300 bg-amber-400/20 scale-[1.02]" : ""}
+                      ${!isOver && isCorrect ? "border-emerald-400 bg-emerald-500/15" : ""}
+                      ${!isOver && isWrong ? "border-red-500 bg-red-500/20 animate-pulse" : ""}
+                      ${!isOver && !filledWith && isEmptyWrongCheck ? "border-red-400/70 bg-red-500/10" : ""}
+                      ${!isOver && !filledWith && !isEmptyWrongCheck ? "border-white/40 bg-white/[0.05] hover:border-white/70 hover:bg-white/[0.08]" : ""}
+                      ${!isOver && filledWith && !isCorrect && !isWrong ? "border-sky-400/70 bg-sky-500/15" : ""}
+                    `}
+                  >
+                    {filledWith ? (
+                      <div
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("text/plain", filledWith);
+                          removeFromZone(z.id);
+                        }}
+                        className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none"
+                        title="Drag to move"
+                      >
+                        {isCorrect ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                        ) : isWrong ? (
+                          <XCircle className="w-3.5 h-3.5 text-red-300 shrink-0" />
+                        ) : null}
+                        <span className="text-[10px] md:text-xs font-black tracking-wide text-white drop-shadow">
+                          {t.parts[filledWith]}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-white/55">
+                        <Plus className="w-3.5 h-3.5" />
+                        <span className="text-[9px] uppercase tracking-[0.25em] font-bold">
+                          ?
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </foreignObject>
+              );
+            })}
           </svg>
 
           {/* Bottom equation ticker */}
@@ -624,17 +776,98 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
               </span>
             </div>
             <button
-              onClick={() => setClosed((c) => !c)}
+              onClick={() => ready && setClosed((c) => !c)}
+              disabled={!ready}
+              title={!ready ? t.locked : undefined}
               className={`shrink-0 inline-flex items-center gap-2 h-9 px-4 rounded-xl border-2 text-xs font-black tracking-widest transition-all ${
-                closed
-                  ? "bg-amber-500/20 border-amber-400 text-amber-300"
-                  : "bg-white/5 border-white/20 text-white/70 hover:border-white/50"
+                !ready
+                  ? "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
+                  : closed
+                    ? "bg-amber-500/20 border-amber-400 text-amber-300"
+                    : "bg-white/5 border-white/20 text-white/70 hover:border-white/50"
               }`}
-              style={closed ? { boxShadow: "0 0 24px rgba(251,191,36,0.45)" } : undefined}
+              style={ready && closed ? { boxShadow: "0 0 24px rgba(251,191,36,0.45)" } : undefined}
             >
-              <Power className="w-3.5 h-3.5" />
-              {closed ? t.on : t.off}
+              {ready ? <Power className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+              {ready ? (closed ? t.on : t.off) : t.off}
             </button>
+          </div>
+        </div>
+
+        {/* ============ Assembly panel (build mode) ============ */}
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              {ready ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              ) : (
+                <Lock className="w-4 h-4 text-amber-500" />
+              )}
+              <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold">
+                {t.build}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={resetBuild}
+                className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border bg-secondary/50 text-xs font-semibold hover:border-primary/40 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {t.buildReset}
+              </button>
+              <button
+                onClick={runCheck}
+                disabled={!allFilled || ready}
+                className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-black tracking-wide border-2 transition-all ${
+                  ready
+                    ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                    : allFilled
+                      ? "border-amber-500 bg-amber-500/15 text-amber-500 hover:bg-amber-500/25"
+                      : "border-border text-muted-foreground opacity-60 cursor-not-allowed"
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {t.check}
+              </button>
+            </div>
+          </div>
+
+          {/* status banner */}
+          {checked === "ok" && (
+            <div className="mb-3 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span className="text-xs font-bold text-emerald-500">{t.correct}</span>
+            </div>
+          )}
+          {checked === "fail" && (
+            <div className="mb-3 rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 flex items-center gap-2">
+              <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+              <span className="text-xs font-bold text-red-500">{t.wrong}</span>
+            </div>
+          )}
+          {checked === null && (
+            <p className="mb-3 text-xs text-muted-foreground leading-relaxed">{t.buildDesc}</p>
+          )}
+
+          {/* tray */}
+          <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground font-bold mb-2">
+            {t.tray}
+          </p>
+          <div className="flex flex-wrap gap-2 min-h-[44px]">
+            {unplaced.length === 0 ? (
+              <span className="text-xs text-muted-foreground italic self-center">{t.trayEmpty}</span>
+            ) : (
+              unplaced.map((p) => (
+                <div
+                  key={p}
+                  draggable
+                  onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
+                  className="px-3 py-2 rounded-lg border-2 border-primary/50 bg-primary/10 text-primary text-xs font-bold cursor-grab active:cursor-grabbing hover:border-primary hover:bg-primary/20 select-none transition-colors"
+                >
+                  {t.parts[p]}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -670,25 +903,38 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
           <div className="grid grid-cols-2 gap-2 mb-4">
             <button
               onClick={() => setClosed(false)}
+              disabled={!ready}
               className={`h-10 rounded-lg text-[11px] font-black tracking-widest border-2 transition-all ${
-                !closed
-                  ? "bg-primary/15 border-primary text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/40"
+                !ready
+                  ? "border-border text-muted-foreground/40 cursor-not-allowed"
+                  : !closed
+                    ? "bg-primary/15 border-primary text-primary"
+                    : "border-border text-muted-foreground hover:border-primary/40"
               }`}
             >
               {t.off}
             </button>
             <button
               onClick={() => setClosed(true)}
-              className={`h-10 rounded-lg text-[11px] font-black tracking-widest border-2 transition-all ${
-                closed
-                  ? "bg-amber-500/15 border-amber-500 text-amber-500"
-                  : "border-border text-muted-foreground hover:border-amber-500/40"
+              disabled={!ready}
+              title={!ready ? t.locked : undefined}
+              className={`h-10 rounded-lg text-[11px] font-black tracking-widest border-2 transition-all inline-flex items-center justify-center gap-1.5 ${
+                !ready
+                  ? "border-border text-muted-foreground/40 cursor-not-allowed"
+                  : closed
+                    ? "bg-amber-500/15 border-amber-500 text-amber-500"
+                    : "border-border text-muted-foreground hover:border-amber-500/40"
               }`}
             >
+              {!ready && <Lock className="w-3 h-3" />}
               {t.on}
             </button>
           </div>
+          {!ready && (
+            <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-1">
+              <Lock className="w-3 h-3" /> {t.locked}
+            </p>
+          )}
 
           <MiniSlider label={t.zincConc}   value={znC} min={0.01} max={2} step={0.01} suffix=" M" fmt={(v) => v.toFixed(2)} onChange={(v) => setZnC(v)} />
           <MiniSlider label={t.copperConc} value={cuC} min={0.01} max={2} step={0.01} suffix=" M" fmt={(v) => v.toFixed(2)} onChange={(v) => setCuC(v)} />
