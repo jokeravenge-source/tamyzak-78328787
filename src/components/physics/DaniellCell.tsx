@@ -2,10 +2,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { RotateCcw, Power, Info, Zap, Circle, CheckCircle2, XCircle, Lock, Plus } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
+import znElecImg from "@/assets/parts/zn-electrode.png";
+import cuElecImg from "@/assets/parts/cu-electrode.png";
+import znSolImg from "@/assets/parts/znso4.png";
+import cuSolImg from "@/assets/parts/cuso4.png";
+import bridgeImg from "@/assets/parts/salt-bridge.png";
+import wireImg from "@/assets/parts/voltmeter.png";
 
 // ---------- assembly parts ----------
 type PartId = "znElec" | "cuElec" | "znSol" | "cuSol" | "bridge" | "wire";
 const ALL_PARTS: PartId[] = ["znElec", "cuElec", "znSol", "cuSol", "bridge", "wire"];
+
+const PART_IMG: Record<PartId, string> = {
+  znElec: znElecImg,
+  cuElec: cuElecImg,
+  znSol: znSolImg,
+  cuSol: cuSolImg,
+  bridge: bridgeImg,
+  wire: wireImg,
+};
 
 type Zone = { id: PartId; x: number; y: number; w: number; h: number };
 const ZONES: Zone[] = [
