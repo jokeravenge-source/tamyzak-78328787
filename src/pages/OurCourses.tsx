@@ -603,11 +603,17 @@ function CourseRunner({
   course,
   isAr,
   exams,
+  playlists,
+  isAdmin,
+  onDeletePlaylist,
   onClose,
 }: {
   course: Course;
   isAr: boolean;
   exams: ExamRow[];
+  playlists: PlaylistRow[];
+  isAdmin: boolean;
+  onDeletePlaylist: (pl: PlaylistRow) => void;
   onClose: () => void;
 }) {
   const [selected, setSelected] = useState<ExamRow | null>(null);
