@@ -5,7 +5,7 @@ import { ArrowLeft, Atom, RotateCcw, Zap } from "lucide-react";
 import * as THREE from "three";
 import type { AppLanguage } from "@/components/LanguageGate";
 import CapacitorDischarge from "@/components/physics/CapacitorDischarge";
-import Calorimeter from "@/components/physics/Calorimeter";
+import DaniellCell from "@/components/physics/DaniellCell";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const copy = {
@@ -434,8 +434,8 @@ const PhysicsActivities = ({
             <TabsTrigger value="discharge">
               {isRTL ? "تفريغ المكثف" : "Discharging a Capacitor"}
             </TabsTrigger>
-            <TabsTrigger value="calorimeter">
-              {isRTL ? "المسعر الحراري" : "Calorimeter"}
+            <TabsTrigger value="daniell">
+              {isRTL ? "خلية دانييل" : "Daniell Cell"}
             </TabsTrigger>
           </TabsList>
 
@@ -536,8 +536,8 @@ const PhysicsActivities = ({
             <CapacitorDischarge language={language} />
           </TabsContent>
 
-          <TabsContent value="calorimeter">
-            <Calorimeter language={language} />
+          <TabsContent value="daniell">
+            <DaniellCell language={language} />
           </TabsContent>
         </Tabs>
       </div>
