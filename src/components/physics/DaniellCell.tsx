@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { RotateCcw, Power, Info, Zap, Circle, CheckCircle2, XCircle, Lock, Plus } from "lucide-react";
+import { RotateCcw, Power, Info, Zap, Circle, CheckCircle2, XCircle, Lock, Sparkles, MousePointer2, PackageOpen } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import znElecAsset from "@/assets/parts/zn-electrode.png.asset.json";
 import cuElecAsset from "@/assets/parts/cu-electrode.png.asset.json";
@@ -738,15 +739,27 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                       if (ALL_PARTS.includes(pid)) handleDrop(z.id, pid);
                     }}
                     style={{ width: "100%", height: "100%" }}
-                    className={`rounded-xl border-2 border-dashed flex items-center justify-center text-center px-2 transition-all
-                      ${isOver ? "border-amber-300 bg-amber-400/20 scale-[1.02]" : ""}
-                      ${!isOver && isCorrect ? "border-emerald-400 bg-emerald-500/15" : ""}
-                      ${!isOver && isWrong ? "border-red-500 bg-red-500/20 animate-pulse" : ""}
-                      ${!isOver && !filledWith && isEmptyWrongCheck ? "border-red-400/70 bg-red-500/10" : ""}
-                      ${!isOver && !filledWith && !isEmptyWrongCheck ? "border-white/40 bg-white/[0.05] hover:border-white/70 hover:bg-white/[0.08]" : ""}
-                      ${!isOver && filledWith && !isCorrect && !isWrong ? "border-sky-400/70 bg-sky-500/15" : ""}
+                    className={`relative overflow-hidden rounded-2xl border-2 border-dashed flex items-center justify-center text-center px-2 transition-all duration-300 backdrop-blur-[2px]
+                      ${isOver ? "border-amber-300 bg-gradient-to-br from-amber-400/30 to-amber-500/10 scale-[1.05] shadow-[0_0_30px_rgba(251,191,36,0.5)]" : ""}
+                      ${!isOver && isCorrect ? "border-emerald-400 bg-gradient-to-br from-emerald-500/20 to-emerald-400/5 shadow-[0_0_20px_rgba(52,211,153,0.35)]" : ""}
+                      ${!isOver && isWrong ? "border-red-500 bg-gradient-to-br from-red-500/25 to-red-400/10 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.4)]" : ""}
+                      ${!isOver && !filledWith && isEmptyWrongCheck ? "border-red-400/80 bg-red-500/10" : ""}
+                      ${!isOver && !filledWith && !isEmptyWrongCheck ? "border-white/40 bg-gradient-to-br from-white/[0.06] to-white/[0.02] hover:border-amber-300/80 hover:from-amber-400/10 hover:to-amber-400/[0.02] hover:shadow-[0_0_18px_rgba(251,191,36,0.25)]" : ""}
+                      ${!isOver && filledWith && !isCorrect && !isWrong ? "border-sky-400/70 bg-gradient-to-br from-sky-500/20 to-sky-400/5" : ""}
                     `}
                   >
+                    {/* animated shimmer for empty zones */}
+                    {!filledWith && !isOver && (
+                      <div
+                        className="absolute inset-0 opacity-40 pointer-events-none"
+                        style={{
+                          background:
+                            "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%)",
+                          backgroundSize: "200% 100%",
+                          animation: "shimmer 3s linear infinite",
+                        }}
+                      />
+                    )}
                     {filledWith ? (
                       <div
                         draggable
@@ -754,29 +767,50 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                           e.dataTransfer.setData("text/plain", filledWith);
                           removeFromZone(z.id);
                         }}
-                        className="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+                        className="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none group"
                         title={t.parts[filledWith]}
                       >
+                        {/* radial glow behind part */}
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{
+                            background: isCorrect
+                              ? "radial-gradient(circle at center, rgba(52,211,153,0.35), transparent 65%)"
+                              : isWrong
+                                ? "radial-gradient(circle at center, rgba(239,68,68,0.35), transparent 65%)"
+                                : "radial-gradient(circle at center, rgba(56,189,248,0.3), transparent 65%)",
+                          }}
+                        />
                         <img
                           src={PART_IMG[filledWith]}
                           alt={t.parts[filledWith]}
                           draggable={false}
-                          className="max-w-full max-h-full object-contain pointer-events-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
+                          className="relative max-w-[85%] max-h-[85%] object-contain pointer-events-none drop-shadow-[0_6px_14px_rgba(0,0,0,0.6)] transition-transform group-hover:scale-105"
                         />
                         {isCorrect && (
-                          <CheckCircle2 className="absolute top-1 right-1 w-4 h-4 text-emerald-300 bg-emerald-900/70 rounded-full" />
+                          <div className="absolute top-1 right-1 rounded-full bg-emerald-500 p-0.5 shadow-[0_0_10px_rgba(52,211,153,0.7)]">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                          </div>
                         )}
                         {isWrong && (
-                          <XCircle className="absolute top-1 right-1 w-4 h-4 text-red-300 bg-red-900/70 rounded-full" />
+                          <div className="absolute top-1 right-1 rounded-full bg-red-500 p-0.5 shadow-[0_0_10px_rgba(239,68,68,0.7)]">
+                            <XCircle className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                          </div>
                         )}
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 text-white/55">
-                        <Plus className="w-3.5 h-3.5" />
-                        <span className="text-[9px] uppercase tracking-[0.25em] font-bold">
-                          ?
+                      <motion.div
+                        className="relative flex flex-col items-center gap-1 text-white/70"
+                        animate={{ y: [0, -3, 0] }}
+                        transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <div className="rounded-full bg-white/10 p-1.5 border border-white/20">
+                          <MousePointer2 className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-[9px] uppercase tracking-[0.25em] font-black">
+                          drop
                         </span>
-                      </div>
+                      </motion.div>
                     )}
                   </div>
                 </foreignObject>
