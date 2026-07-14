@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send } from "lucide-react";
+import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -80,6 +80,26 @@ type ExamRow = {
   chapter: string;
 };
 
+type PlaylistRow = {
+  id: string;
+  course_id: string;
+  title: string;
+  playlist_id: string;
+  created_at: string;
+};
+
+function extractPlaylistId(input: string): string | null {
+  const s = input.trim();
+  if (!s) return null;
+  if (/^(PL|UU|LL|FL|RD|OL)[A-Za-z0-9_-]{10,}$/.test(s)) return s;
+  try {
+    const u = new URL(s.startsWith("http") ? s : `https://${s}`);
+    const list = u.searchParams.get("list");
+    if (list && /^[A-Za-z0-9_-]{10,}$/.test(list)) return list;
+  } catch { /* */ }
+  return null;
+}
+
 const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const isAr = language === "ar";
   const [isAdmin, setIsAdmin] = useState(false);
@@ -88,6 +108,8 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [uploadFor, setUploadFor] = useState<Course | null>(null);
   const [manageFor, setManageFor] = useState<Course | null>(null);
   const [openCourse, setOpenCourse] = useState<Course | null>(null);
+  const [playlistsByCourse, setPlaylistsByCourse] = useState<Record<string, PlaylistRow[]>>({});
+  const [addPlaylistFor, setAddPlaylistFor] = useState<Course | null>(null);
 
   const refresh = async () => {
     const { data } = await supabase
@@ -103,6 +125,15 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     });
     setCounts(cMap);
     setExamsByCourse(byCourse);
+    const { data: pls } = await (supabase as any)
+      .from("course_playlists")
+      .select("id, course_id, title, playlist_id, created_at")
+      .order("created_at", { ascending: false });
+    const plMap: Record<string, PlaylistRow[]> = {};
+    ((pls ?? []) as PlaylistRow[]).forEach((p) => {
+      (plMap[p.course_id] ??= []).push(p);
+    });
+    setPlaylistsByCourse(plMap);
   };
 
   useEffect(() => {
@@ -125,6 +156,14 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     if (!confirm(isAr ? "حذف هذا الامتحان؟" : "Delete this exam?")) return;
     await supabase.storage.from("course-exams").remove([exam.exam_path, exam.answer_path]);
     const { error } = await supabase.from("course_exams").delete().eq("id", exam.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(isAr ? "تم الحذف" : "Deleted");
+    refresh();
+  };
+
+  const deletePlaylist = async (pl: PlaylistRow) => {
+    if (!confirm(isAr ? "حذف قائمة التشغيل؟" : "Delete this playlist?")) return;
+    const { error } = await (supabase as any).from("course_playlists").delete().eq("id", pl.id);
     if (error) { toast.error(error.message); return; }
     toast.success(isAr ? "تم الحذف" : "Deleted");
     refresh();
@@ -277,7 +316,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                   )}
 
                   {isAdmin && (
-                    <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="mt-2 grid grid-cols-3 gap-2">
                       <button
                         onClick={() => setUploadFor(c)}
                         className="h-9 rounded-lg text-xs font-bold inline-flex items-center justify-center gap-1.5 bg-primary text-primary-foreground hover:opacity-90 transition"
@@ -291,6 +330,14 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                       >
                         <ShieldCheck className="w-3.5 h-3.5" />
                         {isAr ? "إدارة" : "Manage"} ({examCount})
+                      </button>
+                      <button
+                        onClick={() => setAddPlaylistFor(c)}
+                        className="h-9 rounded-lg text-xs font-bold inline-flex items-center justify-center gap-1.5 bg-secondary text-secondary-foreground hover:bg-secondary/80 transition"
+                        title={isAr ? "إضافة قائمة تشغيل" : "Add YouTube playlist"}
+                      >
+                        <Youtube className="w-3.5 h-3.5 text-[#ff0033]" />
+                        {isAr ? "قائمة" : "Playlist"}
                       </button>
                     </div>
                   )}
@@ -324,7 +371,18 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           course={openCourse}
           isAr={isAr}
           exams={examsByCourse[openCourse.id] ?? []}
+          playlists={playlistsByCourse[openCourse.id] ?? []}
+          isAdmin={isAdmin}
+          onDeletePlaylist={deletePlaylist}
           onClose={() => setOpenCourse(null)}
+        />
+      )}
+      {addPlaylistFor && (
+        <AddPlaylistModal
+          course={addPlaylistFor}
+          isAr={isAr}
+          onClose={() => setAddPlaylistFor(null)}
+          onDone={() => { setAddPlaylistFor(null); refresh(); }}
         />
       )}
     </main>
