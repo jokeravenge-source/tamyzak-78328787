@@ -783,7 +783,45 @@ function CourseRunner({
         </div>
 
         {!selected ? (
-          exams.length === 0 ? (
+          <>
+            {playlists.length > 0 && (
+              <section className="mb-8">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-primary/80 mb-3 border-b border-border pb-2 flex items-center gap-2">
+                  <ListVideo className="w-4 h-4" />
+                  {isAr ? "قوائم تشغيل يوتيوب" : "YouTube playlists"}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {playlists.map((pl) => (
+                    <div key={pl.id} className="rounded-2xl border border-border bg-card overflow-hidden">
+                      <div className="flex items-center gap-2 p-3 border-b border-border">
+                        <Youtube className="w-4 h-4 text-[#ff0033] shrink-0" />
+                        <div className="flex-1 min-w-0 font-semibold text-sm truncate">{pl.title}</div>
+                        {isAdmin && (
+                          <button
+                            onClick={() => onDeletePlaylist(pl)}
+                            className="w-8 h-8 rounded-lg hover:bg-destructive/10 text-destructive flex items-center justify-center"
+                            title={isAr ? "حذف" : "Delete"}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="aspect-video bg-black">
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(pl.playlist_id)}&rel=0&modestbranding=1`}
+                          title={pl.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          className="w-full h-full"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+            {exams.length === 0 ? (
             <div className="rounded-2xl border border-border bg-card p-10 text-center text-muted-foreground">
               {isAr ? "لا توجد امتحانات بعد لهذه الدورة." : "No exams available for this course yet."}
             </div>
@@ -819,7 +857,8 @@ function CourseRunner({
                 </section>
               ))}
             </div>
-          )
+            )}
+          </>
         ) : (
           <div className="space-y-5">
             <div className="rounded-2xl border border-border bg-card overflow-hidden">
