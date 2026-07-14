@@ -990,11 +990,13 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                     initial={{ opacity: 0, y: 8, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ delay: i * 0.04 }}
-                    draggable
-                    onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
-                    title={t.parts[p]}
-                    className="group relative w-[76px] h-[84px] rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex flex-col items-center justify-between p-1.5 cursor-grab active:cursor-grabbing hover:border-primary hover:-translate-y-1 hover:shadow-[0_10px_25px_-5px_hsl(var(--primary)/0.4)] select-none transition-all overflow-hidden"
                   >
+                    <div
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
+                      title={t.parts[p]}
+                      className="group relative w-[76px] h-[84px] rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex flex-col items-center justify-between p-1.5 cursor-grab active:cursor-grabbing hover:border-primary hover:-translate-y-1 hover:shadow-[0_10px_25px_-5px_hsl(var(--primary)/0.4)] select-none transition-all overflow-hidden"
+                    >
                     {/* glow halo */}
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
                          style={{ background: "radial-gradient(circle at center, hsl(var(--primary) / 0.25), transparent 65%)" }} />
@@ -1009,9 +1011,10 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                     <span className="relative text-[8.5px] font-bold text-foreground/85 text-center leading-tight line-clamp-2 w-full">
                       {t.parts[p]}
                     </span>
-                    {/* drag hint corner */}
-                    <div className="absolute top-1 right-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                      <MousePointer2 className="w-2.5 h-2.5 text-primary" />
+                      {/* drag hint corner */}
+                      <div className="absolute top-1 right-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                        <MousePointer2 className="w-2.5 h-2.5 text-primary" />
+                      </div>
                     </div>
                   </motion.div>
                 ))
