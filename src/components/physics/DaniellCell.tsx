@@ -125,11 +125,51 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
   const rafRef = useRef<number>();
   const startRef = useRef<number>(0);
 
+  // assembly state
+  const emptyPlaced: Record<PartId, PartId | null> = {
+    znElec: null, cuElec: null, znSol: null, cuSol: null, bridge: null, wire: null,
+  };
+  const [placed, setPlaced] = useState<Record<PartId, PartId | null>>(emptyPlaced);
+  const [checked, setChecked] = useState<null | "ok" | "fail">(null);
+  const [dragOver, setDragOver] = useState<PartId | null>(null);
+
+  const allFilled = ALL_PARTS.every((z) => placed[z] !== null);
+  const allCorrect = ALL_PARTS.every((z) => placed[z] === z);
+  const ready = checked === "ok" && allCorrect;
+  const unplaced = ALL_PARTS.filter((p) => !Object.values(placed).includes(p));
+
+  const handleDrop = (zoneId: PartId, partId: PartId) => {
+    setPlaced((prev) => {
+      // if the part is currently placed elsewhere, remove it from that slot
+      const next = { ...prev };
+      (Object.keys(next) as PartId[]).forEach((k) => {
+        if (next[k] === partId) next[k] = null;
+      });
+      next[zoneId] = partId;
+      return next;
+    });
+    setChecked(null);
+    setDragOver(null);
+  };
+  const removeFromZone = (zoneId: PartId) => {
+    setPlaced((prev) => ({ ...prev, [zoneId]: null }));
+    setChecked(null);
+  };
+  const resetBuild = () => {
+    setPlaced(emptyPlaced);
+    setChecked(null);
+    setClosed(false);
+  };
+  const runCheck = () => {
+    if (!allFilled) return;
+    setChecked(allCorrect ? "ok" : "fail");
+  };
+
   const E0 = 1.10;
   const emf = E0 - (0.0592 / 2) * Math.log10(znC / cuC);
 
   useEffect(() => {
-    if (!closed) return;
+    if (!closed || !ready) return;
     startRef.current = performance.now() - elapsed * 1000;
     const step = () => {
       const e = (performance.now() - startRef.current) / 1000;
@@ -139,7 +179,7 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
     rafRef.current = requestAnimationFrame(step);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [closed]);
+  }, [closed, ready]);
 
   const reactionExtent = Math.min(1, (elapsed * emf) / 40);
   const znDelta = reactionExtent * 40;
