@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { RotateCcw, Power, Info, Zap, Circle, CheckCircle2, XCircle, Lock, Plus } from "lucide-react";
+import { RotateCcw, Power, Info, Zap, Circle, CheckCircle2, XCircle, Lock, Sparkles, MousePointer2, PackageOpen } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import znElecAsset from "@/assets/parts/zn-electrode.png.asset.json";
 import cuElecAsset from "@/assets/parts/cu-electrode.png.asset.json";
@@ -738,15 +739,27 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                       if (ALL_PARTS.includes(pid)) handleDrop(z.id, pid);
                     }}
                     style={{ width: "100%", height: "100%" }}
-                    className={`rounded-xl border-2 border-dashed flex items-center justify-center text-center px-2 transition-all
-                      ${isOver ? "border-amber-300 bg-amber-400/20 scale-[1.02]" : ""}
-                      ${!isOver && isCorrect ? "border-emerald-400 bg-emerald-500/15" : ""}
-                      ${!isOver && isWrong ? "border-red-500 bg-red-500/20 animate-pulse" : ""}
-                      ${!isOver && !filledWith && isEmptyWrongCheck ? "border-red-400/70 bg-red-500/10" : ""}
-                      ${!isOver && !filledWith && !isEmptyWrongCheck ? "border-white/40 bg-white/[0.05] hover:border-white/70 hover:bg-white/[0.08]" : ""}
-                      ${!isOver && filledWith && !isCorrect && !isWrong ? "border-sky-400/70 bg-sky-500/15" : ""}
+                    className={`relative overflow-hidden rounded-2xl border-2 border-dashed flex items-center justify-center text-center px-2 transition-all duration-300 backdrop-blur-[2px]
+                      ${isOver ? "border-amber-300 bg-gradient-to-br from-amber-400/30 to-amber-500/10 scale-[1.05] shadow-[0_0_30px_rgba(251,191,36,0.5)]" : ""}
+                      ${!isOver && isCorrect ? "border-emerald-400 bg-gradient-to-br from-emerald-500/20 to-emerald-400/5 shadow-[0_0_20px_rgba(52,211,153,0.35)]" : ""}
+                      ${!isOver && isWrong ? "border-red-500 bg-gradient-to-br from-red-500/25 to-red-400/10 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.4)]" : ""}
+                      ${!isOver && !filledWith && isEmptyWrongCheck ? "border-red-400/80 bg-red-500/10" : ""}
+                      ${!isOver && !filledWith && !isEmptyWrongCheck ? "border-white/40 bg-gradient-to-br from-white/[0.06] to-white/[0.02] hover:border-amber-300/80 hover:from-amber-400/10 hover:to-amber-400/[0.02] hover:shadow-[0_0_18px_rgba(251,191,36,0.25)]" : ""}
+                      ${!isOver && filledWith && !isCorrect && !isWrong ? "border-sky-400/70 bg-gradient-to-br from-sky-500/20 to-sky-400/5" : ""}
                     `}
                   >
+                    {/* animated shimmer for empty zones */}
+                    {!filledWith && !isOver && (
+                      <div
+                        className="absolute inset-0 opacity-40 pointer-events-none"
+                        style={{
+                          background:
+                            "linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%)",
+                          backgroundSize: "200% 100%",
+                          animation: "shimmer 3s linear infinite",
+                        }}
+                      />
+                    )}
                     {filledWith ? (
                       <div
                         draggable
@@ -754,29 +767,50 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                           e.dataTransfer.setData("text/plain", filledWith);
                           removeFromZone(z.id);
                         }}
-                        className="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+                        className="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none group"
                         title={t.parts[filledWith]}
                       >
+                        {/* radial glow behind part */}
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{
+                            background: isCorrect
+                              ? "radial-gradient(circle at center, rgba(52,211,153,0.35), transparent 65%)"
+                              : isWrong
+                                ? "radial-gradient(circle at center, rgba(239,68,68,0.35), transparent 65%)"
+                                : "radial-gradient(circle at center, rgba(56,189,248,0.3), transparent 65%)",
+                          }}
+                        />
                         <img
                           src={PART_IMG[filledWith]}
                           alt={t.parts[filledWith]}
                           draggable={false}
-                          className="max-w-full max-h-full object-contain pointer-events-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
+                          className="relative max-w-[85%] max-h-[85%] object-contain pointer-events-none drop-shadow-[0_6px_14px_rgba(0,0,0,0.6)] transition-transform group-hover:scale-105"
                         />
                         {isCorrect && (
-                          <CheckCircle2 className="absolute top-1 right-1 w-4 h-4 text-emerald-300 bg-emerald-900/70 rounded-full" />
+                          <div className="absolute top-1 right-1 rounded-full bg-emerald-500 p-0.5 shadow-[0_0_10px_rgba(52,211,153,0.7)]">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                          </div>
                         )}
                         {isWrong && (
-                          <XCircle className="absolute top-1 right-1 w-4 h-4 text-red-300 bg-red-900/70 rounded-full" />
+                          <div className="absolute top-1 right-1 rounded-full bg-red-500 p-0.5 shadow-[0_0_10px_rgba(239,68,68,0.7)]">
+                            <XCircle className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                          </div>
                         )}
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 text-white/55">
-                        <Plus className="w-3.5 h-3.5" />
-                        <span className="text-[9px] uppercase tracking-[0.25em] font-bold">
-                          ?
+                      <motion.div
+                        className="relative flex flex-col items-center gap-1 text-white/70"
+                        animate={{ y: [0, -3, 0] }}
+                        transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <div className="rounded-full bg-white/10 p-1.5 border border-white/20">
+                          <MousePointer2 className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-[9px] uppercase tracking-[0.25em] font-black">
+                          drop
                         </span>
-                      </div>
+                      </motion.div>
                     )}
                   </div>
                 </foreignObject>
@@ -814,88 +848,178 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
         </div>
 
         {/* ============ Assembly panel (build mode) ============ */}
-        <div className="rounded-2xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+        <div
+          className="relative rounded-2xl border border-border bg-card p-4 overflow-hidden"
+          style={{
+            backgroundImage:
+              "radial-gradient(ellipse at top left, hsl(var(--primary) / 0.08), transparent 60%), radial-gradient(ellipse at bottom right, hsl(var(--primary) / 0.05), transparent 55%)",
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div className="flex items-center gap-2">
-              {ready ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              ) : (
-                <Lock className="w-4 h-4 text-amber-500" />
-              )}
-              <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold">
-                {t.build}
-              </p>
+              <motion.div
+                className={`rounded-lg p-1.5 ${ready ? "bg-emerald-500/15" : "bg-amber-500/15"}`}
+                animate={ready ? { scale: [1, 1.08, 1] } : {}}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                {ready ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                ) : (
+                  <PackageOpen className="w-4 h-4 text-amber-500" />
+                )}
+              </motion.div>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-primary font-black leading-none">
+                  {t.build}
+                </p>
+                <p className="text-[9px] text-muted-foreground mt-0.5 font-mono tabular-nums">
+                  {ALL_PARTS.filter(z => placed[z] !== null).length} / {ALL_PARTS.length}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={resetBuild}
-                className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border bg-secondary/50 text-xs font-semibold hover:border-primary/40 transition-colors"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                {t.buildReset}
-              </button>
-              <button
-                onClick={runCheck}
-                disabled={!allFilled || ready}
-                className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-black tracking-wide border-2 transition-all ${
-                  ready
-                    ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
-                    : allFilled
-                      ? "border-amber-500 bg-amber-500/15 text-amber-500 hover:bg-amber-500/25"
-                      : "border-border text-muted-foreground opacity-60 cursor-not-allowed"
-                }`}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {t.check}
-              </button>
+            {/* Progress dots */}
+            <div className="flex items-center gap-1">
+              {ALL_PARTS.map((z) => {
+                const filled = placed[z] !== null;
+                const correct = placed[z] === z;
+                return (
+                  <div
+                    key={`dot-${z}`}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      ready || correct
+                        ? "bg-emerald-500 shadow-[0_0_6px_rgba(52,211,153,0.7)]"
+                        : checked === "fail" && filled && !correct
+                          ? "bg-red-500"
+                          : filled
+                            ? "bg-sky-400"
+                            : "bg-muted-foreground/25"
+                    }`}
+                  />
+                );
+              })}
             </div>
           </div>
 
-          {/* status banner */}
-          {checked === "ok" && (
-            <div className="mb-3 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span className="text-xs font-bold text-emerald-500">{t.correct}</span>
-            </div>
-          )}
-          {checked === "fail" && (
-            <div className="mb-3 rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 flex items-center gap-2">
-              <XCircle className="w-4 h-4 text-red-500 shrink-0" />
-              <span className="text-xs font-bold text-red-500">{t.wrong}</span>
-            </div>
-          )}
-          {checked === null && (
-            <p className="mb-3 text-xs text-muted-foreground leading-relaxed">{t.buildDesc}</p>
-          )}
+          {/* Action row */}
+          <div className="flex items-center gap-2 mb-3">
+            <button
+              onClick={resetBuild}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-secondary/60 text-xs font-bold hover:border-primary/50 hover:bg-secondary transition-all"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              {t.buildReset}
+            </button>
+            <button
+              onClick={runCheck}
+              disabled={!allFilled || ready}
+              className={`flex-1 inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-xs font-black tracking-wide border-2 transition-all ${
+                ready
+                  ? "border-emerald-500 bg-gradient-to-r from-emerald-500/25 to-emerald-400/15 text-emerald-500 shadow-[0_0_18px_rgba(52,211,153,0.35)]"
+                  : allFilled
+                    ? "border-amber-400 bg-gradient-to-r from-amber-500/25 to-amber-400/10 text-amber-500 hover:from-amber-500/35 hover:to-amber-400/20 shadow-[0_0_18px_rgba(251,191,36,0.3)] animate-pulse"
+                    : "border-border text-muted-foreground opacity-50 cursor-not-allowed"
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {t.check}
+            </button>
+          </div>
 
-          {/* tray */}
-          <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground font-bold mb-2">
-            {t.tray}
-          </p>
-          <div className="flex flex-wrap gap-3 min-h-[80px]">
-            {unplaced.length === 0 ? (
-              <span className="text-xs text-muted-foreground italic self-center">{t.trayEmpty}</span>
-            ) : (
-              unplaced.map((p) => (
-                <div
-                  key={p}
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
-                  title={t.parts[p]}
-                  className="group w-20 h-20 rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/5 to-primary/15 flex flex-col items-center justify-center p-1.5 cursor-grab active:cursor-grabbing hover:border-primary hover:scale-105 hover:shadow-lg select-none transition-all"
-                >
-                  <img
-                    src={PART_IMG[p]}
-                    alt={t.parts[p]}
-                    draggable={false}
-                    className="w-12 h-12 object-contain pointer-events-none"
-                  />
-                  <span className="text-[9px] font-bold text-foreground/80 text-center leading-tight mt-0.5 line-clamp-1">
-                    {t.parts[p]}
-                  </span>
-                </div>
-              ))
+          {/* status banner */}
+          <AnimatePresence mode="wait">
+            {checked === "ok" && (
+              <motion.div
+                key="ok"
+                initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="mb-3 relative overflow-hidden rounded-xl border border-emerald-500/50 bg-gradient-to-r from-emerald-500/20 via-emerald-400/10 to-emerald-500/20 px-3 py-2.5 flex items-center gap-2 shadow-[0_0_20px_rgba(52,211,153,0.25)]"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="text-xs font-black text-emerald-500 tracking-wide">{t.correct}</span>
+                <Sparkles className="w-3 h-3 text-emerald-400/70 shrink-0 ml-auto" />
+              </motion.div>
             )}
+            {checked === "fail" && (
+              <motion.div
+                key="fail"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: [0, -4, 4, -3, 3, 0] }}
+                exit={{ opacity: 0 }}
+                transition={{ x: { duration: 0.45 } }}
+                className="mb-3 rounded-xl border border-red-500/50 bg-gradient-to-r from-red-500/15 to-red-400/5 px-3 py-2.5 flex items-center gap-2"
+              >
+                <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                <span className="text-xs font-bold text-red-500">{t.wrong}</span>
+              </motion.div>
+            )}
+            {checked === null && (
+              <motion.p
+                key="hint"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="mb-3 text-xs text-muted-foreground leading-relaxed"
+              >
+                {t.buildDesc}
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          {/* Tray */}
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground font-black">
+              {t.tray}
+            </p>
+            <span className="text-[9px] font-mono text-muted-foreground/70">
+              {unplaced.length} {unplaced.length === 1 ? "part" : "parts"}
+            </span>
+          </div>
+          <div className="relative rounded-xl border border-dashed border-border/70 bg-gradient-to-br from-secondary/40 to-transparent p-3 min-h-[96px]">
+            <div className="flex flex-wrap gap-2.5">
+              {unplaced.length === 0 ? (
+                <div className="w-full flex items-center justify-center gap-2 py-4">
+                  <PackageOpen className="w-4 h-4 text-muted-foreground/60" />
+                  <span className="text-xs text-muted-foreground italic">{t.trayEmpty}</span>
+                </div>
+              ) : (
+                unplaced.map((p, i) => (
+                  <motion.div
+                    key={p}
+                    initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: i * 0.04 }}
+                  >
+                    <div
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
+                      title={t.parts[p]}
+                      className="group relative w-[76px] h-[84px] rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex flex-col items-center justify-between p-1.5 cursor-grab active:cursor-grabbing hover:border-primary hover:-translate-y-1 hover:shadow-[0_10px_25px_-5px_hsl(var(--primary)/0.4)] select-none transition-all overflow-hidden"
+                    >
+                    {/* glow halo */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                         style={{ background: "radial-gradient(circle at center, hsl(var(--primary) / 0.25), transparent 65%)" }} />
+                    <div className="relative flex-1 w-full flex items-center justify-center">
+                      <img
+                        src={PART_IMG[p]}
+                        alt={t.parts[p]}
+                        draggable={false}
+                        className="w-11 h-11 object-contain pointer-events-none drop-shadow-[0_4px_8px_rgba(0,0,0,0.25)] group-hover:scale-110 transition-transform"
+                      />
+                    </div>
+                    <span className="relative text-[8.5px] font-bold text-foreground/85 text-center leading-tight line-clamp-2 w-full">
+                      {t.parts[p]}
+                    </span>
+                      {/* drag hint corner */}
+                      <div className="absolute top-1 right-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                        <MousePointer2 className="w-2.5 h-2.5 text-primary" />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

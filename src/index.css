@@ -183,6 +183,12 @@ img { -webkit-user-drag: none; }
 }
 /* ============ End UX polish ============ */
 
+/* Drop-zone shimmer sweep */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
 /* Gemini-style shimmer status text */
 @keyframes gemini-shimmer {
   0% { background-position: 200% 50%; }
