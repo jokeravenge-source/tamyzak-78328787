@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, Power, Info, Zap, Beaker, Circle } from "lucide-react";
+import { motion } from "framer-motion";
+import { RotateCcw, Power, Info, Zap, Circle } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 
 // ---------- copy ----------
