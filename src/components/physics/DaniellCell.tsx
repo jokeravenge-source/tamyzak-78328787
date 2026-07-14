@@ -903,25 +903,38 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
           <div className="grid grid-cols-2 gap-2 mb-4">
             <button
               onClick={() => setClosed(false)}
+              disabled={!ready}
               className={`h-10 rounded-lg text-[11px] font-black tracking-widest border-2 transition-all ${
-                !closed
-                  ? "bg-primary/15 border-primary text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/40"
+                !ready
+                  ? "border-border text-muted-foreground/40 cursor-not-allowed"
+                  : !closed
+                    ? "bg-primary/15 border-primary text-primary"
+                    : "border-border text-muted-foreground hover:border-primary/40"
               }`}
             >
               {t.off}
             </button>
             <button
               onClick={() => setClosed(true)}
-              className={`h-10 rounded-lg text-[11px] font-black tracking-widest border-2 transition-all ${
-                closed
-                  ? "bg-amber-500/15 border-amber-500 text-amber-500"
-                  : "border-border text-muted-foreground hover:border-amber-500/40"
+              disabled={!ready}
+              title={!ready ? t.locked : undefined}
+              className={`h-10 rounded-lg text-[11px] font-black tracking-widest border-2 transition-all inline-flex items-center justify-center gap-1.5 ${
+                !ready
+                  ? "border-border text-muted-foreground/40 cursor-not-allowed"
+                  : closed
+                    ? "bg-amber-500/15 border-amber-500 text-amber-500"
+                    : "border-border text-muted-foreground hover:border-amber-500/40"
               }`}
             >
+              {!ready && <Lock className="w-3 h-3" />}
               {t.on}
             </button>
           </div>
+          {!ready && (
+            <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-1">
+              <Lock className="w-3 h-3" /> {t.locked}
+            </p>
+          )}
 
           <MiniSlider label={t.zincConc}   value={znC} min={0.01} max={2} step={0.01} suffix=" M" fmt={(v) => v.toFixed(2)} onChange={(v) => setZnC(v)} />
           <MiniSlider label={t.copperConc} value={cuC} min={0.01} max={2} step={0.01} suffix=" M" fmt={(v) => v.toFixed(2)} onChange={(v) => setCuC(v)} />
