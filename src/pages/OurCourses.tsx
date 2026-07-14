@@ -599,6 +599,100 @@ function ManageModal({
 
 export default OurCourses;
 
+function AddPlaylistModal({
+  course,
+  isAr,
+  onClose,
+  onDone,
+}: {
+  course: Course;
+  isAr: boolean;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    const pl = extractPlaylistId(url);
+    if (!title.trim() || !pl) {
+      toast.error(isAr ? "أدخل عنواناً ورابط قائمة تشغيل صحيح" : "Enter a title and a valid playlist URL");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await (supabase as any).from("course_playlists").insert({
+        course_id: course.id,
+        title: title.trim(),
+        playlist_id: pl,
+        created_by: user.id,
+      });
+      if (error) throw error;
+      toast.success(isAr ? "تمت الإضافة" : "Playlist added");
+      onDone();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        dir={isAr ? "rtl" : "ltr"}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-5"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold inline-flex items-center gap-2">
+            <Youtube className="w-5 h-5 text-[#ff0033]" />
+            {isAr ? `إضافة قائمة تشغيل - ${course.titleAr}` : `Add playlist - ${course.titleEn}`}
+          </h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <label className="block text-xs font-semibold mb-1">{isAr ? "العنوان" : "Title"}</label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={120}
+          placeholder={isAr ? "مثال: محاضرات الفصل 1" : "e.g. Chapter 1 lectures"}
+          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
+        />
+
+        <label className="block text-xs font-semibold mb-1">{isAr ? "رابط قائمة تشغيل يوتيوب" : "YouTube playlist URL"}</label>
+        <input
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://youtube.com/playlist?list=PL..."
+          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-2"
+          dir="ltr"
+        />
+        <p className="text-[11px] text-muted-foreground mb-4">
+          {isAr
+            ? "ألصق رابط قائمة تشغيل يوتيوب أو معرّف القائمة (مثال: PLxxxxxx)."
+            : "Paste a YouTube playlist URL or ID (e.g. PLxxxxxx)."}
+        </p>
+
+        <button
+          onClick={submit}
+          disabled={busy}
+          className="w-full h-10 rounded-xl bg-primary text-primary-foreground font-bold text-sm inline-flex items-center justify-center gap-2 disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          {isAr ? "إضافة" : "Add"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CourseRunner({
   course,
   isAr,
