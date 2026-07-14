@@ -872,7 +872,7 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
           <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground font-bold mb-2">
             {t.tray}
           </p>
-          <div className="flex flex-wrap gap-2 min-h-[44px]">
+          <div className="flex flex-wrap gap-3 min-h-[80px]">
             {unplaced.length === 0 ? (
               <span className="text-xs text-muted-foreground italic self-center">{t.trayEmpty}</span>
             ) : (
@@ -881,9 +881,18 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                   key={p}
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
-                  className="px-3 py-2 rounded-lg border-2 border-primary/50 bg-primary/10 text-primary text-xs font-bold cursor-grab active:cursor-grabbing hover:border-primary hover:bg-primary/20 select-none transition-colors"
+                  title={t.parts[p]}
+                  className="group w-20 h-20 rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/5 to-primary/15 flex flex-col items-center justify-center p-1.5 cursor-grab active:cursor-grabbing hover:border-primary hover:scale-105 hover:shadow-lg select-none transition-all"
                 >
-                  {t.parts[p]}
+                  <img
+                    src={PART_IMG[p]}
+                    alt={t.parts[p]}
+                    draggable={false}
+                    className="w-12 h-12 object-contain pointer-events-none"
+                  />
+                  <span className="text-[9px] font-bold text-foreground/80 text-center leading-tight mt-0.5 line-clamp-1">
+                    {t.parts[p]}
+                  </span>
                 </div>
               ))
             )}
