@@ -776,17 +776,98 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
               </span>
             </div>
             <button
-              onClick={() => setClosed((c) => !c)}
+              onClick={() => ready && setClosed((c) => !c)}
+              disabled={!ready}
+              title={!ready ? t.locked : undefined}
               className={`shrink-0 inline-flex items-center gap-2 h-9 px-4 rounded-xl border-2 text-xs font-black tracking-widest transition-all ${
-                closed
-                  ? "bg-amber-500/20 border-amber-400 text-amber-300"
-                  : "bg-white/5 border-white/20 text-white/70 hover:border-white/50"
+                !ready
+                  ? "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
+                  : closed
+                    ? "bg-amber-500/20 border-amber-400 text-amber-300"
+                    : "bg-white/5 border-white/20 text-white/70 hover:border-white/50"
               }`}
-              style={closed ? { boxShadow: "0 0 24px rgba(251,191,36,0.45)" } : undefined}
+              style={ready && closed ? { boxShadow: "0 0 24px rgba(251,191,36,0.45)" } : undefined}
             >
-              <Power className="w-3.5 h-3.5" />
-              {closed ? t.on : t.off}
+              {ready ? <Power className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+              {ready ? (closed ? t.on : t.off) : t.off}
             </button>
+          </div>
+        </div>
+
+        {/* ============ Assembly panel (build mode) ============ */}
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              {ready ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              ) : (
+                <Lock className="w-4 h-4 text-amber-500" />
+              )}
+              <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground font-bold">
+                {t.build}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={resetBuild}
+                className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-border bg-secondary/50 text-xs font-semibold hover:border-primary/40 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {t.buildReset}
+              </button>
+              <button
+                onClick={runCheck}
+                disabled={!allFilled || ready}
+                className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-black tracking-wide border-2 transition-all ${
+                  ready
+                    ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                    : allFilled
+                      ? "border-amber-500 bg-amber-500/15 text-amber-500 hover:bg-amber-500/25"
+                      : "border-border text-muted-foreground opacity-60 cursor-not-allowed"
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {t.check}
+              </button>
+            </div>
+          </div>
+
+          {/* status banner */}
+          {checked === "ok" && (
+            <div className="mb-3 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span className="text-xs font-bold text-emerald-500">{t.correct}</span>
+            </div>
+          )}
+          {checked === "fail" && (
+            <div className="mb-3 rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 flex items-center gap-2">
+              <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+              <span className="text-xs font-bold text-red-500">{t.wrong}</span>
+            </div>
+          )}
+          {checked === null && (
+            <p className="mb-3 text-xs text-muted-foreground leading-relaxed">{t.buildDesc}</p>
+          )}
+
+          {/* tray */}
+          <p className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground font-bold mb-2">
+            {t.tray}
+          </p>
+          <div className="flex flex-wrap gap-2 min-h-[44px]">
+            {unplaced.length === 0 ? (
+              <span className="text-xs text-muted-foreground italic self-center">{t.trayEmpty}</span>
+            ) : (
+              unplaced.map((p) => (
+                <div
+                  key={p}
+                  draggable
+                  onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
+                  className="px-3 py-2 rounded-lg border-2 border-primary/50 bg-primary/10 text-primary text-xs font-bold cursor-grab active:cursor-grabbing hover:border-primary hover:bg-primary/20 select-none transition-colors"
+                >
+                  {t.parts[p]}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
