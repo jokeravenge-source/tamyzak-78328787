@@ -368,6 +368,8 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
               </radialGradient>
             </defs>
 
+            {/* ============ assembleable content — dims until assembled ============ */}
+            <g style={{ opacity: ready ? 1 : 0.14, transition: "opacity 500ms ease" }} pointerEvents={ready ? "auto" : "none"}>
             {/* baseline / stage floor */}
             <line x1="80" y1="480" x2="720" y2="480" stroke="#ffffff" strokeOpacity="0.08" strokeWidth="1" strokeDasharray="4 6" />
             <ellipse cx="200" cy="480" rx="130" ry="8" fill="#000" opacity="0.5" />
