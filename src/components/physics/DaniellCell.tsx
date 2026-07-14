@@ -754,17 +754,21 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                           e.dataTransfer.setData("text/plain", filledWith);
                           removeFromZone(z.id);
                         }}
-                        className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none"
-                        title="Drag to move"
+                        className="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+                        title={t.parts[filledWith]}
                       >
-                        {isCorrect ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                        ) : isWrong ? (
-                          <XCircle className="w-3.5 h-3.5 text-red-300 shrink-0" />
-                        ) : null}
-                        <span className="text-[10px] md:text-xs font-black tracking-wide text-white drop-shadow">
-                          {t.parts[filledWith]}
-                        </span>
+                        <img
+                          src={PART_IMG[filledWith]}
+                          alt={t.parts[filledWith]}
+                          draggable={false}
+                          className="max-w-full max-h-full object-contain pointer-events-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
+                        />
+                        {isCorrect && (
+                          <CheckCircle2 className="absolute top-1 right-1 w-4 h-4 text-emerald-300 bg-emerald-900/70 rounded-full" />
+                        )}
+                        {isWrong && (
+                          <XCircle className="absolute top-1 right-1 w-4 h-4 text-red-300 bg-red-900/70 rounded-full" />
+                        )}
                       </div>
                     ) : (
                       <div className="flex items-center gap-1 text-white/55">
