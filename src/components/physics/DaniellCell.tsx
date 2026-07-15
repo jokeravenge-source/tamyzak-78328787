@@ -148,6 +148,8 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
   const [placed, setPlaced] = useState<Record<PartId, PartId | null>>(emptyPlaced);
   const [checked, setChecked] = useState<null | "ok" | "fail">(null);
   const [dragOver, setDragOver] = useState<PartId | null>(null);
+  // tap-to-place selection (mobile / touch fallback)
+  const [selectedPart, setSelectedPart] = useState<PartId | null>(null);
 
   const allFilled = ALL_PARTS.every((z) => placed[z] !== null);
   const allCorrect = ALL_PARTS.every((z) => placed[z] === z);
@@ -166,6 +168,7 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
     });
     setChecked(null);
     setDragOver(null);
+    setSelectedPart(null);
   };
   const removeFromZone = (zoneId: PartId) => {
     setPlaced((prev) => ({ ...prev, [zoneId]: null }));
@@ -175,6 +178,7 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
     setPlaced(emptyPlaced);
     setChecked(null);
     setClosed(false);
+    setSelectedPart(null);
   };
   const runCheck = () => {
     if (!allFilled) return;
