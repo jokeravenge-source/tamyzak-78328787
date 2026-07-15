@@ -64,7 +64,7 @@ const copy = {
     ],
     nernst: "E = 1.10 − (0.0592/2) · log ( [Zn²⁺] / [Cu²⁺] )",
     build: "ASSEMBLY MODE",
-    buildDesc: "Drag each part into its correct place, then check your work.",
+    buildDesc: "Drag each part into its slot — or tap a part then tap a slot on touch devices. Then check your work.",
     check: "Check assembly",
     correct: "Perfect assembly — circuit is ready.",
     wrong: "Some parts are misplaced. Fix the red slots.",
@@ -110,7 +110,7 @@ const copy = {
     ],
     nernst: "E = 1.10 − (0.0592/2) · log ( [Zn²⁺] / [Cu²⁺] )",
     build: "وضع التركيب",
-    buildDesc: "اسحب كل قطعة إلى مكانها الصحيح ثم تحقّق من إجابتك.",
+    buildDesc: "اسحب كل قطعة إلى مكانها، أو انقر على القطعة ثم انقر على المكان في الأجهزة اللمسية، ثم تحقّق من إجابتك.",
     check: "تحقق من التركيب",
     correct: "تركيب صحيح — الدائرة جاهزة.",
     wrong: "بعض القطع في مكان خاطئ. صحّح الخانات الحمراء.",
@@ -148,6 +148,8 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
   const [placed, setPlaced] = useState<Record<PartId, PartId | null>>(emptyPlaced);
   const [checked, setChecked] = useState<null | "ok" | "fail">(null);
   const [dragOver, setDragOver] = useState<PartId | null>(null);
+  // tap-to-place selection (mobile / touch fallback)
+  const [selectedPart, setSelectedPart] = useState<PartId | null>(null);
 
   const allFilled = ALL_PARTS.every((z) => placed[z] !== null);
   const allCorrect = ALL_PARTS.every((z) => placed[z] === z);
@@ -166,6 +168,7 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
     });
     setChecked(null);
     setDragOver(null);
+    setSelectedPart(null);
   };
   const removeFromZone = (zoneId: PartId) => {
     setPlaced((prev) => ({ ...prev, [zoneId]: null }));
@@ -175,6 +178,7 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
     setPlaced(emptyPlaced);
     setChecked(null);
     setClosed(false);
+    setSelectedPart(null);
   };
   const runCheck = () => {
     if (!allFilled) return;
@@ -738,8 +742,20 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                       const pid = e.dataTransfer.getData("text/plain") as PartId;
                       if (ALL_PARTS.includes(pid)) handleDrop(z.id, pid);
                     }}
+                    onClick={() => {
+                      // tap-to-place: if a tray part is selected, drop it here
+                      if (selectedPart) {
+                        handleDrop(z.id, selectedPart);
+                        return;
+                      }
+                      // otherwise, tapping a filled zone returns its part to the tray
+                      if (filledWith) {
+                        removeFromZone(z.id);
+                      }
+                    }}
                     style={{ width: "100%", height: "100%" }}
                     className={`relative overflow-hidden rounded-2xl border-2 border-dashed flex items-center justify-center text-center px-2 transition-all duration-300 backdrop-blur-[2px]
+                      ${selectedPart && !filledWith ? "cursor-pointer ring-2 ring-amber-300/60 animate-pulse" : "cursor-pointer"}
                       ${isOver ? "border-amber-300 bg-gradient-to-br from-amber-400/30 to-amber-500/10 scale-[1.05] shadow-[0_0_30px_rgba(251,191,36,0.5)]" : ""}
                       ${!isOver && isCorrect ? "border-emerald-400 bg-gradient-to-br from-emerald-500/20 to-emerald-400/5 shadow-[0_0_20px_rgba(52,211,153,0.35)]" : ""}
                       ${!isOver && isWrong ? "border-red-500 bg-gradient-to-br from-red-500/25 to-red-400/10 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.4)]" : ""}
@@ -994,8 +1010,13 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                     <div
                       draggable
                       onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
+                      onClick={() => setSelectedPart((cur) => (cur === p ? null : p))}
                       title={t.parts[p]}
-                      className="group relative w-[76px] h-[84px] rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex flex-col items-center justify-between p-1.5 cursor-grab active:cursor-grabbing hover:border-primary hover:-translate-y-1 hover:shadow-[0_10px_25px_-5px_hsl(var(--primary)/0.4)] select-none transition-all overflow-hidden"
+                      className={`group relative w-[76px] h-[84px] rounded-xl border-2 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex flex-col items-center justify-between p-1.5 cursor-pointer md:cursor-grab active:cursor-grabbing hover:-translate-y-1 hover:shadow-[0_10px_25px_-5px_hsl(var(--primary)/0.4)] select-none transition-all overflow-hidden ${
+                        selectedPart === p
+                          ? "border-amber-400 ring-2 ring-amber-300/60 shadow-[0_0_20px_rgba(251,191,36,0.45)] -translate-y-1"
+                          : "border-primary/40 hover:border-primary"
+                      }`}
                     >
                     {/* glow halo */}
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
