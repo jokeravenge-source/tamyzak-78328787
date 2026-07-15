@@ -1010,8 +1010,13 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                     <div
                       draggable
                       onDragStart={(e) => e.dataTransfer.setData("text/plain", p)}
+                      onClick={() => setSelectedPart((cur) => (cur === p ? null : p))}
                       title={t.parts[p]}
-                      className="group relative w-[76px] h-[84px] rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex flex-col items-center justify-between p-1.5 cursor-grab active:cursor-grabbing hover:border-primary hover:-translate-y-1 hover:shadow-[0_10px_25px_-5px_hsl(var(--primary)/0.4)] select-none transition-all overflow-hidden"
+                      className={`group relative w-[76px] h-[84px] rounded-xl border-2 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex flex-col items-center justify-between p-1.5 cursor-pointer md:cursor-grab active:cursor-grabbing hover:-translate-y-1 hover:shadow-[0_10px_25px_-5px_hsl(var(--primary)/0.4)] select-none transition-all overflow-hidden ${
+                        selectedPart === p
+                          ? "border-amber-400 ring-2 ring-amber-300/60 shadow-[0_0_20px_rgba(251,191,36,0.45)] -translate-y-1"
+                          : "border-primary/40 hover:border-primary"
+                      }`}
                     >
                     {/* glow halo */}
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
