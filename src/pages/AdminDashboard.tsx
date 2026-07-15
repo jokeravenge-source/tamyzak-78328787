@@ -23,6 +23,23 @@ type Row = {
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes";
   const [tab, setTab] = useState<Tab>("pending");
+  // Owner gate: only this email sees every tab. Other admins are moderators
+  // and only see acceptance/review-related tabs (summaries pending, flashcards
+  // approvals, username requests, AI files uploads).
+  const OWNER_EMAIL = "majs11@gmail.com";
+  const [isOwner, setIsOwner] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      setIsOwner((data.user?.email ?? "").toLowerCase() === OWNER_EMAIL);
+    })();
+  }, []);
+  const MOD_TABS: Tab[] = ["pending", "flashcards", "usernames", "aifiles"];
+  const canSee = (t: Tab) => isOwner || MOD_TABS.includes(t);
+  useEffect(() => {
+    if (!canSee(tab)) setTab("pending");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOwner]);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
