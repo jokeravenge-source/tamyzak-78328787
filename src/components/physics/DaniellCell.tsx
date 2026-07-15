@@ -742,8 +742,20 @@ const DaniellCell = ({ language }: { language: AppLanguage }) => {
                       const pid = e.dataTransfer.getData("text/plain") as PartId;
                       if (ALL_PARTS.includes(pid)) handleDrop(z.id, pid);
                     }}
+                    onClick={() => {
+                      // tap-to-place: if a tray part is selected, drop it here
+                      if (selectedPart) {
+                        handleDrop(z.id, selectedPart);
+                        return;
+                      }
+                      // otherwise, tapping a filled zone returns its part to the tray
+                      if (filledWith) {
+                        removeFromZone(z.id);
+                      }
+                    }}
                     style={{ width: "100%", height: "100%" }}
                     className={`relative overflow-hidden rounded-2xl border-2 border-dashed flex items-center justify-center text-center px-2 transition-all duration-300 backdrop-blur-[2px]
+                      ${selectedPart && !filledWith ? "cursor-pointer ring-2 ring-amber-300/60 animate-pulse" : "cursor-pointer"}
                       ${isOver ? "border-amber-300 bg-gradient-to-br from-amber-400/30 to-amber-500/10 scale-[1.05] shadow-[0_0_30px_rgba(251,191,36,0.5)]" : ""}
                       ${!isOver && isCorrect ? "border-emerald-400 bg-gradient-to-br from-emerald-500/20 to-emerald-400/5 shadow-[0_0_20px_rgba(52,211,153,0.35)]" : ""}
                       ${!isOver && isWrong ? "border-red-500 bg-gradient-to-br from-red-500/25 to-red-400/10 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.4)]" : ""}
