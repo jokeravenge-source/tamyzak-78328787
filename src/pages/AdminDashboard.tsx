@@ -23,6 +23,23 @@ type Row = {
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes";
   const [tab, setTab] = useState<Tab>("pending");
+  // Owner gate: only this email sees every tab. Other admins are moderators
+  // and only see acceptance/review-related tabs (summaries pending, flashcards
+  // approvals, username requests, AI files uploads).
+  const OWNER_EMAIL = "majs11@gmail.com";
+  const [isOwner, setIsOwner] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      setIsOwner((data.user?.email ?? "").toLowerCase() === OWNER_EMAIL);
+    })();
+  }, []);
+  const MOD_TABS: Tab[] = ["pending", "flashcards", "usernames", "aifiles"];
+  const canSee = (t: Tab) => isOwner || MOD_TABS.includes(t);
+  useEffect(() => {
+    if (!canSee(tab)) setTab("pending");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOwner]);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -554,30 +571,40 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
           <button onClick={() => setTab("pending")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "pending" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Clock className="w-4 h-4 inline mr-1.5" />Summaries — Pending
           </button>
-          <button onClick={() => setTab("approved")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "approved" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-            <Check className="w-4 h-4 inline mr-1.5" />Summaries — Approved
-          </button>
+          {canSee("approved") && (
+            <button onClick={() => setTab("approved")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "approved" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              <Check className="w-4 h-4 inline mr-1.5" />Summaries — Approved
+            </button>
+          )}
           <button onClick={() => setTab("flashcards")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "flashcards" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <Layers className="w-4 h-4 inline mr-1.5" />Flashcards
           </button>
-          <button onClick={() => setTab("notifications")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "notifications" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-            <Bell className="w-4 h-4 inline mr-1.5" />Notifications
-          </button>
-          <button onClick={() => setTab("news")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "news" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-            <Newspaper className="w-4 h-4 inline mr-1.5" />News
-          </button>
-          <button onClick={() => setTab("users")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "users" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-            <UsersIcon className="w-4 h-4 inline mr-1.5" />Users
-          </button>
+          {canSee("notifications") && (
+            <button onClick={() => setTab("notifications")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "notifications" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              <Bell className="w-4 h-4 inline mr-1.5" />Notifications
+            </button>
+          )}
+          {canSee("news") && (
+            <button onClick={() => setTab("news")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "news" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              <Newspaper className="w-4 h-4 inline mr-1.5" />News
+            </button>
+          )}
+          {canSee("users") && (
+            <button onClick={() => setTab("users")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "users" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              <UsersIcon className="w-4 h-4 inline mr-1.5" />Users
+            </button>
+          )}
           <button onClick={() => setTab("usernames")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "usernames" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <UserCog className="w-4 h-4 inline mr-1.5" />Username Requests
           </button>
           <button onClick={() => setTab("aifiles")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "aifiles" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <BookOpen className="w-4 h-4 inline mr-1.5" />AI Files
           </button>
-          <button onClick={() => setTab("notes")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "notes" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-            <StickyNote className="w-4 h-4 inline mr-1.5" />Notes
-          </button>
+          {canSee("notes") && (
+            <button onClick={() => setTab("notes")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "notes" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              <StickyNote className="w-4 h-4 inline mr-1.5" />Notes
+            </button>
+          )}
         </div>
 
         {tab === "notes" ? (
