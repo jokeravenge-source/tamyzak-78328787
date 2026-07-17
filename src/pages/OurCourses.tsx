@@ -1148,6 +1148,7 @@ function CourseRunner({
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setHumanSent(true);
+      setRoutedSubject((data as any)?.routed ? String((data as any)?.subjectCode ?? "") : "");
       toast.success(isAr ? "تم الإرسال إلى المدرّس" : "Sent to the human grader");
     } catch (e: any) {
       toast.error(e?.message ?? (isAr ? "تعذّر الإرسال" : "Send failed"));
