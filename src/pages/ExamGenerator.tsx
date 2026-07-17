@@ -123,6 +123,7 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const [sendingHuman, setSendingHuman] = useState(false);
   const [humanSent, setHumanSent] = useState(false);
   const [routedSubject, setRoutedSubject] = useState<string>("");
+  const [groupOverride, setGroupOverride] = useState<"physics" | "chemistry" | "biology" | "math" | "">("");
 
   useEffect(() => {
     try {
@@ -229,11 +230,12 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
     setSendingHuman(true);
     try {
       const ch = subject ? getChaptersForSubject(subject).find((c) => c.n === chapterN) : null;
+      const chosen = groupOverride || (subject ?? "");
       const { data, error } = await supabase.functions.invoke("send-to-human-grader", {
         body: {
           telegramUsername: uname,
           subject: subject ? (language === "ar" ? subjectMeta?.ar : subjectMeta?.en) : "",
-          subjectCode: subject ?? "",
+          subjectCode: chosen,
           chapter: ch ? (language === "ar" ? ch.arTitle : ch.title) : "",
           examText,
           studentText: studentText.trim(),
