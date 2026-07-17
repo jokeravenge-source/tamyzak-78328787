@@ -122,6 +122,7 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
   const [humanReason, setHumanReason] = useState("");
   const [sendingHuman, setSendingHuman] = useState(false);
   const [humanSent, setHumanSent] = useState(false);
+  const [routedSubject, setRoutedSubject] = useState<string>("");
 
   useEffect(() => {
     try {
