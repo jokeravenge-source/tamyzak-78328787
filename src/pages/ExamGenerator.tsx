@@ -563,7 +563,16 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
                     )}
 
                     {humanSent && (
-                      <div className="mt-3 text-sm text-emerald-300">✓ {t.sent}</div>
+                      <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+                        <div>✓ {t.sent}</div>
+                        {routedSubject && (
+                          <div className="mt-1 text-xs text-emerald-200/90">
+                            {language === "ar"
+                              ? `تم توجيه الاعتراض إلى كروب ${({ physics: "الفيزياء", chemistry: "الكيمياء", biology: "الأحياء", math: "الرياضيات" } as Record<string,string>)[routedSubject] ?? routedSubject} الخاص بالمصححين.`
+                              : `Your request was routed to the ${({ physics: "Physics", chemistry: "Chemistry", biology: "Biology", math: "Math" } as Record<string,string>)[routedSubject] ?? routedSubject} graders group.`}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
