@@ -45,22 +45,17 @@ Deno.serve(async (req) => {
       ? body.studentImages.filter((s: unknown) => typeof s === "string" && (s as string).startsWith("data:image/")).slice(0, 10)
       : [];
 
-    // Route to subject-specific forum topic in the review supergroup.
-    // https://t.me/c/4451494196/<topic_id>  →  chat_id -1004451494196, message_thread_id = topic_id
-    const SUBJECT_TOPICS: Record<string, { chat_id: string; thread_id: number }> = {
-      biology:   { chat_id: "-1004451494196", thread_id: 583 },
-      chemistry: { chat_id: "-1004451494196", thread_id: 584 },
-      physics:   { chat_id: "-1004451494196", thread_id: 585 },
-      math:      { chat_id: "-1004451494196", thread_id: 586 },
+    // Route to subject-specific Telegram group.
+    const SUBJECT_CHATS: Record<string, string> = {
+      physics:   "-1004498749305",
+      chemistry: "-1003710019898",
+      math:      "-1004420333283",
+      biology:   "-1004461471633",
     };
-    const routed = SUBJECT_TOPICS[subjectCode];
-    const TARGET_CHAT_ID = routed ? routed.chat_id : CHAT_ID;
-    const THREAD_ID = routed ? routed.thread_id : undefined;
-    const withThread = <T extends Record<string, unknown>>(payload: T): T & { message_thread_id?: number } =>
-      THREAD_ID ? { ...payload, message_thread_id: THREAD_ID } : payload;
-    const appendThread = (fd: FormData) => {
-      if (THREAD_ID) fd.append("message_thread_id", String(THREAD_ID));
-    };
+    const routed = SUBJECT_CHATS[subjectCode];
+    const TARGET_CHAT_ID = routed ?? CHAT_ID;
+    const withThread = <T extends Record<string, unknown>>(payload: T): T => payload;
+    const appendThread = (_fd: FormData) => {};
 
     if (!telegramUsername || !/^[A-Za-z0-9_]{4,32}$/.test(telegramUsername)) {
       return new Response(JSON.stringify({ error: "Invalid Telegram username" }), {
