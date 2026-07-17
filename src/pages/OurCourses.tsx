@@ -442,6 +442,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         <PhysicsLecturesModal
           course={openLectures}
           isAr={isAr}
+          playlists={playlistsByCourse[openLectures.id] ?? []}
           onClose={() => setOpenLectures(null)}
         />
       )}
