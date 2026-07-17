@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const telegramUsername = String(body.telegramUsername ?? "").trim().replace(/^@+/, "").slice(0, 64);
     const subject = String(body.subject ?? "").slice(0, 60);
+    const subjectCode = String(body.subjectCode ?? "").toLowerCase().slice(0, 30);
     const chapter = String(body.chapter ?? "").slice(0, 200);
     const examText = String(body.examText ?? "").slice(0, 3500);
     const studentText = String(body.studentText ?? "").slice(0, 3500);
@@ -43,6 +44,23 @@ Deno.serve(async (req) => {
     const images: string[] = Array.isArray(body.studentImages)
       ? body.studentImages.filter((s: unknown) => typeof s === "string" && (s as string).startsWith("data:image/")).slice(0, 10)
       : [];
+
+    // Route to subject-specific forum topic in the review supergroup.
+    // https://t.me/c/4451494196/<topic_id>  →  chat_id -1004451494196, message_thread_id = topic_id
+    const SUBJECT_TOPICS: Record<string, { chat_id: string; thread_id: number }> = {
+      biology:   { chat_id: "-1004451494196", thread_id: 583 },
+      chemistry: { chat_id: "-1004451494196", thread_id: 584 },
+      physics:   { chat_id: "-1004451494196", thread_id: 585 },
+      math:      { chat_id: "-1004451494196", thread_id: 586 },
+    };
+    const routed = SUBJECT_TOPICS[subjectCode];
+    const TARGET_CHAT_ID = routed ? routed.chat_id : CHAT_ID;
+    const THREAD_ID = routed ? routed.thread_id : undefined;
+    const withThread = <T extends Record<string, unknown>>(payload: T): T & { message_thread_id?: number } =>
+      THREAD_ID ? { ...payload, message_thread_id: THREAD_ID } : payload;
+    const appendThread = (fd: FormData) => {
+      if (THREAD_ID) fd.append("message_thread_id", String(THREAD_ID));
+    };
 
     if (!telegramUsername || !/^[A-Za-z0-9_]{4,32}$/.test(telegramUsername)) {
       return new Response(JSON.stringify({ error: "Invalid Telegram username" }), {
@@ -70,7 +88,7 @@ Deno.serve(async (req) => {
     const hRes = await fetch(`${base}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: CHAT_ID, text: header, parse_mode: "HTML" }),
+      body: JSON.stringify(withThread({ chat_id: TARGET_CHAT_ID, text: header, parse_mode: "HTML" })),
     });
     if (!hRes.ok) {
       const t = await hRes.text();
@@ -86,7 +104,7 @@ Deno.serve(async (req) => {
         await fetch(`${base}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: CHAT_ID, text: `📄 الامتحان:\n\n${p}` }),
+          body: JSON.stringify(withThread({ chat_id: TARGET_CHAT_ID, text: `📄 الامتحان:\n\n${p}` })),
         });
       }
     }
@@ -98,7 +116,7 @@ Deno.serve(async (req) => {
         await fetch(`${base}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: CHAT_ID, text: `✍️ إجابة الطالب:\n\n${p}` }),
+          body: JSON.stringify(withThread({ chat_id: TARGET_CHAT_ID, text: `✍️ إجابة الطالب:\n\n${p}` })),
         });
       }
     }
@@ -110,13 +128,15 @@ Deno.serve(async (req) => {
           const b = dataUrlToBlob(group[0]);
           if (!b) continue;
           const fd = new FormData();
-          fd.append("chat_id", CHAT_ID);
+          fd.append("chat_id", TARGET_CHAT_ID);
+          appendThread(fd);
           fd.append("caption", "📷 ورقة الإجابة");
           fd.append("photo", b.blob, `answer.${b.ext}`);
           await fetch(`${base}/sendPhoto`, { method: "POST", body: fd });
         } else {
           const fd = new FormData();
-          fd.append("chat_id", CHAT_ID);
+          fd.append("chat_id", TARGET_CHAT_ID);
+          appendThread(fd);
           const media = group.map((_, i) => ({
             type: "photo",
             media: `attach://file${i}`,
