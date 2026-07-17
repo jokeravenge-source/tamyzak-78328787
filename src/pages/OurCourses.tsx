@@ -792,10 +792,12 @@ function PhysicsHub({
 function PhysicsLecturesModal({
   course,
   isAr,
+  playlists,
   onClose,
 }: {
   course: Course;
   isAr: boolean;
+  playlists: PlaylistRow[];
   onClose: () => void;
 }) {
   const chapters: { n: number; titleAr: string; titleEn: string; locked: boolean }[] = [
