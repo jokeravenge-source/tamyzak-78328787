@@ -1024,6 +1024,7 @@ function CourseRunner({
   const [sendingHuman, setSendingHuman] = useState(false);
   const [humanSent, setHumanSent] = useState(false);
   const [routedSubject, setRoutedSubject] = useState<string>("");
+  const [groupOverride, setGroupOverride] = useState<"physics" | "chemistry" | "biology" | "math" | "">("");
 
   const prepareImageForGrading = (file: File) => new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -1136,7 +1137,7 @@ function CourseRunner({
         body: {
           telegramUsername: uname,
           subject: isAr ? `دورة الليزر - ${course.titleAr}` : `Laser course - ${course.titleEn}`,
-          subjectCode: course.id,
+          subjectCode: groupOverride || course.id,
           chapter: selected.title,
           studentImages,
           aiScore: gradeResult
