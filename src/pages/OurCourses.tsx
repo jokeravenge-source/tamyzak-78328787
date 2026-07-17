@@ -1024,6 +1024,7 @@ function CourseRunner({
   const [sendingHuman, setSendingHuman] = useState(false);
   const [humanSent, setHumanSent] = useState(false);
   const [routedSubject, setRoutedSubject] = useState<string>("");
+  const [groupOverride, setGroupOverride] = useState<"physics" | "chemistry" | "biology" | "math" | "">("");
 
   const prepareImageForGrading = (file: File) => new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -1136,7 +1137,7 @@ function CourseRunner({
         body: {
           telegramUsername: uname,
           subject: isAr ? `دورة الليزر - ${course.titleAr}` : `Laser course - ${course.titleEn}`,
-          subjectCode: course.id,
+          subjectCode: groupOverride || course.id,
           chapter: selected.title,
           studentImages,
           aiScore: gradeResult
@@ -1441,6 +1442,23 @@ function CourseRunner({
                           className="min-h-[70px] rounded-lg text-sm"
                           dir={isAr ? "rtl" : "ltr"}
                         />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">
+                          {isAr ? "أرسل الاعتراض إلى كروب" : "Send objection to group"}
+                        </label>
+                        <select
+                          value={groupOverride || (["physics","chemistry","biology","math"].includes(course.id) ? course.id : "")}
+                          onChange={(e) => setGroupOverride(e.target.value as typeof groupOverride)}
+                          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
+                          dir={isAr ? "rtl" : "ltr"}
+                        >
+                          <option value="">{isAr ? "— اختر الكروب —" : "— Choose group —"}</option>
+                          <option value="physics">{isAr ? "الفيزياء" : "Physics"}</option>
+                          <option value="chemistry">{isAr ? "الكيمياء" : "Chemistry"}</option>
+                          <option value="biology">{isAr ? "الأحياء" : "Biology"}</option>
+                          <option value="math">{isAr ? "الرياضيات" : "Math"}</option>
+                        </select>
                       </div>
                       <button
                         onClick={sendToHuman}
