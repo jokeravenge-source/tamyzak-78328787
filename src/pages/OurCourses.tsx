@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo } from "lucide-react";
+import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo, Video, BookOpen, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -21,6 +21,8 @@ type Course = {
   accent: string;
   cover: string;
   active?: boolean;
+  fixedPlaylistId?: string;
+  hasLectures?: boolean;
 };
 
 const COURSES: Course[] = [
@@ -45,6 +47,7 @@ const COURSES: Course[] = [
     accent: "0 85% 62%",
     cover: nuclearImg,
     active: true,
+    hasLectures: true,
   },
   {
     id: "chemistry",
@@ -67,6 +70,30 @@ const COURSES: Course[] = [
     accent: "270 85% 62%",
     cover: geneticsImg,
     active: true,
+  },
+  {
+    id: "english",
+    titleAr: "الإنجليزية",
+    titleEn: "English",
+    descAr: "منهج اللغة الإنجليزية عبر قائمة تشغيل يوتيوب.",
+    descEn: "English curriculum via a curated YouTube playlist.",
+    Icon: BookOpen,
+    accent: "200 85% 55%",
+    cover: laserImg,
+    active: true,
+    fixedPlaylistId: "PLIeiyEYpbgler8Ue6LCIN_fzcLgzfF7lF",
+  },
+  {
+    id: "arabic",
+    titleAr: "العربية",
+    titleEn: "Arabic",
+    descAr: "منهج اللغة العربية عبر قائمة تشغيل يوتيوب.",
+    descEn: "Arabic curriculum via a curated YouTube playlist.",
+    Icon: Languages,
+    accent: "35 90% 55%",
+    cover: geometryImg,
+    active: true,
+    fixedPlaylistId: "PLIeiyEYpbglfWiy9HM0XfEBdh2U7mqH8_",
   },
 ];
 
@@ -110,6 +137,9 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [openCourse, setOpenCourse] = useState<Course | null>(null);
   const [playlistsByCourse, setPlaylistsByCourse] = useState<Record<string, PlaylistRow[]>>({});
   const [addPlaylistFor, setAddPlaylistFor] = useState<Course | null>(null);
+  const [openPlaylist, setOpenPlaylist] = useState<Course | null>(null);
+  const [openPhysicsHub, setOpenPhysicsHub] = useState<Course | null>(null);
+  const [openLectures, setOpenLectures] = useState<Course | null>(null);
 
   const refresh = async () => {
     const { data } = await supabase
@@ -214,7 +244,12 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           {COURSES.map((c, idx) => {
             const Icon = c.Icon;
             const examCount = counts[c.id] ?? 0;
-            const isReady = examCount > 0;
+            const isReady = !!c.fixedPlaylistId || !!c.hasLectures || examCount > 0;
+            const handleStart = () => {
+              if (c.fixedPlaylistId) setOpenPlaylist(c);
+              else if (c.hasLectures) setOpenPhysicsHub(c);
+              else setOpenCourse(c);
+            };
             return (
               <motion.article
                 key={c.id}
@@ -291,7 +326,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
 
                   {isReady ? (
                     <button
-                      onClick={() => setOpenCourse(c)}
+                      onClick={handleStart}
                       className="mt-5 w-full h-10 rounded-xl text-sm font-bold text-white inline-flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]"
                       style={{
                         background: `linear-gradient(135deg, hsl(${c.accent}), hsl(${c.accent} / 0.75))`,
@@ -383,6 +418,31 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           isAr={isAr}
           onClose={() => setAddPlaylistFor(null)}
           onDone={() => { setAddPlaylistFor(null); refresh(); }}
+        />
+      )}
+      {openPlaylist && (
+        <PlaylistOnlyModal
+          course={openPlaylist}
+          playlistId={openPlaylist.fixedPlaylistId!}
+          isAr={isAr}
+          onClose={() => setOpenPlaylist(null)}
+        />
+      )}
+      {openPhysicsHub && (
+        <PhysicsHub
+          course={openPhysicsHub}
+          isAr={isAr}
+          examCount={counts[openPhysicsHub.id] ?? 0}
+          onClose={() => setOpenPhysicsHub(null)}
+          onExams={() => { const c = openPhysicsHub; setOpenPhysicsHub(null); setOpenCourse(c); }}
+          onLectures={() => { const c = openPhysicsHub; setOpenPhysicsHub(null); setOpenLectures(c); }}
+        />
+      )}
+      {openLectures && (
+        <PhysicsLecturesModal
+          course={openLectures}
+          isAr={isAr}
+          onClose={() => setOpenLectures(null)}
         />
       )}
     </main>
@@ -598,6 +658,223 @@ function ManageModal({
 }
 
 export default OurCourses;
+
+function PlaylistOnlyModal({
+  course,
+  playlistId,
+  isAr,
+  onClose,
+}: {
+  course: Course;
+  playlistId: string;
+  isAr: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-background overflow-y-auto" dir={isAr ? "rtl" : "ltr"}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={onClose}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary"
+          >
+            <ArrowLeft className={`w-4 h-4 ${isAr ? "rotate-180" : ""}`} />
+            {isAr ? "رجوع" : "Back"}
+          </button>
+          <button onClick={onClose} className="w-9 h-9 rounded-lg hover:bg-secondary flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="mb-4">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary/80 mb-1">
+            <ListVideo className="w-3.5 h-3.5" />
+            {isAr ? "منهج" : "Curriculum"}
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold">{isAr ? course.titleAr : course.titleEn}</h1>
+          <p className="mt-1 text-muted-foreground text-sm">{isAr ? course.descAr : course.descEn}</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="aspect-video bg-black">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(playlistId)}&rel=0&modestbranding=1`}
+              title={course.titleEn}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhysicsHub({
+  course,
+  isAr,
+  examCount,
+  onExams,
+  onLectures,
+  onClose,
+}: {
+  course: Course;
+  isAr: boolean;
+  examCount: number;
+  onExams: () => void;
+  onLectures: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-background overflow-y-auto" dir={isAr ? "rtl" : "ltr"}>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={onClose}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary"
+          >
+            <ArrowLeft className={`w-4 h-4 ${isAr ? "rotate-180" : ""}`} />
+            {isAr ? "رجوع" : "Back"}
+          </button>
+          <button onClick={onClose} className="w-9 h-9 rounded-lg hover:bg-secondary flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="mb-6">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary/80 mb-1">
+            <Zap className="w-3.5 h-3.5" />
+            {isAr ? "دورة" : "Course"}
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold">{isAr ? course.titleAr : course.titleEn}</h1>
+          <p className="mt-1 text-muted-foreground text-sm">
+            {isAr ? "اختر ما تريد أن تبدأ به." : "Choose what you want to start with."}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button
+            onClick={onExams}
+            disabled={examCount === 0}
+            className="group relative rounded-2xl border border-border bg-card p-6 text-left hover:-translate-y-1 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ boxShadow: `0 12px 30px -12px hsl(${course.accent} / 0.4)` }}
+          >
+            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
+              <FileText className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-extrabold mb-1">{isAr ? "الامتحانات" : "Exams"}</h3>
+            <p className="text-sm text-muted-foreground">
+              {examCount > 0
+                ? (isAr ? `${examCount} امتحان متاح للحل والتصحيح.` : `${examCount} exams available with OCR grading.`)
+                : (isAr ? "لا توجد امتحانات بعد." : "No exams available yet.")}
+            </p>
+            <ArrowRight className={`absolute bottom-4 ${isAr ? "left-4 rotate-180" : "right-4"} w-5 h-5 text-primary group-hover:translate-x-1 transition-transform`} />
+          </button>
+          <button
+            onClick={onLectures}
+            className="group relative rounded-2xl border border-border bg-card p-6 text-left hover:-translate-y-1 transition-all"
+            style={{ boxShadow: `0 12px 30px -12px hsl(${course.accent} / 0.4)` }}
+          >
+            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
+              <Video className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-extrabold mb-1">{isAr ? "المحاضرات" : "Lectures"}</h3>
+            <p className="text-sm text-muted-foreground">
+              {isAr ? "محاضرات مصوّرة مقسّمة حسب الفصول." : "Video lectures organized by chapter."}
+            </p>
+            <ArrowRight className={`absolute bottom-4 ${isAr ? "left-4 rotate-180" : "right-4"} w-5 h-5 text-primary group-hover:translate-x-1 transition-transform`} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhysicsLecturesModal({
+  course,
+  isAr,
+  onClose,
+}: {
+  course: Course;
+  isAr: boolean;
+  onClose: () => void;
+}) {
+  const chapters: { n: number; titleAr: string; titleEn: string; locked: boolean }[] = [
+    { n: 7, titleAr: "الفصل السابع", titleEn: "Chapter 7", locked: false },
+    { n: 8, titleAr: "الفصل الثامن", titleEn: "Chapter 8", locked: true },
+    { n: 9, titleAr: "الفصل التاسع", titleEn: "Chapter 9", locked: true },
+  ];
+  const [openChapter, setOpenChapter] = useState<number | null>(null);
+  return (
+    <div className="fixed inset-0 z-50 bg-background overflow-y-auto" dir={isAr ? "rtl" : "ltr"}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={openChapter ? () => setOpenChapter(null) : onClose}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary"
+          >
+            <ArrowLeft className={`w-4 h-4 ${isAr ? "rotate-180" : ""}`} />
+            {isAr ? "رجوع" : "Back"}
+          </button>
+          <button onClick={onClose} className="w-9 h-9 rounded-lg hover:bg-secondary flex items-center justify-center">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="mb-6">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary/80 mb-1">
+            <Video className="w-3.5 h-3.5" />
+            {isAr ? "محاضرات" : "Lectures"}
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold">{isAr ? course.titleAr : course.titleEn}</h1>
+        </div>
+        {openChapter === null ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {chapters.map((ch) => (
+              <button
+                key={ch.n}
+                onClick={() => !ch.locked && setOpenChapter(ch.n)}
+                disabled={ch.locked}
+                className={`relative rounded-2xl border p-6 text-left transition-all ${
+                  ch.locked
+                    ? "border-border bg-secondary/40 opacity-70 cursor-not-allowed"
+                    : "border-border bg-card hover:-translate-y-1 cursor-pointer"
+                }`}
+              >
+                <div className="text-5xl font-extrabold font-mono opacity-70 mb-3">
+                  {String(ch.n).padStart(2, "0")}
+                </div>
+                <div className="text-lg font-bold mb-1">{isAr ? ch.titleAr : ch.titleEn}</div>
+                {ch.locked ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                    <Lock className="w-3.5 h-3.5" />
+                    {isAr ? "قريباً" : "Coming soon"}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                    <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "rotate-180" : ""}`} />
+                    {isAr ? "افتح" : "Open"}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border bg-card p-6 text-center">
+            <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+              <Video className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-extrabold mb-1">
+              {isAr ? `الفصل ${openChapter}` : `Chapter ${openChapter}`}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {isAr
+                ? "سيتم إضافة محاضرات هذا الفصل قريباً."
+                : "Lectures for this chapter will be added soon."}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function AddPlaylistModal({
   course,
