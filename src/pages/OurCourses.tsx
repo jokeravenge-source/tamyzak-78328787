@@ -1454,8 +1454,15 @@ function CourseRunner({
                   )}
 
                   {humanSent && (
-                    <div className="mt-3 text-sm text-emerald-500">
-                      ✓ {isAr ? "تم الإرسال. سيتواصل معك المدرّس عبر تيليغرام." : "Sent. The teacher will contact you on Telegram."}
+                    <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-300">
+                      <div>✓ {isAr ? "تم الإرسال. سيتواصل معك المدرّس عبر تيليغرام." : "Sent. The teacher will contact you on Telegram."}</div>
+                      {routedSubject && (
+                        <div className="mt-1 text-xs opacity-90">
+                          {isAr
+                            ? `تم توجيه الاعتراض إلى كروب ${({ physics: "الفيزياء", chemistry: "الكيمياء", biology: "الأحياء", math: "الرياضيات" } as Record<string,string>)[routedSubject] ?? routedSubject} الخاص بالمصححين.`
+                            : `Your request was routed to the ${({ physics: "Physics", chemistry: "Chemistry", biology: "Biology", math: "Math" } as Record<string,string>)[routedSubject] ?? routedSubject} graders group.`}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
