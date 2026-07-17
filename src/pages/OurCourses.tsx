@@ -1443,6 +1443,23 @@ function CourseRunner({
                           dir={isAr ? "rtl" : "ltr"}
                         />
                       </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">
+                          {isAr ? "أرسل الاعتراض إلى كروب" : "Send objection to group"}
+                        </label>
+                        <select
+                          value={groupOverride || (["physics","chemistry","biology","math"].includes(course.id) ? course.id : "")}
+                          onChange={(e) => setGroupOverride(e.target.value as typeof groupOverride)}
+                          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
+                          dir={isAr ? "rtl" : "ltr"}
+                        >
+                          <option value="">{isAr ? "— اختر الكروب —" : "— Choose group —"}</option>
+                          <option value="physics">{isAr ? "الفيزياء" : "Physics"}</option>
+                          <option value="chemistry">{isAr ? "الكيمياء" : "Chemistry"}</option>
+                          <option value="biology">{isAr ? "الأحياء" : "Biology"}</option>
+                          <option value="math">{isAr ? "الرياضيات" : "Math"}</option>
+                        </select>
+                      </div>
                       <button
                         onClick={sendToHuman}
                         disabled={sendingHuman}
