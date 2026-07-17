@@ -245,6 +245,7 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setHumanSent(true);
+      setRoutedSubject((data as any)?.routed ? String((data as any)?.subjectCode ?? "") : "");
       toast({ title: t.sent });
     } catch (e: any) {
       toast({ title: t.sendErr, description: e?.message ?? "", variant: "destructive" });
