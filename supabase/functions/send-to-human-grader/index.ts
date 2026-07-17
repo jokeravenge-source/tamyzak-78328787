@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -44,6 +46,9 @@ Deno.serve(async (req) => {
     const images: string[] = Array.isArray(body.studentImages)
       ? body.studentImages.filter((s: unknown) => typeof s === "string" && (s as string).startsWith("data:image/")).slice(0, 10)
       : [];
+    const answerBucket = String(body.answerBucket ?? "").slice(0, 60);
+    const answerPath = String(body.answerPath ?? "").slice(0, 300);
+    const answerFilename = String(body.answerFilename ?? "correct-answer").slice(0, 120);
 
     // Route to subject-specific Telegram group.
     const SUBJECT_CHATS: Record<string, string> = {
@@ -145,6 +150,28 @@ Deno.serve(async (req) => {
           await fetch(`${base}/sendMediaGroup`, { method: "POST", body: fd });
         }
       }
+    }
+
+    // 5. Attach the correct-answer file uploaded by the course owner (if provided).
+    if (answerBucket && answerPath) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL");
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (supabaseUrl && serviceKey) {
+          const admin = createClient(supabaseUrl, serviceKey);
+          const { data: fileData, error: dlErr } = await admin.storage.from(answerBucket).download(answerPath);
+          if (!dlErr && fileData) {
+            const ext = answerPath.split(".").pop()?.toLowerCase() || "pdf";
+            const safeName = answerFilename.replace(/[^\w\-.\s\u0600-\u06FF]/g, "_").slice(0, 100);
+            const fd = new FormData();
+            fd.append("chat_id", TARGET_CHAT_ID);
+            appendThread(fd);
+            fd.append("caption", "✅ الإجابة النموذجية (مرفوعة من مالك الدورة)");
+            fd.append("document", fileData, `${safeName}.${ext}`);
+            await fetch(`${base}/sendDocument`, { method: "POST", body: fd });
+          }
+        }
+      } catch (_e) { /* non-fatal */ }
     }
 
     return new Response(JSON.stringify({ ok: true, routed: Boolean(routed), subjectCode: routed ? subjectCode : "" }), {
