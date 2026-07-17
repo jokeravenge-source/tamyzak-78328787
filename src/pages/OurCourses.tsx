@@ -442,6 +442,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         <PhysicsLecturesModal
           course={openLectures}
           isAr={isAr}
+          playlists={playlistsByCourse[openLectures.id] ?? []}
           onClose={() => setOpenLectures(null)}
         />
       )}
@@ -791,10 +792,12 @@ function PhysicsHub({
 function PhysicsLecturesModal({
   course,
   isAr,
+  playlists,
   onClose,
 }: {
   course: Course;
   isAr: boolean;
+  playlists: PlaylistRow[];
   onClose: () => void;
 }) {
   const chapters: { n: number; titleAr: string; titleEn: string; locked: boolean }[] = [
@@ -857,18 +860,41 @@ function PhysicsLecturesModal({
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-border bg-card p-6 text-center">
-            <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-              <Video className="w-6 h-6" />
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <Video className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-extrabold">
+                {isAr ? `الفصل ${openChapter}` : `Chapter ${openChapter}`}
+              </h3>
             </div>
-            <h3 className="text-lg font-extrabold mb-1">
-              {isAr ? `الفصل ${openChapter}` : `Chapter ${openChapter}`}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {isAr
-                ? "سيتم إضافة محاضرات هذا الفصل قريباً."
-                : "Lectures for this chapter will be added soon."}
-            </p>
+            {playlists.length === 0 ? (
+              <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                {isAr
+                  ? "سيتم إضافة محاضرات هذا الفصل قريباً."
+                  : "Lectures for this chapter will be added soon."}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {playlists.map((pl) => (
+                  <div key={pl.id} className="rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className="px-4 py-3 border-b border-border">
+                      <div className="font-bold text-sm">{pl.title}</div>
+                    </div>
+                    <div className="aspect-video w-full bg-black">
+                      <iframe
+                        className="w-full h-full"
+                        src={`https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(pl.playlist_id)}&rel=0&modestbranding=1`}
+                        title={pl.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
