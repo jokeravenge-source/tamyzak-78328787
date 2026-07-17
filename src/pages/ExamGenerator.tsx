@@ -232,6 +232,7 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
         body: {
           telegramUsername: uname,
           subject: subject ? (language === "ar" ? subjectMeta?.ar : subjectMeta?.en) : "",
+          subjectCode: subject ?? "",
           chapter: ch ? (language === "ar" ? ch.arTitle : ch.title) : "",
           examText,
           studentText: studentText.trim(),

@@ -1135,6 +1135,7 @@ function CourseRunner({
         body: {
           telegramUsername: uname,
           subject: isAr ? `دورة الليزر - ${course.titleAr}` : `Laser course - ${course.titleEn}`,
+          subjectCode: course.id,
           chapter: selected.title,
           studentImages,
           aiScore: gradeResult
