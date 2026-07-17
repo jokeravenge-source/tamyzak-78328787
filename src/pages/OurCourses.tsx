@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo } from "lucide-react";
+import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo, Video, BookOpen, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -21,6 +21,8 @@ type Course = {
   accent: string;
   cover: string;
   active?: boolean;
+  fixedPlaylistId?: string;
+  hasLectures?: boolean;
 };
 
 const COURSES: Course[] = [
@@ -45,6 +47,7 @@ const COURSES: Course[] = [
     accent: "0 85% 62%",
     cover: nuclearImg,
     active: true,
+    hasLectures: true,
   },
   {
     id: "chemistry",
@@ -67,6 +70,30 @@ const COURSES: Course[] = [
     accent: "270 85% 62%",
     cover: geneticsImg,
     active: true,
+  },
+  {
+    id: "english",
+    titleAr: "الإنجليزية",
+    titleEn: "English",
+    descAr: "منهج اللغة الإنجليزية عبر قائمة تشغيل يوتيوب.",
+    descEn: "English curriculum via a curated YouTube playlist.",
+    Icon: BookOpen,
+    accent: "200 85% 55%",
+    cover: laserImg,
+    active: true,
+    fixedPlaylistId: "PLIeiyEYpbgler8Ue6LCIN_fzcLgzfF7lF",
+  },
+  {
+    id: "arabic",
+    titleAr: "العربية",
+    titleEn: "Arabic",
+    descAr: "منهج اللغة العربية عبر قائمة تشغيل يوتيوب.",
+    descEn: "Arabic curriculum via a curated YouTube playlist.",
+    Icon: Languages,
+    accent: "35 90% 55%",
+    cover: geometryImg,
+    active: true,
+    fixedPlaylistId: "PLIeiyEYpbglfWiy9HM0XfEBdh2U7mqH8_",
   },
 ];
 
@@ -110,6 +137,9 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [openCourse, setOpenCourse] = useState<Course | null>(null);
   const [playlistsByCourse, setPlaylistsByCourse] = useState<Record<string, PlaylistRow[]>>({});
   const [addPlaylistFor, setAddPlaylistFor] = useState<Course | null>(null);
+  const [openPlaylist, setOpenPlaylist] = useState<Course | null>(null);
+  const [openPhysicsHub, setOpenPhysicsHub] = useState<Course | null>(null);
+  const [openLectures, setOpenLectures] = useState<Course | null>(null);
 
   const refresh = async () => {
     const { data } = await supabase
@@ -214,7 +244,12 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           {COURSES.map((c, idx) => {
             const Icon = c.Icon;
             const examCount = counts[c.id] ?? 0;
-            const isReady = examCount > 0;
+            const isReady = !!c.fixedPlaylistId || !!c.hasLectures || examCount > 0;
+            const handleStart = () => {
+              if (c.fixedPlaylistId) setOpenPlaylist(c);
+              else if (c.hasLectures) setOpenPhysicsHub(c);
+              else setOpenCourse(c);
+            };
             return (
               <motion.article
                 key={c.id}
@@ -291,7 +326,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
 
                   {isReady ? (
                     <button
-                      onClick={() => setOpenCourse(c)}
+                      onClick={handleStart}
                       className="mt-5 w-full h-10 rounded-xl text-sm font-bold text-white inline-flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]"
                       style={{
                         background: `linear-gradient(135deg, hsl(${c.accent}), hsl(${c.accent} / 0.75))`,
@@ -383,6 +418,31 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           isAr={isAr}
           onClose={() => setAddPlaylistFor(null)}
           onDone={() => { setAddPlaylistFor(null); refresh(); }}
+        />
+      )}
+      {openPlaylist && (
+        <PlaylistOnlyModal
+          course={openPlaylist}
+          playlistId={openPlaylist.fixedPlaylistId!}
+          isAr={isAr}
+          onClose={() => setOpenPlaylist(null)}
+        />
+      )}
+      {openPhysicsHub && (
+        <PhysicsHub
+          course={openPhysicsHub}
+          isAr={isAr}
+          examCount={counts[openPhysicsHub.id] ?? 0}
+          onClose={() => setOpenPhysicsHub(null)}
+          onExams={() => { const c = openPhysicsHub; setOpenPhysicsHub(null); setOpenCourse(c); }}
+          onLectures={() => { const c = openPhysicsHub; setOpenPhysicsHub(null); setOpenLectures(c); }}
+        />
+      )}
+      {openLectures && (
+        <PhysicsLecturesModal
+          course={openLectures}
+          isAr={isAr}
+          onClose={() => setOpenLectures(null)}
         />
       )}
     </main>
