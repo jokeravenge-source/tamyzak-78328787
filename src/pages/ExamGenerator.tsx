@@ -553,6 +553,23 @@ const ExamGenerator = ({ language, onBack }: { language: AppLanguage; onBack: ()
                             dir={language === "ar" ? "rtl" : "ltr"}
                           />
                         </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">
+                            {language === "ar" ? "أرسل الاعتراض إلى كروب" : "Send objection to group"}
+                          </label>
+                          <select
+                            value={groupOverride || (subject && ["physics","chemistry","biology","math"].includes(subject) ? subject : "")}
+                            onChange={(e) => setGroupOverride(e.target.value as typeof groupOverride)}
+                            className="w-full h-10 px-3 rounded-lg border border-white/10 bg-background/60 text-sm"
+                            dir={language === "ar" ? "rtl" : "ltr"}
+                          >
+                            <option value="">{language === "ar" ? "— اختر الكروب —" : "— Choose group —"}</option>
+                            <option value="physics">{language === "ar" ? "الفيزياء" : "Physics"}</option>
+                            <option value="chemistry">{language === "ar" ? "الكيمياء" : "Chemistry"}</option>
+                            <option value="biology">{language === "ar" ? "الأحياء" : "Biology"}</option>
+                            <option value="math">{language === "ar" ? "الرياضيات" : "Math"}</option>
+                          </select>
+                        </div>
                         <button
                           onClick={sendToHuman}
                           disabled={sendingHuman}
