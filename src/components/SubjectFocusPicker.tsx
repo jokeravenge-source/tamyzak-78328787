@@ -6,6 +6,7 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECT_STORAGE_KEY, type AppSubject } from "@/pages/Subjects";
 
 export const FOCUS_SUBJECT_PICKED_KEY = "app_focus_subject_picked_v1";
+export const STUDY_PLAN_STORAGE_KEY = "app_study_plan_v1";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -24,7 +25,7 @@ type ParsedPlan = {
   goal?: string;
   weeks?: number;
   tools?: string[];
-  days?: { day: string; tasks: string[] }[];
+  days?: { day: string; tasks: (string | { title: string; start?: string; end?: string })[] }[];
 } | null;
 
 function stripMarker(text: string): { clean: string; subject: AppSubject | null } {
@@ -57,6 +58,8 @@ const copy = {
     planReady: "Your plan is ready",
     startStudying: "Start studying",
     error: "Something went wrong. Try again.",
+    sentToTg: "Plan sent to your Telegram ✓",
+    tgNotLinked: "Telegram not linked — reminders will only show in the app.",
   },
   ar: {
     badge: "مرشد الدراسة",
@@ -67,6 +70,8 @@ const copy = {
     planReady: "خطتك جاهزة",
     startStudying: "ابدأ الدراسة",
     error: "صار خطأ. حاول مرة ثانية.",
+    sentToTg: "تم إرسال الخطة إلى تلغرامك ✓",
+    tgNotLinked: "تلغرام غير مربوط — التذكيرات ستظهر داخل التطبيق فقط.",
   },
 } as const;
 
@@ -140,7 +145,19 @@ const SubjectFocusPicker = ({
     try {
       localStorage.setItem(SUBJECT_STORAGE_KEY, code);
       localStorage.setItem(FOCUS_SUBJECT_PICKED_KEY, "1");
+      if (plan) {
+        localStorage.setItem(
+          STUDY_PLAN_STORAGE_KEY,
+          JSON.stringify({ plan, savedAt: Date.now(), language }),
+        );
+      }
     } catch { /* ignore */ }
+    // Fire-and-forget: send plan to the user's Telegram if linked.
+    if (plan) {
+      supabase.functions.invoke("study-plan-notify", {
+        body: { kind: "plan", plan, language },
+      }).catch(() => { /* ignore — client scheduler still works */ });
+    }
     window.dispatchEvent(new CustomEvent("app:set-subject", { detail: { subject: code } }));
     onPick(code);
   };
@@ -233,12 +250,23 @@ const SubjectFocusPicker = ({
                     <li key={di} className="rounded-xl border border-border bg-card/60 p-3">
                       <div className="text-xs font-semibold text-primary mb-1">{d.day}</div>
                       <ul className="space-y-1 text-sm text-foreground">
-                        {(d.tasks ?? []).map((tk, ti) => (
-                          <li key={ti} className="flex items-start gap-2">
-                            <span className="text-primary/70 mt-0.5">•</span>
-                            <span>{tk}</span>
-                          </li>
-                        ))}
+                        {(d.tasks ?? []).map((tk, ti) => {
+                          const title = typeof tk === "string" ? tk : tk.title;
+                          const time = typeof tk === "string" ? null : (tk.start && tk.end ? `${tk.start}–${tk.end}` : null);
+                          return (
+                            <li key={ti} className="flex items-start gap-2">
+                              <span className="text-primary/70 mt-0.5">•</span>
+                              <span className="flex-1">
+                                {time && (
+                                  <span className="inline-block me-2 rtl:ml-2 rtl:mr-0 text-[11px] font-mono px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/25">
+                                    {time}
+                                  </span>
+                                )}
+                                {title}
+                              </span>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </li>
                   ))}
