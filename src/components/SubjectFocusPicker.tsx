@@ -37,15 +37,29 @@ function stripMarker(text: string): { clean: string; subject: AppSubject | null 
 }
 
 function extractPlan(text: string): { clean: string; plan: ParsedPlan } {
-  const re = /```plan\s*([\s\S]*?)```/i;
-  const m = text.match(re);
-  if (!m) return { clean: text, plan: null };
-  try {
-    const json = JSON.parse(m[1].trim());
-    return { clean: text.replace(re, "").trim(), plan: json };
-  } catch {
-    return { clean: text.replace(re, "").trim(), plan: null };
+  // Accept ```plan``` (documented), ```json``` (what the model often emits),
+  // or a bare ``` fenced block. Fall back to the last { ... } that parses as a plan.
+  const fenceRe = /```(?:plan|json)?\s*([\s\S]*?)```/gi;
+  const matches = [...text.matchAll(fenceRe)];
+  for (const m of matches) {
+    try {
+      const json = JSON.parse(m[1].trim());
+      if (json && typeof json === "object" && ("subject" in json || "days" in json || "tools" in json)) {
+        return { clean: text.replace(m[0], "").trim(), plan: json };
+      }
+    } catch { /* try next */ }
   }
+  // Last-ditch: try to find a raw JSON object with a "days" or "tools" field.
+  const rawMatch = text.match(/\{[\s\S]*"(?:days|tools|subject)"[\s\S]*\}/);
+  if (rawMatch) {
+    try {
+      const json = JSON.parse(rawMatch[0]);
+      if (json && typeof json === "object") {
+        return { clean: text.replace(rawMatch[0], "").trim(), plan: json };
+      }
+    } catch { /* ignore */ }
+  }
+  return { clean: text, plan: null };
 }
 
 const copy = {
