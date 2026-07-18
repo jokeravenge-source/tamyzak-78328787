@@ -1000,7 +1000,9 @@ const Basics = ({
           <section className="mb-6">
             <div className="flex items-center justify-between mb-4 sm:mb-5 gap-2">
               <h4 className="text-base sm:text-lg font-bold text-foreground" style={{ fontFamily: "'Syne', sans-serif" }}>
-                {toolsHeader}
+                {planTools.length > 0
+                  ? (language === "ar" ? "أدوات خطتك" : "Your plan tools")
+                  : toolsHeader}
               </h4>
               <button
                 onClick={() => setShowAllTools(true)}
@@ -1017,7 +1019,29 @@ const Basics = ({
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
               className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
             >
-              {FEATURED.filter((it) => it.key !== "liveBattle").slice(2).map((it) => {
+              {planTools.length > 0 ? planTools.map((it) => {
+                const Icon = it.Icon;
+                return (
+                  <motion.button
+                    key={it.key}
+                    variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    whileHover={{ y: -3 }}
+                    onClick={() => navigate(it.key)}
+                    className={`group ${isRTL ? "text-right" : "text-left"} bg-card p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-primary/40 hover:border-primary hover:bg-primary/5 transition-all`}
+                  >
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center mb-2 sm:mb-3 text-primary group-hover:scale-110 transition-transform">
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </div>
+                    <h5 className="font-bold text-xs sm:text-sm text-foreground mb-1 line-clamp-1">
+                      {language === "ar" ? it.titleAr : it.titleEn}
+                    </h5>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">
+                      {language === "ar" ? it.subAr : it.subEn}
+                    </p>
+                  </motion.button>
+                );
+              }) : FEATURED.filter((it) => it.key !== "liveBattle").slice(2).map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 if (!meta) return null;
