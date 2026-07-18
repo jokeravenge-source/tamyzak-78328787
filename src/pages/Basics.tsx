@@ -4,6 +4,7 @@ import {
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network, Search,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
   Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen, Youtube, FlaskConical, Swords, Video,
+  Bot, Brain, Wand2,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -15,6 +16,49 @@ import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
 import RankStone, { rankFromPoints, RANK_LABELS, type StoneRank } from "@/components/RankStone";
+import { STUDY_PLAN_STORAGE_KEY } from "@/components/SubjectFocusPicker";
+
+type PlanTool = {
+  key: MainMenuChoice;
+  Icon: React.ComponentType<{ className?: string }>;
+  titleEn: string; titleAr: string;
+  subEn: string; subAr: string;
+};
+
+const PLAN_TOOL_MAP: { match: string[]; tool: PlanTool }[] = [
+  { match: ["subject tutor", "tutor", "مدرّس", "معلم"], tool: { key: "subjectTutor", Icon: Bot, titleEn: "AI Subject Tutor", titleAr: "المدرّس الذكي", subEn: "Chat with an AI tutor.", subAr: "دردش مع مدرّس ذكي." } },
+  { match: ["exam generator", "exam gen", "توليد امتحان", "امتحان"], tool: { key: "examGenerator", Icon: GraduationCap, titleEn: "AI Exam Generator", titleAr: "مولّد الامتحانات", subEn: "Generate practice exams.", subAr: "ولّد امتحانات تدريبية." } },
+  { match: ["answer-sheet", "answer sheet", "grader", "musahhih", "مصحّح", "مصحح"], tool: { key: "essay", Icon: PenLine, titleEn: "AI Answer Grader", titleAr: "المصحّح الذكي", subEn: "AI grades your answer sheet.", subAr: "الذكاء الاصطناعي يصحح إجابتك." } },
+  { match: ["beautiful notes", "video to notes", "video notes", "ملاحظات جميلة", "من الفيديو"], tool: { key: "videoNotes", Icon: Headphones, titleEn: "AI Beautiful Notes", titleAr: "ملاحظات ذكية", subEn: "Turn videos into notes.", subAr: "حوّل الفيديو إلى ملاحظات." } },
+  { match: ["mcq generator", "mcq gen", "multiple choice", "mcq practice", "practice", "mcq", "الأسئلة", "اختيار من متعدد", "تدريب"], tool: { key: "mcq", Icon: HelpCircle, titleEn: "MCQ Generator", titleAr: "مولّد الأسئلة", subEn: "MCQs from any file.", subAr: "أسئلة من أي ملف." } },
+  { match: ["mind map", "mindmap", "خريطة ذهنية"], tool: { key: "mindmap", Icon: Network, titleEn: "AI Mind Map", titleAr: "الخريطة الذهنية", subEn: "Visual chapter map.", subAr: "خريطة مرئية للفصل." } },
+  { match: ["essay coach", "مدرّب المقالات", "مقال"], tool: { key: "englishEssays", Icon: ScrollText, titleEn: "Essay Coach", titleAr: "مدرّب المقالات", subEn: "Improve your essays.", subAr: "طوّر مقالاتك." } },
+  { match: ["study companion", "companion", "رفيق"], tool: { key: "companion", Icon: Sparkles, titleEn: "Study Companion", titleAr: "الرفيق الذكي", subEn: "Your daily coach.", subAr: "مدرّبك اليومي." } },
+  { match: ["flashcard", "بطاقات"], tool: { key: "flashcards", Icon: Layers, titleEn: "Flashcards", titleAr: "البطاقات", subEn: "Smart Q&A cards.", subAr: "بطاقات سؤال وجواب." } },
+  { match: ["session", "pomodoro", "focus", "جلسات", "تركيز"], tool: { key: "sessions", Icon: GraduationCap, titleEn: "Focused Sessions", titleAr: "جلسات الدراسة", subEn: "Timed study sessions.", subAr: "جلسات دراسية مؤقتة." } },
+  { match: ["mission", "daily goal", "مهم"], tool: { key: "missions", Icon: Target, titleEn: "Missions", titleAr: "المهمات", subEn: "Daily goal tracking.", subAr: "تتبّع الأهداف اليومية." } },
+  { match: ["ministerial", "الوزاري", "وزاري"], tool: { key: "ministerialBank", Icon: FileText, titleEn: "Ministerial Bank", titleAr: "الأسئلة الوزارية", subEn: "Past ministerial exams.", subAr: "أسئلة وزارية سابقة." } },
+  { match: ["summar", "ملخص"], tool: { key: "summaries", Icon: FileText, titleEn: "Summaries", titleAr: "الملخصات", subEn: "Chapter recaps.", subAr: "مراجعات الفصول." } },
+  { match: ["physics activities", "simulation", "تجارب", "محاكاة"], tool: { key: "physicsActivities", Icon: Wand2, titleEn: "Physics Activities", titleAr: "أنشطة الفيزياء", subEn: "Interactive simulations.", subAr: "محاكاة تفاعلية." } },
+];
+
+function resolvePlanTools(names: string[]): PlanTool[] {
+  const seen = new Set<MainMenuChoice>();
+  const out: PlanTool[] = [];
+  for (const raw of names) {
+    const t = raw.toLowerCase();
+    for (const entry of PLAN_TOOL_MAP) {
+      if (entry.match.some((m) => t.includes(m.toLowerCase()))) {
+        if (!seen.has(entry.tool.key)) {
+          seen.add(entry.tool.key);
+          out.push(entry.tool);
+        }
+        break;
+      }
+    }
+  }
+  return out;
+}
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
