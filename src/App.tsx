@@ -453,6 +453,7 @@ const App = () => {
       {authed && language && authRole !== "admin" && channelVerified && focusPicked && subject && (
         <FocusSubjectPill language={language} subject={subject} onChange={changeFocusSubject} />
       )}
+      {language && focusPicked && <StudyReminders language={language} />}
       <PageTransition
         routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${channelVerified ? "ch" : "noch"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
       >
