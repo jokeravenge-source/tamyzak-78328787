@@ -78,6 +78,8 @@ import TelegramGate from "./components/TelegramGate";
 import TelegramChannelGate from "./components/TelegramChannelGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
+import SubjectFocusPicker, { FOCUS_SUBJECT_PICKED_KEY } from "./components/SubjectFocusPicker";
+import FocusSubjectPill from "./components/FocusSubjectPill";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
@@ -330,6 +332,17 @@ const App = () => {
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
+  const [focusPicked, setFocusPicked] = useState<boolean>(
+    () => (typeof window !== "undefined" ? localStorage.getItem(FOCUS_SUBJECT_PICKED_KEY) === "1" : false)
+  );
+  const changeFocusSubject = () => {
+    try {
+      localStorage.removeItem(FOCUS_SUBJECT_PICKED_KEY);
+      localStorage.removeItem(SUBJECT_STORAGE_KEY);
+    } catch { /* ignore */ }
+    setSubject(null);
+    setFocusPicked(false);
+  };
   useEffect(() => {
     const handler = (e: Event) => {
       const s = (e as CustomEvent).detail?.subject as AppSubject | null;
@@ -436,6 +449,9 @@ const App = () => {
           onSelect={(k) => chooseMenu(k as MenuChoice)}
         />
       )}
+      {authed && language && authRole !== "admin" && channelVerified && focusPicked && subject && (
+        <FocusSubjectPill language={language} subject={subject} onChange={changeFocusSubject} />
+      )}
       <PageTransition
         routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${channelVerified ? "ch" : "noch"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
       >
@@ -461,6 +477,14 @@ const App = () => {
         <LanguageGate onSelect={setLanguage} />
       ) : authRole !== "admin" && !channelVerified ? (
         <TelegramChannelGate language={language} onVerified={() => setChannelVerified(true)} />
+      ) : authRole !== "admin" && !focusPicked ? (
+        <SubjectFocusPicker
+          language={language}
+          onPick={(s) => {
+            setSubject(s);
+            setFocusPicked(true);
+          }}
+        />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
           language={language}
