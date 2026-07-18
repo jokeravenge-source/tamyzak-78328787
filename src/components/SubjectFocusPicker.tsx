@@ -152,6 +152,7 @@ const SubjectFocusPicker = ({
         );
       }
     } catch { /* ignore */ }
+    window.dispatchEvent(new Event("app:study-plan-changed"));
     // Fire-and-forget: send plan to the user's Telegram if linked.
     if (plan) {
       supabase.functions.invoke("study-plan-notify", {
