@@ -39,7 +39,7 @@ function buildSystemPrompt(language: "ar" | "en"): string {
    - الدرجة/الهدف الذي يريد تحقيقه
    - نقاط ضعفه في هذه المادة
    - المدة الزمنية المتاحة (أيام/أسابيع، ساعات باليوم)
-4) اقترح عليه أفضل أدوات التطبيق المناسبة لهدفه من القائمة التالية:
+4) اقترح عليه أفضل أدوات التطبيق المناسبة لهدفه من القائمة التالية، وتأكد من تضمين **أدوات الذكاء الاصطناعي** (على الأقل أداتين ذكيتين مناسبتين لهدفه) لأنها الأقوى في التطبيق:
 ${TOOLS_CATALOG}
 5) قدّم خطة دراسية عملية ومقسّمة بوضوح (أسبوعية أو يومية).
 
@@ -67,7 +67,7 @@ Your goal in this conversation:
    - the grade / target they want to reach
    - their weaknesses in this subject
    - how long they have (days/weeks, hours per day)
-4) Recommend the best app tools for their goal from this catalog:
+4) Recommend the best app tools for their goal from the catalog below. You MUST include at least two **AI-powered tools** in every recommendation — they are the strongest part of the app:
 ${TOOLS_CATALOG}
 5) Deliver a clear, actionable study plan (weekly or daily breakdown).
 
