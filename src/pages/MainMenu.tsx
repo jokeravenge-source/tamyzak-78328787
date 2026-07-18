@@ -114,8 +114,9 @@ const MainMenu = ({
       try {
         const raw = localStorage.getItem(STUDY_PLAN_STORAGE_KEY);
         if (!raw) return setRecommended([]);
-        const plan = JSON.parse(raw) as { tools?: string[] };
-        setRecommended(resolveRecommendedTools(plan?.tools ?? []));
+        const parsed = JSON.parse(raw) as { plan?: { tools?: string[] }; tools?: string[] };
+        const tools = parsed?.plan?.tools ?? parsed?.tools ?? [];
+        setRecommended(resolveRecommendedTools(tools));
       } catch {
         setRecommended([]);
       }
