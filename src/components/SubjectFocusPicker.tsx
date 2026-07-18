@@ -250,12 +250,23 @@ const SubjectFocusPicker = ({
                     <li key={di} className="rounded-xl border border-border bg-card/60 p-3">
                       <div className="text-xs font-semibold text-primary mb-1">{d.day}</div>
                       <ul className="space-y-1 text-sm text-foreground">
-                        {(d.tasks ?? []).map((tk, ti) => (
-                          <li key={ti} className="flex items-start gap-2">
-                            <span className="text-primary/70 mt-0.5">•</span>
-                            <span>{tk}</span>
-                          </li>
-                        ))}
+                        {(d.tasks ?? []).map((tk, ti) => {
+                          const title = typeof tk === "string" ? tk : tk.title;
+                          const time = typeof tk === "string" ? null : (tk.start && tk.end ? `${tk.start}–${tk.end}` : null);
+                          return (
+                            <li key={ti} className="flex items-start gap-2">
+                              <span className="text-primary/70 mt-0.5">•</span>
+                              <span className="flex-1">
+                                {time && (
+                                  <span className="inline-block me-2 rtl:ml-2 rtl:mr-0 text-[11px] font-mono px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/25">
+                                    {time}
+                                  </span>
+                                )}
+                                {title}
+                              </span>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </li>
                   ))}
