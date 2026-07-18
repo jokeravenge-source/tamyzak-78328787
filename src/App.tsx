@@ -442,7 +442,7 @@ const App = () => {
       {authed && language && authRole !== "admin" && channelVerified && (
         <CompanionWelcomeTrigger />
       )}
-      {authed && language && authRole !== "admin" && channelVerified && (
+      {false && authed && language && authRole !== "admin" && channelVerified && (
         <BottomGroupNav
           language={language}
           active={(menuChoice as any) ?? "basics"}
