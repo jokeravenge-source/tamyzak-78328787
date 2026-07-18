@@ -299,6 +299,28 @@ const Basics = ({
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
 
+  // Tools recommended by the AI coach's approved plan.
+  const [planTools, setPlanTools] = useState<PlanTool[]>([]);
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = localStorage.getItem(STUDY_PLAN_STORAGE_KEY);
+        if (!raw) return setPlanTools([]);
+        const parsed = JSON.parse(raw) as { plan?: { tools?: string[] }; tools?: string[] };
+        const tools = parsed?.plan?.tools ?? parsed?.tools ?? [];
+        setPlanTools(resolvePlanTools(tools));
+      } catch { setPlanTools([]); }
+    };
+    read();
+    const onStorage = (e: StorageEvent) => { if (e.key === STUDY_PLAN_STORAGE_KEY) read(); };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("app:study-plan-changed", read);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("app:study-plan-changed", read);
+    };
+  }, []);
+
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
     let total = 0;
