@@ -7,17 +7,25 @@ const corsHeaders = {
 const SUBJECTS_LIST = `physics, chemistry, biology, english, french, arabic, islamic`;
 
 const TOOLS_CATALOG = `
+Study tools:
 - Flashcards (memorize definitions, formulas, vocabulary)
 - Focused Study Sessions (Pomodoro-style timed study)
 - Missions (daily goal tracking)
 - MCQ Practice (multiple choice by chapter)
 - Ministerial Bank (past ministerial exam questions)
 - Summaries & Notes (concise chapter recaps)
-- Subject Tutor (AI Q&A for the subject)
 - Mind Maps (visual chapter overview)
-- Exam Generator (custom practice exams with grading)
 - Physics Activities / Interactive Simulations (for physics)
-- Essay Coach (for languages)
+
+AI-powered tools (ALWAYS recommend at least 2 of these when relevant to the student's goal):
+- 🤖 AI Subject Tutor — chat with an AI tutor that answers questions in the student's subject and explains concepts step by step
+- 🤖 AI Exam Generator — generates custom practice exams from any chapter and auto-grades student answers with detailed feedback
+- 🤖 AI Answer-Sheet Grader — student uploads photos of a handwritten answer sheet and the AI grades it against the model answer with corrections
+- 🤖 AI Beautiful Notes — turns a YouTube lecture or text into styled, illustrated study notes exportable as PDF
+- 🤖 AI MCQ Generator — generates scientific multiple-choice questions from an uploaded PDF (great for self-testing)
+- 🤖 AI Mind Map Builder — auto-builds a visual mind map for any chapter
+- 🤖 AI Essay Coach — reviews and improves the student's essays (best for languages)
+- 🤖 AI Study Companion — proactive daily coach that reminds and motivates the student
 `;
 
 function buildSystemPrompt(language: "ar" | "en"): string {
