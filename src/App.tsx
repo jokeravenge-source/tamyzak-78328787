@@ -78,7 +78,6 @@ import TelegramGate from "./components/TelegramGate";
 import TelegramChannelGate from "./components/TelegramChannelGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
-import SubjectFocusPicker, { FOCUS_SUBJECT_PICKED_KEY } from "./components/SubjectFocusPicker";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
