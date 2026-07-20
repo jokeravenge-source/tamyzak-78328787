@@ -3,7 +3,6 @@ import { LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/components/LanguageGat
 
 export const SUBJECT_STORAGE_KEY = "app_subject_v1";
 export const PREVIOUS_SUBJECT_STORAGE_KEY = "app_previous_subject_v1";
-const FOCUS_SUBJECT_PICKED_KEY = "app_focus_subject_picked_v1";
 
 export type AppSubject = "physics" | "english" | "chemistry" | "biology" | "french" | "arabic" | "islamic" | "revision";
 
@@ -63,13 +62,7 @@ const Subjects = ({
   mode?: "flashcards" | "malazam";
 }) => {
   const text = copy[language];
-  // If the user has locked a focus subject, only show that one — hide all others everywhere.
-  const focusPicked = typeof window !== "undefined" && localStorage.getItem(FOCUS_SUBJECT_PICKED_KEY) === "1";
-  const focusSubject = typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null;
-  const baseList = mode === "malazam" ? [...subjects, revisionSubject] : subjects;
-  const displayedSubjects = focusPicked && focusSubject
-    ? baseList.filter((s) => s.code === focusSubject)
-    : baseList;
+  const displayedSubjects = mode === "malazam" ? [...subjects, revisionSubject] : subjects;
 
   const handleChangeLanguage = () => {
     localStorage.removeItem(LANGUAGE_STORAGE_KEY);

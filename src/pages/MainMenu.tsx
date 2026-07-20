@@ -1,10 +1,9 @@
-import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, Sparkles, Lock, Compass, LineChart, Search, Youtube, StickyNote, Wand2, Bot, GraduationCap as GradCap, ScrollText, Brain, PenLine, Target } from "lucide-react";
+import { Layers, GraduationCap, BookMarked, FileText, HelpCircle, Headphones, ArrowRight, Sparkles, Lock, Compass, LineChart, Search, Youtube, StickyNote } from "lucide-react";
 import { motion } from "framer-motion";
 import { type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import StreakTree from "@/components/StreakTree";
-import { STUDY_PLAN_STORAGE_KEY } from "@/components/SubjectFocusPicker";
 
 
 const copy = {
@@ -58,44 +57,6 @@ const copy = {
 
 export type MainMenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "leaderboard" | "news" | "premium" | "more" | "todo" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers" | "adminNotes";
 
-// Map plan tool names (as returned by the AI coach) to actual menu choices + icons.
-// Keys are matched case-insensitively against substrings of the tool text.
-const TOOL_MAP: { match: string[]; key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }>; en: string; ar: string }[] = [
-  { match: ["subject tutor", "tutor", "مدرّس", "معلم"], key: "subjectTutor", Icon: Bot, en: "AI Subject Tutor", ar: "المدرّس الذكي" },
-  { match: ["exam generator", "exam gen", "توليد امتحان", "امتحان"], key: "examGenerator", Icon: GradCap, en: "AI Exam Generator", ar: "مولّد الامتحانات" },
-  { match: ["answer-sheet", "answer sheet", "grader", "musahhih", "مصحّح", "مصحح"], key: "essay", Icon: PenLine, en: "AI Answer-Sheet Grader", ar: "المصحّح الذكي" },
-  { match: ["beautiful notes", "video to notes", "video notes", "ملاحظات جميلة", "من الفيديو"], key: "videoNotes", Icon: Headphones, en: "AI Beautiful Notes", ar: "ملاحظات ذكية" },
-  { match: ["mcq generator", "mcq gen", "multiple choice", "مولّد الأسئلة", "اختيار من متعدد"], key: "mcq", Icon: HelpCircle, en: "AI MCQ Generator", ar: "مولّد الأسئلة" },
-  { match: ["mind map", "mindmap", "خريطة ذهنية"], key: "mindmap", Icon: Brain, en: "AI Mind Map Builder", ar: "الخريطة الذهنية" },
-  { match: ["essay coach", "مدرّب المقالات", "مقال"], key: "englishEssays", Icon: ScrollText, en: "AI Essay Coach", ar: "مدرّب المقالات" },
-  { match: ["study companion", "companion", "رفيق"], key: "companion", Icon: Sparkles, en: "AI Study Companion", ar: "الرفيق الذكي" },
-  { match: ["flashcard", "بطاقات"], key: "flashcards", Icon: Layers, en: "Flashcards", ar: "البطاقات" },
-  { match: ["session", "pomodoro", "focus", "جلسات", "تركيز"], key: "sessions", Icon: GraduationCap, en: "Focused Sessions", ar: "جلسات الدراسة" },
-  { match: ["mission", "daily goal", "مهم"], key: "missions", Icon: Target, en: "Missions", ar: "المهمات" },
-  { match: ["mcq practice", "practice", "تدريب"], key: "mcq", Icon: HelpCircle, en: "MCQ Practice", ar: "تدريب الأسئلة" },
-  { match: ["ministerial", "الوزاري", "وزاري"], key: "ministerialBank", Icon: FileText, en: "Ministerial Bank", ar: "الأسئلة الوزارية" },
-  { match: ["summar", "notes", "ملخص", "ملاحظات"], key: "summaries", Icon: FileText, en: "Summaries & Notes", ar: "الملخصات" },
-  { match: ["physics activities", "simulation", "تجارب"], key: "physicsActivities", Icon: Wand2, en: "Physics Activities", ar: "أنشطة الفيزياء" },
-];
-
-function resolveRecommendedTools(toolNames: string[]) {
-  const seen = new Set<string>();
-  const out: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }>; en: string; ar: string }[] = [];
-  for (const raw of toolNames) {
-    const t = raw.toLowerCase();
-    for (const entry of TOOL_MAP) {
-      if (entry.match.some((m) => t.includes(m.toLowerCase()))) {
-        if (!seen.has(entry.key)) {
-          seen.add(entry.key);
-          out.push(entry);
-        }
-        break;
-      }
-    }
-  }
-  return out;
-}
-
 const MainMenu = ({
   language,
   onChangeLanguage,
@@ -108,31 +69,6 @@ const MainMenu = ({
   const text = copy[language];
 
   const [username, setUsername] = useState<string>(() => localStorage.getItem("app_display_name_v1") || "");
-  const [recommended, setRecommended] = useState<ReturnType<typeof resolveRecommendedTools>>([]);
-  useEffect(() => {
-    const read = () => {
-      try {
-        const raw = localStorage.getItem(STUDY_PLAN_STORAGE_KEY);
-        if (!raw) return setRecommended([]);
-        const parsed = JSON.parse(raw) as { plan?: { tools?: string[] }; tools?: string[] };
-        const tools = parsed?.plan?.tools ?? parsed?.tools ?? [];
-        setRecommended(resolveRecommendedTools(tools));
-      } catch {
-        setRecommended([]);
-      }
-    };
-    read();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STUDY_PLAN_STORAGE_KEY) read();
-    };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("app:study-plan-changed", read);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("app:study-plan-changed", read);
-    };
-  }, []);
-
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
@@ -193,46 +129,6 @@ const MainMenu = ({
           <p className="mt-3 text-sm text-primary font-medium">{text.hi}, {username} 👋</p>
         )}
       </header>
-
-      {recommended.length > 0 && (
-        <section className="max-w-6xl mx-auto mt-10 relative z-10">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="text-sm uppercase tracking-[0.25em] text-muted-foreground">
-              {language === "ar" ? "أدوات موصى بها لخطتك" : "Recommended for your plan"}
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {recommended.map((r) => {
-              const Icon = r.Icon;
-              return (
-                <motion.button
-                  key={r.key}
-                  whileHover={{ y: -3 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => onSelect(r.key)}
-                  className="group relative text-start rounded-2xl p-4 border border-primary/40 bg-primary/5 hover:border-primary hover:bg-primary/10 transition-all shadow-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {language === "ar" ? r.ar : r.en}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {language === "ar" ? "من خطتك الذكية" : "From your AI plan"}
-                      </p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </motion.button>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       <motion.section
         initial="hidden"

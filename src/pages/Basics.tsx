@@ -4,7 +4,6 @@ import {
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network, Search,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
   Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen, Youtube, FlaskConical, Swords, Video,
-  Bot, Brain, Wand2,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -16,49 +15,6 @@ import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
 import RankStone, { rankFromPoints, RANK_LABELS, type StoneRank } from "@/components/RankStone";
-import { STUDY_PLAN_STORAGE_KEY } from "@/components/SubjectFocusPicker";
-
-type PlanTool = {
-  key: MainMenuChoice;
-  Icon: React.ComponentType<{ className?: string }>;
-  titleEn: string; titleAr: string;
-  subEn: string; subAr: string;
-};
-
-const PLAN_TOOL_MAP: { match: string[]; tool: PlanTool }[] = [
-  { match: ["subject tutor", "tutor", "مدرّس", "معلم"], tool: { key: "subjectTutor", Icon: Bot, titleEn: "AI Subject Tutor", titleAr: "المدرّس الذكي", subEn: "Chat with an AI tutor.", subAr: "دردش مع مدرّس ذكي." } },
-  { match: ["exam generator", "exam gen", "توليد امتحان", "امتحان"], tool: { key: "examGenerator", Icon: GraduationCap, titleEn: "AI Exam Generator", titleAr: "مولّد الامتحانات", subEn: "Generate practice exams.", subAr: "ولّد امتحانات تدريبية." } },
-  { match: ["answer-sheet", "answer sheet", "grader", "musahhih", "مصحّح", "مصحح"], tool: { key: "essay", Icon: PenLine, titleEn: "AI Answer Grader", titleAr: "المصحّح الذكي", subEn: "AI grades your answer sheet.", subAr: "الذكاء الاصطناعي يصحح إجابتك." } },
-  { match: ["beautiful notes", "video to notes", "video notes", "ملاحظات جميلة", "من الفيديو"], tool: { key: "videoNotes", Icon: Headphones, titleEn: "AI Beautiful Notes", titleAr: "ملاحظات ذكية", subEn: "Turn videos into notes.", subAr: "حوّل الفيديو إلى ملاحظات." } },
-  { match: ["mcq generator", "mcq gen", "multiple choice", "mcq practice", "practice", "mcq", "الأسئلة", "اختيار من متعدد", "تدريب"], tool: { key: "mcq", Icon: HelpCircle, titleEn: "MCQ Generator", titleAr: "مولّد الأسئلة", subEn: "MCQs from any file.", subAr: "أسئلة من أي ملف." } },
-  { match: ["mind map", "mindmap", "خريطة ذهنية"], tool: { key: "mindmap", Icon: Network, titleEn: "AI Mind Map", titleAr: "الخريطة الذهنية", subEn: "Visual chapter map.", subAr: "خريطة مرئية للفصل." } },
-  { match: ["essay coach", "مدرّب المقالات", "مقال"], tool: { key: "englishEssays", Icon: ScrollText, titleEn: "Essay Coach", titleAr: "مدرّب المقالات", subEn: "Improve your essays.", subAr: "طوّر مقالاتك." } },
-  { match: ["study companion", "companion", "رفيق"], tool: { key: "companion", Icon: Sparkles, titleEn: "Study Companion", titleAr: "الرفيق الذكي", subEn: "Your daily coach.", subAr: "مدرّبك اليومي." } },
-  { match: ["flashcard", "بطاقات"], tool: { key: "flashcards", Icon: Layers, titleEn: "Flashcards", titleAr: "البطاقات", subEn: "Smart Q&A cards.", subAr: "بطاقات سؤال وجواب." } },
-  { match: ["session", "pomodoro", "focus", "جلسات", "تركيز"], tool: { key: "sessions", Icon: GraduationCap, titleEn: "Focused Sessions", titleAr: "جلسات الدراسة", subEn: "Timed study sessions.", subAr: "جلسات دراسية مؤقتة." } },
-  { match: ["mission", "daily goal", "مهم"], tool: { key: "missions", Icon: Target, titleEn: "Missions", titleAr: "المهمات", subEn: "Daily goal tracking.", subAr: "تتبّع الأهداف اليومية." } },
-  { match: ["ministerial", "الوزاري", "وزاري"], tool: { key: "ministerialBank", Icon: FileText, titleEn: "Ministerial Bank", titleAr: "الأسئلة الوزارية", subEn: "Past ministerial exams.", subAr: "أسئلة وزارية سابقة." } },
-  { match: ["summar", "ملخص"], tool: { key: "summaries", Icon: FileText, titleEn: "Summaries", titleAr: "الملخصات", subEn: "Chapter recaps.", subAr: "مراجعات الفصول." } },
-  { match: ["physics activities", "simulation", "تجارب", "محاكاة"], tool: { key: "physicsActivities", Icon: Wand2, titleEn: "Physics Activities", titleAr: "أنشطة الفيزياء", subEn: "Interactive simulations.", subAr: "محاكاة تفاعلية." } },
-];
-
-function resolvePlanTools(names: string[]): PlanTool[] {
-  const seen = new Set<MainMenuChoice>();
-  const out: PlanTool[] = [];
-  for (const raw of names) {
-    const t = raw.toLowerCase();
-    for (const entry of PLAN_TOOL_MAP) {
-      if (entry.match.some((m) => t.includes(m.toLowerCase()))) {
-        if (!seen.has(entry.tool.key)) {
-          seen.add(entry.tool.key);
-          out.push(entry.tool);
-        }
-        break;
-      }
-    }
-  }
-  return out;
-}
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
@@ -298,28 +254,6 @@ const Basics = ({
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
-
-  // Tools recommended by the AI coach's approved plan.
-  const [planTools, setPlanTools] = useState<PlanTool[]>([]);
-  useEffect(() => {
-    const read = () => {
-      try {
-        const raw = localStorage.getItem(STUDY_PLAN_STORAGE_KEY);
-        if (!raw) return setPlanTools([]);
-        const parsed = JSON.parse(raw) as { plan?: { tools?: string[] }; tools?: string[] };
-        const tools = parsed?.plan?.tools ?? parsed?.tools ?? [];
-        setPlanTools(resolvePlanTools(tools));
-      } catch { setPlanTools([]); }
-    };
-    read();
-    const onStorage = (e: StorageEvent) => { if (e.key === STUDY_PLAN_STORAGE_KEY) read(); };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("app:study-plan-changed", read);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("app:study-plan-changed", read);
-    };
-  }, []);
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
@@ -1000,9 +934,7 @@ const Basics = ({
           <section className="mb-6">
             <div className="flex items-center justify-between mb-4 sm:mb-5 gap-2">
               <h4 className="text-base sm:text-lg font-bold text-foreground" style={{ fontFamily: "'Syne', sans-serif" }}>
-                {planTools.length > 0
-                  ? (language === "ar" ? "أدوات خطتك" : "Your plan tools")
-                  : toolsHeader}
+                {toolsHeader}
               </h4>
               <button
                 onClick={() => setShowAllTools(true)}
@@ -1019,29 +951,7 @@ const Basics = ({
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
               className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
             >
-              {planTools.length > 0 ? planTools.map((it) => {
-                const Icon = it.Icon;
-                return (
-                  <motion.button
-                    key={it.key}
-                    variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
-                    whileHover={{ y: -3 }}
-                    onClick={() => navigate(it.key)}
-                    className={`group ${isRTL ? "text-right" : "text-left"} bg-card p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-primary/40 hover:border-primary hover:bg-primary/5 transition-all`}
-                  >
-                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center mb-2 sm:mb-3 text-primary group-hover:scale-110 transition-transform">
-                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <h5 className="font-bold text-xs sm:text-sm text-foreground mb-1 line-clamp-1">
-                      {language === "ar" ? it.titleAr : it.titleEn}
-                    </h5>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">
-                      {language === "ar" ? it.subAr : it.subEn}
-                    </p>
-                  </motion.button>
-                );
-              }) : FEATURED.filter((it) => it.key !== "liveBattle").slice(2).map((it) => {
+              {FEATURED.filter((it) => it.key !== "liveBattle").slice(2).map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 if (!meta) return null;

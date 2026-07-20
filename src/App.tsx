@@ -80,7 +80,6 @@ import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
 import SubjectFocusPicker, { FOCUS_SUBJECT_PICKED_KEY } from "./components/SubjectFocusPicker";
 import FocusSubjectPill from "./components/FocusSubjectPill";
-import StudyReminders from "./components/StudyReminders";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
@@ -443,7 +442,7 @@ const App = () => {
       {authed && language && authRole !== "admin" && channelVerified && (
         <CompanionWelcomeTrigger />
       )}
-      {false && authed && language && authRole !== "admin" && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && (
         <BottomGroupNav
           language={language}
           active={(menuChoice as any) ?? "basics"}
@@ -453,7 +452,6 @@ const App = () => {
       {authed && language && authRole !== "admin" && channelVerified && focusPicked && subject && (
         <FocusSubjectPill language={language} subject={subject} onChange={changeFocusSubject} />
       )}
-      {language && focusPicked && <StudyReminders language={language} />}
       <PageTransition
         routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${channelVerified ? "ch" : "noch"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
       >
