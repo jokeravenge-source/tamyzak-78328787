@@ -79,7 +79,6 @@ import TelegramChannelGate from "./components/TelegramChannelGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
 import SubjectFocusPicker, { FOCUS_SUBJECT_PICKED_KEY } from "./components/SubjectFocusPicker";
-import FocusSubjectPill from "./components/FocusSubjectPill";
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
@@ -448,9 +447,6 @@ const App = () => {
           active={(menuChoice as any) ?? "basics"}
           onSelect={(k) => chooseMenu(k as MenuChoice)}
         />
-      )}
-      {authed && language && authRole !== "admin" && channelVerified && focusPicked && subject && (
-        <FocusSubjectPill language={language} subject={subject} onChange={changeFocusSubject} />
       )}
       <PageTransition
         routeKey={`${authRole ?? "norole"}|${authed ? "in" : "out"}|${language ?? "nolang"}|${channelVerified ? "ch" : "noch"}|${menuChoice ?? "basics"}|${subject ?? "nosub"}|${englishCategory ?? "noec"}`}
