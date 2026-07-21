@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Heart, Trophy, Sparkles, Timer } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
-import { buildDailyPool, SUBJECT_LABEL, DAILY_GAME_REF_PREFIX, todayKey } from "@/lib/dailyGame";
+import { SUBJECT_LABEL, DAILY_GAME_REF_PREFIX, todayKey } from "@/lib/dailyGame";
+import { loadTodayGame, baghdadDayOfMonth } from "@/lib/dailyGames/manifest";
+import { buildCh1Pool, toBattleShape } from "@/lib/dailyGames/pool";
+import type { DailyGameRow, GameSpec } from "@/lib/dailyGames/types";
+import type { BattleMCQ, BattleSubject } from "@/lib/battleMcqBank";
 import { awardPoints } from "@/lib/points";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,7 +52,7 @@ function FallingGame({
   language,
   onFinish,
 }: {
-  mcqs: ReturnType<typeof buildDailyPool>["mcqs"];
+  mcqs: BattleMCQ[];
   language: AppLanguage;
   onFinish: (score: number, max: number) => void;
 }) {
@@ -195,7 +199,7 @@ function MatchGame({
   seed,
   onFinish,
 }: {
-  mcqs: ReturnType<typeof buildDailyPool>["mcqs"];
+  mcqs: BattleMCQ[];
   language: AppLanguage;
   seed: number;
   onFinish: (score: number, max: number) => void;
@@ -288,12 +292,29 @@ function MatchGame({
 
 export default function DailyGame({ language, onBack }: Props) {
   const t = T(language);
-  const daily = useMemo(() => buildDailyPool(8), []);
-  const subjectLabel = SUBJECT_LABEL[daily.subject][language];
   const [phase, setPhase] = useState<"intro" | "play" | "done">("intro");
+  const [loading, setLoading] = useState(true);
+  const [today, setToday] = useState<DailyGameRow | null>(null);
+  const [mcqs, setMcqs] = useState<BattleMCQ[]>([]);
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
   const [result, setResult] = useState<{ score: number; max: number; awarded: boolean } | null>(null);
   const refId = `${DAILY_GAME_REF_PREFIX}${todayKey()}`;
+  const seed = useMemo(() => baghdadDayOfMonth() * 137 + 11, []);
+
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      setLoading(true);
+      const row = await loadTodayGame();
+      if (cancel) return;
+      const cards = await buildCh1Pool(row.subject as BattleSubject, row.spec.count ?? 8, seed);
+      if (cancel) return;
+      setToday(row);
+      setMcqs(toBattleShape(cards, row.subject as BattleSubject));
+      setLoading(false);
+    })();
+    return () => { cancel = true; };
+  }, [seed]);
 
   useEffect(() => {
     (async () => {
@@ -311,7 +332,8 @@ export default function DailyGame({ language, onBack }: Props) {
   }, [refId]);
 
   const onFinish = async (score: number, max: number) => {
-    const passed = max > 0 && score / max >= 0.6;
+    const threshold = today?.spec.passThreshold ?? 0.6;
+    const passed = max > 0 && score / max >= threshold;
     let awarded = false;
     if (passed && !alreadyClaimed) {
       await awardPoints("mcq", refId);
@@ -322,7 +344,22 @@ export default function DailyGame({ language, onBack }: Props) {
     setPhase("done");
   };
 
-  if (daily.mcqs.length < 4) {
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-background pb-28">
+        <div className="max-w-2xl mx-auto px-4 pt-6" dir={language === "ar" ? "rtl" : "ltr"}>
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-muted-foreground animate-pulse">
+            {language === "ar" ? "جاري تحضير لعبة اليوم…" : "Preparing today's game…"}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const subjectLabel = today ? SUBJECT_LABEL[today.subject][language] : "";
+  const spec: GameSpec | null = today?.spec ?? null;
+
+  if (!today || mcqs.length < 4) {
     return (
       <main className="min-h-screen bg-background pb-28">
         <div className="max-w-2xl mx-auto px-4 pt-6" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -335,6 +372,11 @@ export default function DailyGame({ language, onBack }: Props) {
     );
   }
 
+  const gradient = spec?.theme.gradient ?? "from-primary/10 via-fuchsia-500/5 to-amber-500/10";
+  const motif = spec?.theme.motif ?? "✨";
+  const gameTitle = spec ? spec.title[language] : t.title;
+  const gameTutorial = spec ? spec.tutorial[language] : (today.engine === "falling" ? t.fallingHint : t.matchHint);
+
   return (
     <main className="min-h-screen bg-background pb-28">
       <div className="max-w-2xl mx-auto px-4 pt-6" dir={language === "ar" ? "rtl" : "ltr"}>
@@ -344,16 +386,16 @@ export default function DailyGame({ language, onBack }: Props) {
           <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-primary" />
             {t.title}
+            <span className="text-xl">{motif}</span>
           </h1>
+          <p className="text-xs text-muted-foreground mt-1">{gameTitle}</p>
         </div>
 
         {phase === "intro" && (
-          <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-fuchsia-500/5 to-amber-500/10 p-6 text-center">
+          <div className={`rounded-2xl border border-border bg-gradient-to-br ${gradient} p-6 text-center`}>
             <p className="text-sm text-muted-foreground mb-1">{t.subjectOfDay}</p>
             <p className="text-3xl font-black mb-4">{subjectLabel}</p>
-            <p className="text-sm mb-6">
-              {daily.kind === "falling" ? t.fallingHint : t.matchHint}
-            </p>
+            <p className="text-sm mb-6">{gameTutorial}</p>
             {alreadyClaimed && (
               <p className="text-xs text-amber-600 dark:text-amber-400 mb-4">{t.alreadyClaimed}</p>
             )}
@@ -366,11 +408,15 @@ export default function DailyGame({ language, onBack }: Props) {
           </div>
         )}
 
-        {phase === "play" && daily.kind === "falling" && (
-          <FallingGame mcqs={daily.mcqs} language={language} onFinish={onFinish} />
+        {phase === "play" && today.engine === "falling" && (
+          <FallingGame mcqs={mcqs} language={language} onFinish={onFinish} />
         )}
-        {phase === "play" && daily.kind === "match" && (
-          <MatchGame mcqs={daily.mcqs} language={language} seed={daily.seed} onFinish={onFinish} />
+        {phase === "play" && today.engine === "match" && (
+          <MatchGame mcqs={mcqs} language={language} seed={seed} onFinish={onFinish} />
+        )}
+        {phase === "play" && today.engine !== "falling" && today.engine !== "match" && (
+          // Engine not yet implemented → fall back to falling so the day is playable
+          <FallingGame mcqs={mcqs} language={language} onFinish={onFinish} />
         )}
 
         {phase === "done" && result && (
