@@ -6,6 +6,7 @@ import { SUMMARY_SUBJECTS } from "./Summaries";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import AdminNotesTab from "@/components/AdminNotesTab";
+import RegenerateDailyGamesButton from "@/components/RegenerateDailyGamesButton";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
