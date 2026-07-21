@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, ListOrdered, X } from "lucide-react";
+import { Loader2, ListOrdered, X, Play } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -43,6 +43,17 @@ export default function DailyGamesListButton() {
   const openModal = () => {
     setOpen(true);
     load();
+  };
+
+  const playDay = (day: number) => {
+    try {
+      sessionStorage.setItem("daily_game_preview_day", String(day));
+      // MENU_STORAGE_KEY is defined in App.tsx as "app_menu_choice_v1"
+      localStorage.setItem("app_menu_choice_v1", "dailyGame");
+    } catch {}
+    // Reload the app so the router picks up the menu choice and the
+    // DailyGame page mounts with the preview day.
+    window.location.href = "/";
   };
 
   return (
@@ -114,6 +125,14 @@ export default function DailyGamesListButton() {
                         </p>
                       )}
                     </div>
+                    <button
+                      onClick={() => playDay(r.day)}
+                      className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary/15 hover:bg-primary/25 text-primary text-xs font-semibold"
+                      title={`Play day ${r.day}`}
+                    >
+                      <Play className="w-3.5 h-3.5" />
+                      Play
+                    </button>
                   </li>
                 ))}
               </ul>

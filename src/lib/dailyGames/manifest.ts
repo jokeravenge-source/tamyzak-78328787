@@ -49,9 +49,11 @@ export function fallbackForDay(day: number): { subject: BattleSubject; engine: E
   return { subject, engine, spec };
 }
 
-/** Load today's entry from the DB, falling back to a deterministic default. */
-export async function loadTodayGame(now = new Date()): Promise<DailyGameRow> {
-  const day = baghdadDayOfMonth(now);
+/** Load today's entry from the DB, falling back to a deterministic default.
+ *  When `overrideDay` is provided (admin preview), that day is loaded instead
+ *  of the current Baghdad day. */
+export async function loadTodayGame(now = new Date(), overrideDay?: number): Promise<DailyGameRow> {
+  const day = overrideDay ?? baghdadDayOfMonth(now);
   const monthKey = baghdadMonthKey(now);
   try {
     const { data } = await supabase
