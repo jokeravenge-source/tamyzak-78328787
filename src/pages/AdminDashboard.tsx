@@ -561,9 +561,12 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
             <p className="text-xs text-muted-foreground">Manage uploaded content</p>
           </div>
         </div>
-        <button onClick={logout} className="inline-flex items-center gap-2 px-3 h-10 rounded-xl border border-white/10 bg-secondary/60 hover:bg-secondary text-sm">
-          <LogOut className="w-4 h-4" /> Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          {isOwner && <RegenerateDailyGamesButton />}
+          <button onClick={logout} className="inline-flex items-center gap-2 px-3 h-10 rounded-xl border border-white/10 bg-secondary/60 hover:bg-secondary text-sm">
+            <LogOut className="w-4 h-4" /> Sign out
+          </button>
+        </div>
       </header>
 
       <div className="max-w-6xl mx-auto relative z-10">
