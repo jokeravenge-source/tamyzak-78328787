@@ -9,7 +9,7 @@ import type { BattleMCQ, BattleSubject } from "@/lib/battleMcqBank";
 import { awardPoints } from "@/lib/points";
 import { supabase } from "@/integrations/supabase/client";
 
-type Props = { language: AppLanguage; onBack: () => void };
+type Props = { language: AppLanguage; onBack: () => void; previewDay?: number };
 
 const T = (language: AppLanguage) => ({
   title: language === "ar" ? "لعبة اليوم" : "Daily Game",
@@ -290,7 +290,7 @@ function MatchGame({
 
 /* -------------------- Page shell -------------------- */
 
-export default function DailyGame({ language, onBack }: Props) {
+export default function DailyGame({ language, onBack, previewDay }: Props) {
   const t = T(language);
   const [phase, setPhase] = useState<"intro" | "play" | "done">("intro");
   const [loading, setLoading] = useState(true);
@@ -299,13 +299,15 @@ export default function DailyGame({ language, onBack }: Props) {
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
   const [result, setResult] = useState<{ score: number; max: number; awarded: boolean } | null>(null);
   const refId = `${DAILY_GAME_REF_PREFIX}${todayKey()}`;
-  const seed = useMemo(() => baghdadDayOfMonth() * 137 + 11, []);
+  const effectiveDay = previewDay ?? baghdadDayOfMonth();
+  const seed = useMemo(() => effectiveDay * 137 + 11, [effectiveDay]);
+  const isPreview = previewDay != null;
 
   useEffect(() => {
     let cancel = false;
     (async () => {
       setLoading(true);
-      const row = await loadTodayGame();
+      const row = await loadTodayGame(new Date(), previewDay);
       if (cancel) return;
       const cards = await buildCh1Pool(row.subject as BattleSubject, row.spec.count ?? 8, seed);
       if (cancel) return;
@@ -314,7 +316,7 @@ export default function DailyGame({ language, onBack }: Props) {
       setLoading(false);
     })();
     return () => { cancel = true; };
-  }, [seed]);
+  }, [seed, previewDay]);
 
   useEffect(() => {
     (async () => {
@@ -335,7 +337,7 @@ export default function DailyGame({ language, onBack }: Props) {
     const threshold = today?.spec.passThreshold ?? 0.6;
     const passed = max > 0 && score / max >= threshold;
     let awarded = false;
-    if (passed && !alreadyClaimed) {
+    if (passed && !alreadyClaimed && !isPreview) {
       await awardPoints("mcq", refId);
       awarded = true;
       setAlreadyClaimed(true);
