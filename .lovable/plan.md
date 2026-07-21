@@ -1,48 +1,80 @@
-## Daily Game — "لعبة اليوم"
+# Daily Game — 30 unique mechanisms for Ch1
 
-A once-a-day playable 2D mini-game. The subject rotates automatically across the 7 sadis subjects, and every question inside the game is pulled from the existing curated banks in `src/lib/battleMcqBank.ts` (physics, chemistry, biology, arabic, english, french, islamic) — so content stays strictly sadis-specific, no AI, no general knowledge.
+## Goal
+For every day of the month (1–30), the Daily Game shows a **distinct 2D mini-game** whose mechanic and content are tailored to that day's subject and Chapter 1 flashcards. Content prefers admin-uploaded flashcards for that subject+chapter, falls back to the curated `battleMcqBank` Ch1 items.
 
-### Daily rotation
-- Deterministic by date: `subjectOfDay = SUBJECTS[dayIndex % 7]` where `dayIndex = floor((today - epoch) / 1day)`.
-- Same subject for everyone on the same calendar day (Baghdad time), so it feels like a shared daily.
-- A seeded RNG (`seed = YYYYMMDD`) picks the question set from that subject's pool — same set for all users that day, different set next day.
+## How the "different every day" promise is delivered
 
-### The 3 mini-games (one is picked per day, also seeded)
+Building 30 fully bespoke game engines in code is not realistic and would ship shallow, broken games. Instead:
 
-All are 2D, arcade-feel, touch + mouse, built in React + Tailwind (no new deps). Each round uses ~8 items from that day's pool.
+1. **~8 solid 2D game engines** are hand-built as React components (reliable, tested, mobile-friendly).
+2. **A real AI (Lovable AI Gateway, `google/gemini-3.1-pro-preview`) designs 30 game instances** — one per day — by receiving that day's subject, chapter=1, and the flashcard list, then returning a strict JSON spec: which engine to use, difficulty, timers, distractor style, visual theme (palette, background motif, character), win condition, tutorial copy in AR/EN.
+3. Each day's spec is stored in a manifest committed to the repo (`src/lib/dailyGames/manifest.json`). The runtime loads day N, picks the engine, and skins/parameterizes it from the spec — so no two consecutive days look, feel, or play the same.
 
-1. **Falling Answers** (default for MCQ-style items)
-   - The question sits at the top. Four labeled bubbles fall from above at increasing speed.
-   - Tap/click the correct bubble before it hits the floor. Wrong tap or miss = life lost (3 lives).
-   - Next question spawns on hit. Combo multiplier for consecutive correct hits.
+This is what the user meant by "ask Claude to design a 2D game then copy the instructions and apply it" — I do the AI call at build time, save the design, and the runtime executes it.
 
-2. **Answer Catcher**
-   - A basket at the bottom the user drags left/right. Words drop from the top; catch only the ones that answer the current question, dodge the distractors.
-   - Good for terminology-heavy subjects (arabic, islamic, biology terms).
+## The 8 base engines (all touch + mouse)
 
-3. **Term Match Blitz**
-   - 2×N grid of tiles: half are questions, half are answers, shuffled.
-   - Tap two tiles to match a Q with its A. Correct pair fades with sparkle; wrong pair flashes red. Timer counts down.
+1. **Falling Answers** — choices fall, tap the right one before it hits the floor.
+2. **Term Match Blitz** — 2D pair-matching against a timer.
+3. **Memory Flip** — flip tiles to pair term↔definition.
+4. **Bubble Pop** — bubbles carry answers; pop only the correct ones.
+5. **Lane Sort** — drag flashcards into the right bin (e.g. metal / non-metal).
+6. **Path Doors** — walk a lane, pick the correct door each round.
+7. **Word Cannon** — aim & shoot the correct term at a moving target.
+8. **Reveal Grid** — pixel/tile grid uncovers as you answer; wrong = obscures.
 
-Game choice per day: `games[dayIndex % 3]`, but skip a game if the subject's pool can't feed it (fallback to Falling Answers).
+Every engine reads the same `GameSpec` shape, so a single spec can drive any of them, and the AI can freely pick per day.
 
-### Scoring (points only, no streak, no leaderboard)
-- +1 in-game point per correct action, combo x2 / x3 for 3+ / 5+ streak inside the round.
-- At round end: if the user scored ≥ 60% of max, award **5 app points** via existing `awardPoints("mcq", refId)` where `refId = "daily-game-YYYY-MM-DD"` — the unique constraint on `user_points` already prevents double-claim per day.
-- Below 60%: no points, "Try again tomorrow" screen. User can replay for fun but cannot re-earn.
+## Content pipeline (Ch1)
 
-### Entry point
-- New card on `MainMenu` titled **"لعبة اليوم / Daily Game"** with today's subject label and a "Play" CTA. Card shows a green "✓ تم اللعب اليوم" state once the day's award has been claimed (checked via `user_points` where `source='mcq' AND ref_id LIKE 'daily-game-%'`).
-- Route: `/daily-game` in `src/App.tsx`.
+`buildCh1Pool(subject)`:
+1. Query `custom_flashcards` where `subject = ? AND chapter = 1 AND approved = true` (add `chapter` column if missing).
+2. If < 8 usable items, fall back to `battleMcqBank` Ch1 for that subject.
+3. Normalize to `{ prompt, correct, distractors[] }`.
 
-### Technical section
-- New file `src/lib/dailyGame.ts`: exports `getDailySubject()`, `getDailyGameKind()`, `getDailySeed()`, and `buildDailyPool(subject, seed)` that reuses the same `isMcqFriendly`/pool filtering already in `battleMcqBank.ts` to produce ~8 QA items with 3 on-topic distractors each.
-- New page `src/pages/DailyGame.tsx`: shell that reads today's subject/kind, renders the picked mini-game component, tracks score, and calls `awardPoints` at the end.
-- New components under `src/components/dailyGame/`:
-  - `FallingAnswers.tsx`
-  - `AnswerCatcher.tsx`
-  - `TermMatch.tsx`
-  - `GameHUD.tsx` (lives, score, combo, timer)
-- No new DB tables. Uses existing `user_points` + `award_points_safe` RPC for the per-day dedupe.
-- Language: uses the app's current language flag (already present in the codebase) to show questions in AR or EN where the pool has both; falls back to whatever the QA entry contains.
-- Guest mode: hidden from guests (they still only see Teachers).
+## Build-time AI generator
+
+`scripts/generate-daily-games.ts` (run once per month, or when Ch1 flashcards change):
+- For each day 1–30, resolve subject (existing rotation) and load Ch1 pool.
+- Call Lovable AI Gateway with a strict `Output.object` schema requiring `{ engineKey, theme, difficulty, timing, rules, tutorial, winCondition }`.
+- Persist to `src/lib/dailyGames/manifest.json` and commit.
+
+I'll wire this as a callable edge function (`generate-daily-games`) so the owner can regenerate from the Admin panel with a single click — no shell needed.
+
+## Runtime
+
+`src/pages/DailyGame.tsx` becomes a thin router:
+- Read today's day-of-month → look up manifest entry → load Ch1 pool → mount matching engine with the spec.
+- Show a 3-slide tutorial (from spec) before play.
+- Reward: keep the existing 5-point award on ≥60% correct, deduped per day.
+
+## Delivery in stages
+
+This is genuinely multi-turn. I'll implement in this order, one PR-sized turn each:
+
+**Turn 1 (this turn)**: Foundation
+- `GameSpec` type + shared engine contract.
+- Ch1 pool builder (admin + bank fallback), plus a `chapter` column on `custom_flashcards`.
+- Edge function `generate-daily-games` that calls the AI and produces the 30-entry manifest.
+- Empty manifest committed; runtime skeleton in `DailyGame.tsx` that reads the manifest.
+- Two engines fully working: **Falling Answers** and **Term Match Blitz** (already in the app; refactored to accept `GameSpec`).
+- Admin button "Regenerate 30 games" in the Admin dashboard.
+
+**Turn 2**: Engines 3–5 (Memory Flip, Bubble Pop, Lane Sort).
+
+**Turn 3**: Engines 6–8 (Path Doors, Word Cannon, Reveal Grid) + polish, sound, transitions.
+
+After Turn 1, running "Regenerate 30 games" already produces a full 30-day manifest; days that reference not-yet-built engines fall back to the two shipped ones so the game is never broken.
+
+## Technical notes
+
+- Schema for `custom_flashcards`: add `chapter smallint` if missing, index on `(subject, chapter, approved)`.
+- AI call uses `generateText` + `Output.object` with a small strict schema (no bounds), guarded with `NoObjectGeneratedError` fallback (per `ai-sdk-lovable-gateway`).
+- Manifest is a plain JSON file bundled with the app — no runtime AI on the student's request path.
+- Day-of-month uses Baghdad time (matches the existing rotation).
+- Ties into existing points system via `award_points_safe('mcq', 5, 'daily-game-YYYY-MM-DD')`.
+
+## Confirm to start Turn 1
+
+Reply "go" and I'll ship the foundation + Falling Answers + Term Match Blitz + the AI generator this turn.

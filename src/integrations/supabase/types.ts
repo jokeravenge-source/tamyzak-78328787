@@ -523,6 +523,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_games: {
+        Row: {
+          day: number
+          engine: string
+          month_key: string
+          spec: Json
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          day: number
+          engine: string
+          month_key: string
+          spec?: Json
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          day?: number
+          engine?: string
+          month_key?: string
+          spec?: Json
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_reports: {
         Row: {
           ai_plan: Json | null
