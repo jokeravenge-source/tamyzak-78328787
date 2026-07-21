@@ -299,15 +299,29 @@ export default function DailyGame({ language, onBack, previewDay }: Props) {
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
   const [result, setResult] = useState<{ score: number; max: number; awarded: boolean } | null>(null);
   const refId = `${DAILY_GAME_REF_PREFIX}${todayKey()}`;
-  const effectiveDay = previewDay ?? baghdadDayOfMonth();
+  // Admin preview: opening a specific day from the admin modal sets
+  // sessionStorage("daily_game_preview_day"). We consume it once here.
+  const [sessionPreview] = useState<number | undefined>(() => {
+    try {
+      const raw = sessionStorage.getItem("daily_game_preview_day");
+      if (raw) {
+        sessionStorage.removeItem("daily_game_preview_day");
+        const n = parseInt(raw, 10);
+        if (Number.isFinite(n) && n >= 1 && n <= 31) return n;
+      }
+    } catch {}
+    return undefined;
+  });
+  const activePreviewDay = previewDay ?? sessionPreview;
+  const effectiveDay = activePreviewDay ?? baghdadDayOfMonth();
   const seed = useMemo(() => effectiveDay * 137 + 11, [effectiveDay]);
-  const isPreview = previewDay != null;
+  const isPreview = activePreviewDay != null;
 
   useEffect(() => {
     let cancel = false;
     (async () => {
       setLoading(true);
-      const row = await loadTodayGame(new Date(), previewDay);
+      const row = await loadTodayGame(new Date(), activePreviewDay);
       if (cancel) return;
       const cards = await buildCh1Pool(row.subject as BattleSubject, row.spec.count ?? 8, seed);
       if (cancel) return;
@@ -316,7 +330,7 @@ export default function DailyGame({ language, onBack, previewDay }: Props) {
       setLoading(false);
     })();
     return () => { cancel = true; };
-  }, [seed, previewDay]);
+  }, [seed, activePreviewDay]);
 
   useEffect(() => {
     (async () => {
