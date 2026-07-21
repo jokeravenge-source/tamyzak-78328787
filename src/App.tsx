@@ -462,7 +462,15 @@ const App = () => {
       ) : authRole === "admin" && !authed ? (
         <AdminLogin onAuthed={() => setAuthed(true)} onBack={resetRole} />
       ) : authRole === "admin" && authed && isAdmin ? (
-        <AdminDashboard onLogout={adminLogout} />
+        adminPreviewDay != null ? (
+          <DailyGame
+            language={language ?? "ar"}
+            onBack={exitAdminPreview}
+            previewDay={adminPreviewDay}
+          />
+        ) : (
+          <AdminDashboard onLogout={adminLogout} />
+        )
       ) : authRole === "guest" ? (
         <Teachers
           language={language ?? "ar"}
