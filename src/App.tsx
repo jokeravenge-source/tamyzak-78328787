@@ -347,6 +347,19 @@ const App = () => {
     () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
   );
 
+  // Admin "Play daily game" preview: when set, we render DailyGame directly
+  // even for admins (which normally short-circuit to AdminDashboard).
+  const [adminPreviewDay, setAdminPreviewDay] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = sessionStorage.getItem("daily_game_preview_day");
+    const n = raw ? parseInt(raw, 10) : NaN;
+    return Number.isFinite(n) ? n : null;
+  });
+  const exitAdminPreview = () => {
+    try { sessionStorage.removeItem("daily_game_preview_day"); } catch {}
+    setAdminPreviewDay(null);
+  };
+
   const resetLanguage = () => {
     setSubject(null);
     setMenuChoice(null);
@@ -449,7 +462,15 @@ const App = () => {
       ) : authRole === "admin" && !authed ? (
         <AdminLogin onAuthed={() => setAuthed(true)} onBack={resetRole} />
       ) : authRole === "admin" && authed && isAdmin ? (
-        <AdminDashboard onLogout={adminLogout} />
+        adminPreviewDay != null ? (
+          <DailyGame
+            language={language ?? "ar"}
+            onBack={exitAdminPreview}
+            previewDay={adminPreviewDay}
+          />
+        ) : (
+          <AdminDashboard onLogout={adminLogout} />
+        )
       ) : authRole === "guest" ? (
         <Teachers
           language={language ?? "ar"}
