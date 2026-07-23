@@ -224,13 +224,17 @@ const Teachers = ({
           )}
 
           {view.kind === "topics" && (
-            <TopicsView
-              key="topics"
-              teacher={view.teacher}
-              language={language}
-              L={L}
-              onOpen={(topicKey) => setView({ kind: "topic", teacher: view.teacher, topicKey })}
-            />
+            view.teacher.id === "mohammed-anzi" ? (
+              <AnziFlow key="anzi" teacher={view.teacher} isAdmin={!!isAdmin} />
+            ) : (
+              <TopicsView
+                key="topics"
+                teacher={view.teacher}
+                language={language}
+                L={L}
+                onOpen={(topicKey) => setView({ kind: "topic", teacher: view.teacher, topicKey })}
+              />
+            )
           )}
 
           {view.kind === "topic" && (
