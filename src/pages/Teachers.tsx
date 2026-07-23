@@ -960,6 +960,13 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
                   allowFullScreen
                 />
               </div>
+              {isAdmin && (
+                <AnziBulkNotesGenerator
+                  teacherId={teacher.id}
+                  lang={stage.lang}
+                  ch={stage.ch}
+                />
+              )}
             </div>
           )}
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -1010,6 +1017,144 @@ function BookOpenIcon() {
         <path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z" />
       </svg>
     </span>
+  );
+}
+
+// ---- Bulk generator: run video-notes for every lecture in the playlist ----
+function AnziBulkNotesGenerator({
+  teacherId, lang, ch,
+}: {
+  teacherId: string;
+  lang: AnziLang;
+  ch: number;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number; label: string } | null>(null);
+  const [summary, setSummary] = useState<{ created: number; skipped: number; failed: number } | null>(null);
+  const label = lang === "ar" ? "توليد ملاحظات لكل المحاضرات" : "Generate notes for all lectures";
+  const running = lang === "ar" ? "جاري التوليد" : "Generating";
+  const noFetch = lang === "ar" ? "تعذّر جلب قائمة الفيديوهات." : "Could not fetch playlist videos.";
+
+  const run = async () => {
+    if (busy) return;
+    setBusy(true); setSummary(null); setProgress({ done: 0, total: 0, label: "…" });
+    try {
+      // 1) Load playlist videos via the existing edge function
+      const { data: pl, error: plErr } = await supabase.functions.invoke("youtube-playlist", {
+        body: {}, // function reads ?list=... — invoke supports query via url override? use fetch instead
+      }).catch(() => ({ data: null, error: new Error("skip") } as any));
+
+      // supabase.functions.invoke doesn't support query strings for GET-style
+      // functions; call the function URL directly.
+      const projectRef = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || "";
+      const supaUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "";
+      const base = supaUrl ? `${supaUrl}/functions/v1` : (projectRef ? `https://${projectRef}.functions.supabase.co` : "");
+      const res = await fetch(`${base}/youtube-playlist?list=${ANZI_PLAYLISTS[lang]}`, {
+        headers: { apikey: (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) || "" },
+      });
+      const listJson = await res.json();
+      const videos: { id: string; title: string }[] = Array.isArray(listJson?.videos) ? listJson.videos : [];
+      if (!videos.length) { toast.error(noFetch); return; }
+
+      // 2) Existing rows so we skip lectures that already have a video saved
+      const total = Math.min(ANZI_LECTURE_COUNT, videos.length);
+      const topicKeys = Array.from({ length: total }, (_, i) => `anzi-${lang}-ch${ch}-lec${i + 1}-study`);
+      const { data: existing } = await supabase
+        .from("teacher_topic_videos")
+        .select("topic_key")
+        .eq("teacher_id", teacherId)
+        .in("topic_key", topicKeys);
+      const already = new Set((existing ?? []).map((r: any) => r.topic_key));
+
+      const { data: u } = await supabase.auth.getUser();
+      let created = 0, skipped = 0, failed = 0;
+      setProgress({ done: 0, total, label: "…" });
+
+      for (let i = 0; i < total; i++) {
+        const n = i + 1;
+        const topicKey = topicKeys[i];
+        setProgress({ done: i, total, label: `${lang === "ar" ? "المحاضرة" : "Lecture"} ${n}` });
+        if (already.has(topicKey)) { skipped++; continue; }
+        const v = videos[i];
+        const url = `https://www.youtube.com/watch?v=${v.id}`;
+        try {
+          const { data, error } = await supabase.functions.invoke("video-notes", {
+            body: { url, language: lang, mode: "notes" },
+          });
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          const parts = data?.parts?.length
+            ? data.parts
+            : (data?.notes ? [{ title: v.title || `Lecture ${n}`, notes: data.notes }] : []);
+          if (!parts.length) throw new Error("empty");
+          const { error: insErr } = await supabase.from("teacher_topic_videos").insert({
+            teacher_id: teacherId,
+            topic_key: topicKey,
+            youtube_url: url,
+            video_id: v.id,
+            title: v.title || `Lecture ${n}`,
+            transcript: data?.transcript || null,
+            notes_parts: parts as any,
+            approved: true,
+            created_by: u.user?.id,
+          });
+          if (insErr) throw insErr;
+          created++;
+        } catch (e: any) {
+          failed++;
+          console.error("bulk gen failed", n, e);
+        }
+      }
+      setProgress({ done: total, total, label: "" });
+      setSummary({ created, skipped, failed });
+      toast.success(
+        lang === "ar"
+          ? `تم: ${created} · متخطاة: ${skipped} · فاشلة: ${failed}`
+          : `Done: ${created} · Skipped: ${skipped} · Failed: ${failed}`,
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 p-3 rounded-xl border border-primary/30 bg-primary/5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs text-muted-foreground">
+          {lang === "ar"
+            ? "شغّل مولّد ملاحظات الفيديو لكل المحاضرات دفعة واحدة (يتجاوز أي محاضرة لها ملاحظات مسبقاً)."
+            : "Run the video-to-notes generator for every lecture at once (skips lectures that already have notes)."}
+        </div>
+        <button
+          onClick={run}
+          disabled={busy}
+          className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50 whitespace-nowrap"
+        >
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          {busy ? running : label}
+        </button>
+      </div>
+      {progress && progress.total > 0 && (
+        <div className="mt-2">
+          <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${(progress.done / progress.total) * 100}%` }}
+            />
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground">
+            {progress.done}/{progress.total} · {progress.label}
+          </div>
+        </div>
+      )}
+      {summary && !busy && (
+        <div className="mt-2 text-[11px] text-muted-foreground">
+          {lang === "ar"
+            ? `تم إنشاء ${summary.created} · متخطاة ${summary.skipped} · فاشلة ${summary.failed}`
+            : `Created ${summary.created} · Skipped ${summary.skipped} · Failed ${summary.failed}`}
+        </div>
+      )}
+    </div>
   );
 }
 
