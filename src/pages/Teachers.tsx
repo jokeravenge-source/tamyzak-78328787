@@ -752,3 +752,400 @@ function PracticeModal({
 }
 
 export default Teachers;
+
+// ================= Mohammed Al-Anzi flow =================
+const ANZI_PLAYLISTS = {
+  ar: "PL8aWGashaQUhrL8s3uNqTCwDQgvCu35za",
+  en: "PLsYLu8VyivsT1nBmS7r8OPLYpNJXqbsAs",
+} as const;
+
+const ANZI_LECTURE_COUNT = 20;
+
+type AnziLang = "ar" | "en";
+type AnziStage =
+  | { s: "language" }
+  | { s: "chapters"; lang: AnziLang }
+  | { s: "chapterMenu"; lang: AnziLang; ch: number }
+  | { s: "lectures"; lang: AnziLang; ch: number; mode: "study" | "exam" }
+  | { s: "lecture"; lang: AnziLang; ch: number; mode: "study" | "exam"; n: number };
+
+function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) {
+  const [stage, setStage] = useState<AnziStage>({ s: "language" });
+
+  const back = () => {
+    setStage((cur) => {
+      switch (cur.s) {
+        case "language": return cur;
+        case "chapters": return { s: "language" };
+        case "chapterMenu": return { s: "chapters", lang: cur.lang };
+        case "lectures": return { s: "chapterMenu", lang: cur.lang, ch: cur.ch };
+        case "lecture": return { s: "lectures", lang: cur.lang, ch: cur.ch, mode: cur.mode };
+      }
+    });
+  };
+
+  const lang: AnziLang = stage.s === "language" ? "ar" : (stage as any).lang;
+  const isRTL = lang === "ar";
+  const tr = {
+    ar: {
+      pickLang: "اختر لغة المنهج",
+      arabic: "المنهج العربي",
+      english: "المنهج الإنجليزي",
+      chapters: "الفصول",
+      chapter: "الفصل",
+      soon: "قريباً",
+      study: "دراسة",
+      exam: "امتحن نفسك",
+      studyDesc: "شاهد المحاضرات ووّلد ملاحظات جميلة بصيغة PDF.",
+      examDesc: "أجب عن ٢٠ سؤال اختيار من متعدد لكل محاضرة.",
+      lectures: "المحاضرات",
+      lecture: "محاضرة",
+      playlistOrder: "قائمة التشغيل بترتيب المحاضرات",
+      back: "رجوع",
+      openLecture: "افتح",
+    },
+    en: {
+      pickLang: "Choose curriculum language",
+      arabic: "Arabic curriculum",
+      english: "English curriculum",
+      chapters: "Chapters",
+      chapter: "Chapter",
+      soon: "Coming soon",
+      study: "Study",
+      exam: "Exam myself",
+      studyDesc: "Watch lectures and generate beautiful PDF notes.",
+      examDesc: "Answer 20 MCQs per lecture.",
+      lectures: "Lectures",
+      lecture: "Lecture",
+      playlistOrder: "Playlist in lecture order",
+      back: "Back",
+      openLecture: "Open",
+    },
+  }[lang];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      dir={isRTL ? "rtl" : "ltr"}
+    >
+      <header className="mb-8">
+        <div className="flex items-center gap-4">
+          <img
+            src={teacher.photo}
+            alt={teacher.nameEn}
+            className="w-16 h-16 rounded-2xl object-cover border border-primary/30"
+          />
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.25em] text-primary">Biology</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              {isRTL ? teacher.nameAr : teacher.nameEn}
+            </h1>
+          </div>
+        </div>
+      </header>
+
+      {stage.s !== "language" && (
+        <button
+          onClick={back}
+          className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors mb-6"
+        >
+          <ArrowLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} /> {tr.back}
+        </button>
+      )}
+
+      {stage.s === "language" && (
+        <section>
+          <h2 className="text-xl font-bold mb-4">{tr.pickLang}</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(["ar", "en"] as const).map((l) => (
+              <button
+                key={l}
+                onClick={() => setStage({ s: "chapters", lang: l })}
+                className="p-6 rounded-3xl border border-primary/40 bg-secondary/40 hover:border-primary hover:-translate-y-0.5 transition-all text-start"
+                dir={l === "ar" ? "rtl" : "ltr"}
+              >
+                <p className="text-[11px] uppercase tracking-[0.25em] text-primary mb-2">
+                  {l === "ar" ? "العربية" : "English"}
+                </p>
+                <h3 className="text-2xl font-bold">
+                  {l === "ar" ? "المنهج العربي" : "English curriculum"}
+                </h3>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {stage.s === "chapters" && (
+        <section>
+          <h2 className="text-xl font-bold mb-4">{tr.chapters}</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5].map((n) => {
+              const unlocked = n === 3;
+              return (
+                <button
+                  key={n}
+                  disabled={!unlocked}
+                  onClick={() => unlocked && setStage({ s: "chapterMenu", lang: stage.lang, ch: n })}
+                  className={`p-5 rounded-2xl border text-start transition-all ${
+                    unlocked
+                      ? "border-primary/40 bg-secondary/40 hover:border-primary hover:-translate-y-0.5 cursor-pointer"
+                      : "border-border bg-card opacity-60 cursor-not-allowed"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-4xl font-bold font-mono gradient-text">
+                      {String(n).padStart(2, "0")}
+                    </span>
+                    {!unlocked && <span className="text-xs text-muted-foreground">{tr.soon}</span>}
+                  </div>
+                  <p className="font-semibold">
+                    {tr.chapter} {n}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {stage.s === "chapterMenu" && (
+        <section>
+          <h2 className="text-xl font-bold mb-4">
+            {tr.chapter} {stage.ch}
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(["study", "exam"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() =>
+                  setStage({ s: "lectures", lang: stage.lang, ch: stage.ch, mode: m })
+                }
+                className="p-6 rounded-3xl border border-primary/40 bg-secondary/40 hover:border-primary hover:-translate-y-0.5 transition-all text-start"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  {m === "study" ? (
+                    <BookOpenIcon />
+                  ) : (
+                    <Sparkles className="w-5 h-5 text-primary" />
+                  )}
+                  <h3 className="text-xl font-bold">{m === "study" ? tr.study : tr.exam}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {m === "study" ? tr.studyDesc : tr.examDesc}
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {stage.s === "lectures" && (
+        <section>
+          <h2 className="text-xl font-bold mb-2">
+            {tr.chapter} {stage.ch} · {stage.mode === "study" ? tr.study : tr.exam}
+          </h2>
+          {stage.mode === "study" && (
+            <div className="mb-6">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+                {tr.playlistOrder}
+              </p>
+              <div className="aspect-video rounded-2xl overflow-hidden border border-border bg-black">
+                <iframe
+                  className="w-full h-full"
+                  src={`https://www.youtube.com/embed/videoseries?list=${ANZI_PLAYLISTS[stage.lang]}`}
+                  title="Playlist"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          )}
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {Array.from({ length: ANZI_LECTURE_COUNT }, (_, i) => i + 1).map((n) => (
+              <li key={n}>
+                <button
+                  onClick={() =>
+                    setStage({
+                      s: "lecture",
+                      lang: stage.lang,
+                      ch: stage.ch,
+                      mode: stage.mode,
+                      n,
+                    })
+                  }
+                  className="w-full flex items-center justify-between gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-colors text-start"
+                >
+                  <span className="font-medium">
+                    {tr.lecture} {n}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground rtl:rotate-180" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {stage.s === "lecture" && (
+        <AnziLectureView
+          teacher={teacher}
+          lang={stage.lang}
+          ch={stage.ch}
+          mode={stage.mode}
+          n={stage.n}
+          isAdmin={isAdmin}
+        />
+      )}
+    </motion.div>
+  );
+}
+
+function BookOpenIcon() {
+  return (
+    <span className="w-5 h-5 grid place-items-center text-primary">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z" />
+        <path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z" />
+      </svg>
+    </span>
+  );
+}
+
+function AnziLectureView({
+  teacher, lang, ch, mode, n, isAdmin,
+}: {
+  teacher: Teacher;
+  lang: AnziLang;
+  ch: number;
+  mode: "study" | "exam";
+  n: number;
+  isAdmin: boolean;
+}) {
+  const isRTL = lang === "ar";
+  const topicKey = `anzi-${lang}-ch${ch}-lec${n}-${mode}`;
+  const label = lang === "ar" ? `المحاضرة ${n}` : `Lecture ${n}`;
+  const playlist = ANZI_PLAYLISTS[lang];
+  const L2 = t[lang];
+
+  // MCQ state (exam mode)
+  const [sets, setSets] = useState<MCQSet[]>([]);
+  const [loading, setLoading] = useState(mode === "exam");
+  const [showGen, setShowGen] = useState(false);
+  const [practice, setPractice] = useState<MCQSet | null>(null);
+
+  useEffect(() => {
+    if (mode !== "exam") return;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("teacher_topic_mcqs")
+        .select("id, teacher_id, topic_key, title, questions, created_at")
+        .eq("teacher_id", teacher.id)
+        .eq("topic_key", topicKey)
+        .order("created_at", { ascending: false });
+      if (error) toast.error(error.message);
+      else setSets((data ?? []) as unknown as MCQSet[]);
+      setLoading(false);
+    })();
+  }, [teacher.id, topicKey, mode]);
+
+  return (
+    <div dir={isRTL ? "rtl" : "ltr"}>
+      <header className="mb-4">
+        <p className="text-[11px] uppercase tracking-[0.25em] text-primary">
+          {lang === "ar" ? `الفصل ${ch}` : `Chapter ${ch}`} · {mode === "study" ? (lang === "ar" ? "دراسة" : "Study") : (lang === "ar" ? "امتحن نفسك" : "Exam myself")}
+        </p>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">{label}</h1>
+      </header>
+
+      {mode === "study" && (
+        <>
+          <div className="aspect-video rounded-2xl overflow-hidden border border-border bg-black mb-6">
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/videoseries?list=${playlist}&index=${n}`}
+              title={label}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          <TeacherLectureVideos
+            teacherId={teacher.id}
+            topicKey={topicKey}
+            language={lang}
+            isAdmin={isAdmin}
+          />
+        </>
+      )}
+
+      {mode === "exam" && (
+        <div>
+          {isAdmin && (
+            <div className="mb-6">
+              {!showGen ? (
+                <button
+                  onClick={() => setShowGen(true)}
+                  className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-primary/40 bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20"
+                >
+                  <Plus className="w-4 h-4" />
+                  {L2.generateTitle}
+                </button>
+              ) : (
+                <GeneratorPanel
+                  teacher={teacher}
+                  topicKey={topicKey}
+                  language={lang}
+                  L={L2}
+                  onCreated={(row) => {
+                    setSets((s) => [row, ...s]);
+                    setShowGen(false);
+                  }}
+                  onCancel={() => setShowGen(false)}
+                />
+              )}
+            </div>
+          )}
+
+          <h2 className="text-sm uppercase tracking-widest text-muted-foreground mb-3">MCQ sets</h2>
+          {loading ? (
+            <div className="p-6 text-center text-muted-foreground">
+              <Loader2 className="w-5 h-5 animate-spin inline" />
+            </div>
+          ) : sets.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{L2.noSets}</p>
+          ) : (
+            <ul className="grid gap-3">
+              {sets.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center justify-between gap-3 p-4 rounded-xl border border-border bg-card"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">
+                      {s.title || `${s.questions.length} ${L2.questions}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {s.questions.length} {L2.questions} · {new Date(s.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setPractice(s)}
+                    className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
+                  >
+                    {L2.practice}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {practice && (
+            <PracticeModal set={practice} language={lang} L={L2} onClose={() => setPractice(null)} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
