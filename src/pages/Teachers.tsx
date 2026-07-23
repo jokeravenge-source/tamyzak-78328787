@@ -960,6 +960,13 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
                   allowFullScreen
                 />
               </div>
+              {isAdmin && (
+                <AnziBulkNotesGenerator
+                  teacherId={teacher.id}
+                  lang={stage.lang}
+                  ch={stage.ch}
+                />
+              )}
             </div>
           )}
           <ul className="grid gap-2 sm:grid-cols-2">
