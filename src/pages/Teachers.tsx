@@ -759,7 +759,7 @@ const ANZI_PLAYLISTS = {
   en: "PLsYLu8VyivsT1nBmS7r8OPLYpNJXqbsAs",
 } as const;
 
-const ANZI_LECTURE_COUNT = 20;
+const ANZI_LECTURE_COUNT: Record<AnziLang, number> = { ar: 20, en: 22 };
 
 type AnziLang = "ar" | "en";
 type AnziStage =
@@ -970,7 +970,7 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
             </div>
           )}
           <ul className="grid gap-2 sm:grid-cols-2">
-            {Array.from({ length: ANZI_LECTURE_COUNT }, (_, i) => i + 1).map((n) => (
+            {Array.from({ length: ANZI_LECTURE_COUNT[stage.lang] }, (_, i) => i + 1).map((n) => (
               <li key={n}>
                 <button
                   onClick={() =>
@@ -1057,7 +1057,7 @@ function AnziBulkNotesGenerator({
       if (!videos.length) { toast.error(noFetch); return; }
 
       // 2) Existing rows so we skip lectures that already have a video saved
-      const total = Math.min(ANZI_LECTURE_COUNT, videos.length);
+      const total = Math.min(ANZI_LECTURE_COUNT[lang], videos.length);
       const topicKeys = Array.from({ length: total }, (_, i) => `anzi-${lang}-ch${ch}-lec${i + 1}-study`);
       const { data: existing } = await supabase
         .from("teacher_topic_videos")
