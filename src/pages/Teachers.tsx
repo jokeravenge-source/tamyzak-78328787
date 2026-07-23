@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import ahmedAsset from "@/assets/teachers/ahmed-nadawi.jpg.asset.json";
+import anziAsset from "@/assets/teachers/mohammed-anzi.jpg.asset.json";
 import { missionsData } from "@/data/missions";
 import { supabase } from "@/integrations/supabase/client";
 import { extractStudyMaterial } from "@/lib/fileText";
@@ -99,6 +100,14 @@ const teachers: Teacher[] = [
     photo: ahmedAsset.url,
     subject: "chemistry",
     chapterKey: "chem-1",
+  },
+  {
+    id: "mohammed-anzi",
+    nameAr: "محمد العنزي",
+    nameEn: "Mohammed Al-Anzi",
+    photo: anziAsset.url,
+    subject: "biology",
+    chapterKey: "bio-1",
   },
 ];
 
