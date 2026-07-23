@@ -60,10 +60,13 @@ Deno.serve(async (req) => {
     let transcriptText = typeof providedTranscript === "string" ? providedTranscript : "";
     if (!transcriptText && SUPADATA_API_KEY) {
       try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 45000);
         const tRes = await fetch(
           `https://api.supadata.ai/v1/youtube/transcript?url=${encodeURIComponent(url.trim())}&text=true`,
-          { headers: { "x-api-key": SUPADATA_API_KEY } },
+          { headers: { "x-api-key": SUPADATA_API_KEY }, signal: controller.signal },
         );
+        clearTimeout(timer);
         const tText = await tRes.text();
         const tJson = parseJsonMaybe(tText);
         if (tRes.ok && tJson) {
@@ -76,6 +79,15 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.error("Supadata fetch failed", e);
       }
+    }
+
+    if (!transcriptText) {
+      return jsonResponse({
+        error: lang0 === "ar"
+          ? "تعذّر تفريغ هذا الفيديو (قد يكون طويلاً جداً أو بدون ترجمة). جرّب فيديو آخر."
+          : "Could not transcribe this video (may be too long or lack captions). Try another video.",
+        retryable: true,
+      });
     }
 
     // Cap transcript size to stay well under model limits.
