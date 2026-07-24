@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Swords, Users, Trophy, Copy, Loader2, Check, X, Sparkles, Upload, FileText } from "lucide-react";
+import { ArrowLeft, Swords, Users, Trophy, Copy, Loader2, Check, X, Sparkles, Upload, FileText, User, Shuffle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ type Subject = BattleSubject;
 type MCQ = BattleMCQ;
 
 const QUESTION_TIME = 25;
+const SOLO_QUESTION_TIME = 20;
 
 function pickQuestions(n: number, seed: number, subject: Subject = "general"): MCQ[] {
   // Mix in time-based randomness so each room gets a fresh set even with the same seed range.
@@ -23,7 +24,13 @@ function pickQuestions(n: number, seed: number, subject: Subject = "general"): M
 
 const T = (l: AppLanguage) => ({
   title: l === "ar" ? "المعركة المباشرة" : "Live Battle",
-  subtitle: l === "ar" ? "ارفع ملفاً وتحدَّ صديقك بأسئلة منه" : "Upload a file and challenge a friend with its questions",
+  subtitle: l === "ar" ? "اختر طريقتك: تدرّب لوحدك، تحدَّ لاعباً عشوائياً، أو العب مع صديق" : "Choose your mode: solo, random match, or play with a friend",
+  soloMode: l === "ar" ? "ابدأ الحل" : "Start solving",
+  soloDesc: l === "ar" ? "ارفع ملفاً وحل الأسئلة بمفردك" : "Upload a file and solve on your own",
+  randomMode: l === "ar" ? "منافسة عشوائية" : "Pick a battle randomly",
+  randomDesc: l === "ar" ? "طابق مع طالب آخر حسب المادة والفصل" : "Match another student by subject & chapter",
+  friendMode: l === "ar" ? "العب مع صديق" : "Play with a friend",
+  friendDesc: l === "ar" ? "أنشئ غرفة وشارك الرمز" : "Create a room and share the code",
   create: l === "ar" ? "إنشاء غرفة" : "Create Room",
   join: l === "ar" ? "انضمام لغرفة" : "Join Room",
   back: l === "ar" ? "رجوع" : "Back",
@@ -31,6 +38,14 @@ const T = (l: AppLanguage) => ({
   code: l === "ar" ? "رمز الغرفة" : "Room code",
   shareCode: l === "ar" ? "شارك هذا الرمز مع صديقك" : "Share this code with your friend",
   waiting: l === "ar" ? "بانتظار اللاعب الثاني..." : "Waiting for second player...",
+  searching: l === "ar" ? "جاري البحث عن منافس..." : "Searching for an opponent...",
+  matchFound: l === "ar" ? "تم إيجاد منافس!" : "Match found!",
+  cancelSearch: l === "ar" ? "إلغاء البحث" : "Cancel search",
+  subject: l === "ar" ? "المادة" : "Subject",
+  chapter: l === "ar" ? "الفصل" : "Chapter",
+  findMatch: l === "ar" ? "ابحث عن منافس" : "Find opponent",
+  finish: l === "ar" ? "إنهاء" : "Finish",
+  next: l === "ar" ? "التالي" : "Next",
   starting: l === "ar" ? "تبدأ خلال" : "Starting in",
   q: l === "ar" ? "سؤال" : "Question",
   of: l === "ar" ? "من" : "of",
@@ -40,7 +55,9 @@ const T = (l: AppLanguage) => ({
   tie: l === "ar" ? "تعادل!" : "It's a tie!",
   youWin: l === "ar" ? "فزت! 🎉" : "You win! 🎉",
   youLose: l === "ar" ? "خسارة 😔" : "You lost 😔",
+  soloDone: l === "ar" ? "انتهيت!" : "All done!",
   pointsEarned: l === "ar" ? "نقاط مكتسبة" : "Points earned",
+  correctCount: l === "ar" ? "إجابات صحيحة" : "Correct answers",
   playAgain: l === "ar" ? "العب مرة أخرى" : "Play again",
   invalidCode: l === "ar" ? "أدخل رمزاً صحيحاً" : "Enter a valid 6-digit code",
   copied: l === "ar" ? "تم النسخ" : "Copied",
@@ -48,6 +65,7 @@ const T = (l: AppLanguage) => ({
   locked: l === "ar" ? "لا يمكنك مغادرة المعركة حتى تنتهي" : "You can't leave until the battle is over",
   questionsCount: l === "ar" ? "عدد الأسئلة" : "Number of questions",
   createNow: l === "ar" ? "إنشاء الغرفة" : "Create room",
+  startSolo: l === "ar" ? "ابدأ الحل" : "Start solving",
   uploadFile: l === "ar" ? "ارفع ملف الدراسة" : "Upload study file",
   uploadHint: l === "ar" ? "PDF أو DOCX أو TXT" : "PDF, DOCX, or TXT",
   noFile: l === "ar" ? "اختر ملفاً أولاً" : "Pick a file first",
@@ -57,7 +75,29 @@ const T = (l: AppLanguage) => ({
   genFailed: l === "ar" ? "تعذّر توليد الأسئلة" : "Failed to generate questions",
 });
 
-type Phase = "menu" | "createSettings" | "join" | "lobby" | "countdown" | "playing" | "done";
+type Phase =
+  | "menu"
+  | "soloSetup"
+  | "soloPlaying"
+  | "soloDone"
+  | "randomSetup"
+  | "matchmaking"
+  | "createSettings"
+  | "join"
+  | "lobby"
+  | "countdown"
+  | "playing"
+  | "done";
+
+const SUBJECT_OPTIONS: { key: BattleSubject; ar: string; en: string }[] = [
+  { key: "physics",   ar: "فيزياء",   en: "Physics" },
+  { key: "chemistry", ar: "كيمياء",   en: "Chemistry" },
+  { key: "biology",   ar: "أحياء",     en: "Biology" },
+  { key: "arabic",    ar: "عربي",     en: "Arabic" },
+  { key: "english",   ar: "إنجليزي", en: "English" },
+  { key: "french",    ar: "فرنسي",   en: "French" },
+  { key: "islamic",   ar: "إسلامية", en: "Islamic" },
+];
 
 export default function LiveBattle({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
   const t = T(language);
@@ -80,6 +120,19 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const [file, setFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Solo mode state
+  const [soloScore, setSoloScore] = useState(0);
+  const [soloAnswered, setSoloAnswered] = useState<number | null>(null);
+  const [soloFeedback, setSoloFeedback] = useState<null | "correct" | "wrong">(null);
+  const [soloTimeLeft, setSoloTimeLeft] = useState(SOLO_QUESTION_TIME);
+  const soloAdvanceTimer = useRef<number | null>(null);
+
+  // Random matchmaking state
+  const [randomSubject, setRandomSubject] = useState<BattleSubject>("physics");
+  const [randomChapter, setRandomChapter] = useState<number>(1);
+  const matchmakingRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const matchedRef = useRef(false);
 
   const meId = useRef<string>(Math.random().toString(36).slice(2, 10));
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -341,6 +394,8 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
 
   const restart = () => {
     cleanup();
+    stopMatchmaking();
+    if (soloAdvanceTimer.current) { window.clearTimeout(soloAdvanceTimer.current); soloAdvanceTimer.current = null; }
     setPhase("menu");
     setCode("");
     setJoinInput("");
@@ -348,8 +403,188 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     setQIdx(0);
     setScores({});
     setPlayers([]);
+    setSoloScore(0);
+    setSoloAnswered(null);
+    setSoloFeedback(null);
+    setFile(null);
     awardedRef.current = false;
     hostAnswers.current = {};
+    matchedRef.current = false;
+  };
+
+  /* ---------------- Solo mode ---------------- */
+
+  const startSolo = async () => {
+    if (!file) { toast.error(t.noFile); return; }
+    setCreating(true);
+    try {
+      toast.loading(t.reading, { id: "solo-ext" });
+      const material = await extractStudyMaterial(file);
+      toast.dismiss("solo-ext");
+      if ((!material.text || material.text.trim().length < 50) && !material.pageImages?.length) {
+        toast.error(t.noText);
+        setCreating(false);
+        return;
+      }
+      toast.loading(t.generating, { id: "solo-gen" });
+      const { data, error } = await supabase.functions.invoke("generate-mcq", {
+        body: { text: material.text, pageImages: material.pageImages, count: qCount, language },
+      });
+      toast.dismiss("solo-gen");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.message || data.error);
+      const raw: any[] = (data?.questions || []).filter((q: any) => q?.choices?.length === 4);
+      if (!raw.length) throw new Error(t.genFailed);
+      const qs: MCQ[] = raw.slice(0, qCount).map((q) => ({
+        q: q.question, choices: q.choices, answer: q.answer_index, subject: "general" as BattleSubject,
+      }));
+      setQuestions(qs);
+      setQIdx(0);
+      setSoloScore(0);
+      setSoloAnswered(null);
+      setSoloFeedback(null);
+      setPhase("soloPlaying");
+    } catch (e: any) {
+      toast.dismiss();
+      toast.error(e?.message || t.genFailed);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Solo timer + auto-advance
+  useEffect(() => {
+    if (phase !== "soloPlaying") return;
+    setSoloTimeLeft(SOLO_QUESTION_TIME);
+    setSoloAnswered(null);
+    setSoloFeedback(null);
+    const start = Date.now();
+    const iv = window.setInterval(() => {
+      const left = Math.max(0, SOLO_QUESTION_TIME - Math.floor((Date.now() - start) / 1000));
+      setSoloTimeLeft(left);
+      if (left <= 0) {
+        window.clearInterval(iv);
+        soloAdvanceTimer.current = window.setTimeout(soloNext, 600);
+      }
+    }, 200);
+    return () => window.clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, qIdx]);
+
+  const soloNext = () => {
+    if (soloAdvanceTimer.current) { window.clearTimeout(soloAdvanceTimer.current); soloAdvanceTimer.current = null; }
+    setQIdx((cur) => {
+      const next = cur + 1;
+      if (next >= questionsRef.current.length) {
+        setPhase("soloDone");
+        return cur;
+      }
+      return next;
+    });
+  };
+
+  const soloAnswer = (idx: number) => {
+    if (soloAnswered !== null) return;
+    const q = questions[qIdx];
+    if (!q) return;
+    const correct = q.answer === idx;
+    setSoloAnswered(idx);
+    setSoloFeedback(correct ? "correct" : "wrong");
+    if (correct) setSoloScore((s) => s + 1);
+    soloAdvanceTimer.current = window.setTimeout(soloNext, 800);
+  };
+
+  // Award points once solo run finishes
+  const soloAwardedRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "soloDone" || soloAwardedRef.current) return;
+    soloAwardedRef.current = true;
+    (async () => {
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        if (u.user && soloScore > 0) {
+          await supabase.rpc("award_points_safe", {
+            _source: "mcq",
+            _points: Math.min(5, soloScore),
+            _ref_id: `solo:${Date.now()}`,
+          });
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [phase, soloScore]);
+
+  /* ---------------- Random matchmaking ---------------- */
+
+  const stopMatchmaking = () => {
+    if (matchmakingRef.current) {
+      supabase.removeChannel(matchmakingRef.current);
+      matchmakingRef.current = null;
+    }
+  };
+
+  const findRandomMatch = () => {
+    stopMatchmaking();
+    matchedRef.current = false;
+    setPhase("matchmaking");
+    const lobbyName = `battle:lobby:${randomSubject}:${randomChapter}`;
+    const ch = supabase.channel(lobbyName, { config: { presence: { key: meId.current } } });
+    matchmakingRef.current = ch;
+
+    ch.on("presence", { event: "sync" }, () => {
+      if (matchedRef.current) return;
+      const state = ch.presenceState() as Record<string, Array<{ name: string; ts: number }>>;
+      const ids = Object.keys(state);
+      if (ids.length < 2) return;
+
+      // Deterministic host = smallest id
+      const sorted = ids.slice().sort();
+      const hostId = sorted[0];
+      const partnerId = sorted[1];
+      if (meId.current !== hostId && meId.current !== partnerId) return;
+
+      matchedRef.current = true;
+      const iAmHost = meId.current === hostId;
+
+      if (iAmHost) {
+        const roomCode = String(Math.floor(100000 + Math.random() * 900000));
+        const seed = (Date.now() ^ (randomChapter * 9973)) >>> 0;
+        const qs = buildBattleMcqs(randomSubject, 10, seed);
+        // Tell everyone in the lobby which two players matched and the room to join
+        ch.send({
+          type: "broadcast",
+          event: "matched",
+          payload: { hostId, partnerId, roomCode, questions: qs },
+        });
+      }
+    });
+
+    ch.on("broadcast", { event: "matched" }, ({ payload }) => {
+      const { hostId, partnerId, roomCode, questions: qs } = payload as any;
+      if (meId.current !== hostId && meId.current !== partnerId) return;
+      matchedRef.current = true;
+      toast.success(t.matchFound);
+      const iAmHost = meId.current === hostId;
+      setCode(roomCode);
+      setIsHost(iAmHost);
+      stopMatchmaking();
+      setupChannel(roomCode, iAmHost, iAmHost ? (qs as MCQ[]) : undefined);
+      if (!iAmHost) {
+        // Non-host preloads questions so first "start" arrives cleanly
+        setQuestions(qs as MCQ[]);
+      }
+      setPhase("lobby");
+    });
+
+    ch.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await ch.track({ name, ts: Date.now() });
+      }
+    });
+  };
+
+  const cancelMatchmaking = () => {
+    stopMatchmaking();
+    setPhase("randomSetup");
   };
 
   const me = players.find((p) => p.id === meId.current);
@@ -404,50 +639,46 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               <label className="text-sm font-medium">{t.name}</label>
               <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-2" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
+              <motion.button
+                onClick={() => setPhase("soloSetup")}
+                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="relative rounded-2xl p-5 text-left overflow-hidden bg-gradient-to-br from-sky-500 via-cyan-500 to-teal-500 text-white shadow-lg"
+              >
+                <User className="w-8 h-8 mb-2 drop-shadow" />
+                <div className="font-bold text-lg">{t.soloMode}</div>
+                <div className="text-sm opacity-90">{t.soloDesc}</div>
+              </motion.button>
+
+              <motion.button
+                onClick={() => setPhase("randomSetup")}
+                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="relative rounded-2xl p-5 text-left overflow-hidden bg-gradient-to-br from-fuchsia-600 via-rose-500 to-orange-500 text-white shadow-lg"
+              >
+                <Shuffle className="w-8 h-8 mb-2 drop-shadow" />
+                <div className="font-bold text-lg">{t.randomMode}</div>
+                <div className="text-sm opacity-90">{t.randomDesc}</div>
+              </motion.button>
+
               <motion.button
                 onClick={() => setPhase("createSettings")}
                 variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
                 whileHover={{ y: -3, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                className="relative group rounded-2xl text-left overflow-hidden"
+                className="relative rounded-2xl p-5 text-left overflow-hidden bg-card border-2 border-primary/20 hover:border-primary/60 transition"
               >
-                <span
-                  aria-hidden
-                  className="absolute -inset-[1.5px] rounded-2xl"
-                  style={{
-                    background:
-                      "conic-gradient(from 0deg, hsl(var(--primary)), #d946ef, #f97316, #ef4444, hsl(var(--primary)))",
-                    animation: "spin 6s linear infinite",
-                  }}
-                />
-                <div className="relative rounded-2xl p-6 bg-gradient-to-br from-fuchsia-600 via-rose-500 to-orange-500 text-white overflow-hidden">
-                  <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                  <motion.div
-                    animate={{ rotate: [-10, 10, -10] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <Swords className="w-8 h-8 mb-2 drop-shadow" />
-                  </motion.div>
-                  <div className="font-bold text-lg">{t.create}</div>
-                </div>
+                <Users className="w-8 h-8 mb-2 text-primary" />
+                <div className="font-bold text-lg">{t.friendMode}</div>
+                <div className="text-sm text-muted-foreground">{t.friendDesc}</div>
               </motion.button>
-              <motion.button
-                onClick={() => setPhase("join")}
-                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                whileHover={{ y: -3, scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className="relative group rounded-2xl p-6 bg-card border-2 border-primary/20 text-left hover:border-primary/60 transition overflow-hidden"
-              >
-                <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <Users className="w-8 h-8 mb-2 text-primary" />
-                </motion.div>
-                <div className="font-bold text-lg">{t.join}</div>
-              </motion.button>
+
+              <Button variant="outline" onClick={() => setPhase("join")} className="w-full">
+                {t.join}
+              </Button>
             </div>
           </motion.div>
         )}
@@ -688,6 +919,178 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+        )}
+
+        {phase === "done" && (
+          null
+        )}
+        {phase === "soloSetup" && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.uploadFile}</label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="cursor-pointer border-2 border-dashed border-primary/30 hover:border-primary rounded-xl p-6 text-center transition"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.docx,.txt,application/pdf,text/plain"
+                  onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+                />
+                {file ? (
+                  <div className="flex flex-col items-center gap-1">
+                    <FileText className="w-8 h-8 text-primary" />
+                    <p className="font-medium text-sm truncate max-w-full">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <Upload className="w-8 h-8 text-primary" />
+                    <p className="font-medium text-sm">{t.uploadFile}</p>
+                    <p className="text-xs text-muted-foreground">{t.uploadHint}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.questionsCount}</label>
+              <div className="grid grid-cols-4 gap-2">
+                {[5, 10, 15, 20].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setQCount(n)}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${
+                      qCount === n ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={restart} className="flex-1" disabled={creating}>{t.back}</Button>
+              <Button onClick={startSolo} className="flex-1" disabled={creating || !file}>
+                {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> {t.generating}</> : t.startSolo}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {phase === "soloPlaying" && cur && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span>{t.q} {qIdx + 1} {t.of} {questions.length}</span>
+              <span className={soloTimeLeft <= 5 ? "text-destructive font-bold" : ""}>{soloTimeLeft}s</span>
+            </div>
+            <Progress value={(soloTimeLeft / SOLO_QUESTION_TIME) * 100} className="h-2" />
+            <motion.div
+              key={qIdx}
+              animate={soloFeedback === "wrong" ? { x: [0, -10, 10, -8, 8, -4, 4, 0] } : {}}
+              transition={{ duration: 0.5 }}
+              className="rounded-2xl border bg-card p-6"
+            >
+              <div className="text-lg font-medium mb-4">{cur.q}</div>
+              <div className="grid gap-2">
+                {cur.choices.map((c, i) => {
+                  const hasAnswered = soloAnswered !== null;
+                  const isMine = hasAnswered && soloAnswered === i;
+                  const isCorrect = cur.answer === i;
+                  return (
+                    <button
+                      key={i}
+                      disabled={hasAnswered}
+                      onClick={() => soloAnswer(i)}
+                      className={`relative rounded-xl border p-3 text-left transition ${
+                        hasAnswered
+                          ? isCorrect
+                            ? "bg-green-100 border-green-500 text-green-900"
+                            : isMine
+                              ? "bg-red-100 border-red-500 text-red-900"
+                              : "opacity-60"
+                          : "hover:bg-accent"
+                      }`}
+                    >
+                      <span className="font-mono text-xs me-2 opacity-60">{String.fromCharCode(65 + i)}.</span>
+                      {c}
+                      {hasAnswered && isCorrect && <Check className="w-5 h-5 text-green-600 absolute top-1/2 -translate-y-1/2 end-3" />}
+                      {hasAnswered && isMine && !isCorrect && <X className="w-5 h-5 text-red-600 absolute top-1/2 -translate-y-1/2 end-3" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {phase === "soloDone" && (
+          <div className="text-center space-y-6 py-8">
+            <Trophy className="w-20 h-20 text-amber-500 mx-auto" />
+            <div className="text-3xl font-bold">{t.soloDone}</div>
+            <div className="text-lg text-muted-foreground">
+              {t.correctCount}: <span className="font-bold text-foreground">{soloScore}</span> / {questions.length}
+            </div>
+            <Button onClick={restart} size="lg">{t.playAgain}</Button>
+          </div>
+        )}
+
+        {phase === "randomSetup" && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.subject}</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {SUBJECT_OPTIONS.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setRandomSubject(s.key)}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${
+                      randomSubject === s.key ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {language === "ar" ? s.ar : s.en}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.chapter}</label>
+              <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                {[1,2,3,4,5,6,7,8].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setRandomChapter(n)}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${
+                      randomChapter === n ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={restart} className="flex-1">{t.back}</Button>
+              <Button onClick={findRandomMatch} className="flex-1">{t.findMatch}</Button>
+            </div>
+          </div>
+        )}
+
+        {phase === "matchmaking" && (
+          <div className="text-center space-y-6 py-12">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="mx-auto w-16 h-16 rounded-full border-4 border-primary border-t-transparent"
+            />
+            <div className="text-lg font-bold">{t.searching}</div>
+            <div className="text-sm text-muted-foreground">
+              {t.subject}: <b>{SUBJECT_OPTIONS.find(s => s.key === randomSubject)?.[language] ?? randomSubject}</b>
+              {" · "}{t.chapter} {randomChapter}
+            </div>
+            <Button variant="outline" onClick={cancelMatchmaking}>{t.cancelSearch}</Button>
           </div>
         )}
 
