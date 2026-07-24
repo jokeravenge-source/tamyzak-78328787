@@ -121,6 +121,19 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const [creating, setCreating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Solo mode state
+  const [soloScore, setSoloScore] = useState(0);
+  const [soloAnswered, setSoloAnswered] = useState<number | null>(null);
+  const [soloFeedback, setSoloFeedback] = useState<null | "correct" | "wrong">(null);
+  const [soloTimeLeft, setSoloTimeLeft] = useState(SOLO_QUESTION_TIME);
+  const soloAdvanceTimer = useRef<number | null>(null);
+
+  // Random matchmaking state
+  const [randomSubject, setRandomSubject] = useState<BattleSubject>("physics");
+  const [randomChapter, setRandomChapter] = useState<number>(1);
+  const matchmakingRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const matchedRef = useRef(false);
+
   const meId = useRef<string>(Math.random().toString(36).slice(2, 10));
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const questionsRef = useRef<MCQ[]>([]);
