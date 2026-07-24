@@ -394,6 +394,8 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
 
   const restart = () => {
     cleanup();
+    stopMatchmaking();
+    if (soloAdvanceTimer.current) { window.clearTimeout(soloAdvanceTimer.current); soloAdvanceTimer.current = null; }
     setPhase("menu");
     setCode("");
     setJoinInput("");
@@ -401,8 +403,188 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     setQIdx(0);
     setScores({});
     setPlayers([]);
+    setSoloScore(0);
+    setSoloAnswered(null);
+    setSoloFeedback(null);
+    setFile(null);
     awardedRef.current = false;
     hostAnswers.current = {};
+    matchedRef.current = false;
+  };
+
+  /* ---------------- Solo mode ---------------- */
+
+  const startSolo = async () => {
+    if (!file) { toast.error(t.noFile); return; }
+    setCreating(true);
+    try {
+      toast.loading(t.reading, { id: "solo-ext" });
+      const material = await extractStudyMaterial(file);
+      toast.dismiss("solo-ext");
+      if ((!material.text || material.text.trim().length < 50) && !material.pageImages?.length) {
+        toast.error(t.noText);
+        setCreating(false);
+        return;
+      }
+      toast.loading(t.generating, { id: "solo-gen" });
+      const { data, error } = await supabase.functions.invoke("generate-mcq", {
+        body: { text: material.text, pageImages: material.pageImages, count: qCount, language },
+      });
+      toast.dismiss("solo-gen");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.message || data.error);
+      const raw: any[] = (data?.questions || []).filter((q: any) => q?.choices?.length === 4);
+      if (!raw.length) throw new Error(t.genFailed);
+      const qs: MCQ[] = raw.slice(0, qCount).map((q) => ({
+        q: q.question, choices: q.choices, answer: q.answer_index, subject: "general" as BattleSubject,
+      }));
+      setQuestions(qs);
+      setQIdx(0);
+      setSoloScore(0);
+      setSoloAnswered(null);
+      setSoloFeedback(null);
+      setPhase("soloPlaying");
+    } catch (e: any) {
+      toast.dismiss();
+      toast.error(e?.message || t.genFailed);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Solo timer + auto-advance
+  useEffect(() => {
+    if (phase !== "soloPlaying") return;
+    setSoloTimeLeft(SOLO_QUESTION_TIME);
+    setSoloAnswered(null);
+    setSoloFeedback(null);
+    const start = Date.now();
+    const iv = window.setInterval(() => {
+      const left = Math.max(0, SOLO_QUESTION_TIME - Math.floor((Date.now() - start) / 1000));
+      setSoloTimeLeft(left);
+      if (left <= 0) {
+        window.clearInterval(iv);
+        soloAdvanceTimer.current = window.setTimeout(soloNext, 600);
+      }
+    }, 200);
+    return () => window.clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, qIdx]);
+
+  const soloNext = () => {
+    if (soloAdvanceTimer.current) { window.clearTimeout(soloAdvanceTimer.current); soloAdvanceTimer.current = null; }
+    setQIdx((cur) => {
+      const next = cur + 1;
+      if (next >= questionsRef.current.length) {
+        setPhase("soloDone");
+        return cur;
+      }
+      return next;
+    });
+  };
+
+  const soloAnswer = (idx: number) => {
+    if (soloAnswered !== null) return;
+    const q = questions[qIdx];
+    if (!q) return;
+    const correct = q.answer === idx;
+    setSoloAnswered(idx);
+    setSoloFeedback(correct ? "correct" : "wrong");
+    if (correct) setSoloScore((s) => s + 1);
+    soloAdvanceTimer.current = window.setTimeout(soloNext, 800);
+  };
+
+  // Award points once solo run finishes
+  const soloAwardedRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "soloDone" || soloAwardedRef.current) return;
+    soloAwardedRef.current = true;
+    (async () => {
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        if (u.user && soloScore > 0) {
+          await supabase.rpc("award_points_safe", {
+            _source: "mcq",
+            _points: Math.min(5, soloScore),
+            _ref_id: `solo:${Date.now()}`,
+          });
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [phase, soloScore]);
+
+  /* ---------------- Random matchmaking ---------------- */
+
+  const stopMatchmaking = () => {
+    if (matchmakingRef.current) {
+      supabase.removeChannel(matchmakingRef.current);
+      matchmakingRef.current = null;
+    }
+  };
+
+  const findRandomMatch = () => {
+    stopMatchmaking();
+    matchedRef.current = false;
+    setPhase("matchmaking");
+    const lobbyName = `battle:lobby:${randomSubject}:${randomChapter}`;
+    const ch = supabase.channel(lobbyName, { config: { presence: { key: meId.current } } });
+    matchmakingRef.current = ch;
+
+    ch.on("presence", { event: "sync" }, () => {
+      if (matchedRef.current) return;
+      const state = ch.presenceState() as Record<string, Array<{ name: string; ts: number }>>;
+      const ids = Object.keys(state);
+      if (ids.length < 2) return;
+
+      // Deterministic host = smallest id
+      const sorted = ids.slice().sort();
+      const hostId = sorted[0];
+      const partnerId = sorted[1];
+      if (meId.current !== hostId && meId.current !== partnerId) return;
+
+      matchedRef.current = true;
+      const iAmHost = meId.current === hostId;
+
+      if (iAmHost) {
+        const roomCode = String(Math.floor(100000 + Math.random() * 900000));
+        const seed = (Date.now() ^ (randomChapter * 9973)) >>> 0;
+        const qs = buildBattleMcqs(randomSubject, 10, seed);
+        // Tell everyone in the lobby which two players matched and the room to join
+        ch.send({
+          type: "broadcast",
+          event: "matched",
+          payload: { hostId, partnerId, roomCode, questions: qs },
+        });
+      }
+    });
+
+    ch.on("broadcast", { event: "matched" }, ({ payload }) => {
+      const { hostId, partnerId, roomCode, questions: qs } = payload as any;
+      if (meId.current !== hostId && meId.current !== partnerId) return;
+      matchedRef.current = true;
+      toast.success(t.matchFound);
+      const iAmHost = meId.current === hostId;
+      setCode(roomCode);
+      setIsHost(iAmHost);
+      stopMatchmaking();
+      setupChannel(roomCode, iAmHost, iAmHost ? (qs as MCQ[]) : undefined);
+      if (!iAmHost) {
+        // Non-host preloads questions so first "start" arrives cleanly
+        setQuestions(qs as MCQ[]);
+      }
+      setPhase("lobby");
+    });
+
+    ch.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await ch.track({ name, ts: Date.now() });
+      }
+    });
+  };
+
+  const cancelMatchmaking = () => {
+    stopMatchmaking();
+    setPhase("randomSetup");
   };
 
   const me = players.find((p) => p.id === meId.current);
