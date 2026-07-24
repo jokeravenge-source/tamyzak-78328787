@@ -639,50 +639,46 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
               <label className="text-sm font-medium">{t.name}</label>
               <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-2" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
+              <motion.button
+                onClick={() => setPhase("soloSetup")}
+                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="relative rounded-2xl p-5 text-left overflow-hidden bg-gradient-to-br from-sky-500 via-cyan-500 to-teal-500 text-white shadow-lg"
+              >
+                <User className="w-8 h-8 mb-2 drop-shadow" />
+                <div className="font-bold text-lg">{t.soloMode}</div>
+                <div className="text-sm opacity-90">{t.soloDesc}</div>
+              </motion.button>
+
+              <motion.button
+                onClick={() => setPhase("randomSetup")}
+                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="relative rounded-2xl p-5 text-left overflow-hidden bg-gradient-to-br from-fuchsia-600 via-rose-500 to-orange-500 text-white shadow-lg"
+              >
+                <Shuffle className="w-8 h-8 mb-2 drop-shadow" />
+                <div className="font-bold text-lg">{t.randomMode}</div>
+                <div className="text-sm opacity-90">{t.randomDesc}</div>
+              </motion.button>
+
               <motion.button
                 onClick={() => setPhase("createSettings")}
                 variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
                 whileHover={{ y: -3, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                className="relative group rounded-2xl text-left overflow-hidden"
+                className="relative rounded-2xl p-5 text-left overflow-hidden bg-card border-2 border-primary/20 hover:border-primary/60 transition"
               >
-                <span
-                  aria-hidden
-                  className="absolute -inset-[1.5px] rounded-2xl"
-                  style={{
-                    background:
-                      "conic-gradient(from 0deg, hsl(var(--primary)), #d946ef, #f97316, #ef4444, hsl(var(--primary)))",
-                    animation: "spin 6s linear infinite",
-                  }}
-                />
-                <div className="relative rounded-2xl p-6 bg-gradient-to-br from-fuchsia-600 via-rose-500 to-orange-500 text-white overflow-hidden">
-                  <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                  <motion.div
-                    animate={{ rotate: [-10, 10, -10] }}
-                    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <Swords className="w-8 h-8 mb-2 drop-shadow" />
-                  </motion.div>
-                  <div className="font-bold text-lg">{t.create}</div>
-                </div>
+                <Users className="w-8 h-8 mb-2 text-primary" />
+                <div className="font-bold text-lg">{t.friendMode}</div>
+                <div className="text-sm text-muted-foreground">{t.friendDesc}</div>
               </motion.button>
-              <motion.button
-                onClick={() => setPhase("join")}
-                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                whileHover={{ y: -3, scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className="relative group rounded-2xl p-6 bg-card border-2 border-primary/20 text-left hover:border-primary/60 transition overflow-hidden"
-              >
-                <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <Users className="w-8 h-8 mb-2 text-primary" />
-                </motion.div>
-                <div className="font-bold text-lg">{t.join}</div>
-              </motion.button>
+
+              <Button variant="outline" onClick={() => setPhase("join")} className="w-full">
+                {t.join}
+              </Button>
             </div>
           </motion.div>
         )}
