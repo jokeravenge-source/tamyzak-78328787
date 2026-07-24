@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Swords, Users, Trophy, Copy, Loader2, Check, X, Sparkles, Upload, FileText } from "lucide-react";
+import { ArrowLeft, Swords, Users, Trophy, Copy, Loader2, Check, X, Sparkles, Upload, FileText, User, Shuffle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ type Subject = BattleSubject;
 type MCQ = BattleMCQ;
 
 const QUESTION_TIME = 25;
+const SOLO_QUESTION_TIME = 20;
 
 function pickQuestions(n: number, seed: number, subject: Subject = "general"): MCQ[] {
   // Mix in time-based randomness so each room gets a fresh set even with the same seed range.
@@ -23,7 +24,13 @@ function pickQuestions(n: number, seed: number, subject: Subject = "general"): M
 
 const T = (l: AppLanguage) => ({
   title: l === "ar" ? "المعركة المباشرة" : "Live Battle",
-  subtitle: l === "ar" ? "ارفع ملفاً وتحدَّ صديقك بأسئلة منه" : "Upload a file and challenge a friend with its questions",
+  subtitle: l === "ar" ? "اختر طريقتك: تدرّب لوحدك، تحدَّ لاعباً عشوائياً، أو العب مع صديق" : "Choose your mode: solo, random match, or play with a friend",
+  soloMode: l === "ar" ? "ابدأ الحل" : "Start solving",
+  soloDesc: l === "ar" ? "ارفع ملفاً وحل الأسئلة بمفردك" : "Upload a file and solve on your own",
+  randomMode: l === "ar" ? "منافسة عشوائية" : "Pick a battle randomly",
+  randomDesc: l === "ar" ? "طابق مع طالب آخر حسب المادة والفصل" : "Match another student by subject & chapter",
+  friendMode: l === "ar" ? "العب مع صديق" : "Play with a friend",
+  friendDesc: l === "ar" ? "أنشئ غرفة وشارك الرمز" : "Create a room and share the code",
   create: l === "ar" ? "إنشاء غرفة" : "Create Room",
   join: l === "ar" ? "انضمام لغرفة" : "Join Room",
   back: l === "ar" ? "رجوع" : "Back",
@@ -31,6 +38,14 @@ const T = (l: AppLanguage) => ({
   code: l === "ar" ? "رمز الغرفة" : "Room code",
   shareCode: l === "ar" ? "شارك هذا الرمز مع صديقك" : "Share this code with your friend",
   waiting: l === "ar" ? "بانتظار اللاعب الثاني..." : "Waiting for second player...",
+  searching: l === "ar" ? "جاري البحث عن منافس..." : "Searching for an opponent...",
+  matchFound: l === "ar" ? "تم إيجاد منافس!" : "Match found!",
+  cancelSearch: l === "ar" ? "إلغاء البحث" : "Cancel search",
+  subject: l === "ar" ? "المادة" : "Subject",
+  chapter: l === "ar" ? "الفصل" : "Chapter",
+  findMatch: l === "ar" ? "ابحث عن منافس" : "Find opponent",
+  finish: l === "ar" ? "إنهاء" : "Finish",
+  next: l === "ar" ? "التالي" : "Next",
   starting: l === "ar" ? "تبدأ خلال" : "Starting in",
   q: l === "ar" ? "سؤال" : "Question",
   of: l === "ar" ? "من" : "of",
@@ -40,7 +55,9 @@ const T = (l: AppLanguage) => ({
   tie: l === "ar" ? "تعادل!" : "It's a tie!",
   youWin: l === "ar" ? "فزت! 🎉" : "You win! 🎉",
   youLose: l === "ar" ? "خسارة 😔" : "You lost 😔",
+  soloDone: l === "ar" ? "انتهيت!" : "All done!",
   pointsEarned: l === "ar" ? "نقاط مكتسبة" : "Points earned",
+  correctCount: l === "ar" ? "إجابات صحيحة" : "Correct answers",
   playAgain: l === "ar" ? "العب مرة أخرى" : "Play again",
   invalidCode: l === "ar" ? "أدخل رمزاً صحيحاً" : "Enter a valid 6-digit code",
   copied: l === "ar" ? "تم النسخ" : "Copied",
@@ -48,6 +65,7 @@ const T = (l: AppLanguage) => ({
   locked: l === "ar" ? "لا يمكنك مغادرة المعركة حتى تنتهي" : "You can't leave until the battle is over",
   questionsCount: l === "ar" ? "عدد الأسئلة" : "Number of questions",
   createNow: l === "ar" ? "إنشاء الغرفة" : "Create room",
+  startSolo: l === "ar" ? "ابدأ الحل" : "Start solving",
   uploadFile: l === "ar" ? "ارفع ملف الدراسة" : "Upload study file",
   uploadHint: l === "ar" ? "PDF أو DOCX أو TXT" : "PDF, DOCX, or TXT",
   noFile: l === "ar" ? "اختر ملفاً أولاً" : "Pick a file first",
@@ -57,7 +75,29 @@ const T = (l: AppLanguage) => ({
   genFailed: l === "ar" ? "تعذّر توليد الأسئلة" : "Failed to generate questions",
 });
 
-type Phase = "menu" | "createSettings" | "join" | "lobby" | "countdown" | "playing" | "done";
+type Phase =
+  | "menu"
+  | "soloSetup"
+  | "soloPlaying"
+  | "soloDone"
+  | "randomSetup"
+  | "matchmaking"
+  | "createSettings"
+  | "join"
+  | "lobby"
+  | "countdown"
+  | "playing"
+  | "done";
+
+const SUBJECT_OPTIONS: { key: BattleSubject; ar: string; en: string }[] = [
+  { key: "physics",   ar: "فيزياء",   en: "Physics" },
+  { key: "chemistry", ar: "كيمياء",   en: "Chemistry" },
+  { key: "biology",   ar: "أحياء",     en: "Biology" },
+  { key: "arabic",    ar: "عربي",     en: "Arabic" },
+  { key: "english",   ar: "إنجليزي", en: "English" },
+  { key: "french",    ar: "فرنسي",   en: "French" },
+  { key: "islamic",   ar: "إسلامية", en: "Islamic" },
+];
 
 export default function LiveBattle({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
   const t = T(language);
