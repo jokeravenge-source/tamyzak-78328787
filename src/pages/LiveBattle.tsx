@@ -550,40 +550,27 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
       matchedRef.current = true;
       const iAmHost = meId.current === hostId;
 
-      if (iAmHost) {
-        const roomCode = String(Math.floor(100000 + Math.random() * 900000));
-        const seed = (Date.now() ^ (randomChapter * 9973)) >>> 0;
-        const qs = buildBattleMcqs(randomSubject, 10, seed);
-        // Notify the partner
-        ch.send({
-          type: "broadcast",
-          event: "matched",
-          payload: { hostId, partnerId, roomCode, questions: qs },
-        });
-        // Also transition the host locally in case the self-broadcast is dropped
-        toast.success(t.matchFound);
-        setCode(roomCode);
-        setIsHost(true);
-        stopMatchmaking();
-        setupChannel(roomCode, true, qs);
-        setPhase("lobby");
+      // Deterministic room code from the two player IDs so both sides join the
+      // same battle room without needing a broadcast handshake.
+      const combined = `${hostId}:${partnerId}`;
+      let hash = 0;
+      for (let i = 0; i < combined.length; i++) {
+        hash = ((hash << 5) - hash + combined.charCodeAt(i)) | 0;
       }
-    });
+      const roomCode = String(100000 + (Math.abs(hash) % 900000));
 
-    ch.on("broadcast", { event: "matched" }, ({ payload }) => {
-      const { hostId, partnerId, roomCode, questions: qs } = payload as any;
-      if (meId.current !== hostId && meId.current !== partnerId) return;
-      matchedRef.current = true;
+      let qs: MCQ[] | undefined;
+      if (iAmHost) {
+        const seed = (Math.abs(hash) ^ (randomChapter * 9973)) >>> 0;
+        qs = buildBattleMcqs(randomSubject, 10, seed);
+      }
+
       toast.success(t.matchFound);
-      const iAmHost = meId.current === hostId;
       setCode(roomCode);
       setIsHost(iAmHost);
       stopMatchmaking();
-      setupChannel(roomCode, iAmHost, iAmHost ? (qs as MCQ[]) : undefined);
-      if (!iAmHost) {
-        // Non-host preloads questions so first "start" arrives cleanly
-        setQuestions(qs as MCQ[]);
-      }
+      setupChannel(roomCode, iAmHost, qs);
+      if (!iAmHost && qs) setQuestions(qs);
       setPhase("lobby");
     });
 
