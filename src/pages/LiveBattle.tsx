@@ -923,6 +923,178 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
         )}
 
         {phase === "done" && (
+          null
+        )}
+        {phase === "soloSetup" && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.uploadFile}</label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="cursor-pointer border-2 border-dashed border-primary/30 hover:border-primary rounded-xl p-6 text-center transition"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.docx,.txt,application/pdf,text/plain"
+                  onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+                />
+                {file ? (
+                  <div className="flex flex-col items-center gap-1">
+                    <FileText className="w-8 h-8 text-primary" />
+                    <p className="font-medium text-sm truncate max-w-full">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1">
+                    <Upload className="w-8 h-8 text-primary" />
+                    <p className="font-medium text-sm">{t.uploadFile}</p>
+                    <p className="text-xs text-muted-foreground">{t.uploadHint}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.questionsCount}</label>
+              <div className="grid grid-cols-4 gap-2">
+                {[5, 10, 15, 20].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setQCount(n)}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${
+                      qCount === n ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={restart} className="flex-1" disabled={creating}>{t.back}</Button>
+              <Button onClick={startSolo} className="flex-1" disabled={creating || !file}>
+                {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> {t.generating}</> : t.startSolo}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {phase === "soloPlaying" && cur && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span>{t.q} {qIdx + 1} {t.of} {questions.length}</span>
+              <span className={soloTimeLeft <= 5 ? "text-destructive font-bold" : ""}>{soloTimeLeft}s</span>
+            </div>
+            <Progress value={(soloTimeLeft / SOLO_QUESTION_TIME) * 100} className="h-2" />
+            <motion.div
+              key={qIdx}
+              animate={soloFeedback === "wrong" ? { x: [0, -10, 10, -8, 8, -4, 4, 0] } : {}}
+              transition={{ duration: 0.5 }}
+              className="rounded-2xl border bg-card p-6"
+            >
+              <div className="text-lg font-medium mb-4">{cur.q}</div>
+              <div className="grid gap-2">
+                {cur.choices.map((c, i) => {
+                  const hasAnswered = soloAnswered !== null;
+                  const isMine = hasAnswered && soloAnswered === i;
+                  const isCorrect = cur.answer === i;
+                  return (
+                    <button
+                      key={i}
+                      disabled={hasAnswered}
+                      onClick={() => soloAnswer(i)}
+                      className={`relative rounded-xl border p-3 text-left transition ${
+                        hasAnswered
+                          ? isCorrect
+                            ? "bg-green-100 border-green-500 text-green-900"
+                            : isMine
+                              ? "bg-red-100 border-red-500 text-red-900"
+                              : "opacity-60"
+                          : "hover:bg-accent"
+                      }`}
+                    >
+                      <span className="font-mono text-xs me-2 opacity-60">{String.fromCharCode(65 + i)}.</span>
+                      {c}
+                      {hasAnswered && isCorrect && <Check className="w-5 h-5 text-green-600 absolute top-1/2 -translate-y-1/2 end-3" />}
+                      {hasAnswered && isMine && !isCorrect && <X className="w-5 h-5 text-red-600 absolute top-1/2 -translate-y-1/2 end-3" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {phase === "soloDone" && (
+          <div className="text-center space-y-6 py-8">
+            <Trophy className="w-20 h-20 text-amber-500 mx-auto" />
+            <div className="text-3xl font-bold">{t.soloDone}</div>
+            <div className="text-lg text-muted-foreground">
+              {t.correctCount}: <span className="font-bold text-foreground">{soloScore}</span> / {questions.length}
+            </div>
+            <Button onClick={restart} size="lg">{t.playAgain}</Button>
+          </div>
+        )}
+
+        {phase === "randomSetup" && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.subject}</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {SUBJECT_OPTIONS.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setRandomSubject(s.key)}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${
+                      randomSubject === s.key ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {language === "ar" ? s.ar : s.en}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border bg-card p-4 space-y-3">
+              <label className="text-sm font-medium">{t.chapter}</label>
+              <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                {[1,2,3,4,5,6,7,8].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setRandomChapter(n)}
+                    className={`rounded-xl border p-3 text-sm font-bold transition ${
+                      randomChapter === n ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={restart} className="flex-1">{t.back}</Button>
+              <Button onClick={findRandomMatch} className="flex-1">{t.findMatch}</Button>
+            </div>
+          </div>
+        )}
+
+        {phase === "matchmaking" && (
+          <div className="text-center space-y-6 py-12">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="mx-auto w-16 h-16 rounded-full border-4 border-primary border-t-transparent"
+            />
+            <div className="text-lg font-bold">{t.searching}</div>
+            <div className="text-sm text-muted-foreground">
+              {t.subject}: <b>{SUBJECT_OPTIONS.find(s => s.key === randomSubject)?.[language] ?? randomSubject}</b>
+              {" · "}{t.chapter} {randomChapter}
+            </div>
+            <Button variant="outline" onClick={cancelMatchmaking}>{t.cancelSearch}</Button>
+          </div>
+        )}
+
+        {phase === "done" && (
           <div className="text-center space-y-6 py-8">
             <Trophy className="w-20 h-20 text-amber-500 mx-auto" />
             <div className="text-3xl font-bold">
