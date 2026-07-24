@@ -568,10 +568,12 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
       toast.success(t.matchFound);
       setCode(roomCode);
       setIsHost(iAmHost);
-      stopMatchmaking();
       setupChannel(roomCode, iAmHost, qs);
       if (!iAmHost && qs) setQuestions(qs);
       setPhase("lobby");
+      // Delay leaving the lobby so both peers have time to see each other
+      // in the presence state before either untracks.
+      setTimeout(() => stopMatchmaking(), 1500);
     });
 
     ch.subscribe(async (status) => {
