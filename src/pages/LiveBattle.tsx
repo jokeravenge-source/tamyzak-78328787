@@ -527,7 +527,12 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
     matchedRef.current = false;
     setPhase("matchmaking");
     const lobbyName = `battle:lobby:${randomSubject}:${randomChapter}`;
-    const ch = supabase.channel(lobbyName, { config: { presence: { key: meId.current } } });
+    const ch = supabase.channel(lobbyName, {
+      config: {
+        presence: { key: meId.current },
+        broadcast: { self: true, ack: true },
+      },
+    });
     matchmakingRef.current = ch;
 
     ch.on("presence", { event: "sync" }, () => {
@@ -549,12 +554,19 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
         const roomCode = String(Math.floor(100000 + Math.random() * 900000));
         const seed = (Date.now() ^ (randomChapter * 9973)) >>> 0;
         const qs = buildBattleMcqs(randomSubject, 10, seed);
-        // Tell everyone in the lobby which two players matched and the room to join
+        // Notify the partner
         ch.send({
           type: "broadcast",
           event: "matched",
           payload: { hostId, partnerId, roomCode, questions: qs },
         });
+        // Also transition the host locally in case the self-broadcast is dropped
+        toast.success(t.matchFound);
+        setCode(roomCode);
+        setIsHost(true);
+        stopMatchmaking();
+        setupChannel(roomCode, true, qs);
+        setPhase("lobby");
       }
     });
 
