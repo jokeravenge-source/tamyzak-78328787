@@ -4,6 +4,7 @@ import { type AppLanguage } from "@/components/LanguageGate";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import StreakTree from "@/components/StreakTree";
+import CountdownTimer from "@/components/CountdownTimer";
 
 
 const copy = {
@@ -129,6 +130,8 @@ const MainMenu = ({
           <p className="mt-3 text-sm text-primary font-medium">{text.hi}, {username} 👋</p>
         )}
       </header>
+
+      <CountdownTimer target="2026-08-07T00:00:00" language={language} />
 
       <motion.section
         initial="hidden"
