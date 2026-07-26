@@ -647,18 +647,24 @@ function PracticeModal({
   language,
   L,
   onClose,
+  isAdmin,
+  onSetUpdated,
 }: {
   set: MCQSet;
   language: AppLanguage;
   L: Record<keyof (typeof t)["en"], string>;
   onClose: () => void;
+  isAdmin?: boolean;
+  onSetUpdated?: (next: MCQSet | null) => void;
 }) {
   const [i, setI] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
-  const q = set.questions[i];
+  const [questions, setQuestions] = useState<MCQItem[]>(set.questions);
+  const [deleting, setDeleting] = useState(false);
+  const q = questions[i];
 
   const submit = () => {
     if (selected === null) return;
@@ -667,13 +673,48 @@ function PracticeModal({
   };
 
   const next = () => {
-    if (i + 1 >= set.questions.length) {
+    if (i + 1 >= questions.length) {
       setDone(true);
       return;
     }
     setI((n) => n + 1);
     setSelected(null);
     setRevealed(false);
+  };
+
+  const deleteCurrentQuestion = async () => {
+    if (!confirm(L.confirmDeleteQuestion)) return;
+    setDeleting(true);
+    try {
+      const remaining = questions.filter((_, idx) => idx !== i);
+      if (remaining.length === 0) {
+        const { error } = await supabase
+          .from("teacher_topic_mcqs")
+          .delete()
+          .eq("id", set.id);
+        if (error) throw error;
+        toast.success(L.delete);
+        onSetUpdated?.(null);
+        onClose();
+        return;
+      }
+      const { error } = await supabase
+        .from("teacher_topic_mcqs")
+        .update({ questions: remaining as any })
+        .eq("id", set.id);
+      if (error) throw error;
+      setQuestions(remaining);
+      const nextIndex = Math.min(i, remaining.length - 1);
+      setI(nextIndex);
+      setSelected(null);
+      setRevealed(false);
+      onSetUpdated?.({ ...set, questions: remaining });
+      toast.success(L.delete);
+    } catch (e: any) {
+      toast.error(e.message || "Failed");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -690,18 +731,31 @@ function PracticeModal({
       >
         <div className="flex items-center justify-between mb-4">
           <span className="text-xs text-muted-foreground">
-            {done ? L.finish : `${i + 1} / ${set.questions.length}`}
+            {done ? L.finish : `${i + 1} / ${questions.length}`}
           </span>
-          <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">
-            {L.close}
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && !done && (
+              <button
+                onClick={deleteCurrentQuestion}
+                disabled={deleting}
+                className="inline-flex items-center gap-1 h-8 px-2 rounded-lg border border-destructive/40 text-destructive text-xs hover:bg-destructive/10 disabled:opacity-50"
+                aria-label={L.deleteQuestion}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {L.deleteQuestion}
+              </button>
+            )}
+            <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">
+              {L.close}
+            </button>
+          </div>
         </div>
 
         {done ? (
           <div className="text-center py-6">
             <h3 className="text-2xl font-bold mb-2">{L.score}</h3>
             <p className="text-4xl font-bold text-primary">
-              {score} / {set.questions.length}
+              {score} / {questions.length}
             </p>
           </div>
         ) : (
@@ -754,7 +808,7 @@ function PracticeModal({
                   onClick={next}
                   className="h-10 px-4 rounded-lg bg-primary text-primary-foreground font-semibold"
                 >
-                  {i + 1 >= set.questions.length ? L.finish : L.next}
+                  {i + 1 >= questions.length ? L.finish : L.next}
                 </button>
               )}
             </div>
