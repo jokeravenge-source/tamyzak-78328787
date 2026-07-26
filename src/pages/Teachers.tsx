@@ -1369,7 +1369,21 @@ function AnziLectureView({
           )}
 
           {practice && (
-            <PracticeModal set={practice} language={lang} L={L2} onClose={() => setPractice(null)} />
+            <PracticeModal
+              set={practice}
+              language={lang}
+              L={L2}
+              onClose={() => setPractice(null)}
+              isAdmin={isAdmin}
+              onSetUpdated={(next) => {
+                if (next === null) {
+                  setSets((arr) => arr.filter((x) => x.id !== practice.id));
+                } else {
+                  setSets((arr) => arr.map((x) => (x.id === next.id ? next : x)));
+                  setPractice(next);
+                }
+              }}
+            />
           )}
         </div>
       )}
