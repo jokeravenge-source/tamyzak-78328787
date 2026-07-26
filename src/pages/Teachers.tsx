@@ -473,7 +473,6 @@ function TopicView({
       {practice && (
         <PracticeModal set={practice} language={language} L={L} onClose={() => setPractice(null)} />
       )}
-      )}
 
       <TeacherLectureVideos
         teacherId={teacher.id}
