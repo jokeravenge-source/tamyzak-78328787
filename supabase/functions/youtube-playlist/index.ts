@@ -7,7 +7,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const url = new URL(req.url);
-    const listId = url.searchParams.get("list");
+    let listId = url.searchParams.get("list") || url.searchParams.get("playlistId") || url.searchParams.get("playlist_id");
+    if (!listId && (req.method === "POST" || req.method === "PUT" || req.method === "PATCH")) {
+      try {
+        const body = await req.json();
+        listId = body?.list || body?.playlistId || body?.playlist_id || null;
+      } catch (_) { /* ignore */ }
+    }
     if (!listId) {
       return new Response(JSON.stringify({ error: "Missing list" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
