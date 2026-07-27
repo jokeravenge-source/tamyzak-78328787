@@ -3,7 +3,7 @@ import {
   ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network, Search,
   Globe, Trophy, Target, HelpCircle, Headphones, Lightbulb, Sparkles,
-  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen, Youtube, FlaskConical, Swords, Video,
+  Crown, UserCog, BookOpen, Heart, Users, Settings, Moon, PenLine, MousePointerClick, NotebookPen, Youtube, FlaskConical, Swords, Video, Palette,
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -202,35 +202,51 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
   },
 ];
 
-// Featured "Study Tools" cards on the dashboard
+// Featured top cards (report/summaries + todo/fahrast)
 const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }>; tintBg: string; tintText: string }[] = [
   { key: "report",          Icon: Sparkles,   tintBg: "bg-primary",     tintText: "text-primary-foreground" },
   { key: "summaries",       Icon: FileText,   tintBg: "bg-violet-50",  tintText: "text-violet-600" },
-  { key: "mcq",             Icon: HelpCircle, tintBg: "bg-rose-50",    tintText: "text-rose-600" },
-  { key: "mindmap",         Icon: Network,    tintBg: "bg-cyan-50",    tintText: "text-cyan-600" },
-  { key: "youtube",         Icon: Youtube,    tintBg: "bg-red-50",     tintText: "text-red-600" },
+  { key: "todo",            Icon: ListChecks, tintBg: "bg-emerald-50", tintText: "text-emerald-600" },
+  { key: "missions",        Icon: Target,     tintBg: "bg-amber-50",   tintText: "text-amber-600" },
   { key: "liveBattle",      Icon: Swords,     tintBg: "bg-fuchsia-50", tintText: "text-fuchsia-600" },
-  { key: "leaderboard",     Icon: Trophy,     tintBg: "bg-emerald-50", tintText: "text-emerald-600" },
+];
+
+// Study tools grid (bottom section)
+const STUDY_TOOLS: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "videoNotes", Icon: Headphones },
+  { key: "youtube",    Icon: Youtube },
+  { key: "canvas",     Icon: Palette },
+  { key: "notes",      Icon: NotebookPen },
+  { key: "companion",  Icon: Sparkles },
+  { key: "mcq",        Icon: HelpCircle },
 ];
 
 const FEATURED_COPY = {
   en: {
     report: { title: "Daily Report", subtitle: "AI insights + parent follow-up link." },
     summaries: { title: "Notes & Summaries", subtitle: "Upload and browse approved notes." },
+    todo: { title: "To-Do List", subtitle: "Plan tasks and celebrate when you finish." },
+    missions: { title: "Al-Fahrast", subtitle: "Chapter topics tracked per subject." },
     mcq: { title: "MCQ Generator", subtitle: "Get multiple-choice questions from any file." },
-    mindmap: { title: "Mind Map", subtitle: "AI builds a clean map from any topic." },
     youtube: { title: "YouTube Player", subtitle: "Watch any YouTube video inside the app." },
+    videoNotes: { title: "Video to Notes", subtitle: "Turn a YouTube lecture into AI study notes." },
+    canvas: { title: "Canvas", subtitle: "Sketch and diagram your ideas freely." },
+    notes: { title: "Notes", subtitle: "Write and organize your own study notes." },
+    companion: { title: "Success Companion", subtitle: "Your AI study partner and planner." },
     liveBattle: { title: "Live Battle", subtitle: "Challenge a friend in a 10-question MCQ duel." },
-    leaderboard: { title: "Leaderboard", subtitle: "See where you stand this week." },
   },
   ar: {
     report: { title: "تقريري اليومي", subtitle: "ملاحظات ذكية ورابط متابعة لولي الأمر." },
     summaries: { title: "ملخصات", subtitle: "ارفع وتصفّح ملاحظات معتمدة." },
+    todo: { title: "قائمة المهام", subtitle: "نظّم مهامك واحتفل بإنجازها." },
+    missions: { title: "الفهرست", subtitle: "مواضيع الفصول لكل مادة." },
     mcq: { title: "مولّد الأسئلة", subtitle: "احصل على اختيارات من متعدد من أي ملف." },
-    mindmap: { title: "الخريطة الذهنية", subtitle: "خريطة مرتبة بالذكاء الاصطناعي." },
     youtube: { title: "مشغّل يوتيوب", subtitle: "شاهد أي فيديو يوتيوب داخل التطبيق." },
+    videoNotes: { title: "من الفيديو إلى ملاحظات", subtitle: "حوّل محاضرة يوتيوب إلى ملاحظات بالذكاء." },
+    canvas: { title: "اللوحة", subtitle: "ارسم ونظّم أفكارك بحرية." },
+    notes: { title: "ملاحظاتي", subtitle: "اكتب ونظّم ملاحظاتك الدراسية." },
+    companion: { title: "رفيق النجاح", subtitle: "شريكك الذكي في الدراسة والتخطيط." },
     liveBattle: { title: "المعركة المباشرة", subtitle: "تحد صديقك" },
-    leaderboard: { title: "المتصدرون", subtitle: "اعرف ترتيبك هذا الأسبوع." },
   },
 } as const;
 
@@ -795,7 +811,7 @@ const Basics = ({
 
             {/* Core tools + Live battle (right of ring) */}
             <div className="col-span-12 md:col-span-8 grid grid-cols-2 gap-3 sm:gap-4">
-              {FEATURED.filter((it) => it.key !== "liveBattle").slice(0, 2).map((it) => {
+              {FEATURED.filter((it) => it.key !== "liveBattle").map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 if (!meta) return null;
@@ -960,7 +976,7 @@ const Basics = ({
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
               className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
             >
-              {FEATURED.filter((it) => it.key !== "liveBattle").slice(2).map((it) => {
+              {STUDY_TOOLS.map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 if (!meta) return null;
