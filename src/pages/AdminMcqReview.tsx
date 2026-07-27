@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, LogIn, LogOut, Plus, Trash2, Check, X, ShieldAlert, ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type MCQ = { question: string; choices: string[]; answer_index: number; hint?: string; explanation?: string };
 type MCQSet = { id: string; teacher_id: string; topic_key: string; title: string; questions: MCQ[]; created_at: string };
@@ -49,12 +50,12 @@ export default function AdminMcqReview() {
   };
   useEffect(() => { check(); }, []);
 
-  // Force dark theme for this admin page
+  // This standalone route bypasses the app-level theme initializer.
   useEffect(() => {
     const root = document.documentElement;
-    const had = root.classList.contains("dark");
-    root.classList.add("dark");
-    return () => { if (!had) root.classList.remove("dark"); };
+    const had = root.classList.contains("theme-notion-dark");
+    root.classList.add("theme-notion-dark");
+    return () => { if (!had) root.classList.remove("theme-notion-dark"); };
   }, []);
 
   const signIn = async (e: React.FormEvent) => {
@@ -71,23 +72,22 @@ export default function AdminMcqReview() {
   const signOut = async () => { await supabase.auth.signOut(); await check(); };
 
   if (checking) {
-    return <div className="min-h-screen grid place-items-center bg-background text-foreground"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+    return <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   }
 
   if (!userEmail) {
     return (
-      <div className="min-h-screen grid place-items-center bg-background text-foreground p-6">
-        <form onSubmit={signIn} className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 space-y-4">
+      <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground p-6">
+        <form onSubmit={signIn} className="w-full max-w-sm rounded-lg border border-border bg-card text-card-foreground p-6 space-y-4 shadow-card">
           <h1 className="text-xl font-bold">Admin Sign-In</h1>
           <p className="text-sm text-muted-foreground">MCQ review panel</p>
           <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-10 px-3 rounded-lg bg-background border border-border text-sm" />
+            className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
           <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full h-10 px-3 rounded-lg bg-background border border-border text-sm" />
-          <button type="submit" disabled={busy}
-            className="inline-flex items-center justify-center gap-2 w-full h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">
+            className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          <Button type="submit" disabled={busy} className="w-full">
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />} Sign in
-          </button>
+          </Button>
         </form>
       </div>
     );
@@ -95,14 +95,14 @@ export default function AdminMcqReview() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen grid place-items-center bg-background text-foreground p-6">
-        <div className="w-full max-w-md rounded-2xl border border-destructive/40 bg-card p-6 space-y-3 text-center">
+      <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground p-6">
+        <div className="w-full max-w-md rounded-lg border border-destructive/40 bg-card text-card-foreground p-6 space-y-3 text-center shadow-card">
           <ShieldAlert className="w-8 h-8 text-destructive mx-auto" />
           <p className="font-semibold">This account is not an admin.</p>
           <p className="text-xs text-muted-foreground">{userEmail}</p>
-          <button onClick={signOut} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border text-sm">
+          <Button onClick={signOut} variant="outline" size="sm">
             <LogOut className="w-4 h-4" /> Sign out
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -214,15 +214,15 @@ function ReviewPanel({ userEmail, onSignOut }: { userEmail: string; onSignOut: (
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur px-4 py-3 flex items-center justify-between">
+    <div className="theme-notion-dark min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-10 border-b border-border bg-card/95 text-card-foreground backdrop-blur px-4 py-3 flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold">Admin · MCQ Review</h1>
           <p className="text-xs text-muted-foreground">{userEmail}</p>
         </div>
-        <button onClick={onSignOut} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border text-sm">
+        <Button onClick={onSignOut} variant="outline" size="sm">
           <LogOut className="w-4 h-4" /> Sign out
-        </button>
+        </Button>
       </header>
 
       <main className="max-w-4xl mx-auto p-4 space-y-8">
@@ -235,17 +235,17 @@ function ReviewPanel({ userEmail, onSignOut }: { userEmail: string; onSignOut: (
           ) : (
             <ul className="space-y-2">
               {pending.map((c) => (
-                <li key={c.id} className="rounded-xl border border-yellow-500/40 bg-yellow-500/5 p-3">
+                 <li key={c.id} className="rounded-lg border border-primary/50 bg-primary/10 p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-xs uppercase tracking-widest text-yellow-600 font-semibold">
+                       <p className="text-xs uppercase tracking-widest text-primary font-semibold">
                         {c.action === "delete" ? "Delete question" : "Add question"} · {labelFor(c.topic_key)}
                       </p>
                       {c.action === "delete" ? (
                         <p className="mt-1 text-sm">
                           Question #{(c.question_index ?? 0) + 1}
                           {setsByKey.get(c.topic_key)?.questions[c.question_index ?? -1]?.question
-                            ? ` — ${setsByKey.get(c.topic_key)!.questions[c.question_index!].question.slice(0, 120)}`
+                             ? ` — ${setsByKey.get(c.topic_key)?.questions[c.question_index ?? -1]?.question.slice(0, 120)}`
                             : ""}
                         </p>
                       ) : (
@@ -253,19 +253,19 @@ function ReviewPanel({ userEmail, onSignOut }: { userEmail: string; onSignOut: (
                           <p className="font-medium">{c.new_question?.question}</p>
                           <ul className="text-xs text-muted-foreground mt-1 list-disc ms-5">
                             {(c.new_question?.choices ?? []).map((ch, i) => (
-                              <li key={i} className={i === c.new_question?.answer_index ? "text-emerald-600 font-semibold" : ""}>{ch}</li>
+                               <li key={i} className={i === c.new_question?.answer_index ? "text-primary font-semibold" : ""}>{ch}</li>
                             ))}
                           </ul>
                         </div>
                       )}
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <button onClick={() => approve(c)} className="h-8 px-3 rounded-lg bg-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1">
+                       <Button onClick={() => approve(c)} size="sm" className="h-8 px-3 text-xs">
                         <Check className="w-3.5 h-3.5" /> Approve
-                      </button>
-                      <button onClick={() => reject(c)} className="h-8 px-3 rounded-lg border border-border text-xs inline-flex items-center gap-1">
+                       </Button>
+                       <Button onClick={() => reject(c)} variant="outline" size="sm" className="h-8 px-3 text-xs">
                         <X className="w-3.5 h-3.5" /> Reject
-                      </button>
+                       </Button>
                     </div>
                   </div>
                 </li>
@@ -285,10 +285,11 @@ function ReviewPanel({ userEmail, onSignOut }: { userEmail: string; onSignOut: (
                 const pend = pendingByKey.get(topicKey) ?? [];
                 const isOpen = !!open[topicKey];
                 return (
-                  <li key={topicKey} className="rounded-xl border border-border bg-card">
-                    <button
+                   <li key={topicKey} className="rounded-lg border border-border bg-card text-card-foreground overflow-hidden">
+                     <Button
+                       variant="ghost"
                       onClick={() => setOpen((o) => ({ ...o, [topicKey]: !o[topicKey] }))}
-                      className="w-full flex items-center justify-between p-3 text-start"
+                       className="w-full h-auto flex items-center justify-between rounded-none p-3 text-start hover:bg-secondary hover:text-secondary-foreground"
                     >
                       <span className="flex items-center gap-2 font-semibold text-sm">
                         {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -298,24 +299,24 @@ function ReviewPanel({ userEmail, onSignOut }: { userEmail: string; onSignOut: (
                         {set ? `${set.questions.length} MCQs` : "No MCQs yet"}
                         {pend.length ? ` · ${pend.length} pending` : ""}
                       </span>
-                    </button>
+                     </Button>
                     {isOpen && (
                       <div className="border-t border-border p-3 space-y-3">
                         {set && set.questions.length > 0 ? (
                           <ol className="space-y-2">
                             {set.questions.map((q, i) => (
-                              <li key={i} className="rounded-lg border border-border p-3">
+                               <li key={i} className="rounded-md border border-border bg-secondary text-secondary-foreground p-3">
                                 <p className="text-sm font-medium">{i + 1}. {q.question}</p>
                                 <ul className="mt-1 ms-5 text-xs list-disc">
                                   {q.choices.map((c, j) => (
-                                    <li key={j} className={j === q.answer_index ? "text-emerald-600 font-semibold" : "text-muted-foreground"}>{c}</li>
+                                     <li key={j} className={j === q.answer_index ? "text-primary font-semibold" : "text-muted-foreground"}>{c}</li>
                                   ))}
                                 </ul>
                                 <div className="mt-2 flex justify-end">
-                                  <button onClick={() => requestDelete(topicKey, i)}
-                                    className="inline-flex items-center gap-1 h-7 px-2 rounded-lg border border-destructive/50 text-destructive text-xs hover:bg-destructive/10">
+                                   <Button onClick={() => requestDelete(topicKey, i)} variant="outline" size="sm"
+                                     className="h-7 px-2 border-destructive/50 text-destructive text-xs hover:bg-destructive/10 hover:text-destructive">
                                     <Trash2 className="w-3 h-3" /> Request delete
-                                  </button>
+                                   </Button>
                                 </div>
                               </li>
                             ))}
@@ -347,25 +348,24 @@ function AddQuestionForm({ onSubmit }: { onSubmit: (q: MCQ) => void }) {
     setQuestion(""); setChoices(["", "", "", ""]); setAnswer(0);
   };
   return (
-    <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 space-y-2">
+    <div className="rounded-md border border-primary/40 bg-primary/10 p-3 space-y-2">
       <p className="text-xs font-semibold uppercase tracking-widest text-primary">Add question (needs approval)</p>
       <textarea value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Question"
-        className="w-full min-h-16 p-2 rounded-lg bg-background border border-border text-sm" />
+        className="w-full min-h-16 p-2 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {choices.map((c, i) => (
           <label key={i} className="flex items-center gap-2 text-sm">
             <input type="radio" name="ans" checked={answer === i} onChange={() => setAnswer(i)} />
             <input value={c} onChange={(e) => setChoices((cs) => cs.map((x, j) => j === i ? e.target.value : x))}
               placeholder={`Choice ${i + 1}`}
-              className="flex-1 h-9 px-2 rounded-lg bg-background border border-border text-sm" />
+              className="flex-1 h-9 px-2 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
           </label>
         ))}
       </div>
       <div className="flex justify-end">
-        <button onClick={submit}
-          className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold">
+        <Button onClick={submit} size="sm" className="h-8 px-3 text-xs">
           <Plus className="w-3.5 h-3.5" /> Submit for approval
-        </button>
+        </Button>
       </div>
     </div>
   );
