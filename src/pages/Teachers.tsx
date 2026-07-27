@@ -139,7 +139,16 @@ const Teachers = ({
 }) => {
   const L = t[language];
   const isRTL = language === "ar";
-  const [view, setView] = useState<View>({ kind: "list" });
+  const [view, setView] = useState<View>(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("anzi") || p.get("lang") || p.get("lec")) {
+        const anzi = teachers.find((t) => t.id === "mohammed-anzi");
+        if (anzi) return { kind: "topics", teacher: anzi };
+      }
+    }
+    return { kind: "list" };
+  });
   const [ownerEmail, setOwnerEmail] = useState<string | null>(null);
 
   useEffect(() => {
