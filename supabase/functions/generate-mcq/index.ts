@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const MAX_STUDY_CHARS = 180000;
-const AI_MODEL = "google/gemini-3.5-flash";
+const AI_MODEL = "google/gemini-2.5-flash";
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MAX_PAGE_IMAGES = 20;
 
