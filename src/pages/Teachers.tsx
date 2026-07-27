@@ -846,22 +846,37 @@ const ANZI_LECTURE_COUNT: Record<AnziLang, number> = { ar: 23, en: 22 };
 type AnziLang = "ar" | "en";
 type AnziStage =
   | { s: "language" }
-  | { s: "chapters"; lang: AnziLang }
-  | { s: "chapterMenu"; lang: AnziLang; ch: number }
-  | { s: "lectures"; lang: AnziLang; ch: number; mode: "study" | "exam" }
-  | { s: "lecture"; lang: AnziLang; ch: number; mode: "study" | "exam"; n: number };
+  | { s: "lectures"; lang: AnziLang }
+  | { s: "lecture"; lang: AnziLang; n: number };
+
+// Chapter 3 is the only unlocked chapter — kept as a constant so existing
+// stored MCQ / notes topic keys (anzi-<lang>-ch3-lec<N>-<mode>) still match.
+const ANZI_CH = 3;
 
 function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) {
   const [stage, setStage] = useState<AnziStage>({ s: "language" });
+
+  // Deep-link support: /teachers?anzi=1&lang=ar&lec=5
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const lang = p.get("lang");
+    const lec = parseInt(p.get("lec") || "", 10);
+    if (lang === "ar" || lang === "en") {
+      if (lec && lec >= 1 && lec <= ANZI_LECTURE_COUNT[lang]) {
+        setStage({ s: "lecture", lang, n: lec });
+      } else {
+        setStage({ s: "lectures", lang });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const back = () => {
     setStage((cur) => {
       switch (cur.s) {
         case "language": return cur;
-        case "chapters": return { s: "language" };
-        case "chapterMenu": return { s: "chapters", lang: cur.lang };
-        case "lectures": return { s: "chapterMenu", lang: cur.lang, ch: cur.ch };
-        case "lecture": return { s: "lectures", lang: cur.lang, ch: cur.ch, mode: cur.mode };
+        case "lectures": return { s: "language" };
+        case "lecture": return { s: "lectures", lang: cur.lang };
       }
     });
   };
@@ -873,35 +888,17 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
       pickLang: "اختر لغة المنهج",
       arabic: "المنهج العربي",
       english: "المنهج الإنجليزي",
-      chapters: "الفصول",
-      chapter: "الفصل",
-      soon: "قريباً",
-      study: "دراسة",
-      exam: "امتحن نفسك",
-      studyDesc: "شاهد المحاضرات ووّلد ملاحظات جميلة بصيغة PDF.",
-      examDesc: "أجب عن ٢٠ سؤال اختيار من متعدد لكل محاضرة.",
       lectures: "المحاضرات",
       lecture: "محاضرة",
-      playlistOrder: "قائمة التشغيل بترتيب المحاضرات",
       back: "رجوع",
-      openLecture: "افتح",
     },
     en: {
       pickLang: "Choose curriculum language",
       arabic: "Arabic curriculum",
       english: "English curriculum",
-      chapters: "Chapters",
-      chapter: "Chapter",
-      soon: "Coming soon",
-      study: "Study",
-      exam: "Exam myself",
-      studyDesc: "Watch lectures and generate beautiful PDF notes.",
-      examDesc: "Answer 20 MCQs per lecture.",
       lectures: "Lectures",
       lecture: "Lecture",
-      playlistOrder: "Playlist in lecture order",
       back: "Back",
-      openLecture: "Open",
     },
   }[lang];
 
@@ -943,7 +940,7 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
             {(["ar", "en"] as const).map((l) => (
               <button
                 key={l}
-                onClick={() => setStage({ s: "chapters", lang: l })}
+                onClick={() => setStage({ s: "lectures", lang: l })}
                 className="p-6 rounded-3xl border border-primary/40 bg-secondary/40 hover:border-primary hover:-translate-y-0.5 transition-all text-start"
                 dir={l === "ar" ? "rtl" : "ltr"}
               >
@@ -959,96 +956,16 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
         </section>
       )}
 
-      {stage.s === "chapters" && (
-        <section>
-          <h2 className="text-xl font-bold mb-4">{tr.chapters}</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3, 4, 5].map((n) => {
-              const unlocked = n === 3;
-              return (
-                <button
-                  key={n}
-                  disabled={!unlocked}
-                  onClick={() => unlocked && setStage({ s: "chapterMenu", lang: stage.lang, ch: n })}
-                  className={`p-5 rounded-2xl border text-start transition-all ${
-                    unlocked
-                      ? "border-primary/40 bg-secondary/40 hover:border-primary hover:-translate-y-0.5 cursor-pointer"
-                      : "border-border bg-card opacity-60 cursor-not-allowed"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-4xl font-bold font-mono gradient-text">
-                      {String(n).padStart(2, "0")}
-                    </span>
-                    {!unlocked && <span className="text-xs text-muted-foreground">{tr.soon}</span>}
-                  </div>
-                  <p className="font-semibold">
-                    {tr.chapter} {n}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {stage.s === "chapterMenu" && (
-        <section>
-          <h2 className="text-xl font-bold mb-4">
-            {tr.chapter} {stage.ch}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {(["study", "exam"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() =>
-                  setStage({ s: "lectures", lang: stage.lang, ch: stage.ch, mode: m })
-                }
-                className="p-6 rounded-3xl border border-primary/40 bg-secondary/40 hover:border-primary hover:-translate-y-0.5 transition-all text-start"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  {m === "study" ? (
-                    <BookOpenIcon />
-                  ) : (
-                    <Sparkles className="w-5 h-5 text-primary" />
-                  )}
-                  <h3 className="text-xl font-bold">{m === "study" ? tr.study : tr.exam}</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {m === "study" ? tr.studyDesc : tr.examDesc}
-                </p>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
       {stage.s === "lectures" && (
         <section>
-          <h2 className="text-xl font-bold mb-2">
-            {tr.chapter} {stage.ch} · {stage.mode === "study" ? tr.study : tr.exam}
-          </h2>
-          {stage.mode === "study" && (
+          <h2 className="text-xl font-bold mb-4">{tr.lectures}</h2>
+          {isAdmin && (
             <div className="mb-6">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
-                {tr.playlistOrder}
-              </p>
-              <div className="aspect-video rounded-2xl overflow-hidden border border-border bg-black">
-                <iframe
-                  className="w-full h-full"
-                  src={`https://www.youtube.com/embed/videoseries?list=${ANZI_PLAYLISTS[stage.lang]}`}
-                  title="Playlist"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              {isAdmin && (
-                <AnziBulkNotesGenerator
-                  teacherId={teacher.id}
-                  lang={stage.lang}
-                  ch={stage.ch}
-                />
-              )}
+              <AnziBulkNotesGenerator
+                teacherId={teacher.id}
+                lang={stage.lang}
+                ch={ANZI_CH}
+              />
             </div>
           )}
           <ul className="grid gap-2 sm:grid-cols-2">
@@ -1056,13 +973,7 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
               <li key={n}>
                 <button
                   onClick={() =>
-                    setStage({
-                      s: "lecture",
-                      lang: stage.lang,
-                      ch: stage.ch,
-                      mode: stage.mode,
-                      n,
-                    })
+                    setStage({ s: "lecture", lang: stage.lang, n })
                   }
                   className="w-full flex items-center justify-between gap-3 p-4 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-secondary/50 transition-colors text-start"
                 >
@@ -1081,8 +992,7 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
         <AnziLectureView
           teacher={teacher}
           lang={stage.lang}
-          ch={stage.ch}
-          mode={stage.mode}
+          ch={ANZI_CH}
           n={stage.n}
           isAdmin={isAdmin}
         />
