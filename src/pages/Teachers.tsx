@@ -1121,13 +1121,7 @@ function AnziBulkNotesGenerator({
     if (busy) return;
     setBusy(true); setSummary(null); setProgress({ done: 0, total: 0, label: "…" });
     try {
-      // 1) Load playlist videos via the existing edge function
-      const { data: pl, error: plErr } = await supabase.functions.invoke("youtube-playlist", {
-        body: {}, // function reads ?list=... — invoke supports query via url override? use fetch instead
-      }).catch(() => ({ data: null, error: new Error("skip") } as any));
-
-      // supabase.functions.invoke doesn't support query strings for GET-style
-      // functions; call the function URL directly.
+      // Load playlist videos via the edge function (GET with ?list=...).
       const projectRef = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || "";
       const supaUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "";
       const base = supaUrl ? `${supaUrl}/functions/v1` : (projectRef ? `https://${projectRef}.functions.supabase.co` : "");
