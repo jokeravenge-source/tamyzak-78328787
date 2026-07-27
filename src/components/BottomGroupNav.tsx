@@ -53,12 +53,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
   },
   {
     titleEn: "Home", titleAr: "الرئيسية",
-    items: [
-      { key: "basics", labelEn: "Home", labelAr: "الرئيسية", Icon: Home },
-      { key: "report", labelEn: "Daily Report", labelAr: "تقريري", Icon: Sparkles },
-      { key: "todo", labelEn: "To-Do List", labelAr: "قائمة المهام", Icon: ListChecks },
-      { key: "missions", labelEn: "Al-Fahrast", labelAr: "الفهرست", Icon: Target },
-    ],
+    items: [],
   },
   {
     titleEn: "Community", titleAr: "المجتمع",
@@ -136,6 +131,7 @@ const BottomGroupNav = ({
         className="pointer-events-auto w-full max-w-3xl rounded-2xl border border-border bg-card/85 backdrop-blur-xl shadow-[0_18px_50px_-12px_hsl(var(--primary)/0.25)] p-1.5"
         aria-label="Primary"
       >
+        {currentGroup.items.length > 0 && (
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeGroup}
@@ -186,6 +182,7 @@ const BottomGroupNav = ({
             </LayoutGroup>
           </motion.div>
         </AnimatePresence>
+        )}
 
         <LayoutGroup id="bgn-group-tabs">
           <div className="flex items-stretch gap-1">
@@ -196,7 +193,10 @@ const BottomGroupNav = ({
                 <motion.button
                   key={g.titleEn}
                   whileTap={{ scale: 0.92 }}
-                  onClick={() => setActiveGroup(g.titleEn)}
+                  onClick={() => {
+                    setActiveGroup(g.titleEn);
+                    if (g.items.length === 0) onSelect("basics");
+                  }}
                   className={`relative flex-1 h-12 inline-flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-semibold transition-colors ${
                     isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                   }`}
