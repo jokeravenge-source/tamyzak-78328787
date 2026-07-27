@@ -1145,29 +1145,29 @@ function AnziBulkNotesGenerator({
 }
 
 function AnziLectureView({
-  teacher, lang, ch, mode, n, isAdmin,
+  teacher, lang, ch, n, isAdmin,
 }: {
   teacher: Teacher;
   lang: AnziLang;
   ch: number;
-  mode: "study" | "exam";
   n: number;
   isAdmin: boolean;
 }) {
   const isRTL = lang === "ar";
-  const topicKey = `anzi-${lang}-ch${ch}-lec${n}-${mode}`;
+  const [tab, setTab] = useState<"notes" | "exam">("notes");
+  const topicKey = `anzi-${lang}-ch${ch}-lec${n}-${tab === "notes" ? "study" : "exam"}`;
   const label = lang === "ar" ? `المحاضرة ${n}` : `Lecture ${n}`;
   const playlist = ANZI_PLAYLISTS[lang];
   const L2 = t[lang];
 
   // MCQ state (exam mode)
   const [sets, setSets] = useState<MCQSet[]>([]);
-  const [loading, setLoading] = useState(mode === "exam");
+  const [loading, setLoading] = useState(false);
   const [showGen, setShowGen] = useState(false);
   const [practice, setPractice] = useState<MCQSet | null>(null);
 
   useEffect(() => {
-    if (mode !== "exam") return;
+    if (tab !== "exam") return;
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
@@ -1180,38 +1180,60 @@ function AnziLectureView({
       else setSets((data ?? []) as unknown as MCQSet[]);
       setLoading(false);
     })();
-  }, [teacher.id, topicKey, mode]);
+  }, [teacher.id, topicKey, tab]);
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"}>
       <header className="mb-4">
         <p className="text-[11px] uppercase tracking-[0.25em] text-primary">
-          {lang === "ar" ? `الفصل ${ch}` : `Chapter ${ch}`} · {mode === "study" ? (lang === "ar" ? "دراسة" : "Study") : (lang === "ar" ? "امتحن نفسك" : "Exam myself")}
+          {lang === "ar" ? `الفصل ${ch}` : `Chapter ${ch}`}
         </p>
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">{label}</h1>
       </header>
 
-      {mode === "study" && (
-        <>
-          <div className="aspect-video rounded-2xl overflow-hidden border border-border bg-black mb-6">
-            <iframe
-              className="w-full h-full"
-              src={`https://www.youtube.com/embed/videoseries?list=${playlist}&index=${n}`}
-              title={label}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-          <TeacherLectureVideos
-            teacherId={teacher.id}
-            topicKey={topicKey}
-            language={lang}
-            isAdmin={isAdmin}
-          />
-        </>
+      <div className="aspect-video rounded-2xl overflow-hidden border border-border bg-black mb-6">
+        <iframe
+          className="w-full h-full"
+          src={`https://www.youtube.com/embed/videoseries?list=${playlist}&index=${n}`}
+          title={label}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-6">
+        {(["notes", "exam"] as const).map((k) => {
+          const active = tab === k;
+          const label =
+            k === "notes"
+              ? (lang === "ar" ? "ملاحظات المحاضرة" : "Lecture notes")
+              : (lang === "ar" ? "امتحن نفسك" : "Exam yourself");
+          return (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              className={`h-11 rounded-xl border text-sm font-semibold transition-all ${
+                active
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card hover:border-primary/40 hover:bg-secondary/50"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === "notes" && (
+        <TeacherLectureVideos
+          teacherId={teacher.id}
+          topicKey={topicKey}
+          language={lang}
+          isAdmin={isAdmin}
+        />
       )}
 
-      {mode === "exam" && (
+      {tab === "exam" && (
         <div>
           {isAdmin && (
             <div className="mb-6">
