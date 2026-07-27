@@ -23,11 +23,12 @@ export async function claimFeature(req: Request, feature: string): Promise<Entit
     { global: { headers: { Authorization: authHeader } } },
   );
 
-  const { data: userData, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !userData?.user) {
+  const token = authHeader.replace("Bearer ", "").trim();
+  const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
+  const userId = claimsData?.claims?.sub as string | undefined;
+  if (claimsErr || !userId) {
     return { ok: false, status: 401, error: "Invalid session." };
   }
-  const userId = userData.user.id;
 
   const { data: allowed, error } = await supabase.rpc("claim_daily_feature", { _feature: feature });
   if (error) {
