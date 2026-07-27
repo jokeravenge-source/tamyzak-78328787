@@ -1185,6 +1185,51 @@ export type Database = {
           },
         ]
       }
+      teacher_mcq_pending_changes: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_question: Json | null
+          question_index: number | null
+          requested_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          teacher_id: string
+          topic_key: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_question?: Json | null
+          question_index?: number | null
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          teacher_id: string
+          topic_key: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_question?: Json | null
+          question_index?: number | null
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          teacher_id?: string
+          topic_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       teacher_topic_mcqs: {
         Row: {
           created_at: string
