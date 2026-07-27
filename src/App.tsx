@@ -174,6 +174,18 @@ const App = () => {
     );
   }
 
+  if (typeof window !== "undefined" && window.location.pathname === "/admin/mcq-review") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AdminMcqReview />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
 
   useEffect(() => {
     applyTheme(getInitialTheme());
