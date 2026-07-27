@@ -46,7 +46,7 @@ STRICT CONTENT RULES:
 
 Each question must have 4 distinct choices, one correct answer, a short helpful hint (without revealing the answer) and a clear explanation derived from the material. Return ONLY valid JSON, no markdown.`;
 
-    const userPrompt = `Study material text extracted from the file:\n\n${content || "No selectable text was extracted. Use the attached page images."}\n\n${images.length ? "Attached page images are sampled from the PDF. Read/OCR them and use them together with the extracted text." : ""}\n\nGenerate ${n} MCQs in ${lang}.`;
+    const userPrompt = `Study material text extracted from the file:\n\n${content || "(No selectable text — the PDF is scanned. Read the attached page images with OCR.)"}\n\n${images.length ? `Attached are ${images.length} rendered page images from the PDF. They are NOT blank — perform OCR on them (they may contain Arabic or English scanned text, diagrams, equations, or tables) and use their content as the primary source of study material. Do NOT claim they are blank; extract whatever readable characters, symbols, and figures you can and build questions from them.` : ""}\n\nGenerate exactly ${n} scientific MCQs in ${lang} strictly about the topics that appear in the material. Never refuse — always produce ${n} questions from whatever readable content is available.`;
     const userContent = images.length
       ? [
           { type: "text", text: userPrompt },
