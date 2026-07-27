@@ -841,7 +841,7 @@ const ANZI_PLAYLISTS = {
   en: "PLsYLu8VyivsT1nBmS7r8OPLYpNJXqbsAs",
 } as const;
 
-const ANZI_LECTURE_COUNT: Record<AnziLang, number> = { ar: 20, en: 22 };
+const ANZI_LECTURE_COUNT: Record<AnziLang, number> = { ar: 23, en: 22 };
 
 type AnziLang = "ar" | "en";
 type AnziStage =
