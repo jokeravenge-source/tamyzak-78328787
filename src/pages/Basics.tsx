@@ -583,6 +583,14 @@ const Basics = ({
             </span>
             <kbd className="hidden sm:inline-block text-[10px] text-muted-foreground/70 border border-border rounded px-1">⌘K</kbd>
           </button>
+          <button
+            onClick={() => onNav("account")}
+            aria-label={language === "ar" ? "الإعدادات" : "Settings"}
+            title={language === "ar" ? "الإعدادات" : "Settings"}
+            className="ms-2 inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
