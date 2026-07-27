@@ -116,8 +116,20 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
     const msg = data.choices?.[0]?.message;
     const toolCall = msg?.tool_calls?.[0];
     let parsed: any = null;
-    if (toolCall?.function?.arguments) {
-      try { parsed = JSON.parse(toolCall.function.arguments); } catch { /* fall through */ }
+    const rawArgs = toolCall?.function?.arguments;
+    if (rawArgs) {
+      if (typeof rawArgs === "string") {
+        try { parsed = JSON.parse(rawArgs); } catch (e) {
+          console.error("generate-mcq: tool args JSON.parse failed", String(e), rawArgs.slice(0, 300));
+          const s = rawArgs.indexOf("{");
+          const en = rawArgs.lastIndexOf("}");
+          if (s !== -1 && en !== -1) {
+            try { parsed = JSON.parse(rawArgs.slice(s, en + 1)); } catch { /* ignore */ }
+          }
+        }
+      } else if (typeof rawArgs === "object") {
+        parsed = rawArgs;
+      }
     }
     if (!parsed && typeof msg?.content === "string") {
       const raw = msg.content.trim();
