@@ -20,7 +20,7 @@ type NavItem = {
   subject?: string; // when set, opens SubjectsHub focused on this subject
 };
 
-const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
+const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKey?: MainMenuChoice }[] = [
   {
     titleEn: "Subjects", titleAr: "المواد",
     items: [
@@ -61,11 +61,15 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "teachers", labelEn: "Our Teachers", labelAr: "مدرسينا", Icon: Users2 },
       { key: "news", labelEn: "News", labelAr: "الأخبار", Icon: Newspaper },
       { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
-      { key: "whoIsBest", labelEn: "Who is the best?", labelAr: "من الأفضل؟", Icon: Trophy },
       { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
       { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
       { key: "leaderboard", labelEn: "Leaderboard", labelAr: "المتصدرون", Icon: Trophy },
     ],
+  },
+  {
+    titleEn: "Who is best?", titleAr: "من الأفضل؟",
+    directKey: "whoIsBest",
+    items: [],
   },
   {
     titleEn: "All Tools", titleAr: "كل الأدوات",
@@ -87,6 +91,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Study: Layers,
   Home: Home,
   Community: Users,
+  "Who is best?": Trophy,
   "All Tools": Wrench,
 };
 
@@ -196,7 +201,8 @@ const BottomGroupNav = ({
                   whileTap={{ scale: 0.92 }}
                   onClick={() => {
                     setActiveGroup(g.titleEn);
-                    if (g.items.length === 0) onSelect("basics");
+                    if (g.directKey) onSelect(g.directKey);
+                    else if (g.items.length === 0) onSelect("basics");
                   }}
                   className={`relative flex-1 h-12 inline-flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-semibold transition-colors ${
                     isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
