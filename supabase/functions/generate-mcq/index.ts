@@ -11,24 +11,35 @@ const AI_MODEL = "google/gemini-2.5-flash";
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MAX_PAGE_IMAGES = 20;
 
+const cleanExtractedText = (value: unknown) => {
+  if (typeof value !== "string") return "";
+  return value
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_STUDY_CHARS);
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { text, pageImages, count, language } = await req.json();
+    const { text, pageImages, fileData, fileName, count, language } = await req.json();
     const lang0 = language === "ar" ? "ar" : "en";
     const ent = await claimFeature(req, "mcq");
     if (!ent.ok) {
       return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), { status: ent.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const images = Array.isArray(pageImages) ? pageImages.filter((image) => typeof image === "string" && image.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
-    if ((!text || typeof text !== "string") && !images.length) {
+    const pdfData = typeof fileData === "string" && fileData.startsWith("data:application/pdf;base64,")
+      ? fileData
+      : "";
+    const content = cleanExtractedText(text);
+    if (!content && !images.length && !pdfData) {
       return new Response(JSON.stringify({ error: "Missing study material" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const n = Math.max(1, Math.min(100, Number(count) || 10));
     const lang = language === "ar" ? "Arabic" : "English";
-
-    const content = typeof text === "string" ? text.slice(0, MAX_STUDY_CHARS) : "";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -46,13 +57,25 @@ STRICT CONTENT RULES:
 
 Each question must have 4 distinct choices, one correct answer, a short helpful hint (without revealing the answer) and a clear explanation derived from the material. Return ONLY valid JSON, no markdown.`;
 
-    const userPrompt = `Study material text extracted from the file:\n\n${content || "(No selectable text — the PDF is scanned. Read the attached page images with OCR.)"}\n\n${images.length ? `Attached are ${images.length} rendered page images from the PDF. They are NOT blank — perform OCR on them (they may contain Arabic or English scanned text, diagrams, equations, or tables) and use their content as the primary source of study material. Do NOT claim they are blank; extract whatever readable characters, symbols, and figures you can and build questions from them.` : ""}\n\nGenerate exactly ${n} scientific MCQs in ${lang} strictly about the topics that appear in the material. Never refuse — always produce ${n} questions from whatever readable content is available.`;
-    const userContent = images.length
+    const hasPdf = Boolean(pdfData);
+    const userPrompt = `Study material text extracted from the file:\n\n${content || "(No reliable selectable text. Read the attached original PDF or page images.)"}\n\n${hasPdf ? "The original PDF is attached. Read it directly, including Arabic text, scanned pages, diagrams, equations, and tables, and use it as the primary source." : images.length ? `Attached are ${images.length} rendered page images. Perform OCR and use all readable scientific content.` : ""}\n\nGenerate exactly ${n} scientific MCQs in ${lang} strictly about topics present in the source. If part of the source is unreadable, use the readable scientific content; do not invent unrelated facts.`;
+    const userContent = hasPdf
       ? [
           { type: "text", text: userPrompt },
-          ...images.map((url) => ({ type: "image_url", image_url: { url } })),
+          {
+            type: "file",
+            file: {
+              filename: typeof fileName === "string" && fileName.toLowerCase().endsWith(".pdf") ? fileName.slice(0, 200) : "study-material.pdf",
+              file_data: pdfData,
+            },
+          },
         ]
-      : userPrompt;
+      : images.length
+        ? [
+            { type: "text", text: userPrompt },
+            ...images.map((url) => ({ type: "image_url", image_url: { url } })),
+          ]
+        : userPrompt;
 
     const res = await fetch(AI_URL, {
       method: "POST",
@@ -77,6 +100,7 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
                 properties: {
                   questions: {
                     type: "array",
+                    minItems: 1,
                     items: {
                       type: "object",
                       properties: {
@@ -149,7 +173,9 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
     }
     if (!parsed || !Array.isArray(parsed.questions) || !parsed.questions.length) {
       console.error("generate-mcq: no parseable questions", JSON.stringify(data).slice(0, 500));
-      return new Response(JSON.stringify({ error: "No questions generated" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({
+        error: "No readable scientific content was found in the file. Try a clearer PDF or a PDF with selectable text.",
+      }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     // Shuffle choices per question so the correct answer is not biased to a single position
     if (parsed && Array.isArray(parsed.questions)) {

@@ -553,6 +553,8 @@ function GeneratorPanel({
         body: {
           text: material.text,
           pageImages: material.pageImages,
+          fileData: material.fileData,
+          fileName: material.fileName,
           count,
           language,
         },
