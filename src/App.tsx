@@ -22,6 +22,7 @@ const Advices = lazy(() => import("./pages/Advices"));
 const Sessions = lazy(() => import("./pages/Sessions"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 import AdminLogin from "./pages/AdminLogin";
+import AdminMcqReview from "./pages/AdminMcqReview";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
 const AccountCenter = lazy(() => import("./pages/AccountCenter"));
 const Essay = lazy(() => import("./pages/Essay"));
@@ -169,6 +170,18 @@ const App = () => {
           <BrowserRouter>
             <Welcome />
           </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  if (typeof window !== "undefined" && window.location.pathname === "/admin/mcq-review") {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AdminMcqReview />
         </TooltipProvider>
       </QueryClientProvider>
     );
