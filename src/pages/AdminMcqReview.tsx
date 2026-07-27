@@ -40,6 +40,7 @@ export default function AdminMcqReview() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>(() => (localStorage.getItem("mcqReviewMode") as Mode) || "reviewer");
+  const [guestReviewer, setGuestReviewer] = useState(false);
 
   const isOwner = (userEmail ?? "").toLowerCase() === OWNER_EMAIL;
 
@@ -84,12 +85,16 @@ export default function AdminMcqReview() {
     return <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   }
 
+  if (guestReviewer && !userEmail) {
+    return <ReviewPanel userEmail="Guest reviewer" onSignOut={() => setGuestReviewer(false)} mode="reviewer" />;
+  }
+
   if (!userEmail) {
     return (
       <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground p-6">
         <form onSubmit={signIn} className="w-full max-w-sm rounded-lg border border-border bg-card text-card-foreground p-6 space-y-4 shadow-card">
           <h1 className="text-xl font-bold">MCQ Review · Sign-In</h1>
-          <p className="text-sm text-muted-foreground">Choose how you want to sign in</p>
+          <p className="text-sm text-muted-foreground">Choose how you want to enter</p>
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={() => setMode("admin")}
               className={`h-10 rounded-md border text-sm font-medium ${mode === "admin" ? "border-primary bg-primary/15 text-primary" : "border-input bg-background text-foreground hover:bg-secondary"}`}>
@@ -102,16 +107,24 @@ export default function AdminMcqReview() {
           </div>
           <p className="text-xs text-muted-foreground">
             {mode === "admin"
-              ? "Admin can approve or reject pending changes (owner account only)."
-              : "Reviewer can propose add/delete requests for approval."}
+              ? "Admin can approve or reject pending changes (owner account only). Sign-in required."
+              : "Reviewer can propose add/delete requests. No sign-in needed — just tap Continue."}
           </p>
-          <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-          <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-          <Button type="submit" disabled={busy} className="w-full">
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />} Sign in
-          </Button>
+          {mode === "admin" ? (
+            <>
+              <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+              <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+              <Button type="submit" disabled={busy} className="w-full">
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />} Sign in as Admin
+              </Button>
+            </>
+          ) : (
+            <Button type="button" onClick={() => setGuestReviewer(true)} className="w-full">
+              Continue as Reviewer
+            </Button>
+          )}
         </form>
       </div>
     );
