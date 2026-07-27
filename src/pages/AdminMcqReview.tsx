@@ -49,6 +49,14 @@ export default function AdminMcqReview() {
   };
   useEffect(() => { check(); }, []);
 
+  // Force dark theme for this admin page
+  useEffect(() => {
+    const root = document.documentElement;
+    const had = root.classList.contains("dark");
+    root.classList.add("dark");
+    return () => { if (!had) root.classList.remove("dark"); };
+  }, []);
+
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
