@@ -61,6 +61,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "teachers", labelEn: "Our Teachers", labelAr: "مدرسينا", Icon: Users2 },
       { key: "news", labelEn: "News", labelAr: "الأخبار", Icon: Newspaper },
       { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
+      { key: "whoIsBest", labelEn: "Who is the best?", labelAr: "من الأفضل؟", Icon: Trophy },
       { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
       { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
       { key: "leaderboard", labelEn: "Leaderboard", labelAr: "المتصدرون", Icon: Trophy },
