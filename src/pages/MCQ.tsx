@@ -105,7 +105,14 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
       }
       toast.loading(t.generating, { id: "gen" });
       const { data, error } = await supabase.functions.invoke("generate-mcq", {
-        body: { text, pageImages: material.pageImages, count, language },
+        body: {
+          text,
+          pageImages: material.pageImages,
+          fileData: material.fileData,
+          fileName: material.fileName,
+          count,
+          language,
+        },
       });
       toast.dismiss("gen");
       if (error) throw error;

@@ -10,6 +10,8 @@ type ExtractOptions = {
 type StudyMaterial = {
   text: string;
   pageImages?: string[];
+  fileData?: string;
+  fileName?: string;
 };
 
 const DEFAULT_MAX_CHARS = 180000;
@@ -17,6 +19,7 @@ const DEFAULT_MAX_PDF_PAGES = 450;
 const PDF_FRONT_PAGES = 25;
 const PDF_END_PAGES = 10;
 const PDF_IMAGE_PAGES = 20;
+const MAX_INLINE_PDF_BYTES = 8 * 1024 * 1024;
 
 let pdfWorkerReady = false;
 
@@ -40,6 +43,14 @@ const configurePdfWorker = () => {
 };
 
 const waitForBrowser = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+const fileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Unable to read PDF"));
+    reader.onerror = () => reject(reader.error || new Error("Unable to read PDF"));
+    reader.readAsDataURL(file);
+  });
 
 const normalizePageText = (text: string) => text.replace(/\s+/g, " ").trim();
 
@@ -160,7 +171,13 @@ async function extractPdfMaterial(file: File, options: ExtractOptions = {}): Pro
       if (index % 3 === 2) await waitForBrowser();
     }
 
-    return { text: chunks.join("\n\n").slice(0, maxChars), pageImages };
+    const fileData = file.size <= MAX_INLINE_PDF_BYTES ? await fileToDataUrl(file) : undefined;
+    return {
+      text: chunks.join("\n\n").slice(0, maxChars),
+      pageImages,
+      fileData,
+      fileName: file.name,
+    };
   } finally {
     await loadingTask.destroy();
     if (objectUrl) URL.revokeObjectURL(objectUrl);
