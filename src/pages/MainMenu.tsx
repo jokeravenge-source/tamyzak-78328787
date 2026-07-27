@@ -119,7 +119,9 @@ const MainMenu = ({
         </button>
       </div>
 
-      <header className="text-center max-w-3xl mx-auto z-10 relative animate-fade-up">
+      <CountdownTimer target="2026-08-07T00:00:00" language={language} />
+
+      <header className="text-center max-w-3xl mx-auto mt-8 z-10 relative animate-fade-up">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-6">
           <Sparkles className="w-3.5 h-3.5 text-primary" />
           <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{text.badge}</span>
@@ -130,8 +132,6 @@ const MainMenu = ({
           <p className="mt-3 text-sm text-primary font-medium">{text.hi}, {username} 👋</p>
         )}
       </header>
-
-      <CountdownTimer target="2026-08-07T00:00:00" language={language} />
 
       <motion.section
         initial="hidden"

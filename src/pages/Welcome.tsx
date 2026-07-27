@@ -1,10 +1,53 @@
 import { motion } from "framer-motion";
 import tamayzakLogo from "@/assets/tamayzak-logo.png.asset.json";
+import { useEffect, useState } from "react";
 
 const CREAM = "#F7F4EC";
 const NAVY = "#183A72";
 const NAVY_SOFT = "#3A5B96";
 const BLUE_SOFT = "#B9C7DE";
+
+const TARGET_MS = new Date("2026-08-07T00:00:00").getTime();
+const pad = (n: number) => String(n).padStart(2, "0");
+
+const WelcomeCountdown = () => {
+  const calc = () => {
+    const d = Math.max(0, TARGET_MS - Date.now());
+    return {
+      days: Math.floor(d / 86400000),
+      hours: Math.floor((d % 86400000) / 3600000),
+      minutes: Math.floor((d % 3600000) / 60000),
+      seconds: Math.floor((d % 60000) / 1000),
+    };
+  };
+  const [t, setT] = useState(calc);
+  useEffect(() => {
+    const id = setInterval(() => setT(calc()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const Cell = ({ v, l }: { v: number; l: string }) => (
+    <div
+      className="flex flex-col items-center min-w-[58px] px-2 py-2 rounded-2xl"
+      style={{ backgroundColor: NAVY, color: CREAM }}
+    >
+      <span className="text-2xl font-extrabold tabular-nums leading-none">{pad(v)}</span>
+      <span className="mt-1 text-[10px] tracking-widest opacity-80">{l}</span>
+    </div>
+  );
+  return (
+    <div className="mt-6 w-full max-w-[360px] mx-auto text-center">
+      <p className="text-[13px] font-semibold mb-2" style={{ color: NAVY }}>
+        العدّ التنازلي إلى 7 آب
+      </p>
+      <div className="flex items-center justify-center gap-2" dir="ltr">
+        <Cell v={t.days} l="يوم" />
+        <Cell v={t.hours} l="ساعة" />
+        <Cell v={t.minutes} l="دقيقة" />
+        <Cell v={t.seconds} l="ثانية" />
+      </div>
+    </div>
+  );
+};
 
 const Star = ({ x, y, size = 6, delay = 0 }: { x: string; y: string; size?: number; delay?: number }) => (
   <motion.svg
@@ -132,6 +175,7 @@ const Welcome = () => {
         >
           اجعل الذكاء الاصطناعي شريكك في الدراسة، التصحيح، والتعلّم بطريقة أذكى.
         </p>
+        <WelcomeCountdown />
       </motion.div>
 
       {/* Spacer */}
