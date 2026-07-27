@@ -20,6 +20,8 @@ type Pending = {
 
 const TEACHER_ID = "mohammed-anzi";
 const LEC_COUNTS: Record<"ar" | "en", number> = { ar: 23, en: 22 };
+const OWNER_EMAIL = "majs11@gmail.com";
+type Mode = "admin" | "reviewer";
 
 function buildTopicKey(lang: "ar" | "en", n: number) {
   return `anzi-${lang}-ch3-lec${n}-exam`;
@@ -37,6 +39,9 @@ export default function AdminMcqReview() {
   const [busy, setBusy] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>(() => (localStorage.getItem("mcqReviewMode") as Mode) || "reviewer");
+
+  const isOwner = (userEmail ?? "").toLowerCase() === OWNER_EMAIL;
 
   const check = async () => {
     setChecking(true);
@@ -62,8 +67,12 @@ export default function AdminMcqReview() {
     e.preventDefault();
     setBusy(true);
     try {
+      if (mode === "admin" && email.trim().toLowerCase() !== OWNER_EMAIL) {
+        throw new Error("Only the owner account can sign in as Admin");
+      }
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw error;
+      localStorage.setItem("mcqReviewMode", mode);
       await check();
     } catch (err: any) {
       toast.error(err.message || "Sign-in failed");
@@ -79,8 +88,23 @@ export default function AdminMcqReview() {
     return (
       <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground p-6">
         <form onSubmit={signIn} className="w-full max-w-sm rounded-lg border border-border bg-card text-card-foreground p-6 space-y-4 shadow-card">
-          <h1 className="text-xl font-bold">Admin Sign-In</h1>
-          <p className="text-sm text-muted-foreground">MCQ review panel</p>
+          <h1 className="text-xl font-bold">MCQ Review · Sign-In</h1>
+          <p className="text-sm text-muted-foreground">Choose how you want to sign in</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setMode("admin")}
+              className={`h-10 rounded-md border text-sm font-medium ${mode === "admin" ? "border-primary bg-primary/15 text-primary" : "border-input bg-background text-foreground hover:bg-secondary"}`}>
+              Admin
+            </button>
+            <button type="button" onClick={() => setMode("reviewer")}
+              className={`h-10 rounded-md border text-sm font-medium ${mode === "reviewer" ? "border-primary bg-primary/15 text-primary" : "border-input bg-background text-foreground hover:bg-secondary"}`}>
+              Reviewer
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {mode === "admin"
+              ? "Admin can approve or reject pending changes (owner account only)."
+              : "Reviewer can propose add/delete requests for approval."}
+          </p>
           <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
             className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
           <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
@@ -108,10 +132,12 @@ export default function AdminMcqReview() {
     );
   }
 
-  return <ReviewPanel userEmail={userEmail} onSignOut={signOut} />;
+  const effectiveMode: Mode = mode === "admin" && isOwner ? "admin" : "reviewer";
+  return <ReviewPanel userEmail={userEmail} onSignOut={signOut} mode={effectiveMode} />;
 }
 
-function ReviewPanel({ userEmail, onSignOut }: { userEmail: string; onSignOut: () => void }) {
+function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSignOut: () => void; mode: Mode }) {
+  const canModerate = mode === "admin";
   const [sets, setSets] = useState<MCQSet[]>([]);
   const [pending, setPending] = useState<Pending[]>([]);
   const [loading, setLoading] = useState(true);
@@ -217,7 +243,7 @@ function ReviewPanel({ userEmail, onSignOut }: { userEmail: string; onSignOut: (
     <div className="theme-notion-dark min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-10 border-b border-border bg-card/95 text-card-foreground backdrop-blur px-4 py-3 flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold">Admin · MCQ Review</h1>
+          <h1 className="text-lg font-bold">{canModerate ? "Admin" : "Reviewer"} · MCQ Review</h1>
           <p className="text-xs text-muted-foreground">{userEmail}</p>
         </div>
         <Button onClick={onSignOut} variant="outline" size="sm">
@@ -260,12 +286,18 @@ function ReviewPanel({ userEmail, onSignOut }: { userEmail: string; onSignOut: (
                       )}
                     </div>
                     <div className="flex gap-1 shrink-0">
-                       <Button onClick={() => approve(c)} size="sm" className="h-8 px-3 text-xs">
-                        <Check className="w-3.5 h-3.5" /> Approve
-                       </Button>
-                       <Button onClick={() => reject(c)} variant="outline" size="sm" className="h-8 px-3 text-xs">
-                        <X className="w-3.5 h-3.5" /> Reject
-                       </Button>
+                       {canModerate ? (
+                         <>
+                           <Button onClick={() => approve(c)} size="sm" className="h-8 px-3 text-xs">
+                             <Check className="w-3.5 h-3.5" /> Approve
+                           </Button>
+                           <Button onClick={() => reject(c)} variant="outline" size="sm" className="h-8 px-3 text-xs">
+                             <X className="w-3.5 h-3.5" /> Reject
+                           </Button>
+                         </>
+                       ) : (
+                         <span className="text-xs text-muted-foreground italic">Awaiting admin</span>
+                       )}
                     </div>
                   </div>
                 </li>
