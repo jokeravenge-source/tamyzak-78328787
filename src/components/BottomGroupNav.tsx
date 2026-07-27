@@ -52,14 +52,12 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
     ],
   },
   {
-    titleEn: "Progress", titleAr: "التقدم",
+    titleEn: "Home", titleAr: "الرئيسية",
     items: [
       { key: "basics", labelEn: "Home", labelAr: "الرئيسية", Icon: Home },
       { key: "report", labelEn: "Daily Report", labelAr: "تقريري", Icon: Sparkles },
-      { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
-      { key: "missions", labelEn: "Missions", labelAr: "المهمات", Icon: Target },
       { key: "todo", labelEn: "To-Do List", labelAr: "قائمة المهام", Icon: ListChecks },
-      { key: "leaderboard", labelEn: "Leaderboard", labelAr: "المتصدرون", Icon: Trophy },
+      { key: "missions", labelEn: "Al-Fahrast", labelAr: "الفهرست", Icon: Target },
     ],
   },
   {
@@ -69,6 +67,8 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "news", labelEn: "News", labelAr: "الأخبار", Icon: Newspaper },
       { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
       { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
+      { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
+      { key: "leaderboard", labelEn: "Leaderboard", labelAr: "المتصدرون", Icon: Trophy },
     ],
   },
   {
@@ -84,22 +84,14 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "psych", labelEn: "Psych Assistant", labelAr: "المساعد النفسي", Icon: Heart },
     ],
   },
-  {
-    titleEn: "Account", titleAr: "الحساب",
-    items: [
-      { key: "account", labelEn: "Account Center", labelAr: "مركز الحساب", Icon: UserCog },
-      { key: "premium", labelEn: "Premium", labelAr: "بريميوم", Icon: Crown },
-    ],
-  },
 ];
 
 const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Subjects: BookOpen,
   Study: Layers,
-  Progress: Target,
+  Home: Home,
   Community: Users,
   "All Tools": Wrench,
-  Account: Settings,
 };
 
 const BottomGroupNav = ({
