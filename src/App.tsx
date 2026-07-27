@@ -22,6 +22,7 @@ const Advices = lazy(() => import("./pages/Advices"));
 const Sessions = lazy(() => import("./pages/Sessions"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 import AdminLogin from "./pages/AdminLogin";
+import AdminMcqReview from "./pages/AdminMcqReview";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
 const AccountCenter = lazy(() => import("./pages/AccountCenter"));
 const Essay = lazy(() => import("./pages/Essay"));
