@@ -46,16 +46,19 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const systemPrompt = `You are an expert science/academic quiz generator. Generate exactly ${n} high-quality multiple choice questions in ${lang} based ONLY on the provided study material.
+    const systemPrompt = `You are an expert science/academic quiz generator. Generate exactly ${n} high-quality multiple choice questions in ${lang} based STRICTLY and EXCLUSIVELY on the scientific content of the attached PDF / provided study material. Treat the source as the single source of truth.
 
-STRICT CONTENT RULES:
-- Focus EXCLUSIVELY on the scientific/academic/technical topics in the material: definitions, laws, formulas, mechanisms, reactions, processes, terminology, cause-and-effect, numeric problems, diagrams, classifications, and specific facts stated in the source.
-- Do NOT write general knowledge, common-sense, opinion, motivational, historical trivia, or vague/generic questions.
-- Do NOT ask meta questions about the document itself (e.g. "what is this chapter about", "who wrote this", page numbers, chapter titles).
-- Every question must test understanding of a specific scientific concept, term, value, relationship, or step explicitly present in the material.
-- Distractors must be plausible and scientifically related to the same topic (not random).
+STRICT SOURCE-GROUNDING RULES:
+- Every question, every correct answer, and every explanation MUST be directly traceable to a specific sentence, formula, diagram, table, reaction, or numeric value that appears in the source. If a fact is not in the source, do NOT ask about it.
+- Do NOT use outside knowledge, prior training, common textbook facts, or "well-known" information that is not explicitly stated in the source — even if you know it is true.
+- Do NOT paraphrase into general science trivia. Stay on the exact scientific topics, terminology, and level of the uploaded material.
+- Focus EXCLUSIVELY on the scientific/technical content: definitions, laws, formulas, constants, mechanisms, reactions, processes, terminology, cause-and-effect, numeric problems, diagrams, classifications, and specific facts stated in the source.
+- Do NOT write general knowledge, common-sense, opinion, motivational, historical trivia, current-events, or vague/generic questions.
+- Do NOT ask meta questions about the document itself (title, author, chapter number, page numbers, "what is this chapter about", "what does the book discuss").
+- Distractors must be plausible, same-topic, same-scientific-domain wrong answers — ideally other terms/values that also appear in the source. Never random or off-topic.
+- If the readable scientific content is insufficient to produce ${n} strictly-grounded questions, produce fewer rather than inventing content. Never fabricate.
 
-Each question must have 4 distinct choices, one correct answer, a short helpful hint (without revealing the answer) and a clear explanation derived from the material. Return ONLY valid JSON, no markdown.`;
+Each question must have 4 distinct choices, one correct answer, a short helpful hint (without revealing the answer), and a clear explanation whose reasoning is drawn from the source. Return ONLY valid JSON, no markdown.`;
 
     const hasPdf = Boolean(pdfData);
     const userPrompt = `Study material text extracted from the file:\n\n${content || "(No reliable selectable text. Read the attached original PDF or page images.)"}\n\n${hasPdf ? "The original PDF is attached. Read it directly, including Arabic text, scanned pages, diagrams, equations, and tables, and use it as the primary source." : images.length ? `Attached are ${images.length} rendered page images. Perform OCR and use all readable scientific content.` : ""}\n\nGenerate exactly ${n} scientific MCQs in ${lang} strictly about topics present in the source. If part of the source is unreadable, use the readable scientific content; do not invent unrelated facts.`;
