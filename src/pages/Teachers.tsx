@@ -237,11 +237,6 @@ const Teachers = ({
 
           {view.kind === "topics" && (
             view.teacher.id === "mohammed-anzi" ? (
-              !isOwner ? (
-                <div className="text-center text-muted-foreground py-20">
-                  {isRTL ? "هذا المدرّس مقفل حالياً" : "This teacher is locked"}
-                </div>
-              ) :
               <AnziFlow key="anzi" teacher={view.teacher} isAdmin={!!isAdmin} />
             ) : (
               <TopicsView
