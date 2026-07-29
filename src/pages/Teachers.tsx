@@ -200,13 +200,7 @@ const Teachers = ({
                 {teachers.map((teacher, i) => (
                   <motion.button
                     key={teacher.id}
-                    onClick={() => {
-                      if (teacher.id === "mohammed-anzi" && !isOwner) {
-                        toast.error(isRTL ? "هذا المدرّس مقفل حالياً" : "This teacher is locked");
-                        return;
-                      }
-                      setView({ kind: "topics", teacher });
-                    }}
+                    onClick={() => setView({ kind: "topics", teacher })}
                     initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -217,12 +211,12 @@ const Teachers = ({
                         src={teacher.photo}
                         alt={isRTL ? teacher.nameAr : teacher.nameEn}
                         loading="lazy"
-                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${teacher.id === "mohammed-anzi" && !isOwner ? "grayscale opacity-60" : ""}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     </div>
                     <div className="p-5">
                       <p className="text-[11px] uppercase tracking-[0.25em] text-primary mb-1">
-                        {teacher.id === "mohammed-anzi" && !isOwner ? (isRTL ? "مقفل 🔒" : "Locked 🔒") : L.role}
+                        {L.role}
                       </p>
                       <h3 className="text-xl font-bold text-foreground">
                         {isRTL ? teacher.nameAr : teacher.nameEn}
