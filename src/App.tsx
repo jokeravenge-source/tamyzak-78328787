@@ -339,9 +339,18 @@ const App = () => {
       cancelled = true;
     };
   }, [authed, authRole]);
-  const [language, setLanguage] = useState<AppLanguage | null>(
-    () => (typeof window !== "undefined" ? (localStorage.getItem(LANGUAGE_STORAGE_KEY) as AppLanguage | null) : null)
-  );
+  const [language, setLanguage] = useState<AppLanguage | null>(() => {
+    if (typeof window === "undefined") return null;
+    // Deep link /teachers?lang=en&lec=1 — honour the language from the URL.
+    if (window.location.pathname.startsWith("/teachers")) {
+      const l = new URLSearchParams(window.location.search).get("lang");
+      if (l === "ar" || l === "en") {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, l);
+        return l as AppLanguage;
+      }
+    }
+    return localStorage.getItem(LANGUAGE_STORAGE_KEY) as AppLanguage | null;
+  });
   const [subject, setSubject] = useState<AppSubject | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(SUBJECT_STORAGE_KEY) as AppSubject | null) : null)
   );
@@ -357,9 +366,14 @@ const App = () => {
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
   type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers" | "adminNotes" | "dailyGame" | "whoIsBest";
-  const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(
-    () => (typeof window !== "undefined" ? (localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null) : null)
-  );
+  const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(() => {
+    if (typeof window === "undefined") return null;
+    if (window.location.pathname.startsWith("/teachers")) {
+      localStorage.setItem(MENU_STORAGE_KEY, "teachers");
+      return "teachers";
+    }
+    return localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null;
+  });
 
   // Admin "Play daily game" preview: when set, we render DailyGame directly
   // even for admins (which normally short-circuit to AdminDashboard).
