@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
+import ExamPlanPanel from "@/components/ExamPlanPanel";
 import geneticsImg from "@/assets/course-genetics.jpg";
 import organicImg from "@/assets/course-organic.jpg";
 import geometryImg from "@/assets/course-geometry.jpg";
@@ -239,6 +240,11 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
             ))}
           </div>
         </div>
+
+        <ExamPlanPanel
+          language={language}
+          subjects={COURSES.map((c) => ({ id: c.id, titleAr: c.titleAr, titleEn: c.titleEn }))}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {COURSES.map((c, idx) => {

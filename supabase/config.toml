@@ -49,3 +49,6 @@ verify_jwt = false
 
 [functions.grade-course-exam]
 verify_jwt = false
+
+[functions.exam-plan-notify]
+verify_jwt = false

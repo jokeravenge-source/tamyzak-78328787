@@ -242,6 +242,36 @@ export type Database = {
           },
         ]
       }
+      course_exam_plans: {
+        Row: {
+          acknowledged_step: number
+          created_at: string
+          interval_days: number
+          start_date: string
+          subjects: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_step?: number
+          created_at?: string
+          interval_days?: number
+          start_date?: string
+          subjects?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_step?: number
+          created_at?: string
+          interval_days?: number
+          start_date?: string
+          subjects?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       course_exams: {
         Row: {
           answer_path: string
