@@ -26,13 +26,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     items: [
       { key: "ourCourses", labelEn: "Our Courses", labelAr: "دوراتنا", Icon: CoursesIcon },
       { key: "subjectsHub", labelEn: "All Subjects", labelAr: "كل المواد", Icon: BookOpen },
-      { key: "subjectsHub", labelEn: "Physics", labelAr: "الفيزياء", Icon: Atom, subject: "physics" },
-      { key: "subjectsHub", labelEn: "Chemistry", labelAr: "الكيمياء", Icon: FlaskConical, subject: "chemistry" },
-      { key: "subjectsHub", labelEn: "Biology", labelAr: "الأحياء", Icon: Leaf, subject: "biology" },
-      { key: "subjectsHub", labelEn: "English", labelAr: "الإنجليزية", Icon: BookOpen, subject: "english" },
-      { key: "subjectsHub", labelEn: "French", labelAr: "الفرنسية", Icon: LangIcon, subject: "french" },
-      { key: "subjectsHub", labelEn: "Arabic", labelAr: "العربية", Icon: BookOpen, subject: "arabic" },
-      { key: "subjectsHub", labelEn: "Islamic", labelAr: "الإسلامية", Icon: Moon, subject: "islamic" },
     ],
   },
   {
