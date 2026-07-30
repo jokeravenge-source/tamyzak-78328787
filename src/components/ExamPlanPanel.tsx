@@ -3,6 +3,7 @@ import { CalendarClock, Check, ChevronDown, ChevronUp, Loader2, Pencil, Bell, Tr
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
+import { examOffsets } from "@/lib/examPlanSchedule";
 
 export type PlanSubject = { id: string; titleAr: string; titleEn: string };
 
@@ -60,10 +61,11 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
 
   const schedule = useMemo(() => {
     if (!plan || plan.subjects.length === 0) return [];
+    const offsets = examOffsets(plan.subjects.length);
     return plan.subjects.map((id, i) => ({
       id,
       step: i,
-      date: addDays(plan.start_date, i * plan.interval_days),
+      date: addDays(plan.start_date, offsets[i]),
     }));
   }, [plan]);
 
@@ -206,7 +208,7 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
                   <div key={id} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
                     <span className="w-6 h-6 rounded-md bg-secondary text-xs font-bold flex items-center justify-center">{i + 1}</span>
                     <span className="flex-1 text-sm font-medium">{label(id)}</span>
-                    <span className="text-xs text-muted-foreground">{addDays(plan?.start_date ?? today, i * 5)}</span>
+                    <span className="text-xs text-muted-foreground">{addDays(plan?.start_date ?? today, examOffsets(picked.length)[i])}</span>
                     <button onClick={() => move(i, -1)} className="w-7 h-7 rounded-md border border-border flex items-center justify-center hover:bg-secondary"><ChevronUp className="w-3.5 h-3.5" /></button>
                     <button onClick={() => move(i, 1)} className="w-7 h-7 rounded-md border border-border flex items-center justify-center hover:bg-secondary"><ChevronDown className="w-3.5 h-3.5" /></button>
                   </div>
