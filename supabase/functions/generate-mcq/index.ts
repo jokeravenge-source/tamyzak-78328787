@@ -1,4 +1,6 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { generateText, Output } from "npm:ai";
+import { z } from "npm:zod";
+import { createLovableAiGatewayProvider } from "../_shared/ai-gateway.ts";
 import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
@@ -6,18 +8,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MAX_STUDY_CHARS = 180000;
-// Most capable PDF/document-reading models first, then fallbacks.
-// Available to every user (no premium gating) — the client may request one
-// explicitly, otherwise we try each in order until one succeeds.
-const AI_MODELS = [
-  "google/gemini-2.5-pro",
-  "openai/gpt-5.6-sol",
-  "google/gemini-3.5-flash",
-  "openai/gpt-5.4-mini",
-] as const;
-const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const MAX_STUDY_CHARS = 180_000;
 const MAX_PAGE_IMAGES = 20;
+const QUESTIONS_PER_BATCH = 15;
+const MODEL = "openai/gpt-5.6-sol";
+
+const json = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const questionSchema = z.object({
+  question: z.string().min(1),
+  choices: z.array(z.string().min(1)).length(4),
+  answer_index: z.number().int().min(0).max(3),
+  hint: z.string(),
+  explanation: z.string().min(1),
+});
 
 const cleanExtractedText = (value: unknown) => {
   if (typeof value !== "string") return "";
@@ -28,200 +36,107 @@ const cleanExtractedText = (value: unknown) => {
     .slice(0, MAX_STUDY_CHARS);
 };
 
+const shuffleChoices = (question: z.infer<typeof questionSchema>) => {
+  const correct = question.choices[question.answer_index];
+  const choices = [...question.choices];
+  for (let index = choices.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(Math.random() * (index + 1));
+    [choices[index], choices[target]] = [choices[target], choices[index]];
+  }
+  return { ...question, choices, answer_index: choices.indexOf(correct) };
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { text, pageImages, fileData, fileName, count, language, model: requestedModel } = await req.json();
-    const lang0 = language === "ar" ? "ar" : "en";
-    const ent = await claimFeature(req, "mcq");
-    if (!ent.ok) {
-      return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), { status: ent.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    const images = Array.isArray(pageImages) ? pageImages.filter((image) => typeof image === "string" && image.startsWith("data:image/")).slice(0, MAX_PAGE_IMAGES) : [];
-    const pdfData = typeof fileData === "string" && fileData.startsWith("data:application/pdf;base64,")
-      ? fileData
+    const body = await req.json();
+    const language = body.language === "ar" ? "Arabic" : "English";
+    const content = cleanExtractedText(body.text);
+    const pageImages = Array.isArray(body.pageImages)
+      ? body.pageImages
+          .filter((image: unknown) => typeof image === "string" && image.startsWith("data:image/"))
+          .slice(0, MAX_PAGE_IMAGES)
+      : [];
+    const pdfData = typeof body.fileData === "string" && body.fileData.startsWith("data:application/pdf;base64,")
+      ? body.fileData
       : "";
-    const content = cleanExtractedText(text);
-    if (!content && !images.length && !pdfData) {
-      return new Response(JSON.stringify({ error: "Missing study material" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    if (!content && pageImages.length === 0 && !pdfData) return json({ error: "Missing study material" }, 400);
+
+    const entitlement = await claimFeature(req, "mcq");
+    if (!entitlement.ok) return json({ error: entitlement.error, upgrade: entitlement.status === 429 }, entitlement.status);
+
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) return json({ error: "AI service is not configured" }, 500);
+
+    const requestedCount = Math.max(1, Math.min(100, Number(body.count) || 10));
+    const batchSizes: number[] = [];
+    let remaining = requestedCount;
+    while (remaining > 0) {
+      const batchSize = Math.min(QUESTIONS_PER_BATCH, remaining);
+      batchSizes.push(batchSize);
+      remaining -= batchSize;
     }
-    const n = Math.max(1, Math.min(100, Number(count) || 10));
-    const lang = language === "ar" ? "Arabic" : "English";
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    const sourceParts: Array<Record<string, unknown>> = [{
+      type: "text",
+      text: content
+        ? `EXTRACTED SOURCE TEXT:\n${content}`
+        : "No reliable selectable text was extracted. Read the attached source directly.",
+    }];
 
-    const systemPrompt = `You are an expert science/academic quiz generator. Generate exactly ${n} high-quality multiple choice questions in ${lang} based STRICTLY and EXCLUSIVELY on the scientific content of the attached PDF / provided study material. Treat the source as the single source of truth.
-
-STRICT SOURCE-GROUNDING RULES:
-- Every question, every correct answer, and every explanation MUST be directly traceable to a specific sentence, formula, diagram, table, reaction, or numeric value that appears in the source. If a fact is not in the source, do NOT ask about it.
-- Do NOT use outside knowledge, prior training, common textbook facts, or "well-known" information that is not explicitly stated in the source — even if you know it is true.
-- Do NOT paraphrase into general science trivia. Stay on the exact scientific topics, terminology, and level of the uploaded material.
-- Focus EXCLUSIVELY on the scientific/technical content: definitions, laws, formulas, constants, mechanisms, reactions, processes, terminology, cause-and-effect, numeric problems, diagrams, classifications, and specific facts stated in the source.
-- Do NOT write general knowledge, common-sense, opinion, motivational, historical trivia, current-events, or vague/generic questions.
-- Do NOT ask meta questions about the document itself (title, author, chapter number, page numbers, "what is this chapter about", "what does the book discuss").
-- Distractors must be plausible, same-topic, same-scientific-domain wrong answers — ideally other terms/values that also appear in the source. Never random or off-topic.
-- If the readable scientific content is insufficient to produce ${n} strictly-grounded questions, produce fewer rather than inventing content. Never fabricate.
-
-Each question must have 4 distinct choices, one correct answer, a short helpful hint (without revealing the answer), and a clear explanation whose reasoning is drawn from the source. Return ONLY valid JSON, no markdown.`;
-
-    const hasPdf = Boolean(pdfData);
-    const userPrompt = `Study material text extracted from the file:\n\n${content || "(No reliable selectable text. Read the attached original PDF or page images.)"}\n\n${hasPdf ? "The original PDF is attached. Read it directly, including Arabic text, scanned pages, diagrams, equations, and tables, and use it as the primary source." : images.length ? `Attached are ${images.length} rendered page images. Perform OCR and use all readable scientific content.` : ""}\n\nGenerate exactly ${n} scientific MCQs in ${lang} strictly about topics present in the source. If part of the source is unreadable, use the readable scientific content; do not invent unrelated facts.`;
-    const userContent = hasPdf
-      ? [
-          { type: "text", text: userPrompt },
-          {
-            type: "file",
-            file: {
-              filename: typeof fileName === "string" && fileName.toLowerCase().endsWith(".pdf") ? fileName.slice(0, 200) : "study-material.pdf",
-              file_data: pdfData,
-            },
-          },
-        ]
-      : images.length
-        ? [
-            { type: "text", text: userPrompt },
-            ...images.map((url) => ({ type: "image_url", image_url: { url } })),
-          ]
-        : userPrompt;
-
-    const tools = [
-          {
-            type: "function",
-            function: {
-              name: "submit_mcqs",
-              description: "Submit generated multiple choice questions",
-              parameters: {
-                type: "object",
-                properties: {
-                  questions: {
-                    type: "array",
-                    minItems: 1,
-                    items: {
-                      type: "object",
-                      properties: {
-                        question: { type: "string" },
-                        choices: { type: "array", items: { type: "string" }, minItems: 4, maxItems: 4 },
-                        answer_index: { type: "integer", minimum: 0, maximum: 3 },
-                        hint: { type: "string" },
-                        explanation: { type: "string" },
-                      },
-                      required: ["question", "choices", "answer_index", "hint", "explanation"],
-                      additionalProperties: false,
-                    },
-                  },
-                },
-                required: ["questions"],
-                additionalProperties: false,
-              },
-            },
-          },
-    ];
-
-    const modelQueue = (typeof requestedModel === "string" && (AI_MODELS as readonly string[]).includes(requestedModel)
-      ? [requestedModel, ...AI_MODELS.filter((m) => m !== requestedModel)]
-      : [...AI_MODELS]);
-
-    let res: Response | null = null;
-    let lastErrText = "";
-    let lastStatus = 500;
-    for (const m of modelQueue) {
-      const body: Record<string, unknown> = {
-        model: m,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-        tools,
-        tool_choice: { type: "function", function: { name: "submit_mcqs" } },
-      };
-      if (m.startsWith("openai/gpt-5.6")) body.reasoning_effort = "none";
-
-      const attempt = await fetch(AI_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+    if (pdfData) {
+      sourceParts.push({
+        type: "file",
+        data: pdfData,
+        mediaType: "application/pdf",
+        filename: typeof body.fileName === "string" ? body.fileName.slice(0, 200) : "study-material.pdf",
       });
-      if (attempt.ok) { res = attempt; break; }
-      lastStatus = attempt.status;
-      lastErrText = await attempt.text();
-      console.error(`generate-mcq: model ${m} failed [${attempt.status}]: ${lastErrText.slice(0, 300)}`);
-      if (attempt.status === 402) break;
+    } else {
+      for (const image of pageImages) sourceParts.push({ type: "image", image });
     }
 
-    if (!res) {
-      if (lastStatus === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit. Try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (lastStatus === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Add credits in Settings." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      return new Response(JSON.stringify({ error: `AI error: ${lastErrText}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
+    const gateway = createLovableAiGatewayProvider(apiKey);
+    const system = `You create rigorous scientific MCQs in ${language}. The attached material is your ONLY source of truth.
 
-    const data = await res.json();
-    const msg = data.choices?.[0]?.message;
-    const toolCall = msg?.tool_calls?.[0];
-    let parsed: any = null;
-    const rawArgs = toolCall?.function?.arguments;
-    if (rawArgs) {
-      if (typeof rawArgs === "string") {
-        try { parsed = JSON.parse(rawArgs); } catch (e) {
-          console.error("generate-mcq: tool args JSON.parse failed", String(e), rawArgs.slice(0, 300));
-          const s = rawArgs.indexOf("{");
-          const en = rawArgs.lastIndexOf("}");
-          if (s !== -1 && en !== -1) {
-            try { parsed = JSON.parse(rawArgs.slice(s, en + 1)); } catch { /* ignore */ }
-          }
-        }
-      } else if (typeof rawArgs === "object") {
-        parsed = rawArgs;
-      }
-    }
-    if (!parsed && typeof msg?.content === "string") {
-      const raw = msg.content.trim();
-      // Strip markdown code fences (```json ... ``` or ``` ``` `json ... ` ` ` variants)
-      const cleaned = raw
-        .replace(/^`+\s*`*\s*`*\s*json/i, "")
-        .replace(/^```json/i, "")
-        .replace(/^```/, "")
-        .replace(/```$/, "")
-        .replace(/`+\s*$/, "")
-        .trim();
-      const start = cleaned.indexOf("{");
-      const end = cleaned.lastIndexOf("}");
-      if (start !== -1 && end !== -1) {
-        try { parsed = JSON.parse(cleaned.slice(start, end + 1)); } catch { /* ignore */ }
-      }
-    }
-    if (!parsed || !Array.isArray(parsed.questions) || !parsed.questions.length) {
-      console.error("generate-mcq: no parseable questions", JSON.stringify(data).slice(0, 500));
-      return new Response(JSON.stringify({
-        error: "No readable scientific content was found in the file. Try a clearer PDF or a PDF with selectable text.",
-      }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    // Shuffle choices per question so the correct answer is not biased to a single position
-    if (parsed && Array.isArray(parsed.questions)) {
-      parsed.questions = parsed.questions.map((q: any) => {
-        if (!q || !Array.isArray(q.choices) || q.choices.length !== 4) return q;
-        const correct = q.choices[q.answer_index];
-        const indices = [0, 1, 2, 3];
-        for (let i = indices.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [indices[i], indices[j]] = [indices[j], indices[i]];
-        }
-        const shuffled = indices.map((idx) => q.choices[idx]);
-        return { ...q, choices: shuffled, answer_index: shuffled.indexOf(correct) };
+SOURCE RULES:
+- Every question, correct answer, distractor, hint, and explanation must be directly supported by the source.
+- Use only scientific or academic content explicitly present in the source: definitions, mechanisms, formulas, reactions, processes, diagrams, tables, values, classifications, and stated cause-and-effect relationships.
+- Never use outside knowledge, general trivia, document metadata, page numbers, titles, author names, or questions about what the document discusses.
+- Keep terminology and difficulty faithful to the source. Distractors must be plausible and belong to the same scientific topic.
+- If a source section is unreadable, ignore it rather than inventing information.
+- Write all question content only in ${language}.`;
+
+    const outputs = await Promise.all(batchSizes.map(async (batchSize, batchIndex) => {
+      const { output } = await generateText({
+        model: gateway(MODEL),
+        system,
+        messages: [{
+          role: "user",
+          content: [
+            ...sourceParts,
+            {
+              type: "text",
+              text: `Generate ${batchSize} distinct MCQs. This is batch ${batchIndex + 1} of ${batchSizes.length}; vary the covered source concepts. Each question needs exactly four choices, one answer index from 0 to 3, a non-revealing hint, and a source-grounded explanation.`,
+            },
+          ],
+        }],
+        output: Output.object({ schema: z.object({ questions: z.array(questionSchema).min(1).max(batchSize) }) }),
+        providerOptions: { lovable: { reasoningEffort: "none" } },
       });
-    }
-    return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return output.questions;
+    }));
+
+    const questions = outputs.flat().slice(0, requestedCount).map(shuffleChoices);
+    if (questions.length === 0) return json({ error: "No readable scientific content was found in the file." }, 422);
+    return json({ questions });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("generate-mcq failed", message);
+    if (/429|rate.?limit/i.test(message)) return json({ error: "The AI service is busy. Please retry shortly." }, 429);
+    if (/402|credit/i.test(message)) return json({ error: "AI credits are exhausted. Add credits in Settings → Plans & credits." }, 402);
+    if (/timeout|timed out|abort/i.test(message)) return json({ error: "The file took too long to process. Try fewer questions or a smaller PDF." }, 504);
+    return json({ error: `MCQ generation failed: ${message}` }, 500);
   }
 });
