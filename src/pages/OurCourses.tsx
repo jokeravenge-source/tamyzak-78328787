@@ -88,7 +88,9 @@ type PlaylistRow = {
   id: string;
   course_id: string;
   title: string;
-  playlist_id: string;
+  playlist_id: string | null;
+  kind?: "playlist" | "video";
+  video_id?: string | null;
   created_at: string;
 };
 
@@ -103,6 +105,29 @@ function extractPlaylistId(input: string): string | null {
   } catch { /* */ }
   return null;
 }
+
+function extractVideoId(input: string): string | null {
+  const s = input.trim();
+  if (!s) return null;
+  if (/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+  try {
+    const u = new URL(s.startsWith("http") ? s : `https://${s}`);
+    if (u.hostname.includes("youtu.be")) {
+      const id = u.pathname.slice(1);
+      if (/^[A-Za-z0-9_-]{11}$/.test(id)) return id;
+    }
+    const v = u.searchParams.get("v");
+    if (v && /^[A-Za-z0-9_-]{11}$/.test(v)) return v;
+    const m = u.pathname.match(/\/(embed|shorts|live)\/([A-Za-z0-9_-]{11})/);
+    if (m) return m[2];
+  } catch { /* */ }
+  return null;
+}
+
+const embedSrc = (pl: PlaylistRow): string =>
+  pl.kind === "video" && pl.video_id
+    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(pl.video_id)}?rel=0&modestbranding=1`
+    : `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(pl.playlist_id ?? "")}&rel=0&modestbranding=1`;
 
 const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const isAr = language === "ar";
@@ -134,7 +159,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     setExamsByCourse(byCourse);
     const { data: pls } = await (supabase as any)
       .from("course_playlists")
-      .select("id, course_id, title, playlist_id, created_at")
+      .select("id, course_id, title, playlist_id, kind, video_id, created_at")
       .order("created_at", { ascending: false });
     const plMap: Record<string, PlaylistRow[]> = {};
     ((pls ?? []) as PlaylistRow[]).forEach((p) => {
