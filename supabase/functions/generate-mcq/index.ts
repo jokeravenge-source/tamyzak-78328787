@@ -89,7 +89,6 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
         : userPrompt;
 
     const tools = [
-
           {
             type: "function",
             function: {
@@ -120,7 +119,6 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
               },
             },
           },
-        ],
     ];
 
     const modelQueue = (typeof requestedModel === "string" && (AI_MODELS as readonly string[]).includes(requestedModel)
@@ -165,17 +163,6 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
         return new Response(JSON.stringify({ error: "AI credits exhausted. Add credits in Settings." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       return new Response(JSON.stringify({ error: `AI error: ${lastErrText}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    if (!res.ok) {
-      const errText = await res.text();
-      if (res.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit. Try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      if (res.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Add credits in Settings." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-      return new Response(JSON.stringify({ error: `AI error: ${errText}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const data = await res.json();
