@@ -7,17 +7,24 @@ const corsHeaders = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const OCR_MODELS = [
-  // Keep the chain short so one stalled upstream can't burn the whole edge budget.
+  // Most capable vision models first — accuracy matters more than latency here.
+  "google/gemini-2.5-pro",
   "google/gemini-3.5-flash",
   "google/gemini-2.5-flash",
 ];
 const GRADE_MODELS = [
-  "google/gemini-3.5-flash",
   "google/gemini-2.5-pro",
+  "google/gemini-3.5-flash",
+];
+const STRUCTURE_MODELS = [
+  "google/gemini-2.5-pro",
+  "google/gemini-3.5-flash",
 ];
 const MAX_IMAGES = 10;
-const OCR_TIMEOUT_MS = 60_000;
-const GRADE_TIMEOUT_MS = 90_000;
+const OCR_TIMEOUT_MS = 90_000;
+const GRADE_TIMEOUT_MS = 120_000;
+const STRUCTURE_TIMEOUT_MS = 60_000;
+const TOTAL_MARKS = 100;
 
 // Try each model in order. Retries on 5xx and 429. Stops immediately on 402 (credits).
 async function callAiWithFallback(
@@ -122,6 +129,39 @@ Deno.serve(async (req) => {
 
     const isAr = language !== "en";
 
+    // ===== STEP 0: Determine how many questions the paper has, from the ANSWER KEY first =====
+    const structureSource = answerPdf ?? examPdf;
+    const structureContent: unknown[] = [
+      {
+        type: "text",
+        text: `Look at the attached ${answerPdf ? "model-answer key" : "exam"} PDF and count how many MAIN questions it contains (top-level questions such as Q1, Q2, س1, س2 — do NOT count sub-parts a/b/c separately).
+Return ONLY valid JSON: {"question_count": number, "question_numbers": number[]}
+question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`,
+      },
+      { type: "file", file: { filename: answerPdf ? "answer-key.pdf" : "exam.pdf", file_data: structureSource } },
+    ];
+    const structureResult = await callAiWithFallback(LOVABLE_API_KEY, STRUCTURE_MODELS, {
+      messages: [
+        { role: "system", content: "You extract exam structure from PDFs. Answer with JSON only, no commentary." },
+        { role: "user", content: structureContent },
+      ],
+      response_format: { type: "json_object" },
+    }, STRUCTURE_TIMEOUT_MS);
+
+    let questionCount = 0;
+    if (structureResult.ok) {
+      const rawStruct = structureResult.data.choices?.[0]?.message?.content ?? "{}";
+      try {
+        const s = JSON.parse(String(rawStruct).match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+        const n = Number(s?.question_count);
+        if (Number.isFinite(n) && n >= 1 && n <= 30) questionCount = Math.round(n);
+      } catch { /* fall back below */ }
+    }
+    if (!questionCount) questionCount = 6;
+    const perQuestionMax = TOTAL_MARKS / questionCount;
+    const fmtMark = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(2));
+    console.log(`[grade-course-exam] questions=${questionCount} perQuestion=${perQuestionMax}`);
+
     // ===== STEP 1: OCR the student's handwritten answer photos into plain text =====
     const ocrSystem = isAr
       ? `أنت محرك OCR متخصص في قراءة أوراق امتحانات الفيزياء بخط اليد باللغة العربية والرموز الرياضية والفيزيائية. مهمتك الوحيدة هي استخراج كل ما هو مكتوب على الصور حرفياً، بأمانة تامة، مع الحفاظ على ترتيب القراءة وأرقام الأسئلة والمعادلات والوحدات.
@@ -170,7 +210,7 @@ Strict rules:
     // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
     const hasKey = Boolean(answerPdf);
     const systemPrompt = isAr
-      ? `أنت مصحّح وزاري عراقي صارم جداً. لديك ورقة الامتحان PDF${hasKey ? " وورقة الإجابة النموذجية PDF" : ""} ونص إجابات الطالب المستخرج بالـ OCR. صحّح بحزم شديد وفق معايير التصحيح الوزارية: كل سؤال من 20 درجة، وتحتسب أفضل 5 من 6.
+      ? `أنت مصحّح وزاري عراقي صارم جداً. لديك ورقة الامتحان PDF${hasKey ? " وورقة الإجابة النموذجية PDF" : ""} ونص إجابات الطالب المستخرج بالـ OCR. الامتحان يتكون من ${questionCount} أسئلة، والدرجة الكلية 100، أي أن كل سؤال من ${fmtMark(perQuestionMax)} درجة، وتُحتسب جميع الأسئلة.
 
 قواعد التصحيح الصارمة (إلزامية):
 - ${hasKey ? "ورقة الإجابة النموذجية PDF هي **المرجع الوحيد والمطلق والحصري**. لا تعتمد على معرفتك العامة ولا على المنهج، بل فقط على ما هو مكتوب حرفياً داخل ملف الإجابة النموذجية. أي إجابة لا تطابق ما في نموذج الإجابة = خطأ حتى لو بدت صحيحة علمياً." : "لا يوجد نموذج إجابة مرفق؛ صحّح بحذر شديد وفق المنهج الوزاري وحده."}
@@ -180,11 +220,11 @@ Strict rules:
 - إذا لم يجب الطالب أو كتب كلاماً لا علاقة له: score = 0.
 - الدرجة الجزئية مسموحة فقط عندما تطابق خطوة معينة خطوة موثّقة داخل نموذج الإجابة (قانون، تعويض، استنتاج). كل خطوة ناقصة = خصم.
 - التعريفات والقوانين يجب أن تكون كما في نموذج الإجابة؛ أي نقص كلمة جوهرية = خصم.
-- ممنوع التقريب للأعلى. لا تعطِ 20/20 إلا لإجابة مطابقة تماماً لنموذج الإجابة.
+- ممنوع التقريب للأعلى. لا تمنح الدرجة الكاملة إلا لإجابة مطابقة تماماً لنموذج الإجابة.
 - استخدم نص الـ OCR كمصدر لإجابة الطالب فقط. لا تخترع نصاً غير موجود.
 - إذا كان النص [غير مقروء]، ضع attempted=true و score=null و feedback="يحتاج مراجعة يدوية".
 - في حقل corrections اكتب **الإجابة الصحيحة كما وردت في نموذج الإجابة** (اقتباس مباشر أو ملخص أمين لها)، وفي feedback اشرح لماذا خسر الطالب كل درجة بدقة.`
-      : `You are an extremely strict Iraqi ministerial grader. You have the exam PDF${hasKey ? ", the model-answer PDF" : ""}, and the student's OCR transcript. Grade harshly using the official marking scheme: each question out of 20, best 5 of 6.
+      : `You are an extremely strict Iraqi ministerial grader. You have the exam PDF${hasKey ? ", the model-answer PDF" : ""}, and the student's OCR transcript. The paper has ${questionCount} questions and the total is 100 marks, so each question is out of ${fmtMark(perQuestionMax)}. All questions count.
 
 Strict grading rules (mandatory):
 - ${hasKey ? "The model-answer PDF is the **single, absolute, exclusive reference**. Do NOT rely on your general knowledge or on the curriculum — only on what is literally written inside the answer-key PDF. Any answer that does not match the key = wrong, even if it looks scientifically plausible." : "No answer key is attached; grade cautiously using the official curriculum only."}
@@ -194,7 +234,7 @@ Strict grading rules (mandatory):
 - If the student did not answer or wrote irrelevant content: score = 0.
 - Partial credit is allowed ONLY when a step exactly matches a step documented inside the answer key (law, substitution, conclusion). Every missing step = deduction.
 - Definitions and laws must match the answer key wording; any missing key word = deduction.
-- Do NOT round up. Give 20/20 ONLY for an answer that fully matches the answer key.
+- Do NOT round up. Give full marks ONLY for an answer that fully matches the answer key.
 - Use the OCR transcript as the student's answer source only. Do not fabricate text that isn't there.
 - If the transcript is [unreadable], set attempted=true, score=null, feedback="needs manual review".
 - In the "corrections" field, write **the correct answer as it appears in the answer key** (direct quote or faithful summary of it). In "feedback" explain precisely why each mark was lost.`;
@@ -202,11 +242,11 @@ Strict grading rules (mandatory):
     const forcedRules = `
 
 MANDATORY OUTPUT RULES:
-- The exam always has exactly 6 questions numbered 1..6.
-- "per_question" MUST contain exactly 6 entries, one for each question, even if the student did not answer some. For unanswered questions set attempted=false and score=0.
-- Each question is out of 20. "graded_out_of" MUST be 100 (best 5 of 6 = 5 × 20).
-- "total" MUST equal the SUM OF THE TOP 5 SCORES among the 6 questions (ignoring any question with score=null). Never invent a higher total. Never write a total that does not match the per_question scores.
-- If all questions are 0, total = 0. Do NOT output 100 unless five questions truly scored 20 each.`;
+- The exam has exactly ${questionCount} main questions numbered 1..${questionCount} (this was determined from the ${hasKey ? "answer key" : "exam"} PDF).
+- "per_question" MUST contain exactly ${questionCount} entries, one per question, even if the student did not answer some. For unanswered questions set attempted=false and score=0.
+- Each question is out of ${fmtMark(perQuestionMax)}. "graded_out_of" MUST be 100 (${questionCount} × ${fmtMark(perQuestionMax)}).
+- "total" MUST equal the SUM of all per_question scores (ignoring any question with score=null). Never invent a higher total.
+- If all questions are 0, total = 0. Do NOT output 100 unless every question truly earned full marks.`;
 
     const systemPromptFinal = systemPrompt + forcedRules;
 
@@ -259,38 +299,38 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
       if (m) { try { parsed = JSON.parse(m[0]); } catch { /* keep */ } }
     }
 
-    // Server-side normalization: enforce 6 questions and recompute total as best 5 of 6.
+    // Server-side normalization: enforce the detected question count and recompute the total out of 100.
     const obj = (parsed && typeof parsed === "object") ? { ...(parsed as Record<string, unknown>) } : {};
     const rawQs = Array.isArray((obj as any).per_question) ? (obj as any).per_question : [];
     const byN = new Map<number, any>();
     for (const q of rawQs) {
       const n = Number(q?.n);
-      if (Number.isFinite(n) && n >= 1 && n <= 6) byN.set(n, q);
+      if (Number.isFinite(n) && n >= 1 && n <= questionCount) byN.set(n, q);
     }
     const normalized = [] as any[];
-    for (let n = 1; n <= 6; n++) {
+    for (let n = 1; n <= questionCount; n++) {
       const q = byN.get(n);
       if (q) {
-        const scoreNum = q.score === null || q.score === undefined ? null : Math.max(0, Math.min(20, Number(q.score)));
+        const scoreNum = q.score === null || q.score === undefined ? null : Math.max(0, Math.min(perQuestionMax, Number(q.score)));
         normalized.push({
           n,
           attempted: Boolean(q.attempted),
           score: Number.isFinite(scoreNum as number) ? scoreNum : null,
+          out_of: perQuestionMax,
           feedback: String(q.feedback ?? ""),
           corrections: String(q.corrections ?? ""),
         });
       } else {
-        normalized.push({ n, attempted: false, score: 0, feedback: isAr ? "لم يجب الطالب على هذا السؤال." : "Not answered.", corrections: "" });
+        normalized.push({ n, attempted: false, score: 0, out_of: perQuestionMax, feedback: isAr ? "لم يجب الطالب على هذا السؤال." : "Not answered.", corrections: "" });
       }
     }
-    const numericScores = normalized
-      .map((q) => (typeof q.score === "number" ? q.score : null))
-      .filter((s): s is number => typeof s === "number")
-      .sort((a, b) => b - a);
-    const total = numericScores.slice(0, 5).reduce((a, b) => a + b, 0);
+    const rawTotal = normalized.reduce((sum, q) => sum + (typeof q.score === "number" ? q.score : 0), 0);
+    const total = Math.max(0, Math.min(TOTAL_MARKS, Math.round(rawTotal * 100) / 100));
     (obj as any).per_question = normalized;
     (obj as any).total = total;
-    (obj as any).graded_out_of = 100;
+    (obj as any).graded_out_of = TOTAL_MARKS;
+    (obj as any).question_count = questionCount;
+    (obj as any).per_question_max = perQuestionMax;
 
     const out = { ...obj, transcript };
     return new Response(JSON.stringify(out), {
