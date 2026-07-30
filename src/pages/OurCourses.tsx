@@ -802,11 +802,15 @@ function PhysicsLecturesModal({
   course,
   isAr,
   playlists,
+  isAdmin,
+  onDeletePlaylist,
   onClose,
 }: {
   course: Course;
   isAr: boolean;
   playlists: PlaylistRow[];
+  isAdmin?: boolean;
+  onDeletePlaylist?: (pl: PlaylistRow) => void;
   onClose: () => void;
 }) {
   const chapters: { n: number; titleAr: string; titleEn: string; locked: boolean }[] = [
@@ -888,13 +892,22 @@ function PhysicsLecturesModal({
               <div className="grid grid-cols-1 gap-4">
                 {playlists.map((pl) => (
                   <div key={pl.id} className="rounded-2xl border border-border bg-card overflow-hidden">
-                    <div className="px-4 py-3 border-b border-border">
-                      <div className="font-bold text-sm">{pl.title}</div>
+                    <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                      <div className="font-bold text-sm flex-1 min-w-0 truncate">{pl.title}</div>
+                      {isAdmin && onDeletePlaylist && (
+                        <button
+                          onClick={() => onDeletePlaylist(pl)}
+                          className="w-8 h-8 rounded-lg hover:bg-destructive/10 text-destructive flex items-center justify-center shrink-0"
+                          title={isAr ? "حذف" : "Delete"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                     <div className="aspect-video w-full bg-black">
                       <iframe
                         className="w-full h-full"
-                        src={`https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(pl.playlist_id)}&rel=0&modestbranding=1`}
+                        src={embedSrc(pl)}
                         title={pl.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
