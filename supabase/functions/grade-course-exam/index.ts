@@ -129,6 +129,39 @@ Deno.serve(async (req) => {
 
     const isAr = language !== "en";
 
+    // ===== STEP 0: Determine how many questions the paper has, from the ANSWER KEY first =====
+    const structureSource = answerPdf ?? examPdf;
+    const structureContent: unknown[] = [
+      {
+        type: "text",
+        text: `Look at the attached ${answerPdf ? "model-answer key" : "exam"} PDF and count how many MAIN questions it contains (top-level questions such as Q1, Q2, س1, س2 — do NOT count sub-parts a/b/c separately).
+Return ONLY valid JSON: {"question_count": number, "question_numbers": number[]}
+question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`,
+      },
+      { type: "file", file: { filename: answerPdf ? "answer-key.pdf" : "exam.pdf", file_data: structureSource } },
+    ];
+    const structureResult = await callAiWithFallback(LOVABLE_API_KEY, STRUCTURE_MODELS, {
+      messages: [
+        { role: "system", content: "You extract exam structure from PDFs. Answer with JSON only, no commentary." },
+        { role: "user", content: structureContent },
+      ],
+      response_format: { type: "json_object" },
+    }, STRUCTURE_TIMEOUT_MS);
+
+    let questionCount = 0;
+    if (structureResult.ok) {
+      const rawStruct = structureResult.data.choices?.[0]?.message?.content ?? "{}";
+      try {
+        const s = JSON.parse(String(rawStruct).match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+        const n = Number(s?.question_count);
+        if (Number.isFinite(n) && n >= 1 && n <= 30) questionCount = Math.round(n);
+      } catch { /* fall back below */ }
+    }
+    if (!questionCount) questionCount = 6;
+    const perQuestionMax = TOTAL_MARKS / questionCount;
+    const fmtMark = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(2));
+    console.log(`[grade-course-exam] questions=${questionCount} perQuestion=${perQuestionMax}`);
+
     // ===== STEP 1: OCR the student's handwritten answer photos into plain text =====
     const ocrSystem = isAr
       ? `أنت محرك OCR متخصص في قراءة أوراق امتحانات الفيزياء بخط اليد باللغة العربية والرموز الرياضية والفيزيائية. مهمتك الوحيدة هي استخراج كل ما هو مكتوب على الصور حرفياً، بأمانة تامة، مع الحفاظ على ترتيب القراءة وأرقام الأسئلة والمعادلات والوحدات.
