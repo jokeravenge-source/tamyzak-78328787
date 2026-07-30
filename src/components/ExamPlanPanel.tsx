@@ -274,7 +274,42 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
             </div>
           )}
 
+          {picked.length > 0 && (
+            <div className="rounded-xl border border-border bg-secondary/40 p-3.5 space-y-1.5">
+              <p className="text-xs font-semibold">{isAr ? "كيف ستُوزَّع امتحاناتك خلال 5 أيام؟" : "How your exams are spread over 5 days"}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {isAr
+                  ? `اخترت ${picked.length} ${picked.length === 1 ? "مادة" : "مواد"}، لذلك ستمتحن ${picked.length} ${picked.length === 1 ? "مرة" : "امتحانات"} خلال 5 أيام: ${picked
+                      .map((id, i) => `${label(id)} في اليوم ${examOffsets(picked.length)[i] + 1}`)
+                      .join("، ")}. كل الامتحانات تبدأ الساعة 9 مساءً بتوقيت بغداد، والأيام المتبقية أيام راحة.`
+                  : `You picked ${picked.length} subject(s), so you will sit ${picked.length} exam(s) across 5 days: ${picked
+                      .map((id, i) => `${label(id)} on day ${examOffsets(picked.length)[i] + 1}`)
+                      .join(", ")}. Every exam starts at 9:00 PM Baghdad time; the remaining days are rest days.`}
+              </p>
+            </div>
+          )}
+
+          <div className="rounded-xl border border-primary/40 bg-primary/5 p-3.5">
+            <p className="text-xs font-semibold flex items-center gap-1.5"><Send className="w-3.5 h-3.5 text-primary" />{isAr ? "مطلوب: شغّل بوت التنبيهات" : "Required: start the reminders bot"}</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              {isAr
+                ? "اضغط ابدأ في البوت لتصلك التنبيهات: صباح يوم الامتحان، قبل ساعة، وقبل 15 دقيقة."
+                : "Press Start in the bot to receive reminders: on the exam morning, 1 hour before, and 15 minutes before."}
+            </p>
+            <a
+              href={`https://t.me/${EXAM_BOT}?start=exam`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
+            >
+              <Send className="w-3.5 h-3.5" />@{EXAM_BOT}
+            </a>
+          </div>
+
           <div className="flex items-center gap-2">
+            <button onClick={() => setStage("profile")} className="h-9 px-4 rounded-xl border border-border text-sm font-medium hover:bg-secondary">
+              {isAr ? "رجوع" : "Back"}
+            </button>
             <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {isAr ? "حفظ الخطة" : "Save plan"}
