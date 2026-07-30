@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { text, pageImages, fileData, fileName, count, language } = await req.json();
+    const { text, pageImages, fileData, fileName, count, language, model: requestedModel } = await req.json();
     const lang0 = language === "ar" ? "ar" : "en";
     const ent = await claimFeature(req, "mcq");
     if (!ent.ok) {
