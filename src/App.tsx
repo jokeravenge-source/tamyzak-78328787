@@ -209,7 +209,12 @@ const App = () => {
     }
   };
   const [authRole, setAuthRole] = useState<AuthRole | null>(
-    () => (typeof window !== "undefined" ? (localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null) : null)
+    () => {
+      if (typeof window === "undefined") return null;
+      const stored = localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null;
+      if (!stored && window.location.pathname.startsWith("/who-is-best")) return "guest";
+      return stored;
+    }
   );
   useEffect(() => {
     // ---- OAuth callback diagnostics (runs once on mount) ----
@@ -504,11 +509,15 @@ const App = () => {
           <AdminDashboard onLogout={adminLogout} />
         )
       ) : authRole === "guest" ? (
-        <Teachers
-          language={language ?? "ar"}
-          onBack={resetRole}
-          isAdmin={false}
-        />
+        menuChoice === "whoIsBest" ? (
+          <WhoIsBest language={language ?? "ar"} onBack={resetRole} isAdmin={false} />
+        ) : (
+          <Teachers
+            language={language ?? "ar"}
+            onBack={resetRole}
+            isAdmin={false}
+          />
+        )
       ) : !authed ? (
         <Auth onAuthed={() => setAuthed(true)} onGoAdmin={() => chooseRole("admin")} />
       ) : !language ? (
