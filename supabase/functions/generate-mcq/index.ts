@@ -7,7 +7,15 @@ const corsHeaders = {
 };
 
 const MAX_STUDY_CHARS = 180000;
-const AI_MODEL = "openai/gpt-5.4-mini";
+// Most capable PDF/document-reading models first, then fallbacks.
+// Available to every user (no premium gating) — the client may request one
+// explicitly, otherwise we try each in order until one succeeds.
+const AI_MODELS = [
+  "google/gemini-2.5-pro",
+  "openai/gpt-5.6-sol",
+  "google/gemini-3.5-flash",
+  "openai/gpt-5.4-mini",
+] as const;
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MAX_PAGE_IMAGES = 20;
 
