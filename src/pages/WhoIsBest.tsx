@@ -6,10 +6,20 @@ import type { AppLanguage } from "@/components/LanguageGate";
 
 type Poll = { id: string; question: string; is_active: boolean; created_at: string };
 type Option = { id: string; poll_id: string; label: string; image_path: string | null; sort_order: number };
-type OptionRow = Option & { created_by?: string | null };
-type Vote = { poll_id: string; option_id: string; user_id: string };
+type OptionRow = Option & { created_by?: string | null; guest_key?: string | null };
+type Vote = { poll_id: string; option_id: string; user_id: string | null; guest_key?: string | null };
 
 const T = (lang: AppLanguage, ar: string, en: string) => (lang === "ar" ? ar : en);
+
+const GUEST_KEY_STORAGE = "who_is_best_guest_key_v1";
+const getGuestKey = () => {
+  let k = localStorage.getItem(GUEST_KEY_STORAGE);
+  if (!k) {
+    k = crypto.randomUUID();
+    localStorage.setItem(GUEST_KEY_STORAGE, k);
+  }
+  return k;
+};
 
 const publicUrl = (path: string | null) => {
   if (!path) return null;
