@@ -160,6 +160,16 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
     return m;
   }, [votes]);
 
+  const sortedOptions = useMemo(
+    () =>
+      [...options].sort(
+        (a, b) =>
+          (countByOption[b.id] || 0) - (countByOption[a.id] || 0) ||
+          a.sort_order - b.sort_order,
+      ),
+    [options, countByOption],
+  );
+
   const addOption = async () => {
     if (!newLabel.trim() && !newFile) return;
     setUploading(true);
@@ -260,7 +270,7 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
           <div className="text-center text-muted-foreground py-12">{T(language, "لا توجد خيارات بعد", "No options yet")}</div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            {options.map((o) => {
+            {sortedOptions.map((o) => {
               const count = countByOption[o.id] || 0;
               const pct = totalVotes ? Math.round((count / totalVotes) * 100) : 0;
               const selected = myVote === o.id;
