@@ -332,7 +332,7 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
               <div key={s.id} className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${isToday ? "border-primary bg-primary/5" : "border-border"}`}>
                 <span className="w-6 h-6 rounded-md bg-secondary text-xs font-bold flex items-center justify-center">{s.step + 1}</span>
                 <span className={`flex-1 text-sm font-medium ${isPast && !isToday ? "text-muted-foreground line-through" : ""}`}>{label(s.id)}</span>
-                <span className="text-xs text-muted-foreground">{s.date}</span>
+                <span className="text-xs text-muted-foreground">{s.date} · {isAr ? "9 مساءً" : EXAM_TIME_LABEL}</span>
               </div>
             );
           })}
