@@ -5,7 +5,7 @@ import {
   Layers, Target, Users, Swords, ScrollText, Settings, BookOpen,
   NotebookPen, FileText, HelpCircle, Network, Headphones, Video, Youtube,
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
-  UserCog, Crown, Atom, FlaskConical, Leaf, Languages as LangIcon, Moon,
+  UserCog, Crown,
   Home, Palette, Heart, GraduationCap as CoursesIcon, Users2, Lock,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
