@@ -917,6 +917,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          guest_key: string | null
           id: string
           image_path: string | null
           label: string
@@ -926,6 +927,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          guest_key?: string | null
           id?: string
           image_path?: string | null
           label: string
@@ -935,6 +937,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          guest_key?: string | null
           id?: string
           image_path?: string | null
           label?: string
@@ -954,24 +957,27 @@ export type Database = {
       poll_votes: {
         Row: {
           created_at: string
+          guest_key: string | null
           id: string
           option_id: string
           poll_id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
+          guest_key?: string | null
           id?: string
           option_id: string
           poll_id: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
+          guest_key?: string | null
           id?: string
           option_id?: string
           poll_id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
