@@ -8,6 +8,14 @@ type Poll = { id: string; question: string; is_active: boolean; created_at: stri
 type Option = { id: string; poll_id: string; label: string; image_path: string | null; sort_order: number };
 type OptionRow = Option & { created_by?: string | null; guest_key?: string | null };
 type Vote = { poll_id: string; option_id: string; user_id: string | null; guest_key?: string | null };
+type OptionRequest = {
+  id: string;
+  poll_id: string;
+  label: string;
+  image_path: string | null;
+  status: string;
+  created_at: string;
+};
 
 const T = (lang: AppLanguage, ar: string, en: string) => (lang === "ar" ? ar : en);
 
