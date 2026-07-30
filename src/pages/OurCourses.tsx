@@ -1433,12 +1433,45 @@ function CourseRunner({
                 {gradeResult.overall_feedback && (
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{gradeResult.overall_feedback}</p>
                 )}
+                {(typeof gradeResult.ocr_confidence_avg === "number" || Number(gradeResult.review_count) > 0) && (
+                  <div className="rounded-xl border border-border bg-background p-3 flex flex-wrap items-center gap-3 text-xs">
+                    {typeof gradeResult.ocr_confidence_avg === "number" && (
+                      <span className="text-muted-foreground">
+                        {isAr ? "جودة قراءة الخط (OCR):" : "Handwriting read quality (OCR):"}{" "}
+                        <span className="font-mono font-semibold text-foreground">{gradeResult.ocr_confidence_avg}%</span>
+                      </span>
+                    )}
+                    {Number(gradeResult.review_count) > 0 && (
+                      <span className="px-2 py-1 rounded-full bg-amber-500/15 text-amber-600 font-semibold">
+                        {isAr
+                          ? `${gradeResult.review_count} سؤال يحتاج مراجعة يدوية`
+                          : `${gradeResult.review_count} question(s) flagged for manual review`}
+                      </span>
+                    )}
+                  </div>
+                )}
                 {Array.isArray(gradeResult.per_question) && gradeResult.per_question.length > 0 && (
                   <div className="space-y-2">
-                    {gradeResult.per_question.map((q: any) => (
-                      <div key={q.n} className="rounded-xl border border-border bg-background p-3">
+                    {gradeResult.per_question.map((q: any) => {
+                      const conf = typeof q.ocr_confidence === "number" ? q.ocr_confidence : null;
+                      const confTone = conf === null ? "text-muted-foreground bg-muted"
+                        : conf >= 80 ? "text-emerald-600 bg-emerald-500/15"
+                        : conf >= 60 ? "text-amber-600 bg-amber-500/15"
+                        : "text-destructive bg-destructive/10";
+                      return (
+                      <div key={q.n} className={`rounded-xl border p-3 ${q.needs_review ? "border-amber-400/60 bg-amber-500/5" : "border-border bg-background"}`}>
                         <div className="flex items-center justify-between mb-1">
-                          <div className="font-semibold">{isAr ? `س${q.n}` : `Q${q.n}`}</div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold">{isAr ? `س${q.n}` : `Q${q.n}`}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${confTone}`}>
+                              {isAr ? "وضوح" : "clarity"} {conf === null ? "—" : `${conf}%`}
+                            </span>
+                            {q.needs_review && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 font-semibold">
+                                {isAr ? "يحتاج مراجعة يدوية" : "needs manual review"}
+                              </span>
+                            )}
+                          </div>
                           <div className="text-sm font-mono text-primary">{Math.round(Number(q.score) || 0)} / {Math.round(Number(q.out_of) || Number(gradeResult.per_question_max) || 20)}</div>
                         </div>
                         {q.feedback && <p className="text-sm whitespace-pre-wrap">{q.feedback}</p>}
@@ -1446,7 +1479,7 @@ function CourseRunner({
                           <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{q.corrections}</p>
                         )}
                       </div>
-                    ))}
+                    );})}
                   </div>
                 )}
 
