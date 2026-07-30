@@ -192,15 +192,19 @@ const BottomGroupNav = ({
                   key={g.titleEn}
                   whileTap={{ scale: 0.92 }}
                   onClick={() => {
+                    if (g.locked) return;
                     setActiveGroup(g.titleEn);
                     if (g.directKey) onSelect(g.directKey);
                     else if (g.items.length === 0) onSelect("basics");
                   }}
+                  aria-disabled={g.locked || undefined}
                   className={`relative flex-1 h-12 inline-flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-semibold transition-colors ${
-                    isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    g.locked
+                      ? "text-muted-foreground/50 cursor-not-allowed"
+                      : isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {isActive && (
+                  {isActive && !g.locked && (
                     <motion.span
                       layoutId="bgn-group-pill"
                       className="absolute inset-0 rounded-xl bg-primary shadow-[0_6px_20px_hsl(var(--primary)/0.4)]"
@@ -214,8 +218,9 @@ const BottomGroupNav = ({
                   >
                     <Icon className="w-4 h-4" />
                   </motion.span>
-                  <span className="relative z-10 tracking-wide">
+                  <span className="relative z-10 tracking-wide inline-flex items-center gap-1">
                     {language === "ar" ? g.titleAr : g.titleEn}
+                    {g.locked && <Lock className="w-3 h-3" />}
                   </span>
                 </motion.button>
               );
