@@ -72,30 +72,6 @@ const COURSES: Course[] = [
     cover: geneticsImg,
     active: true,
   },
-  {
-    id: "english",
-    titleAr: "الإنجليزية",
-    titleEn: "English",
-    descAr: "منهج اللغة الإنجليزية عبر قائمة تشغيل يوتيوب.",
-    descEn: "English curriculum via a curated YouTube playlist.",
-    Icon: BookOpen,
-    accent: "200 85% 55%",
-    cover: laserImg,
-    active: true,
-    fixedPlaylistId: "PLIeiyEYpbgler8Ue6LCIN_fzcLgzfF7lF",
-  },
-  {
-    id: "arabic",
-    titleAr: "العربية",
-    titleEn: "Arabic",
-    descAr: "منهج اللغة العربية عبر قائمة تشغيل يوتيوب.",
-    descEn: "Arabic curriculum via a curated YouTube playlist.",
-    Icon: Languages,
-    accent: "35 90% 55%",
-    cover: geometryImg,
-    active: true,
-    fixedPlaylistId: "PLIeiyEYpbglfWiy9HM0XfEBdh2U7mqH8_",
-  },
 ];
 
 type ExamRow = {
