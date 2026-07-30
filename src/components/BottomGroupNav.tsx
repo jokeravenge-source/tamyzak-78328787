@@ -6,7 +6,7 @@ import {
   NotebookPen, FileText, HelpCircle, Network, Headphones, Video, Youtube,
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown, Atom, FlaskConical, Leaf, Languages as LangIcon, Moon,
-  Home, Palette, Heart, Wrench, Wand2, GraduationCap as CoursesIcon, Users2,
+  Home, Palette, Heart, Wrench, Wand2, GraduationCap as CoursesIcon, Users2, Lock,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -20,7 +20,7 @@ type NavItem = {
   subject?: string; // when set, opens SubjectsHub focused on this subject
 };
 
-const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKey?: MainMenuChoice }[] = [
+const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKey?: MainMenuChoice; locked?: boolean }[] = [
   {
     titleEn: "Subjects", titleAr: "المواد",
     items: [
@@ -72,17 +72,9 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     items: [],
   },
   {
-    titleEn: "All Tools", titleAr: "كل الأدوات",
-    items: [
-      { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
-      { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
-      { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
-      { key: "textToVideo", labelEn: "Text → Video", labelAr: "نص إلى فيديو", Icon: Video },
-      { key: "problemGenerator", labelEn: "Problem Generator", labelAr: "مولّد المسائل", Icon: Wand2 },
-      { key: "essay", labelEn: "Al-Musahhih", labelAr: "المُصحِّح", Icon: BookOpen },
-      { key: "companion", labelEn: "AI Companion", labelAr: "المرافق الذكي", Icon: Sparkles },
-      { key: "psych", labelEn: "Psych Assistant", labelAr: "المساعد النفسي", Icon: Heart },
-    ],
+    titleEn: "Notes", titleAr: "الملاحظات",
+    items: [],
+    locked: true,
   },
 ];
 
@@ -92,7 +84,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   "Who is best?": Trophy,
-  "All Tools": Wrench,
+  Notes: NotebookPen,
 };
 
 const BottomGroupNav = ({
