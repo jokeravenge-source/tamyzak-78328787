@@ -150,6 +150,76 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
 
   if (!signedIn && !loading) return null;
 
+  const continueFromProfile = () => {
+    if (fullName.trim().length < 3) { toast.error(isAr ? "اكتب اسمك الكامل بالعربية" : "Enter your full name in Arabic"); return; }
+    if (!/^[A-Za-z0-9_]{4,}$/.test(tgUser.trim().replace(/^@/, ""))) { toast.error(isAr ? "اكتب معرّف تيليغرام صحيح" : "Enter a valid Telegram username"); return; }
+    setStage("subjects");
+  };
+
+  // Step 1 lives on its own full screen.
+  if (!loading && editing && stage === "profile") {
+    return (
+      <div className="fixed inset-0 z-50 bg-background overflow-y-auto" dir={isAr ? "rtl" : "ltr"}>
+        <div className="min-h-full flex items-center justify-center p-5">
+          <div className="w-full max-w-md">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <CalendarClock className="w-6 h-6" />
+            </div>
+            <h1 className="text-xl font-bold">{isAr ? "قبل أن نبدأ" : "Before we start"}</h1>
+            <p className="text-sm text-muted-foreground mt-1 mb-6">
+              {isAr
+                ? "اكتب اسمك الكامل بالعربية ومعرّف تيليغرام لتصلك تنبيهات الامتحانات."
+                : "Enter your full name in Arabic and your Telegram username so we can send you exam reminders."}
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">{isAr ? "الاسم الكامل (بالعربية)" : "Full name (in Arabic)"}</label>
+                <input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  maxLength={80}
+                  dir="rtl"
+                  placeholder="مثال: محمد علي حسين"
+                  className="mt-1 w-full h-11 px-3 rounded-xl border border-border bg-card text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">{isAr ? "معرّف تيليغرام" : "Telegram username"}</label>
+                <div className="mt-1 flex items-center gap-2 h-11 px-3 rounded-xl border border-border bg-card" dir="ltr">
+                  <span className="text-sm text-muted-foreground">@</span>
+                  <input
+                    value={tgUser}
+                    onChange={(e) => setTgUser(e.target.value.replace(/^@/, "").slice(0, 32))}
+                    placeholder="username"
+                    className="flex-1 bg-transparent text-sm outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={continueFromProfile}
+                className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+              >
+                {isAr ? "متابعة" : "Continue"}
+                <ArrowRight className={`w-4 h-4 ${isAr ? "rotate-180" : ""}`} />
+              </button>
+
+              {plan && (
+                <button
+                  onClick={() => { setFullName(plan.full_name ?? ""); setTgUser(plan.telegram_username ?? ""); setPicked(plan.subjects); setEditing(false); }}
+                  className="w-full h-10 rounded-xl border border-border text-sm font-medium hover:bg-secondary"
+                >
+                  {isAr ? "إلغاء" : "Cancel"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -193,45 +263,6 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
           </div>
           <button onClick={acknowledge} className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shrink-0">
             {isAr ? "تم" : "Got it"}
-          </button>
-        </div>
-      )}
-
-      {!loading && editing && stage === "profile" && (
-        <div className="mt-4 space-y-3">
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground">{isAr ? "الاسم الكامل (بالعربية)" : "Full name (in Arabic)"}</label>
-            <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              dir="rtl"
-              placeholder={isAr ? "مثال: محمد علي حسين" : "مثال: محمد علي حسين"}
-              className="mt-1 w-full h-10 px-3 rounded-xl border border-border bg-background text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground">{isAr ? "معرّف تيليغرام" : "Telegram username"}</label>
-            <div className="mt-1 flex items-center gap-2 h-10 px-3 rounded-xl border border-border bg-background">
-              <span className="text-sm text-muted-foreground">@</span>
-              <input
-                value={tgUser}
-                onChange={(e) => setTgUser(e.target.value.replace(/^@/, ""))}
-                dir="ltr"
-                placeholder="username"
-                className="flex-1 bg-transparent text-sm outline-none"
-              />
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              if (fullName.trim().length < 3) { toast.error(isAr ? "اكتب اسمك الكامل بالعربية" : "Enter your full name in Arabic"); return; }
-              if (!/^[A-Za-z0-9_]{4,}$/.test(tgUser.trim().replace(/^@/, ""))) { toast.error(isAr ? "اكتب معرّف تيليغرام صحيح" : "Enter a valid Telegram username"); return; }
-              setStage("subjects");
-            }}
-            className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
-          >
-            {isAr ? "متابعة" : "Continue"}
-            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       )}
