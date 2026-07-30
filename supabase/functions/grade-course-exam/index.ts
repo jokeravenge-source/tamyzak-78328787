@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,12 +95,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const ent = await claimFeature(req, "essay");
-    if (!ent.ok) {
-      return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), {
-        status: ent.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Course exam grading has no daily usage limit.
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
