@@ -11,7 +11,7 @@ const corsHeaders = {
 const MAX_STUDY_CHARS = 180_000;
 const MAX_PAGE_IMAGES = 20;
 const QUESTIONS_PER_BATCH = 15;
-const MODEL = "openai/gpt-5.6-sol";
+const MODEL = "google/gemini-2.5-pro";
 
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -123,7 +123,6 @@ SOURCE RULES:
           ],
         }],
         output: Output.object({ schema: z.object({ questions: z.array(questionSchema) }) }),
-        providerOptions: { lovable: { reasoningEffort: "none" } },
       });
       return output.questions;
     }));
