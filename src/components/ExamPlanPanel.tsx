@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Check, ChevronDown, ChevronUp, Loader2, Pencil, Bell, Trash2 } from "lucide-react";
+import { CalendarClock, Check, ChevronDown, ChevronUp, Loader2, Pencil, Bell, Trash2, Send, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -13,7 +13,12 @@ type PlanRow = {
   start_date: string;
   interval_days: number;
   acknowledged_step: number;
+  full_name?: string | null;
+  telegram_username?: string | null;
 };
+
+export const EXAM_BOT = "soveforcejoin_bot";
+export const EXAM_TIME_LABEL = "9:00 PM";
 
 const todayBaghdad = (): string => {
   const d = new Date(Date.now() + 3 * 60 * 60 * 1000);
@@ -37,6 +42,9 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
   const [plan, setPlan] = useState<PlanRow | null>(null);
   const [editing, setEditing] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
+  const [stage, setStage] = useState<"profile" | "subjects">("profile");
+  const [fullName, setFullName] = useState("");
+  const [tgUser, setTgUser] = useState("");
 
   const label = (id: string) => {
     const s = subjects.find((x) => x.id === id);
@@ -50,11 +58,17 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
       setSignedIn(true);
       const { data } = await (supabase as any)
         .from("course_exam_plans")
-        .select("user_id, subjects, start_date, interval_days, acknowledged_step")
+        .select("user_id, subjects, start_date, interval_days, acknowledged_step, full_name, telegram_username")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data) { setPlan(data as PlanRow); setPicked((data as PlanRow).subjects); }
-      else setEditing(true);
+      if (data) {
+        const row = data as PlanRow;
+        setPlan(row);
+        setPicked(row.subjects);
+        setFullName(row.full_name ?? "");
+        setTgUser(row.telegram_username ?? "");
+        if (!row.full_name || !row.telegram_username) { setEditing(true); setStage("profile"); }
+      } else { setEditing(true); setStage("profile"); }
       setLoading(false);
     })();
   }, []);
@@ -106,6 +120,8 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
       start_date: plan?.start_date ?? today,
       interval_days: 5,
       acknowledged_step: -1,
+      full_name: fullName.trim(),
+      telegram_username: tgUser.trim().replace(/^@/, ""),
     };
     const { error } = await (supabase as any).from("course_exam_plans").upsert(row, { onConflict: "user_id" });
     setSaving(false);
@@ -144,13 +160,15 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
           <div>
             <h2 className="text-base font-bold">{isAr ? "خطة الامتحانات" : "Exam Plan"}</h2>
             <p className="text-xs text-muted-foreground">
-              {isAr ? "امتحان كل 5 أيام حسب الترتيب الذي تختاره — تنبيه عبر تيليغرام والموقع." : "One exam every 5 days in your chosen order — reminders via Telegram and the website."}
+              {isAr
+                ? "دورة كل 5 أيام حسب الترتيب الذي تختاره — كل الامتحانات الساعة 9 مساءً بتوقيت بغداد."
+                : "A 5-day cycle in your chosen order — every exam starts at 9:00 PM Baghdad time."}
             </p>
           </div>
         </div>
         {plan && !editing && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border text-xs font-medium hover:bg-secondary">
+            <button onClick={() => { setStage("profile"); setEditing(true); }} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border text-xs font-medium hover:bg-secondary">
               <Pencil className="w-3.5 h-3.5" />{isAr ? "تعديل" : "Edit"}
             </button>
             <button onClick={removePlan} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border text-xs font-medium text-destructive hover:bg-secondary">
@@ -179,7 +197,46 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
         </div>
       )}
 
-      {!loading && editing && (
+      {!loading && editing && stage === "profile" && (
+        <div className="mt-4 space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground">{isAr ? "الاسم الكامل (بالعربية)" : "Full name (in Arabic)"}</label>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              dir="rtl"
+              placeholder={isAr ? "مثال: محمد علي حسين" : "مثال: محمد علي حسين"}
+              className="mt-1 w-full h-10 px-3 rounded-xl border border-border bg-background text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground">{isAr ? "معرّف تيليغرام" : "Telegram username"}</label>
+            <div className="mt-1 flex items-center gap-2 h-10 px-3 rounded-xl border border-border bg-background">
+              <span className="text-sm text-muted-foreground">@</span>
+              <input
+                value={tgUser}
+                onChange={(e) => setTgUser(e.target.value.replace(/^@/, ""))}
+                dir="ltr"
+                placeholder="username"
+                className="flex-1 bg-transparent text-sm outline-none"
+              />
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (fullName.trim().length < 3) { toast.error(isAr ? "اكتب اسمك الكامل بالعربية" : "Enter your full name in Arabic"); return; }
+              if (!/^[A-Za-z0-9_]{4,}$/.test(tgUser.trim().replace(/^@/, ""))) { toast.error(isAr ? "اكتب معرّف تيليغرام صحيح" : "Enter a valid Telegram username"); return; }
+              setStage("subjects");
+            }}
+            className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+          >
+            {isAr ? "متابعة" : "Continue"}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {!loading && editing && stage === "subjects" && (
         <div className="mt-4 space-y-4">
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2">{isAr ? "1) اختر المواد" : "1) Pick your subjects"}</p>
@@ -217,7 +274,42 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
             </div>
           )}
 
+          {picked.length > 0 && (
+            <div className="rounded-xl border border-border bg-secondary/40 p-3.5 space-y-1.5">
+              <p className="text-xs font-semibold">{isAr ? "كيف ستُوزَّع امتحاناتك خلال 5 أيام؟" : "How your exams are spread over 5 days"}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {isAr
+                  ? `اخترت ${picked.length} ${picked.length === 1 ? "مادة" : "مواد"}، لذلك ستمتحن ${picked.length} ${picked.length === 1 ? "مرة" : "امتحانات"} خلال 5 أيام: ${picked
+                      .map((id, i) => `${label(id)} في اليوم ${examOffsets(picked.length)[i] + 1}`)
+                      .join("، ")}. كل الامتحانات تبدأ الساعة 9 مساءً بتوقيت بغداد، والأيام المتبقية أيام راحة.`
+                  : `You picked ${picked.length} subject(s), so you will sit ${picked.length} exam(s) across 5 days: ${picked
+                      .map((id, i) => `${label(id)} on day ${examOffsets(picked.length)[i] + 1}`)
+                      .join(", ")}. Every exam starts at 9:00 PM Baghdad time; the remaining days are rest days.`}
+              </p>
+            </div>
+          )}
+
+          <div className="rounded-xl border border-primary/40 bg-primary/5 p-3.5">
+            <p className="text-xs font-semibold flex items-center gap-1.5"><Send className="w-3.5 h-3.5 text-primary" />{isAr ? "مطلوب: شغّل بوت التنبيهات" : "Required: start the reminders bot"}</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              {isAr
+                ? "اضغط ابدأ في البوت لتصلك التنبيهات: صباح يوم الامتحان، قبل ساعة، وقبل 15 دقيقة."
+                : "Press Start in the bot to receive reminders: on the exam morning, 1 hour before, and 15 minutes before."}
+            </p>
+            <a
+              href={`https://t.me/${EXAM_BOT}?start=exam`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
+            >
+              <Send className="w-3.5 h-3.5" />@{EXAM_BOT}
+            </a>
+          </div>
+
           <div className="flex items-center gap-2">
+            <button onClick={() => setStage("profile")} className="h-9 px-4 rounded-xl border border-border text-sm font-medium hover:bg-secondary">
+              {isAr ? "رجوع" : "Back"}
+            </button>
             <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {isAr ? "حفظ الخطة" : "Save plan"}
@@ -240,7 +332,7 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
               <div key={s.id} className={`flex items-center gap-3 rounded-xl border px-3 py-2 ${isToday ? "border-primary bg-primary/5" : "border-border"}`}>
                 <span className="w-6 h-6 rounded-md bg-secondary text-xs font-bold flex items-center justify-center">{s.step + 1}</span>
                 <span className={`flex-1 text-sm font-medium ${isPast && !isToday ? "text-muted-foreground line-through" : ""}`}>{label(s.id)}</span>
-                <span className="text-xs text-muted-foreground">{s.date}</span>
+                <span className="text-xs text-muted-foreground">{s.date} · {isAr ? "9 مساءً" : EXAM_TIME_LABEL}</span>
               </div>
             );
           })}

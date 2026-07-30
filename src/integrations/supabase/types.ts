@@ -246,27 +246,33 @@ export type Database = {
         Row: {
           acknowledged_step: number
           created_at: string
+          full_name: string | null
           interval_days: number
           start_date: string
           subjects: string[]
+          telegram_username: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           acknowledged_step?: number
           created_at?: string
+          full_name?: string | null
           interval_days?: number
           start_date?: string
           subjects?: string[]
+          telegram_username?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           acknowledged_step?: number
           created_at?: string
+          full_name?: string | null
           interval_days?: number
           start_date?: string
           subjects?: string[]
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -58,6 +58,17 @@ Deno.serve(async (req) => {
 
     const baghdad = new Date(Date.now() + 3 * 60 * 60 * 1000);
     const todayKey = baghdad.toISOString().slice(0, 10);
+    const minutesNow = baghdad.getUTCHours() * 60 + baghdad.getUTCMinutes();
+
+    // Exams start at 21:00 Baghdad time.
+    const EXAM_MIN = 21 * 60;
+    const PHASES: { key: string; at: number; window: number }[] = [
+      { key: "morning", at: 7 * 60, window: 60 },      // start of the exam day
+      { key: "h1", at: EXAM_MIN - 60, window: 20 },    // 1 hour before
+      { key: "m15", at: EXAM_MIN - 15, window: 10 },   // 15 minutes before
+    ];
+    const phase = PHASES.find((p) => minutesNow >= p.at && minutesNow < p.at + p.window);
+    if (!phase) return json({ skippedRun: true, reason: "outside notification windows", minutesNow, date: todayKey });
 
     const { data: plans, error } = await admin
       .from("course_exam_plans")
@@ -79,7 +90,7 @@ Deno.serve(async (req) => {
       const chatId = (tg as { telegram_user_id: number | null } | null)?.telegram_user_id;
       if (!tg || !(tg as { verified: boolean }).verified || !chatId) { skipped++; continue; }
 
-      const key = `exam-plan:${p.user_id}:${todayKey}`;
+      const key = `exam-plan:${p.user_id}:${todayKey}:${phase.key}`;
       const { error: dupErr } = await admin
         .from("telegram_notifications_sent")
         .insert({ notification_key: key, telegram_user_id: chatId });
@@ -87,13 +98,18 @@ Deno.serve(async (req) => {
 
       const subject = p.subjects[step];
       const name = SUBJECT_AR[subject] ?? subject;
-      const msg = `<b>📚 موعد امتحانك اليوم</b>\n\nحان وقت امتحان <b>${esc(name)}</b> (المرحلة ${step + 1} من ${p.subjects.length}).\n\nافتح تميزك ← الدورات وابدأ الامتحان الآن.`;
+      const msg =
+        phase.key === "morning"
+          ? `<b>📚 اليوم امتحانك</b>\n\nامتحان <b>${esc(name)}</b> اليوم الساعة <b>9:00 مساءً</b> بتوقيت بغداد (المرحلة ${step + 1} من ${p.subjects.length}).\n\nجهّز نفسك 💪`
+          : phase.key === "h1"
+            ? `<b>⏰ باقي ساعة</b>\n\nامتحان <b>${esc(name)}</b> يبدأ الساعة <b>9:00 مساءً</b> — بعد ساعة من الآن.`
+            : `<b>🔔 باقي 15 دقيقة</b>\n\nامتحان <b>${esc(name)}</b> يبدأ الساعة <b>9:00 مساءً</b>. افتح تميزك ← الدورات الآن.`;
       const ok = await tgSend(chatId, msg);
       if (ok) sent++; else failed++;
       await new Promise((r) => setTimeout(r, 40));
     }
 
-    return json({ sent, failed, skipped, nodue, date: todayKey, total: plans?.length ?? 0 });
+    return json({ sent, failed, skipped, nodue, phase: phase.key, date: todayKey, total: plans?.length ?? 0 });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
