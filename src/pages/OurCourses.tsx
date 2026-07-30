@@ -194,7 +194,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   };
 
   const deletePlaylist = async (pl: PlaylistRow) => {
-    if (!confirm(isAr ? "حذف قائمة التشغيل؟" : "Delete this playlist?")) return;
+    if (!confirm(isAr ? "حذف هذا العنصر؟" : "Delete this item?")) return;
     const { error } = await (supabase as any).from("course_playlists").delete().eq("id", pl.id);
     if (error) { toast.error(error.message); return; }
     toast.success(isAr ? "تم الحذف" : "Deleted");
@@ -450,6 +450,8 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           course={openLectures}
           isAr={isAr}
           playlists={playlistsByCourse[openLectures.id] ?? []}
+          isAdmin={isAdmin}
+          onDeletePlaylist={deletePlaylist}
           onClose={() => setOpenLectures(null)}
         />
       )}
