@@ -262,7 +262,7 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
           </div>
         </div>
 
-        {(
+        {isAdmin && (
           <div className="mb-4">
             {showAdd ? (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
