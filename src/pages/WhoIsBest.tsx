@@ -6,10 +6,20 @@ import type { AppLanguage } from "@/components/LanguageGate";
 
 type Poll = { id: string; question: string; is_active: boolean; created_at: string };
 type Option = { id: string; poll_id: string; label: string; image_path: string | null; sort_order: number };
-type OptionRow = Option & { created_by?: string | null };
-type Vote = { poll_id: string; option_id: string; user_id: string };
+type OptionRow = Option & { created_by?: string | null; guest_key?: string | null };
+type Vote = { poll_id: string; option_id: string; user_id: string | null; guest_key?: string | null };
 
 const T = (lang: AppLanguage, ar: string, en: string) => (lang === "ar" ? ar : en);
+
+const GUEST_KEY_STORAGE = "who_is_best_guest_key_v1";
+const getGuestKey = () => {
+  let k = localStorage.getItem(GUEST_KEY_STORAGE);
+  if (!k) {
+    k = crypto.randomUUID();
+    localStorage.setItem(GUEST_KEY_STORAGE, k);
+  }
+  return k;
+};
 
 const publicUrl = (path: string | null) => {
   if (!path) return null;
@@ -130,6 +140,7 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
   const [votes, setVotes] = useState<Vote[]>([]);
   const [myVote, setMyVote] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const guestKey = useMemo(() => getGuestKey(), []);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -144,10 +155,15 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
       supabase.from("poll_votes").select("*").eq("poll_id", poll.id),
       supabase.auth.getUser(),
     ]);
+    const uid = userRes.user?.id ?? null;
     setOptions((opts as Option[]) || []);
     setVotes((vts as Vote[]) || []);
-    setUserId(userRes.user?.id ?? null);
-    setMyVote(((vts as Vote[]) || []).find((v) => v.user_id === userRes.user?.id)?.option_id ?? null);
+    setUserId(uid);
+    setMyVote(
+      ((vts as Vote[]) || []).find((v) =>
+        uid ? v.user_id === uid : v.guest_key === guestKey,
+      )?.option_id ?? null,
+    );
     setLoading(false);
   };
 
@@ -188,7 +204,8 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
         image_path,
         sort_order: options.length,
         created_by: userId,
-      });
+        guest_key: userId ? null : guestKey,
+      } as any);
       if (error) throw error;
       setNewLabel(""); setNewFile(null); setShowAdd(false);
       load();
@@ -206,11 +223,18 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
   };
 
   const vote = async (optionId: string) => {
-    if (!userId) return toast.error(T(language, "يجب تسجيل الدخول", "Sign in required"));
-    const { error } = await supabase.from("poll_votes").upsert(
-      { poll_id: poll.id, option_id: optionId, user_id: userId },
-      { onConflict: "poll_id,user_id" },
-    );
+    let error;
+    if (userId) {
+      ({ error } = await supabase.from("poll_votes").upsert(
+        { poll_id: poll.id, option_id: optionId, user_id: userId },
+        { onConflict: "poll_id,user_id" },
+      ));
+    } else {
+      ({ error } = await supabase.from("poll_votes").upsert(
+        { poll_id: poll.id, option_id: optionId, user_id: null, guest_key: guestKey } as any,
+        { onConflict: "poll_id,guest_key" },
+      ));
+    }
     if (error) return toast.error(error.message);
     setMyVote(optionId);
     load();
@@ -285,7 +309,9 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
                   <div className="p-4 space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="font-semibold text-base">{o.label}</h3>
-                      {(isAdmin || (o as OptionRow).created_by === userId) && (
+                      {(isAdmin ||
+                        (userId && (o as OptionRow).created_by === userId) ||
+                        (!userId && (o as OptionRow).guest_key === guestKey)) && (
                         <button onClick={() => deleteOption(o)} className="h-7 w-7 rounded-lg border border-border hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center">
                           <X className="h-3.5 w-3.5" />
                         </button>
