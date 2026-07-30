@@ -333,8 +333,34 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
           </div>
         </div>
 
-        {isAdmin && (
-          <div className="mb-4">
+        {isAdmin && requests.length > 0 && (
+          <div className="mb-4 rounded-xl border border-border bg-card p-4 space-y-3">
+            <h2 className="text-sm font-semibold">
+              {T(language, "طلبات إضافة مدرسين", "Teacher requests")} ({requests.length})
+            </h2>
+            {requests.map((r) => {
+              const img = publicUrl(r.image_path);
+              return (
+                <div key={r.id} className="flex items-center gap-3 rounded-lg border border-border p-2">
+                  {img ? (
+                    <img src={img} alt={r.label} className="h-12 w-12 rounded-lg object-cover" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-lg bg-secondary" />
+                  )}
+                  <span className="flex-1 text-sm font-medium truncate">{r.label}</span>
+                  <button onClick={() => approveRequest(r)} className="h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
+                    {T(language, "قبول", "Approve")}
+                  </button>
+                  <button onClick={() => rejectRequest(r)} className="h-9 px-3 rounded-lg border border-border text-sm">
+                    {T(language, "رفض", "Reject")}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mb-4">
             {showAdd ? (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
                 <input value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder={T(language, "اسم الخيار", "Option label")} className="w-full h-11 rounded-lg border border-border bg-background px-3 text-sm" />
@@ -344,20 +370,24 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => setNewFile(e.target.files?.[0] ?? null)} />
                 </label>
                 <div className="flex gap-2">
-                  <button disabled={uploading} onClick={addOption} className="h-10 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50 inline-flex items-center gap-2">
+                  <button disabled={uploading} onClick={isAdmin ? addOption : submitRequest} className="h-10 px-4 rounded-lg bg-primary text-primary-foreground font-medium text-sm disabled:opacity-50 inline-flex items-center gap-2">
                     {uploading && <Upload className="h-4 w-4 animate-pulse" />}
-                    {T(language, "أضف", "Add")}
+                    {isAdmin ? T(language, "أضف", "Add") : T(language, "إرسال الطلب", "Send request")}
                   </button>
                   <button onClick={() => { setShowAdd(false); setNewLabel(""); setNewFile(null); }} className="h-10 px-4 rounded-lg border border-border text-sm">{T(language, "إلغاء", "Cancel")}</button>
                 </div>
               </div>
             ) : (
               <button onClick={() => setShowAdd(true)} className="w-full h-11 rounded-xl border border-dashed border-border bg-card hover:bg-secondary flex items-center justify-center gap-2 text-sm font-medium">
-                <Plus className="h-4 w-4" /> {T(language, "أضف مدرساً", "Add teacher")}
+                <Plus className="h-4 w-4" /> {isAdmin ? T(language, "أضف مدرساً", "Add teacher") : T(language, "اقترح مدرساً", "Suggest a teacher")}
               </button>
             )}
-          </div>
-        )}
+          {!isAdmin && myRequests.some((r) => r.status === "pending") && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {T(language, "لديك اقتراح بانتظار موافقة الإدارة", "You have a suggestion pending admin approval")}
+            </p>
+          )}
+        </div>
 
         {loading ? (
           <div className="text-center text-muted-foreground py-12">{T(language, "جارٍ التحميل...", "Loading...")}</div>
