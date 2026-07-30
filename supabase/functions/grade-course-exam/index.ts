@@ -7,17 +7,24 @@ const corsHeaders = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const OCR_MODELS = [
-  // Keep the chain short so one stalled upstream can't burn the whole edge budget.
+  // Most capable vision models first — accuracy matters more than latency here.
+  "google/gemini-2.5-pro",
   "google/gemini-3.5-flash",
   "google/gemini-2.5-flash",
 ];
 const GRADE_MODELS = [
-  "google/gemini-3.5-flash",
   "google/gemini-2.5-pro",
+  "google/gemini-3.5-flash",
+];
+const STRUCTURE_MODELS = [
+  "google/gemini-2.5-pro",
+  "google/gemini-3.5-flash",
 ];
 const MAX_IMAGES = 10;
-const OCR_TIMEOUT_MS = 60_000;
-const GRADE_TIMEOUT_MS = 90_000;
+const OCR_TIMEOUT_MS = 90_000;
+const GRADE_TIMEOUT_MS = 120_000;
+const STRUCTURE_TIMEOUT_MS = 60_000;
+const TOTAL_MARKS = 100;
 
 // Try each model in order. Retries on 5xx and 429. Stops immediately on 402 (credits).
 async function callAiWithFallback(
