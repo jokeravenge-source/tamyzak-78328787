@@ -372,6 +372,10 @@ const App = () => {
       localStorage.setItem(MENU_STORAGE_KEY, "teachers");
       return "teachers";
     }
+    if (window.location.pathname.startsWith("/who-is-best")) {
+      localStorage.setItem(MENU_STORAGE_KEY, "whoIsBest");
+      return "whoIsBest";
+    }
     return localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null;
   });
 
