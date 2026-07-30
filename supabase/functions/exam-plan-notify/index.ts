@@ -22,6 +22,15 @@ function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+const CYCLE_DAYS = 5;
+// 1 -> [0]; 2 -> [0,4]; 3 -> [0,2,4]; 4 -> [0,1,3,4]; 5 -> [0..4]; >5 -> consecutive days
+function examOffsets(count: number): number[] {
+  if (count <= 0) return [];
+  if (count === 1) return [0];
+  if (count > CYCLE_DAYS) return Array.from({ length: count }, (_, i) => i);
+  return Array.from({ length: count }, (_, i) => Math.round((i * (CYCLE_DAYS - 1)) / (count - 1)));
+}
+
 async function tgSend(chatId: number, text: string) {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY");
@@ -58,7 +67,8 @@ Deno.serve(async (req) => {
     let sent = 0, skipped = 0, failed = 0, nodue = 0;
 
     for (const p of (plans ?? []) as { user_id: string; subjects: string[]; start_date: string; interval_days: number }[]) {
-      const step = (p.subjects ?? []).findIndex((_, i) => addDays(p.start_date, i * (p.interval_days || 5)) === todayKey);
+      const offsets = examOffsets((p.subjects ?? []).length);
+      const step = (p.subjects ?? []).findIndex((_, i) => addDays(p.start_date, offsets[i]) === todayKey);
       if (step < 0) { nodue++; continue; }
 
       const { data: tg } = await admin
