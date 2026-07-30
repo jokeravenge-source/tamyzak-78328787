@@ -913,6 +913,56 @@ export type Database = {
         }
         Relationships: []
       }
+      poll_option_requests: {
+        Row: {
+          created_at: string
+          guest_key: string | null
+          id: string
+          image_path: string | null
+          label: string
+          poll_id: string
+          requested_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guest_key?: string | null
+          id?: string
+          image_path?: string | null
+          label: string
+          poll_id: string
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guest_key?: string | null
+          id?: string
+          image_path?: string | null
+          label?: string
+          poll_id?: string
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_option_requests_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       poll_options: {
         Row: {
           created_at: string
