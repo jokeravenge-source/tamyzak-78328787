@@ -1238,7 +1238,7 @@ function CourseRunner({
               <section className="mb-8">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-primary/80 mb-3 border-b border-border pb-2 flex items-center gap-2">
                   <ListVideo className="w-4 h-4" />
-                  {isAr ? "قوائم تشغيل يوتيوب" : "YouTube playlists"}
+                  {isAr ? "الفيديوهات وقوائم التشغيل" : "Videos & playlists"}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {playlists.map((pl) => (
@@ -1258,7 +1258,7 @@ function CourseRunner({
                       </div>
                       <div className="aspect-video bg-black">
                         <iframe
-                          src={`https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(pl.playlist_id)}&rel=0&modestbranding=1`}
+                          src={embedSrc(pl)}
                           title={pl.title}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           allowFullScreen
