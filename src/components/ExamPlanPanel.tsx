@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Check, ChevronDown, ChevronUp, Loader2, Pencil, Bell, Trash2 } from "lucide-react";
+import { CalendarClock, Check, ChevronDown, ChevronUp, Loader2, Pencil, Bell, Trash2, Send, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -13,7 +13,12 @@ type PlanRow = {
   start_date: string;
   interval_days: number;
   acknowledged_step: number;
+  full_name?: string | null;
+  telegram_username?: string | null;
 };
+
+export const EXAM_BOT = "soveforcejoin_bot";
+export const EXAM_TIME_LABEL = "9:00 PM";
 
 const todayBaghdad = (): string => {
   const d = new Date(Date.now() + 3 * 60 * 60 * 1000);
@@ -37,6 +42,9 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
   const [plan, setPlan] = useState<PlanRow | null>(null);
   const [editing, setEditing] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
+  const [stage, setStage] = useState<"profile" | "subjects">("profile");
+  const [fullName, setFullName] = useState("");
+  const [tgUser, setTgUser] = useState("");
 
   const label = (id: string) => {
     const s = subjects.find((x) => x.id === id);
@@ -50,11 +58,17 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
       setSignedIn(true);
       const { data } = await (supabase as any)
         .from("course_exam_plans")
-        .select("user_id, subjects, start_date, interval_days, acknowledged_step")
+        .select("user_id, subjects, start_date, interval_days, acknowledged_step, full_name, telegram_username")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data) { setPlan(data as PlanRow); setPicked((data as PlanRow).subjects); }
-      else setEditing(true);
+      if (data) {
+        const row = data as PlanRow;
+        setPlan(row);
+        setPicked(row.subjects);
+        setFullName(row.full_name ?? "");
+        setTgUser(row.telegram_username ?? "");
+        if (!row.full_name || !row.telegram_username) { setEditing(true); setStage("profile"); }
+      } else { setEditing(true); setStage("profile"); }
       setLoading(false);
     })();
   }, []);
@@ -106,6 +120,8 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
       start_date: plan?.start_date ?? today,
       interval_days: 5,
       acknowledged_step: -1,
+      full_name: fullName.trim(),
+      telegram_username: tgUser.trim().replace(/^@/, ""),
     };
     const { error } = await (supabase as any).from("course_exam_plans").upsert(row, { onConflict: "user_id" });
     setSaving(false);
