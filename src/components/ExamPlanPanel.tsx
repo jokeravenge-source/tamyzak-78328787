@@ -160,13 +160,15 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
           <div>
             <h2 className="text-base font-bold">{isAr ? "خطة الامتحانات" : "Exam Plan"}</h2>
             <p className="text-xs text-muted-foreground">
-              {isAr ? "امتحان كل 5 أيام حسب الترتيب الذي تختاره — تنبيه عبر تيليغرام والموقع." : "One exam every 5 days in your chosen order — reminders via Telegram and the website."}
+              {isAr
+                ? "دورة كل 5 أيام حسب الترتيب الذي تختاره — كل الامتحانات الساعة 9 مساءً بتوقيت بغداد."
+                : "A 5-day cycle in your chosen order — every exam starts at 9:00 PM Baghdad time."}
             </p>
           </div>
         </div>
         {plan && !editing && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border text-xs font-medium hover:bg-secondary">
+            <button onClick={() => { setStage("profile"); setEditing(true); }} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border text-xs font-medium hover:bg-secondary">
               <Pencil className="w-3.5 h-3.5" />{isAr ? "تعديل" : "Edit"}
             </button>
             <button onClick={removePlan} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border text-xs font-medium text-destructive hover:bg-secondary">
@@ -195,7 +197,46 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
         </div>
       )}
 
-      {!loading && editing && (
+      {!loading && editing && stage === "profile" && (
+        <div className="mt-4 space-y-3">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground">{isAr ? "الاسم الكامل (بالعربية)" : "Full name (in Arabic)"}</label>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              dir="rtl"
+              placeholder={isAr ? "مثال: محمد علي حسين" : "مثال: محمد علي حسين"}
+              className="mt-1 w-full h-10 px-3 rounded-xl border border-border bg-background text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground">{isAr ? "معرّف تيليغرام" : "Telegram username"}</label>
+            <div className="mt-1 flex items-center gap-2 h-10 px-3 rounded-xl border border-border bg-background">
+              <span className="text-sm text-muted-foreground">@</span>
+              <input
+                value={tgUser}
+                onChange={(e) => setTgUser(e.target.value.replace(/^@/, ""))}
+                dir="ltr"
+                placeholder="username"
+                className="flex-1 bg-transparent text-sm outline-none"
+              />
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (fullName.trim().length < 3) { toast.error(isAr ? "اكتب اسمك الكامل بالعربية" : "Enter your full name in Arabic"); return; }
+              if (!/^[A-Za-z0-9_]{4,}$/.test(tgUser.trim().replace(/^@/, ""))) { toast.error(isAr ? "اكتب معرّف تيليغرام صحيح" : "Enter a valid Telegram username"); return; }
+              setStage("subjects");
+            }}
+            className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
+          >
+            {isAr ? "متابعة" : "Continue"}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {!loading && editing && stage === "subjects" && (
         <div className="mt-4 space-y-4">
           <div>
             <p className="text-xs font-semibold text-muted-foreground mb-2">{isAr ? "1) اختر المواد" : "1) Pick your subjects"}</p>
