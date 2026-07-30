@@ -210,7 +210,7 @@ Strict rules:
     // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
     const hasKey = Boolean(answerPdf);
     const systemPrompt = isAr
-      ? `أنت مصحّح وزاري عراقي صارم جداً. لديك ورقة الامتحان PDF${hasKey ? " وورقة الإجابة النموذجية PDF" : ""} ونص إجابات الطالب المستخرج بالـ OCR. صحّح بحزم شديد وفق معايير التصحيح الوزارية: كل سؤال من 20 درجة، وتحتسب أفضل 5 من 6.
+      ? `أنت مصحّح وزاري عراقي صارم جداً. لديك ورقة الامتحان PDF${hasKey ? " وورقة الإجابة النموذجية PDF" : ""} ونص إجابات الطالب المستخرج بالـ OCR. الامتحان يتكون من ${questionCount} أسئلة، والدرجة الكلية 100، أي أن كل سؤال من ${fmtMark(perQuestionMax)} درجة، وتُحتسب جميع الأسئلة.
 
 قواعد التصحيح الصارمة (إلزامية):
 - ${hasKey ? "ورقة الإجابة النموذجية PDF هي **المرجع الوحيد والمطلق والحصري**. لا تعتمد على معرفتك العامة ولا على المنهج، بل فقط على ما هو مكتوب حرفياً داخل ملف الإجابة النموذجية. أي إجابة لا تطابق ما في نموذج الإجابة = خطأ حتى لو بدت صحيحة علمياً." : "لا يوجد نموذج إجابة مرفق؛ صحّح بحذر شديد وفق المنهج الوزاري وحده."}
@@ -224,7 +224,7 @@ Strict rules:
 - استخدم نص الـ OCR كمصدر لإجابة الطالب فقط. لا تخترع نصاً غير موجود.
 - إذا كان النص [غير مقروء]، ضع attempted=true و score=null و feedback="يحتاج مراجعة يدوية".
 - في حقل corrections اكتب **الإجابة الصحيحة كما وردت في نموذج الإجابة** (اقتباس مباشر أو ملخص أمين لها)، وفي feedback اشرح لماذا خسر الطالب كل درجة بدقة.`
-      : `You are an extremely strict Iraqi ministerial grader. You have the exam PDF${hasKey ? ", the model-answer PDF" : ""}, and the student's OCR transcript. Grade harshly using the official marking scheme: each question out of 20, best 5 of 6.
+      : `You are an extremely strict Iraqi ministerial grader. You have the exam PDF${hasKey ? ", the model-answer PDF" : ""}, and the student's OCR transcript. The paper has ${questionCount} questions and the total is 100 marks, so each question is out of ${fmtMark(perQuestionMax)}. All questions count.
 
 Strict grading rules (mandatory):
 - ${hasKey ? "The model-answer PDF is the **single, absolute, exclusive reference**. Do NOT rely on your general knowledge or on the curriculum — only on what is literally written inside the answer-key PDF. Any answer that does not match the key = wrong, even if it looks scientifically plausible." : "No answer key is attached; grade cautiously using the official curriculum only."}
@@ -234,7 +234,7 @@ Strict grading rules (mandatory):
 - If the student did not answer or wrote irrelevant content: score = 0.
 - Partial credit is allowed ONLY when a step exactly matches a step documented inside the answer key (law, substitution, conclusion). Every missing step = deduction.
 - Definitions and laws must match the answer key wording; any missing key word = deduction.
-- Do NOT round up. Give 20/20 ONLY for an answer that fully matches the answer key.
+- Do NOT round up. Give full marks ONLY for an answer that fully matches the answer key.
 - Use the OCR transcript as the student's answer source only. Do not fabricate text that isn't there.
 - If the transcript is [unreadable], set attempted=true, score=null, feedback="needs manual review".
 - In the "corrections" field, write **the correct answer as it appears in the answer key** (direct quote or faithful summary of it). In "feedback" explain precisely why each mark was lost.`;
@@ -242,11 +242,11 @@ Strict grading rules (mandatory):
     const forcedRules = `
 
 MANDATORY OUTPUT RULES:
-- The exam always has exactly 6 questions numbered 1..6.
-- "per_question" MUST contain exactly 6 entries, one for each question, even if the student did not answer some. For unanswered questions set attempted=false and score=0.
-- Each question is out of 20. "graded_out_of" MUST be 100 (best 5 of 6 = 5 × 20).
-- "total" MUST equal the SUM OF THE TOP 5 SCORES among the 6 questions (ignoring any question with score=null). Never invent a higher total. Never write a total that does not match the per_question scores.
-- If all questions are 0, total = 0. Do NOT output 100 unless five questions truly scored 20 each.`;
+- The exam has exactly ${questionCount} main questions numbered 1..${questionCount} (this was determined from the ${hasKey ? "answer key" : "exam"} PDF).
+- "per_question" MUST contain exactly ${questionCount} entries, one per question, even if the student did not answer some. For unanswered questions set attempted=false and score=0.
+- Each question is out of ${fmtMark(perQuestionMax)}. "graded_out_of" MUST be 100 (${questionCount} × ${fmtMark(perQuestionMax)}).
+- "total" MUST equal the SUM of all per_question scores (ignoring any question with score=null). Never invent a higher total.
+- If all questions are 0, total = 0. Do NOT output 100 unless every question truly earned full marks.`;
 
     const systemPromptFinal = systemPrompt + forcedRules;
 
