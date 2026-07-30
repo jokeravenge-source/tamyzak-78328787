@@ -275,7 +275,7 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
                   <div className="p-4 space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="font-semibold text-base">{o.label}</h3>
-                      {isAdmin && (
+                      {(isAdmin || (o as OptionRow).created_by === userId) && (
                         <button onClick={() => deleteOption(o)} className="h-7 w-7 rounded-lg border border-border hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center">
                           <X className="h-3.5 w-3.5" />
                         </button>
