@@ -938,11 +938,17 @@ function AddPlaylistModal({
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
+  const [kind, setKind] = useState<"playlist" | "video">("playlist");
 
   const submit = async () => {
-    const pl = extractPlaylistId(url);
-    if (!title.trim() || !pl) {
-      toast.error(isAr ? "أدخل عنواناً ورابط قائمة تشغيل صحيح" : "Enter a title and a valid playlist URL");
+    const pl = kind === "playlist" ? extractPlaylistId(url) : null;
+    const vid = kind === "video" ? extractVideoId(url) : null;
+    if (!title.trim() || (kind === "playlist" ? !pl : !vid)) {
+      toast.error(
+        isAr
+          ? kind === "playlist" ? "أدخل عنواناً ورابط قائمة تشغيل صحيح" : "أدخل عنواناً ورابط محاضرة يوتيوب صحيح"
+          : kind === "playlist" ? "Enter a title and a valid playlist URL" : "Enter a title and a valid YouTube video URL",
+      );
       return;
     }
     setBusy(true);
@@ -952,11 +958,13 @@ function AddPlaylistModal({
       const { error } = await (supabase as any).from("course_playlists").insert({
         course_id: course.id,
         title: title.trim(),
+        kind,
         playlist_id: pl,
+        video_id: vid,
         created_by: user.id,
       });
       if (error) throw error;
-      toast.success(isAr ? "تمت الإضافة" : "Playlist added");
+      toast.success(isAr ? "تمت الإضافة" : "Added");
       onDone();
     } catch (e: any) {
       toast.error(e.message ?? "Failed");
@@ -975,11 +983,23 @@ function AddPlaylistModal({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold inline-flex items-center gap-2">
             <Youtube className="w-5 h-5 text-[#ff0033]" />
-            {isAr ? `إضافة قائمة تشغيل - ${course.titleAr}` : `Add playlist - ${course.titleEn}`}
+            {isAr ? `إضافة محتوى - ${course.titleAr}` : `Add content - ${course.titleEn}`}
           </h3>
           <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center">
             <X className="w-4 h-4" />
           </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {(["playlist", "video"] as const).map((k) => (
+            <button
+              key={k}
+              onClick={() => setKind(k)}
+              className={`h-9 rounded-lg border text-xs font-semibold transition-colors ${kind === k ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-secondary"}`}
+            >
+              {k === "playlist" ? (isAr ? "قائمة تشغيل" : "Playlist") : (isAr ? "محاضرة واحدة" : "Single lecture")}
+            </button>
+          ))}
         </div>
 
         <label className="block text-xs font-semibold mb-1">{isAr ? "العنوان" : "Title"}</label>
@@ -991,18 +1011,22 @@ function AddPlaylistModal({
           className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
         />
 
-        <label className="block text-xs font-semibold mb-1">{isAr ? "رابط قائمة تشغيل يوتيوب" : "YouTube playlist URL"}</label>
+        <label className="block text-xs font-semibold mb-1">
+          {kind === "playlist"
+            ? (isAr ? "رابط قائمة تشغيل يوتيوب" : "YouTube playlist URL")
+            : (isAr ? "رابط محاضرة يوتيوب" : "YouTube video URL")}
+        </label>
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://youtube.com/playlist?list=PL..."
+          placeholder={kind === "playlist" ? "https://youtube.com/playlist?list=PL..." : "https://youtu.be/xxxxxxxxxxx"}
           className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-2"
           dir="ltr"
         />
         <p className="text-[11px] text-muted-foreground mb-4">
           {isAr
-            ? "ألصق رابط قائمة تشغيل يوتيوب أو معرّف القائمة (مثال: PLxxxxxx)."
-            : "Paste a YouTube playlist URL or ID (e.g. PLxxxxxx)."}
+            ? kind === "playlist" ? "ألصق رابط قائمة تشغيل يوتيوب أو معرّف القائمة (مثال: PLxxxxxx)." : "ألصق رابط فيديو يوتيوب أو معرّف الفيديو."
+            : kind === "playlist" ? "Paste a YouTube playlist URL or ID (e.g. PLxxxxxx)." : "Paste a YouTube video URL or video ID."}
         </p>
 
         <button
