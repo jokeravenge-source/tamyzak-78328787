@@ -88,19 +88,8 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
           ]
         : userPrompt;
 
-    const res = await fetch(AI_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-        tools: [
+    const tools = [
+
           {
             type: "function",
             function: {
@@ -132,9 +121,51 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
             },
           },
         ],
+    ];
+
+    const modelQueue = (typeof requestedModel === "string" && (AI_MODELS as readonly string[]).includes(requestedModel)
+      ? [requestedModel, ...AI_MODELS.filter((m) => m !== requestedModel)]
+      : [...AI_MODELS]);
+
+    let res: Response | null = null;
+    let lastErrText = "";
+    let lastStatus = 500;
+    for (const m of modelQueue) {
+      const body: Record<string, unknown> = {
+        model: m,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+        tools,
         tool_choice: { type: "function", function: { name: "submit_mcqs" } },
-      }),
-    });
+      };
+      if (m.startsWith("openai/gpt-5.6")) body.reasoning_effort = "none";
+
+      const attempt = await fetch(AI_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      if (attempt.ok) { res = attempt; break; }
+      lastStatus = attempt.status;
+      lastErrText = await attempt.text();
+      console.error(`generate-mcq: model ${m} failed [${attempt.status}]: ${lastErrText.slice(0, 300)}`);
+      if (attempt.status === 402) break;
+    }
+
+    if (!res) {
+      if (lastStatus === 429) {
+        return new Response(JSON.stringify({ error: "Rate limit. Try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (lastStatus === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Add credits in Settings." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ error: `AI error: ${lastErrText}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     if (!res.ok) {
       const errText = await res.text();
