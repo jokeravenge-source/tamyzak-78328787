@@ -7,7 +7,15 @@ const corsHeaders = {
 };
 
 const MAX_STUDY_CHARS = 180000;
-const AI_MODEL = "openai/gpt-5.4-mini";
+// Most capable PDF/document-reading models first, then fallbacks.
+// Available to every user (no premium gating) — the client may request one
+// explicitly, otherwise we try each in order until one succeeds.
+const AI_MODELS = [
+  "google/gemini-2.5-pro",
+  "openai/gpt-5.6-sol",
+  "google/gemini-3.5-flash",
+  "openai/gpt-5.4-mini",
+] as const;
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MAX_PAGE_IMAGES = 20;
 
@@ -24,7 +32,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { text, pageImages, fileData, fileName, count, language } = await req.json();
+    const { text, pageImages, fileData, fileName, count, language, model: requestedModel } = await req.json();
     const lang0 = language === "ar" ? "ar" : "en";
     const ent = await claimFeature(req, "mcq");
     if (!ent.ok) {
@@ -80,19 +88,7 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
           ]
         : userPrompt;
 
-    const res = await fetch(AI_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-        tools: [
+    const tools = [
           {
             type: "function",
             function: {
@@ -123,20 +119,50 @@ Each question must have 4 distinct choices, one correct answer, a short helpful 
               },
             },
           },
-        ],
-        tool_choice: { type: "function", function: { name: "submit_mcqs" } },
-      }),
-    });
+    ];
 
-    if (!res.ok) {
-      const errText = await res.text();
-      if (res.status === 429) {
+    const modelQueue = (typeof requestedModel === "string" && (AI_MODELS as readonly string[]).includes(requestedModel)
+      ? [requestedModel, ...AI_MODELS.filter((m) => m !== requestedModel)]
+      : [...AI_MODELS]);
+
+    let res: Response | null = null;
+    let lastErrText = "";
+    let lastStatus = 500;
+    for (const m of modelQueue) {
+      const body: Record<string, unknown> = {
+        model: m,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+        tools,
+        tool_choice: { type: "function", function: { name: "submit_mcqs" } },
+      };
+      if (m.startsWith("openai/gpt-5.6")) body.reasoning_effort = "none";
+
+      const attempt = await fetch(AI_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      if (attempt.ok) { res = attempt; break; }
+      lastStatus = attempt.status;
+      lastErrText = await attempt.text();
+      console.error(`generate-mcq: model ${m} failed [${attempt.status}]: ${lastErrText.slice(0, 300)}`);
+      if (attempt.status === 402) break;
+    }
+
+    if (!res) {
+      if (lastStatus === 429) {
         return new Response(JSON.stringify({ error: "Rate limit. Try again shortly." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      if (res.status === 402) {
+      if (lastStatus === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted. Add credits in Settings." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      return new Response(JSON.stringify({ error: `AI error: ${errText}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: `AI error: ${lastErrText}` }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const data = await res.json();
