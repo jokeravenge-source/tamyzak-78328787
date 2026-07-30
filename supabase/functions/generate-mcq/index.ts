@@ -20,11 +20,11 @@ const json = (body: Record<string, unknown>, status = 200) =>
   });
 
 const questionSchema = z.object({
-  question: z.string().min(1),
-  choices: z.array(z.string().min(1)).length(4),
-  answer_index: z.number().int().min(0).max(3),
+  question: z.string(),
+  choices: z.array(z.string()),
+  answer_index: z.number(),
   hint: z.string(),
-  explanation: z.string().min(1),
+  explanation: z.string(),
 });
 
 const cleanExtractedText = (value: unknown) => {
@@ -122,13 +122,24 @@ SOURCE RULES:
             },
           ],
         }],
-        output: Output.object({ schema: z.object({ questions: z.array(questionSchema).min(1).max(batchSize) }) }),
+        output: Output.object({ schema: z.object({ questions: z.array(questionSchema) }) }),
         providerOptions: { lovable: { reasoningEffort: "none" } },
       });
       return output.questions;
     }));
 
-    const questions = outputs.flat().slice(0, requestedCount).map(shuffleChoices);
+    const questions = outputs
+      .flat()
+      .filter((question) =>
+        question.question.trim().length > 0
+        && question.choices.length === 4
+        && Number.isInteger(question.answer_index)
+        && question.answer_index >= 0
+        && question.answer_index <= 3
+        && question.explanation.trim().length > 0
+      )
+      .slice(0, requestedCount)
+      .map(shuffleChoices);
     if (questions.length === 0) return json({ error: "No readable scientific content was found in the file." }, 422);
     return json({ questions });
   } catch (error) {
