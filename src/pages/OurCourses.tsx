@@ -184,6 +184,13 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     })();
   }, []);
 
+  // Scroll to top whenever the user opens a subject / sub-view
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [openCourse, openPhysicsHub, openLectures, openPlaylist]);
+
   const deleteExam = async (exam: ExamRow) => {
     if (!confirm(isAr ? "حذف هذا الامتحان؟" : "Delete this exam?")) return;
     await supabase.storage.from("course-exams").remove([exam.exam_path, exam.answer_path]);
