@@ -246,7 +246,9 @@ MANDATORY OUTPUT RULES:
 - "per_question" MUST contain exactly ${questionCount} entries, one per question, even if the student did not answer some. For unanswered questions set attempted=false and score=0.
 - Each question is out of ${fmtMark(perQuestionMax)}. "graded_out_of" MUST be 100 (${questionCount} × ${fmtMark(perQuestionMax)}).
 - "total" MUST equal the SUM of all per_question scores (ignoring any question with score=null). Never invent a higher total.
-- If all questions are 0, total = 0. Do NOT output 100 unless every question truly earned full marks.`;
+- If all questions are 0, total = 0. Do NOT output 100 unless every question truly earned full marks.
+- For EVERY question also output "ocr_confidence": an integer 0-100 describing how clearly you could READ the student's handwriting for that question in the transcript (100 = perfectly legible, 0 = nothing readable). Judge legibility only, not correctness.
+- Also output "needs_review": true when ocr_confidence < 60, when the transcript for that question contains [unreadable]/[غير مقروء], or when you are not confident the grade is reliable. Otherwise false.`;
 
     const systemPromptFinal = systemPrompt + forcedRules;
 
@@ -263,7 +265,7 @@ Return ONLY valid JSON (no markdown fences) with this exact shape:
   "total": number,
   "graded_out_of": 100,
   "per_question": [
-    { "n": number, "attempted": boolean, "score": number, "feedback": string, "corrections": string }
+    { "n": number, "attempted": boolean, "score": number, "feedback": string, "corrections": string, "ocr_confidence": number, "needs_review": boolean }
   ],
   "overall_feedback": string,
   "strengths": string[],
@@ -312,16 +314,21 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
       const q = byN.get(n);
       if (q) {
         const scoreNum = q.score === null || q.score === undefined ? null : Math.max(0, Math.min(perQuestionMax, Number(q.score)));
+        const confRaw = Number(q.ocr_confidence);
+        const conf = Number.isFinite(confRaw) ? Math.max(0, Math.min(100, Math.round(confRaw))) : null;
+        const needsReview = Boolean(q.needs_review) || scoreNum === null || (conf !== null && conf < 60);
         normalized.push({
           n,
           attempted: Boolean(q.attempted),
           score: Number.isFinite(scoreNum as number) ? scoreNum : null,
           out_of: perQuestionMax,
+          ocr_confidence: conf,
+          needs_review: needsReview,
           feedback: String(q.feedback ?? ""),
           corrections: String(q.corrections ?? ""),
         });
       } else {
-        normalized.push({ n, attempted: false, score: 0, out_of: perQuestionMax, feedback: isAr ? "لم يجب الطالب على هذا السؤال." : "Not answered.", corrections: "" });
+        normalized.push({ n, attempted: false, score: 0, out_of: perQuestionMax, ocr_confidence: null, needs_review: false, feedback: isAr ? "لم يجب الطالب على هذا السؤال." : "Not answered.", corrections: "" });
       }
     }
     const rawTotal = normalized.reduce((sum, q) => sum + (typeof q.score === "number" ? q.score : 0), 0);
@@ -331,6 +338,10 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
     (obj as any).graded_out_of = TOTAL_MARKS;
     (obj as any).question_count = questionCount;
     (obj as any).per_question_max = perQuestionMax;
+    const confVals = normalized.map((q) => q.ocr_confidence).filter((v) => typeof v === "number") as number[];
+    (obj as any).ocr_confidence_avg = confVals.length ? Math.round(confVals.reduce((a, b) => a + b, 0) / confVals.length) : null;
+    (obj as any).review_count = normalized.filter((q) => q.needs_review).length;
+    (obj as any).transcript_low_quality = transcriptLooksUnreadable;
 
     const out = { ...obj, transcript };
     return new Response(JSON.stringify(out), {
