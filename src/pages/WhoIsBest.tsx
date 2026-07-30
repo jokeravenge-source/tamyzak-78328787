@@ -6,6 +6,7 @@ import type { AppLanguage } from "@/components/LanguageGate";
 
 type Poll = { id: string; question: string; is_active: boolean; created_at: string };
 type Option = { id: string; poll_id: string; label: string; image_path: string | null; sort_order: number };
+type OptionRow = Option & { created_by?: string | null };
 type Vote = { poll_id: string; option_id: string; user_id: string };
 
 const T = (lang: AppLanguage, ar: string, en: string) => (lang === "ar" ? ar : en);
@@ -176,6 +177,7 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
         label: newLabel.trim() || T(language, "خيار", "Option"),
         image_path,
         sort_order: options.length,
+        created_by: userId,
       });
       if (error) throw error;
       setNewLabel(""); setNewFile(null); setShowAdd(false);
@@ -226,7 +228,7 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
           </div>
         </div>
 
-        {isAdmin && (
+        {(
           <div className="mb-4">
             {showAdd ? (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
@@ -246,7 +248,7 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
               </div>
             ) : (
               <button onClick={() => setShowAdd(true)} className="w-full h-11 rounded-xl border border-dashed border-border bg-card hover:bg-secondary flex items-center justify-center gap-2 text-sm font-medium">
-                <Plus className="h-4 w-4" /> {T(language, "أضف خياراً", "Add option")}
+                <Plus className="h-4 w-4" /> {T(language, "أضف مدرساً", "Add teacher")}
               </button>
             )}
           </div>
