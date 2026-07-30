@@ -154,6 +154,8 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
   const [newLabel, setNewLabel] = useState("");
   const [newFile, setNewFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [requests, setRequests] = useState<OptionRequest[]>([]);
+  const [myRequests, setMyRequests] = useState<OptionRequest[]>([]);
   const rtl = language === "ar";
 
   const load = async () => {
@@ -172,6 +174,19 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
         uid ? v.user_id === uid : v.guest_key === guestKey,
       )?.option_id ?? null,
     );
+    if (uid) {
+      const { data: reqs } = await (supabase as any)
+        .from("poll_option_requests")
+        .select("*")
+        .eq("poll_id", poll.id)
+        .order("created_at", { ascending: false });
+      const list = ((reqs as OptionRequest[]) || []);
+      setRequests(list.filter((r) => r.status === "pending"));
+      setMyRequests(list);
+    } else {
+      setRequests([]);
+      setMyRequests([]);
+    }
     setLoading(false);
   };
 
@@ -194,18 +209,66 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
     [options, countByOption],
   );
 
+  const uploadImage = async () => {
+    if (!newFile) return null;
+    const ext = newFile.name.split(".").pop() || "png";
+    const key = `${poll.id}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("polls").upload(key, newFile, { contentType: newFile.type });
+    if (upErr) throw upErr;
+    return key;
+  };
+
+  const submitRequest = async () => {
+    if (!newLabel.trim()) return;
+    setUploading(true);
+    try {
+      const image_path = await uploadImage();
+      const { error } = await (supabase as any).from("poll_option_requests").insert({
+        poll_id: poll.id,
+        label: newLabel.trim(),
+        image_path,
+        guest_key: userId ? null : guestKey,
+      });
+      if (error) throw error;
+      setNewLabel(""); setNewFile(null); setShowAdd(false);
+      toast.success(T(language, "تم إرسال الطلب، بانتظار موافقة الإدارة", "Request sent — waiting for admin approval"));
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally { setUploading(false); }
+  };
+
+  const approveRequest = async (r: OptionRequest) => {
+    const { error } = await supabase.from("poll_options").insert({
+      poll_id: r.poll_id,
+      label: r.label,
+      image_path: r.image_path,
+      sort_order: options.length,
+      created_by: userId,
+    } as any);
+    if (error) return toast.error(error.message);
+    await (supabase as any)
+      .from("poll_option_requests")
+      .update({ status: "approved", reviewed_by: userId, reviewed_at: new Date().toISOString() })
+      .eq("id", r.id);
+    toast.success(T(language, "تمت الموافقة", "Approved"));
+    load();
+  };
+
+  const rejectRequest = async (r: OptionRequest) => {
+    const { error } = await (supabase as any)
+      .from("poll_option_requests")
+      .update({ status: "rejected", reviewed_by: userId, reviewed_at: new Date().toISOString() })
+      .eq("id", r.id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
   const addOption = async () => {
     if (!newLabel.trim() && !newFile) return;
     setUploading(true);
     try {
-      let image_path: string | null = null;
-      if (newFile) {
-        const ext = newFile.name.split(".").pop() || "png";
-        const key = `${poll.id}/${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("polls").upload(key, newFile, { contentType: newFile.type });
-        if (upErr) throw upErr;
-        image_path = key;
-      }
+      const image_path = await uploadImage();
       const { error } = await supabase.from("poll_options").insert({
         poll_id: poll.id,
         label: newLabel.trim() || T(language, "خيار", "Option"),
