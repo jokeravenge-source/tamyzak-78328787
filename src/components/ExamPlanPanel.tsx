@@ -17,7 +17,7 @@ type PlanRow = {
   telegram_username?: string | null;
 };
 
-export const EXAM_BOT = "soveforcejoin_bot";
+export const EXAM_BOT = "sovforcejoin_bot";
 export const EXAM_TIME_LABEL = "9:00 PM";
 
 const todayBaghdad = (): string => {
