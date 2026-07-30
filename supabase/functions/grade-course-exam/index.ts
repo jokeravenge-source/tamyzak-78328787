@@ -299,38 +299,38 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
       if (m) { try { parsed = JSON.parse(m[0]); } catch { /* keep */ } }
     }
 
-    // Server-side normalization: enforce 6 questions and recompute total as best 5 of 6.
+    // Server-side normalization: enforce the detected question count and recompute the total out of 100.
     const obj = (parsed && typeof parsed === "object") ? { ...(parsed as Record<string, unknown>) } : {};
     const rawQs = Array.isArray((obj as any).per_question) ? (obj as any).per_question : [];
     const byN = new Map<number, any>();
     for (const q of rawQs) {
       const n = Number(q?.n);
-      if (Number.isFinite(n) && n >= 1 && n <= 6) byN.set(n, q);
+      if (Number.isFinite(n) && n >= 1 && n <= questionCount) byN.set(n, q);
     }
     const normalized = [] as any[];
-    for (let n = 1; n <= 6; n++) {
+    for (let n = 1; n <= questionCount; n++) {
       const q = byN.get(n);
       if (q) {
-        const scoreNum = q.score === null || q.score === undefined ? null : Math.max(0, Math.min(20, Number(q.score)));
+        const scoreNum = q.score === null || q.score === undefined ? null : Math.max(0, Math.min(perQuestionMax, Number(q.score)));
         normalized.push({
           n,
           attempted: Boolean(q.attempted),
           score: Number.isFinite(scoreNum as number) ? scoreNum : null,
+          out_of: perQuestionMax,
           feedback: String(q.feedback ?? ""),
           corrections: String(q.corrections ?? ""),
         });
       } else {
-        normalized.push({ n, attempted: false, score: 0, feedback: isAr ? "لم يجب الطالب على هذا السؤال." : "Not answered.", corrections: "" });
+        normalized.push({ n, attempted: false, score: 0, out_of: perQuestionMax, feedback: isAr ? "لم يجب الطالب على هذا السؤال." : "Not answered.", corrections: "" });
       }
     }
-    const numericScores = normalized
-      .map((q) => (typeof q.score === "number" ? q.score : null))
-      .filter((s): s is number => typeof s === "number")
-      .sort((a, b) => b - a);
-    const total = numericScores.slice(0, 5).reduce((a, b) => a + b, 0);
+    const rawTotal = normalized.reduce((sum, q) => sum + (typeof q.score === "number" ? q.score : 0), 0);
+    const total = Math.max(0, Math.min(TOTAL_MARKS, Math.round(rawTotal * 100) / 100));
     (obj as any).per_question = normalized;
     (obj as any).total = total;
-    (obj as any).graded_out_of = 100;
+    (obj as any).graded_out_of = TOTAL_MARKS;
+    (obj as any).question_count = questionCount;
+    (obj as any).per_question_max = perQuestionMax;
 
     const out = { ...obj, transcript };
     return new Response(JSON.stringify(out), {
