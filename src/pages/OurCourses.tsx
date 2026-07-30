@@ -88,7 +88,9 @@ type PlaylistRow = {
   id: string;
   course_id: string;
   title: string;
-  playlist_id: string;
+  playlist_id: string | null;
+  kind?: "playlist" | "video";
+  video_id?: string | null;
   created_at: string;
 };
 
@@ -103,6 +105,29 @@ function extractPlaylistId(input: string): string | null {
   } catch { /* */ }
   return null;
 }
+
+function extractVideoId(input: string): string | null {
+  const s = input.trim();
+  if (!s) return null;
+  if (/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+  try {
+    const u = new URL(s.startsWith("http") ? s : `https://${s}`);
+    if (u.hostname.includes("youtu.be")) {
+      const id = u.pathname.slice(1);
+      if (/^[A-Za-z0-9_-]{11}$/.test(id)) return id;
+    }
+    const v = u.searchParams.get("v");
+    if (v && /^[A-Za-z0-9_-]{11}$/.test(v)) return v;
+    const m = u.pathname.match(/\/(embed|shorts|live)\/([A-Za-z0-9_-]{11})/);
+    if (m) return m[2];
+  } catch { /* */ }
+  return null;
+}
+
+const embedSrc = (pl: PlaylistRow): string =>
+  pl.kind === "video" && pl.video_id
+    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(pl.video_id)}?rel=0&modestbranding=1`
+    : `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(pl.playlist_id ?? "")}&rel=0&modestbranding=1`;
 
 const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
   const isAr = language === "ar";
@@ -134,7 +159,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     setExamsByCourse(byCourse);
     const { data: pls } = await (supabase as any)
       .from("course_playlists")
-      .select("id, course_id, title, playlist_id, created_at")
+      .select("id, course_id, title, playlist_id, kind, video_id, created_at")
       .order("created_at", { ascending: false });
     const plMap: Record<string, PlaylistRow[]> = {};
     ((pls ?? []) as PlaylistRow[]).forEach((p) => {
@@ -169,7 +194,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   };
 
   const deletePlaylist = async (pl: PlaylistRow) => {
-    if (!confirm(isAr ? "حذف قائمة التشغيل؟" : "Delete this playlist?")) return;
+    if (!confirm(isAr ? "حذف هذا العنصر؟" : "Delete this item?")) return;
     const { error } = await (supabase as any).from("course_playlists").delete().eq("id", pl.id);
     if (error) { toast.error(error.message); return; }
     toast.success(isAr ? "تم الحذف" : "Deleted");
@@ -425,6 +450,8 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           course={openLectures}
           isAr={isAr}
           playlists={playlistsByCourse[openLectures.id] ?? []}
+          isAdmin={isAdmin}
+          onDeletePlaylist={deletePlaylist}
           onClose={() => setOpenLectures(null)}
         />
       )}
@@ -775,11 +802,15 @@ function PhysicsLecturesModal({
   course,
   isAr,
   playlists,
+  isAdmin,
+  onDeletePlaylist,
   onClose,
 }: {
   course: Course;
   isAr: boolean;
   playlists: PlaylistRow[];
+  isAdmin?: boolean;
+  onDeletePlaylist?: (pl: PlaylistRow) => void;
   onClose: () => void;
 }) {
   const chapters: { n: number; titleAr: string; titleEn: string; locked: boolean }[] = [
@@ -861,13 +892,22 @@ function PhysicsLecturesModal({
               <div className="grid grid-cols-1 gap-4">
                 {playlists.map((pl) => (
                   <div key={pl.id} className="rounded-2xl border border-border bg-card overflow-hidden">
-                    <div className="px-4 py-3 border-b border-border">
-                      <div className="font-bold text-sm">{pl.title}</div>
+                    <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                      <div className="font-bold text-sm flex-1 min-w-0 truncate">{pl.title}</div>
+                      {isAdmin && onDeletePlaylist && (
+                        <button
+                          onClick={() => onDeletePlaylist(pl)}
+                          className="w-8 h-8 rounded-lg hover:bg-destructive/10 text-destructive flex items-center justify-center shrink-0"
+                          title={isAr ? "حذف" : "Delete"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                     <div className="aspect-video w-full bg-black">
                       <iframe
                         className="w-full h-full"
-                        src={`https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(pl.playlist_id)}&rel=0&modestbranding=1`}
+                        src={embedSrc(pl)}
                         title={pl.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -898,11 +938,17 @@ function AddPlaylistModal({
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
+  const [kind, setKind] = useState<"playlist" | "video">("playlist");
 
   const submit = async () => {
-    const pl = extractPlaylistId(url);
-    if (!title.trim() || !pl) {
-      toast.error(isAr ? "أدخل عنواناً ورابط قائمة تشغيل صحيح" : "Enter a title and a valid playlist URL");
+    const pl = kind === "playlist" ? extractPlaylistId(url) : null;
+    const vid = kind === "video" ? extractVideoId(url) : null;
+    if (!title.trim() || (kind === "playlist" ? !pl : !vid)) {
+      toast.error(
+        isAr
+          ? kind === "playlist" ? "أدخل عنواناً ورابط قائمة تشغيل صحيح" : "أدخل عنواناً ورابط محاضرة يوتيوب صحيح"
+          : kind === "playlist" ? "Enter a title and a valid playlist URL" : "Enter a title and a valid YouTube video URL",
+      );
       return;
     }
     setBusy(true);
@@ -912,11 +958,13 @@ function AddPlaylistModal({
       const { error } = await (supabase as any).from("course_playlists").insert({
         course_id: course.id,
         title: title.trim(),
+        kind,
         playlist_id: pl,
+        video_id: vid,
         created_by: user.id,
       });
       if (error) throw error;
-      toast.success(isAr ? "تمت الإضافة" : "Playlist added");
+      toast.success(isAr ? "تمت الإضافة" : "Added");
       onDone();
     } catch (e: any) {
       toast.error(e.message ?? "Failed");
@@ -935,11 +983,23 @@ function AddPlaylistModal({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold inline-flex items-center gap-2">
             <Youtube className="w-5 h-5 text-[#ff0033]" />
-            {isAr ? `إضافة قائمة تشغيل - ${course.titleAr}` : `Add playlist - ${course.titleEn}`}
+            {isAr ? `إضافة محتوى - ${course.titleAr}` : `Add content - ${course.titleEn}`}
           </h3>
           <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center">
             <X className="w-4 h-4" />
           </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {(["playlist", "video"] as const).map((k) => (
+            <button
+              key={k}
+              onClick={() => setKind(k)}
+              className={`h-9 rounded-lg border text-xs font-semibold transition-colors ${kind === k ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-secondary"}`}
+            >
+              {k === "playlist" ? (isAr ? "قائمة تشغيل" : "Playlist") : (isAr ? "محاضرة واحدة" : "Single lecture")}
+            </button>
+          ))}
         </div>
 
         <label className="block text-xs font-semibold mb-1">{isAr ? "العنوان" : "Title"}</label>
@@ -951,18 +1011,22 @@ function AddPlaylistModal({
           className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
         />
 
-        <label className="block text-xs font-semibold mb-1">{isAr ? "رابط قائمة تشغيل يوتيوب" : "YouTube playlist URL"}</label>
+        <label className="block text-xs font-semibold mb-1">
+          {kind === "playlist"
+            ? (isAr ? "رابط قائمة تشغيل يوتيوب" : "YouTube playlist URL")
+            : (isAr ? "رابط محاضرة يوتيوب" : "YouTube video URL")}
+        </label>
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://youtube.com/playlist?list=PL..."
+          placeholder={kind === "playlist" ? "https://youtube.com/playlist?list=PL..." : "https://youtu.be/xxxxxxxxxxx"}
           className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-2"
           dir="ltr"
         />
         <p className="text-[11px] text-muted-foreground mb-4">
           {isAr
-            ? "ألصق رابط قائمة تشغيل يوتيوب أو معرّف القائمة (مثال: PLxxxxxx)."
-            : "Paste a YouTube playlist URL or ID (e.g. PLxxxxxx)."}
+            ? kind === "playlist" ? "ألصق رابط قائمة تشغيل يوتيوب أو معرّف القائمة (مثال: PLxxxxxx)." : "ألصق رابط فيديو يوتيوب أو معرّف الفيديو."
+            : kind === "playlist" ? "Paste a YouTube playlist URL or ID (e.g. PLxxxxxx)." : "Paste a YouTube video URL or video ID."}
         </p>
 
         <button
@@ -1174,7 +1238,7 @@ function CourseRunner({
               <section className="mb-8">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-primary/80 mb-3 border-b border-border pb-2 flex items-center gap-2">
                   <ListVideo className="w-4 h-4" />
-                  {isAr ? "قوائم تشغيل يوتيوب" : "YouTube playlists"}
+                  {isAr ? "الفيديوهات وقوائم التشغيل" : "Videos & playlists"}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {playlists.map((pl) => (
@@ -1194,7 +1258,7 @@ function CourseRunner({
                       </div>
                       <div className="aspect-video bg-black">
                         <iframe
-                          src={`https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(pl.playlist_id)}&rel=0&modestbranding=1`}
+                          src={embedSrc(pl)}
                           title={pl.title}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           allowFullScreen

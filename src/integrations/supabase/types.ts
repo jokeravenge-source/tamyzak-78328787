@@ -311,27 +311,33 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
-          playlist_id: string
+          kind: string
+          playlist_id: string | null
           title: string
           updated_at: string
+          video_id: string | null
         }
         Insert: {
           course_id: string
           created_at?: string
           created_by?: string | null
           id?: string
-          playlist_id: string
+          kind?: string
+          playlist_id?: string | null
           title: string
           updated_at?: string
+          video_id?: string | null
         }
         Update: {
           course_id?: string
           created_at?: string
           created_by?: string | null
           id?: string
-          playlist_id?: string
+          kind?: string
+          playlist_id?: string | null
           title?: string
           updated_at?: string
+          video_id?: string | null
         }
         Relationships: []
       }
