@@ -140,6 +140,7 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
   const [votes, setVotes] = useState<Vote[]>([]);
   const [myVote, setMyVote] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const guestKey = useMemo(() => getGuestKey(), []);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -154,10 +155,15 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
       supabase.from("poll_votes").select("*").eq("poll_id", poll.id),
       supabase.auth.getUser(),
     ]);
+    const uid = userRes.user?.id ?? null;
     setOptions((opts as Option[]) || []);
     setVotes((vts as Vote[]) || []);
-    setUserId(userRes.user?.id ?? null);
-    setMyVote(((vts as Vote[]) || []).find((v) => v.user_id === userRes.user?.id)?.option_id ?? null);
+    setUserId(uid);
+    setMyVote(
+      ((vts as Vote[]) || []).find((v) =>
+        uid ? v.user_id === uid : v.guest_key === guestKey,
+      )?.option_id ?? null,
+    );
     setLoading(false);
   };
 
@@ -198,7 +204,8 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
         image_path,
         sort_order: options.length,
         created_by: userId,
-      });
+        guest_key: userId ? null : guestKey,
+      } as any);
       if (error) throw error;
       setNewLabel(""); setNewFile(null); setShowAdd(false);
       load();
@@ -216,11 +223,18 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
   };
 
   const vote = async (optionId: string) => {
-    if (!userId) return toast.error(T(language, "يجب تسجيل الدخول", "Sign in required"));
-    const { error } = await supabase.from("poll_votes").upsert(
-      { poll_id: poll.id, option_id: optionId, user_id: userId },
-      { onConflict: "poll_id,user_id" },
-    );
+    let error;
+    if (userId) {
+      ({ error } = await supabase.from("poll_votes").upsert(
+        { poll_id: poll.id, option_id: optionId, user_id: userId },
+        { onConflict: "poll_id,user_id" },
+      ));
+    } else {
+      ({ error } = await supabase.from("poll_votes").upsert(
+        { poll_id: poll.id, option_id: optionId, user_id: null, guest_key: guestKey } as any,
+        { onConflict: "poll_id,guest_key" },
+      ));
+    }
     if (error) return toast.error(error.message);
     setMyVote(optionId);
     load();
