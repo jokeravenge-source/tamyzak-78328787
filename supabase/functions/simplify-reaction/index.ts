@@ -1,3 +1,5 @@
+import { requireUser } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -9,6 +11,10 @@ const AI_MODEL = "google/gemini-2.5-flash";
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    const auth = await requireUser(req);
+    if (!auth.ok) {
+      return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const { equation, label, language } = await req.json();
     if (!equation || typeof equation !== "string") {
       return new Response(JSON.stringify({ error: "Missing equation" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });

@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
 
@@ -41,6 +42,14 @@ Deno.serve(async (req) => {
     new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
+    // Cron-only / admin-only: reject anonymous callers.
+    const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
+    const provided = req.headers.get("x-cron-secret") ?? "";
+    if (!(cronSecret && provided === cronSecret)) {
+      const auth = await requireAdmin(req);
+      if (!auth.ok) return json({ error: auth.error }, auth.status);
+    }
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
