@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,6 +27,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const auth = await requireUser(req);
+    if (!auth.ok) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const TOKEN = Deno.env.get("HUMAN_GRADER_BOT_TOKEN");
     const CHAT_ID = Deno.env.get("HUMAN_GRADER_CHAT_ID");
     if (!TOKEN || !CHAT_ID) {
@@ -46,9 +54,12 @@ Deno.serve(async (req) => {
     const images: string[] = Array.isArray(body.studentImages)
       ? body.studentImages.filter((s: unknown) => typeof s === "string" && (s as string).startsWith("data:image/")).slice(0, 10)
       : [];
-    const answerBucket = String(body.answerBucket ?? "").slice(0, 60);
-    const answerPath = String(body.answerPath ?? "").slice(0, 300);
-    const answerFilename = String(body.answerFilename ?? "correct-answer").slice(0, 120);
+    // Never trust client-supplied storage locations: resolve the answer key
+    // server-side from the exam record instead.
+    const examId = String(body.examId ?? "").slice(0, 64);
+    const answerBucket = "course-exams";
+    let answerPath = "";
+    let answerFilename = "correct-answer";
 
     // Route to subject-specific Telegram group.
     const SUBJECT_CHATS: Record<string, string> = {
