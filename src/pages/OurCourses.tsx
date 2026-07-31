@@ -1193,9 +1193,7 @@ function CourseRunner({
           subjectCode: groupOverride || course.id,
           chapter: selected.title,
           studentImages,
-          answerBucket: "course-exams",
-          answerPath: selected.answer_path,
-          answerFilename: `${selected.title} - answer`,
+          examId: selected.id,
           aiScore: gradeResult
             ? `${Math.round(Number(gradeResult.total) || 0)} / ${Number(gradeResult.graded_out_of) || 100}`
             : "",
