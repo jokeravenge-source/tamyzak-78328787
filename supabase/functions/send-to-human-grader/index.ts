@@ -85,6 +85,23 @@ Deno.serve(async (req) => {
     }
 
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = supabaseUrl && serviceKey ? createClient(supabaseUrl, serviceKey) : null;
+
+    if (examId && admin && /^[0-9a-fA-F-]{36}$/.test(examId)) {
+      const { data: exam } = await admin
+        .from("course_exams")
+        .select("id, title, answer_path")
+        .eq("id", examId)
+        .maybeSingle();
+      if (exam?.answer_path) {
+        answerPath = String(exam.answer_path);
+        answerFilename = `${String(exam.title ?? "exam")} - answer`;
+      }
+    }
+
     const header =
       `📝 <b>طلب تصحيح بشري</b>\n` +
       `👤 المستخدم: @${esc(telegramUsername)}\n` +
@@ -164,12 +181,9 @@ Deno.serve(async (req) => {
     }
 
     // 5. Attach the correct-answer file uploaded by the course owner (if provided).
-    if (answerBucket && answerPath) {
+    if (answerPath && admin) {
       try {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL");
-        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-        if (supabaseUrl && serviceKey) {
-          const admin = createClient(supabaseUrl, serviceKey);
+        {
           const { data: fileData, error: dlErr } = await admin.storage.from(answerBucket).download(answerPath);
           if (!dlErr && fileData) {
             const ext = answerPath.split(".").pop()?.toLowerCase() || "pdf";
