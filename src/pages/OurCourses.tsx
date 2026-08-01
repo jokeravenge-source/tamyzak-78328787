@@ -1068,6 +1068,7 @@ function CourseRunner({
 }) {
   const [selected, setSelected] = useState<ExamRow | null>(null);
   const [examUrl, setExamUrl] = useState<string | null>(null);
+  const [completed, setCompleted] = useState<Record<string, { score: number | null; out_of: number | null }>>({});
   const [studentImages, setStudentImages] = useState<string[]>([]);
   const [grading, setGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState<any>(null);
