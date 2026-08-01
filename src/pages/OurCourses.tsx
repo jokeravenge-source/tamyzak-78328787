@@ -497,14 +497,37 @@ function UploadModal({
   const [newChapter, setNewChapter] = useState("");
   const [examFile, setExamFile] = useState<File | null>(null);
   const [ansFile, setAnsFile] = useState<File | null>(null);
+  const [qCount, setQCount] = useState<number>(4);
+  const [marks, setMarks] = useState<string[]>(["25", "25", "25", "25"]);
   const [busy, setBusy] = useState(false);
   const examRef = useRef<HTMLInputElement>(null);
   const ansRef = useRef<HTMLInputElement>(null);
+
+  const setCount = (n: number) => {
+    const c = Math.max(1, Math.min(30, Math.round(n || 1)));
+    setQCount(c);
+    const even = Math.round((100 / c) * 100) / 100;
+    setMarks(Array.from({ length: c }, (_, i) => (marks[i] ?? String(even))));
+  };
+  const distributeEvenly = () => {
+    const even = Math.round((100 / qCount) * 100) / 100;
+    setMarks(Array.from({ length: qCount }, () => String(even)));
+  };
+  const marksNums = marks.slice(0, qCount).map((m) => Number(m) || 0);
+  const marksTotal = Math.round(marksNums.reduce((a, b) => a + b, 0) * 100) / 100;
 
   const submit = async () => {
     const chapterFinal = (newChapter.trim() || chapter.trim() || "General");
     if (!title.trim() || !examFile || !ansFile) {
       toast.error(isAr ? "أكمل جميع الحقول" : "Fill all fields");
+      return;
+    }
+    if (marksNums.some((m) => m <= 0)) {
+      toast.error(isAr ? "حدد درجة صحيحة لكل سؤال" : "Set a valid mark for each question");
+      return;
+    }
+    if (Math.abs(marksTotal - 100) > 0.5) {
+      toast.error(isAr ? `مجموع الدرجات يجب أن يكون 100 (حالياً ${marksTotal})` : `Marks must total 100 (currently ${marksTotal})`);
       return;
     }
     if (examFile.type !== "application/pdf" || ansFile.type !== "application/pdf") {
@@ -528,6 +551,8 @@ function UploadModal({
         chapter: chapterFinal,
         exam_path: examPath,
         answer_path: ansPath,
+        question_count: qCount,
+        question_marks: marksNums,
         created_by: user.id,
       });
       if (error) throw error;
