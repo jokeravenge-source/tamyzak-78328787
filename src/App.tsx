@@ -195,6 +195,7 @@ const App = () => {
   }, []);
   const [authed, setAuthed] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [equationSolved, setEquationSolved] = useState<boolean>(() => isEquationSolved());
   const [isAdmin, setIsAdmin] = useState(false);
   const [tgVerified, setTgVerified] = useState(false);
   const [tgLoading, setTgLoading] = useState(false);
