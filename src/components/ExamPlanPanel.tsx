@@ -34,7 +34,17 @@ const addDays = (iso: string, days: number): string => {
 const daysBetween = (from: string, to: string): number =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
 
-const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects: PlanSubject[] }) => {
+export const PLAN_VALID_DAYS = 5;
+
+const ExamPlanPanel = ({
+  language,
+  subjects,
+  onPlanStatus,
+}: {
+  language: AppLanguage;
+  subjects: PlanSubject[];
+  onPlanStatus?: (active: boolean) => void;
+}) => {
   const isAr = language === "ar";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,10 +86,14 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
         const row = data as PlanRow;
         setPlan(row);
         setPicked(row.subjects);
+        const expired = daysBetween(row.start_date, todayBaghdad()) >= PLAN_VALID_DAYS;
         if (!hasProfile) {
           setFullName(prof?.full_name ?? row.full_name ?? "");
           setTgUser(prof?.telegram_username ?? row.telegram_username ?? "");
           setEditing(true); setStage("profile");
+        } else if (expired) {
+          // The plan only lasts 5 days — after that the student must make a new one.
+          setEditing(true); setStage("subjects");
         }
       } else {
         setEditing(true);
@@ -100,6 +114,13 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
   }, [plan]);
 
   const today = todayBaghdad();
+  const planExpired = plan ? daysBetween(plan.start_date, today) >= PLAN_VALID_DAYS : false;
+  const planActive = Boolean(plan) && !planExpired;
+
+  useEffect(() => {
+    if (!loading) onPlanStatus?.(planActive);
+  }, [planActive, loading, onPlanStatus]);
+
   const dueItem = useMemo(() => {
     if (!plan) return null;
     const past = schedule.filter((s) => daysBetween(s.date, today) >= 0);
@@ -139,7 +160,7 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
     const row = {
       user_id: user.id,
       subjects: picked,
-      start_date: plan?.start_date ?? today,
+      start_date: plan && !planExpired ? plan.start_date : today,
       interval_days: 5,
       acknowledged_step: -1,
       full_name: cleanName,
@@ -272,7 +293,17 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
 
       {loading && <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />...</div>}
 
-      {!loading && dueItem && !editing && (
+      {!loading && planExpired && !editing && (
+        <div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3.5">
+          <p className="text-sm font-semibold">{isAr ? "انتهت خطتك (5 أيام)" : "Your 5-day plan has ended"}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {isAr
+              ? "أعد اختيار موادك لخطة الـ 5 أيام القادمة قبل أن تتمكن من دخول الامتحانات."
+              : "Pick your subjects again for the next 5 days before you can take exams."}
+          </p>
+        </div>
+      )}
+      {!loading && dueItem && !editing && !planExpired && (
         <div className="mt-4 rounded-xl border border-primary/40 bg-primary/10 p-3.5 flex items-start gap-3">
           <Bell className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
           <div className="flex-1">
@@ -318,7 +349,7 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
                   <div key={id} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
                     <span className="w-6 h-6 rounded-md bg-secondary text-xs font-bold flex items-center justify-center">{i + 1}</span>
                     <span className="flex-1 text-sm font-medium">{label(id)}</span>
-                    <span className="text-xs text-muted-foreground">{addDays(plan?.start_date ?? today, examOffsets(picked.length)[i])}</span>
+                    <span className="text-xs text-muted-foreground">{addDays(plan && !planExpired ? plan.start_date : today, examOffsets(picked.length)[i])}</span>
                     <button onClick={() => move(i, -1)} className="w-7 h-7 rounded-md border border-border flex items-center justify-center hover:bg-secondary"><ChevronUp className="w-3.5 h-3.5" /></button>
                     <button onClick={() => move(i, 1)} className="w-7 h-7 rounded-md border border-border flex items-center justify-center hover:bg-secondary"><ChevronDown className="w-3.5 h-3.5" /></button>
                   </div>

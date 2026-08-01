@@ -142,6 +142,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [openPlaylist, setOpenPlaylist] = useState<Course | null>(null);
   const [openPhysicsHub, setOpenPhysicsHub] = useState<Course | null>(null);
   const [openLectures, setOpenLectures] = useState<Course | null>(null);
+  const [planActive, setPlanActive] = useState(true);
 
   const refresh = async () => {
     const { data } = await supabase
@@ -252,6 +253,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
         <ExamPlanPanel
           language={language}
           subjects={COURSES.map((c) => ({ id: c.id, titleAr: c.titleAr, titleEn: c.titleEn }))}
+          onPlanStatus={setPlanActive}
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -260,6 +262,15 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
             const examCount = counts[c.id] ?? 0;
             const isReady = !!c.fixedPlaylistId || !!c.hasLectures || examCount > 0;
             const handleStart = () => {
+              if (!planActive) {
+                toast.error(
+                  isAr
+                    ? "عذراً، لا يمكنك دخول امتحان الآن. الرجاء وضع خطتك للأيام الـ 5 القادمة."
+                    : "Oops, you can't take an exam right now. Please make your plan for the next 5 days.",
+                );
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
               if (c.fixedPlaylistId) setOpenPlaylist(c);
               else if (c.hasLectures) setOpenPhysicsHub(c);
               else setOpenCourse(c);
