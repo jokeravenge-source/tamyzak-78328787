@@ -130,6 +130,11 @@ const BottomGroupNav = ({
                     key={it.key}
                     whileTap={{ scale: 0.94 }}
                     onClick={() => {
+                      if (it.key === "more") {
+                        onSelect("basics");
+                        setTimeout(() => window.dispatchEvent(new Event("app:show-all-tools")), 60);
+                        return;
+                      }
                       if (it.subject) {
                         try {
                           localStorage.setItem("app_subject_focus_v1", it.subject);
