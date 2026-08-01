@@ -79,7 +79,6 @@ type ExamRow = {
   course_id: string;
   title: string;
   exam_path: string;
-  answer_path: string;
   created_at: string;
   chapter: string;
 };
@@ -147,7 +146,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const refresh = async () => {
     const { data } = await supabase
       .from("course_exams")
-      .select("id, course_id, title, exam_path, answer_path, created_at, chapter")
+      .select("id, course_id, title, exam_path, created_at, chapter")
       .order("created_at", { ascending: false });
     const rows = (data ?? []) as ExamRow[];
     const cMap: Record<string, number> = {};
