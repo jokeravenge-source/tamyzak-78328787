@@ -265,7 +265,10 @@ Strict rules:
     }, OCR_TIMEOUT_MS);
     if (!ocrResult.ok) {
       const status = ocrResult.status === 402 ? 402 : 200;
-      return new Response(JSON.stringify({ error: `OCR failed: ${ocrResult.error}` }), {
+      const msg = ocrResult.status === 504
+        ? (isAr ? "استغرقت قراءة الصور وقتاً طويلاً. قلّل عدد الصور أو جرّب مرة أخرى." : "Reading your images took too long. Use fewer photos and try again.")
+        : `OCR failed: ${ocrResult.error}`;
+      return new Response(JSON.stringify({ error: msg }), {
         status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -357,7 +360,10 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
     }, GRADE_TIMEOUT_MS);
     if (!gradeResult.ok) {
       const status = gradeResult.status === 402 ? 402 : 200;
-      return new Response(JSON.stringify({ error: `Grading failed: ${gradeResult.error}` }), {
+      const msg = gradeResult.status === 504
+        ? (isAr ? "استغرق التصحيح وقتاً طويلاً. الرجاء المحاولة مرة أخرى." : "Grading took too long. Please try again.")
+        : `Grading failed: ${gradeResult.error}`;
+      return new Response(JSON.stringify({ error: msg }), {
         status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
