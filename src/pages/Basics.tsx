@@ -761,7 +761,10 @@ const Basics = ({
           </header>
 
           {/* Row A: progress ring (4) + core tools bento (8) */}
-          <section className="mb-6 grid grid-cols-12 gap-3 sm:gap-5">
+          <h4 className="mb-3 sm:mb-4 text-base sm:text-lg font-bold text-foreground" style={{ fontFamily: "'Syne', sans-serif" }}>
+            {startHere}
+          </h4>
+          <section className="mb-8 grid grid-cols-12 gap-3 sm:gap-5">
             {/* Progress ring */}
             <div className="col-span-12 md:col-span-4 bg-card rounded-3xl p-4 sm:p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
               <div
