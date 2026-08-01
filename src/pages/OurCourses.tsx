@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo, Video, BookOpen, Languages } from "lucide-react";
+import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo, Video, BookOpen, Languages, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -1068,6 +1068,7 @@ function CourseRunner({
 }) {
   const [selected, setSelected] = useState<ExamRow | null>(null);
   const [examUrl, setExamUrl] = useState<string | null>(null);
+  const [completed, setCompleted] = useState<Record<string, { score: number | null; out_of: number | null }>>({});
   const [studentImages, setStudentImages] = useState<string[]>([]);
   const [grading, setGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState<any>(null);
@@ -1115,6 +1116,23 @@ function CourseRunner({
     setShowHumanForm(false);
     setHumanSent(false);
   }, [selected]);
+
+  // Which exams of this course the student already finished.
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await (supabase as any)
+        .from("course_exam_completions")
+        .select("exam_id, score, graded_out_of")
+        .eq("user_id", user.id);
+      const map: Record<string, { score: number | null; out_of: number | null }> = {};
+      ((data ?? []) as any[]).forEach((r) => {
+        map[r.exam_id] = { score: r.score === null ? null : Number(r.score), out_of: r.graded_out_of === null ? null : Number(r.graded_out_of) };
+      });
+      setCompleted(map);
+    })();
+  }, [course.id]);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -1170,6 +1188,24 @@ function CourseRunner({
       }
       if ((data as any)?.error) throw new Error((data as any).error);
       setGradeResult(data);
+      // Mark this exam as completed so the student can tell it apart next time.
+      const score = Number((data as any)?.total);
+      const outOf = Number((data as any)?.graded_out_of) || 100;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await (supabase as any).from("course_exam_completions").upsert(
+          {
+            user_id: user.id,
+            exam_id: selected.id,
+            course_id: course.id,
+            score: Number.isFinite(score) ? score : null,
+            graded_out_of: outOf,
+            completed_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,exam_id" },
+        );
+        setCompleted((p) => ({ ...p, [selected.id]: { score: Number.isFinite(score) ? score : null, out_of: outOf } }));
+      }
     } catch (e: any) {
       toast.error(e?.message ?? (isAr ? "تعذّر التصحيح" : "Grading failed"));
     } finally {
@@ -1291,22 +1327,30 @@ function CourseRunner({
                   </h2>
                   <ul className="space-y-3">
                     {exams.filter((e) => (e.chapter || "General") === ch).map((e) => (
-                      <li key={e.id} className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-3">
+                      <li key={e.id} className={`rounded-2xl border p-4 flex flex-wrap items-center gap-3 ${completed[e.id] ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}>
                         <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                          <FileText className="w-5 h-5" />
+                          {completed[e.id] ? <CheckCircle2 className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
                         </div>
                         <div className="flex-1 min-w-[140px]">
-                          <div className="font-semibold">{e.title}</div>
+                          <div className="font-semibold flex items-center gap-2 flex-wrap">
+                            {e.title}
+                            {completed[e.id] && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                                {isAr ? "مكتمل" : "Completed"}
+                                {completed[e.id].score !== null ? ` · ${Math.round(completed[e.id].score as number)}/${completed[e.id].out_of ?? 100}` : ""}
+                              </span>
+                            )}
+                          </div>
                           <div className="text-[11px] text-muted-foreground">
                             {new Date(e.created_at).toLocaleDateString(isAr ? "ar" : "en")}
                           </div>
                         </div>
                         <button
                           onClick={() => setSelected(e)}
-                          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90"
+                          className={`h-9 px-4 rounded-lg text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 ${completed[e.id] ? "border border-border bg-card" : "bg-primary text-primary-foreground"}`}
                         >
                           <GraduationCap className="w-4 h-4" />
-                          {isAr ? "حلّ وصحّح" : "Solve & grade"}
+                          {completed[e.id] ? (isAr ? "إعادة الحل" : "Retake") : (isAr ? "حلّ وصحّح" : "Solve & grade")}
                         </button>
                       </li>
                     ))}

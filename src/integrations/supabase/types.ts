@@ -242,6 +242,50 @@ export type Database = {
           },
         ]
       }
+      course_exam_completions: {
+        Row: {
+          completed_at: string
+          course_id: string
+          created_at: string
+          exam_id: string
+          graded_out_of: number | null
+          id: string
+          score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          course_id: string
+          created_at?: string
+          exam_id: string
+          graded_out_of?: number | null
+          id?: string
+          score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          course_id?: string
+          created_at?: string
+          exam_id?: string
+          graded_out_of?: number | null
+          id?: string
+          score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_exam_completions_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "course_exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_exam_plans: {
         Row: {
           acknowledged_step: number
@@ -344,6 +388,30 @@ export type Database = {
           title?: string
           updated_at?: string
           video_id?: string | null
+        }
+        Relationships: []
+      }
+      course_students: {
+        Row: {
+          created_at: string
+          full_name: string
+          telegram_username: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          telegram_username: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          telegram_username?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
