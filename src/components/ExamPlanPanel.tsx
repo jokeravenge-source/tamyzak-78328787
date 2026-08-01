@@ -293,9 +293,6 @@ const ExamPlanPanel = ({
 
       {loading && <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />...</div>}
 
-      {!loading && dueItem && !editing && (
-        <></>
-      )}
       {!loading && planExpired && !editing && (
         <div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3.5">
           <p className="text-sm font-semibold">{isAr ? "انتهت خطتك (5 أيام)" : "Your 5-day plan has ended"}</p>
