@@ -310,7 +310,7 @@ Grade each question by comparing the transcript above against the model-answer P
 Return ONLY valid JSON (no markdown fences) with this exact shape:
 {
   "total": number,
-  "graded_out_of": 100,
+  "graded_out_of": ${fmtMark(totalPossible)},
   "per_question": [
     { "n": number, "attempted": boolean, "score": number, "feedback": string, "corrections": string, "ocr_confidence": number, "needs_review": boolean }
   ],
