@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
     // supply (or see) the answer-key path.
     const { data: examRow } = await admin
       .from("course_exams")
-      .select("exam_path, answer_path")
+      .select("exam_path, answer_path, question_count, question_marks")
       .eq("id", examId)
       .maybeSingle();
     if (!examRow?.exam_path) {
@@ -160,7 +160,19 @@ Deno.serve(async (req) => {
 
     const isAr = language !== "en";
 
-    // ===== STEP 0: Determine how many questions the paper has, from the ANSWER KEY first =====
+    // ===== STEP 0: Question structure — admin-provided marks win over AI detection =====
+    let questionCount = 0;
+    let marks: number[] = [];
+    const adminCount = Number((examRow as any).question_count);
+    const adminMarks = Array.isArray((examRow as any).question_marks)
+      ? ((examRow as any).question_marks as unknown[]).map((v) => Number(v)).filter((v) => Number.isFinite(v) && v > 0)
+      : [];
+    if (Number.isFinite(adminCount) && adminCount >= 1 && adminCount <= 40 && adminMarks.length === adminCount) {
+      questionCount = adminCount;
+      marks = adminMarks;
+    }
+
+    if (!questionCount) {
     const structureSource = answerPdf ?? examPdf;
     const structureContent: unknown[] = [
       {
@@ -179,7 +191,6 @@ question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`
       response_format: { type: "json_object" },
     }, STRUCTURE_TIMEOUT_MS);
 
-    let questionCount = 0;
     if (structureResult.ok) {
       const rawStruct = structureResult.data.choices?.[0]?.message?.content ?? "{}";
       try {
@@ -189,9 +200,14 @@ question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`
       } catch { /* fall back below */ }
     }
     if (!questionCount) questionCount = 6;
-    const perQuestionMax = TOTAL_MARKS / questionCount;
+    marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
+    }
+
+    const markFor = (n: number) => marks[n - 1] ?? TOTAL_MARKS / questionCount;
+    const totalPossible = Math.round(marks.reduce((a, b) => a + b, 0) * 100) / 100;
     const fmtMark = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(2));
-    console.log(`[grade-course-exam] questions=${questionCount} perQuestion=${perQuestionMax}`);
+    const marksList = marks.map((m, i) => `Q${i + 1}=${fmtMark(m)}`).join(", ");
+    console.log(`[grade-course-exam] questions=${questionCount} marks=${marksList}`);
 
     // ===== STEP 1: OCR the student's handwritten answer photos into plain text =====
     const ocrSystem = isAr
