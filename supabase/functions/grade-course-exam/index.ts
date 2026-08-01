@@ -102,7 +102,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Course exam grading has no daily usage limit.
+    // Course exam grading has no daily usage limit, but is rate limited to
+    // avoid abuse / accidental request floods.
+    const limited = await enforceRateLimit(req, "grade-course-exam", 3, 120);
+    if (!limited.ok) {
+      return new Response(JSON.stringify({ error: limited.error }), {
+        status: limited.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
