@@ -1,4 +1,4 @@
-import { claimFeature } from "../_shared/entitlement.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -92,9 +92,9 @@ Deno.serve(async (req) => {
     if (!mode || !Array.isArray(messages)) {
       return json200({ reply: ar ? "حدث خطأ في الطلب. حاول مرة أخرى." : "Bad request. Please try again." });
     }
-    // Success Companion is unlimited — only require an authenticated session.
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    // Success Companion is unlimited — but requires a genuinely valid session.
+    const auth = await requireUser(req);
+    if (!auth.ok) {
       return json200({ error: "Sign in to use this feature.", reply: ar ? "يرجى تسجيل الدخول." : "Please sign in." });
     }
 

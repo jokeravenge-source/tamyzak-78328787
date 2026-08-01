@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { enforceRateLimit } from "../_shared/rate-limit.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -88,8 +89,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { examPath, answerPath, studentImages, language, examTitle } = await req.json();
-    if (!examPath || typeof examPath !== "string") {
+    // Require a verified session before touching private exam files or the AI gateway.
+    const auth = await requireUser(req);
+    if (!auth.ok) {
+      return new Response(JSON.stringify({ error: auth.error }), {
+        status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { examId, studentImages, language, examTitle } = await req.json();
+    if (!examId || typeof examId !== "string") {
       return new Response(JSON.stringify({ error: "Missing exam" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -123,6 +131,21 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Resolve the storage paths server-side from the exam row — clients never
+    // supply (or see) the answer-key path.
+    const { data: examRow } = await admin
+      .from("course_exams")
+      .select("exam_path, answer_path")
+      .eq("id", examId)
+      .maybeSingle();
+    if (!examRow?.exam_path) {
+      return new Response(JSON.stringify({ error: "Exam not found." }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const examPath = examRow.exam_path as string;
+    const answerPath = examRow.answer_path as string | null;
 
     // Download both PDFs in parallel to cut latency.
     const [examPdf, answerPdf] = await Promise.all([

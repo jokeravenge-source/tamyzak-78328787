@@ -1756,6 +1756,7 @@ export type Database = {
       }
       claim_daily_feature: { Args: { _feature: string }; Returns: boolean }
       feature_usage_today: { Args: { _feature: string }; Returns: number }
+      get_exam_answer_path: { Args: { _exam_id: string }; Returns: string }
       has_active_premium: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
@@ -1775,6 +1776,17 @@ export type Database = {
         Returns: {
           chapter: string
           has_files: boolean
+        }[]
+      }
+      my_poll_vote: {
+        Args: { _guest_key?: string; _poll_id: string }
+        Returns: string
+      }
+      poll_vote_counts: {
+        Args: { _poll_id: string }
+        Returns: {
+          option_id: string
+          votes: number
         }[]
       }
       set_site_visits: { Args: { _count: number }; Returns: number }

@@ -46,8 +46,26 @@ Deno.serve(async (req) => {
     const images: string[] = Array.isArray(body.studentImages)
       ? body.studentImages.filter((s: unknown) => typeof s === "string" && (s as string).startsWith("data:image/")).slice(0, 10)
       : [];
-    const answerBucket = String(body.answerBucket ?? "").slice(0, 60);
-    const answerPath = String(body.answerPath ?? "").slice(0, 300);
+    const examId = typeof body.examId === "string" ? body.examId : "";
+    let answerBucket = "";
+    let answerPath = "";
+    if (examId) {
+      // Answer-key path is resolved server-side; clients never receive it.
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && serviceKey) {
+        const adminDb = createClient(supabaseUrl, serviceKey);
+        const { data: examRow } = await adminDb
+          .from("course_exams")
+          .select("answer_path")
+          .eq("id", examId)
+          .maybeSingle();
+        if (examRow?.answer_path) {
+          answerBucket = "course-exams";
+          answerPath = String(examRow.answer_path);
+        }
+      }
+    }
     const answerFilename = String(body.answerFilename ?? "correct-answer").slice(0, 120);
 
     // Route to subject-specific Telegram group.
