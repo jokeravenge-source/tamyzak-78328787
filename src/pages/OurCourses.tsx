@@ -497,14 +497,37 @@ function UploadModal({
   const [newChapter, setNewChapter] = useState("");
   const [examFile, setExamFile] = useState<File | null>(null);
   const [ansFile, setAnsFile] = useState<File | null>(null);
+  const [qCount, setQCount] = useState<number>(4);
+  const [marks, setMarks] = useState<string[]>(["25", "25", "25", "25"]);
   const [busy, setBusy] = useState(false);
   const examRef = useRef<HTMLInputElement>(null);
   const ansRef = useRef<HTMLInputElement>(null);
+
+  const setCount = (n: number) => {
+    const c = Math.max(1, Math.min(30, Math.round(n || 1)));
+    setQCount(c);
+    const even = Math.round((100 / c) * 100) / 100;
+    setMarks(Array.from({ length: c }, (_, i) => (marks[i] ?? String(even))));
+  };
+  const distributeEvenly = () => {
+    const even = Math.round((100 / qCount) * 100) / 100;
+    setMarks(Array.from({ length: qCount }, () => String(even)));
+  };
+  const marksNums = marks.slice(0, qCount).map((m) => Number(m) || 0);
+  const marksTotal = Math.round(marksNums.reduce((a, b) => a + b, 0) * 100) / 100;
 
   const submit = async () => {
     const chapterFinal = (newChapter.trim() || chapter.trim() || "General");
     if (!title.trim() || !examFile || !ansFile) {
       toast.error(isAr ? "أكمل جميع الحقول" : "Fill all fields");
+      return;
+    }
+    if (marksNums.some((m) => m <= 0)) {
+      toast.error(isAr ? "حدد درجة صحيحة لكل سؤال" : "Set a valid mark for each question");
+      return;
+    }
+    if (Math.abs(marksTotal - 100) > 0.5) {
+      toast.error(isAr ? `مجموع الدرجات يجب أن يكون 100 (حالياً ${marksTotal})` : `Marks must total 100 (currently ${marksTotal})`);
       return;
     }
     if (examFile.type !== "application/pdf" || ansFile.type !== "application/pdf") {
@@ -528,6 +551,8 @@ function UploadModal({
         chapter: chapterFinal,
         exam_path: examPath,
         answer_path: ansPath,
+        question_count: qCount,
+        question_marks: marksNums,
         created_by: user.id,
       });
       if (error) throw error;
@@ -606,6 +631,41 @@ function UploadModal({
           <span className="truncate">{ansFile?.name ?? (isAr ? "اختر ملف PDF" : "Choose PDF")}</span>
         </button>
         <input ref={ansRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => setAnsFile(e.target.files?.[0] ?? null)} />
+
+        <label className="block text-xs font-semibold mb-1">{isAr ? "عدد الأسئلة" : "Number of questions"}</label>
+        <input
+          type="number"
+          min={1}
+          max={30}
+          value={qCount}
+          onChange={(e) => setCount(Number(e.target.value))}
+          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
+        />
+
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-xs font-semibold">{isAr ? "درجة كل سؤال" : "Marks per question"}</label>
+          <button type="button" onClick={distributeEvenly} className="text-[11px] font-semibold text-primary hover:underline">
+            {isAr ? "توزيع متساوٍ" : "Distribute evenly"}
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mb-1">
+          {Array.from({ length: qCount }, (_, i) => (
+            <div key={i} className="flex items-center gap-1">
+              <span className="text-[11px] text-muted-foreground w-6 shrink-0">{isAr ? `س${i + 1}` : `Q${i + 1}`}</span>
+              <input
+                type="number"
+                min={0}
+                step="0.5"
+                value={marks[i] ?? ""}
+                onChange={(e) => setMarks((prev) => { const n = [...prev]; n[i] = e.target.value; return n; })}
+                className="w-full h-9 px-2 rounded-lg border border-border bg-background text-sm"
+              />
+            </div>
+          ))}
+        </div>
+        <p className={`text-[11px] mb-3 ${Math.abs(marksTotal - 100) > 0.5 ? "text-destructive" : "text-muted-foreground"}`}>
+          {isAr ? `المجموع: ${marksTotal} / 100` : `Total: ${marksTotal} / 100`}
+        </p>
 
         <p className="text-[11px] text-muted-foreground mb-3">
           {isAr

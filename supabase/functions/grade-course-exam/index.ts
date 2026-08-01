@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
     // supply (or see) the answer-key path.
     const { data: examRow } = await admin
       .from("course_exams")
-      .select("exam_path, answer_path")
+      .select("exam_path, answer_path, question_count, question_marks")
       .eq("id", examId)
       .maybeSingle();
     if (!examRow?.exam_path) {
@@ -160,7 +160,19 @@ Deno.serve(async (req) => {
 
     const isAr = language !== "en";
 
-    // ===== STEP 0: Determine how many questions the paper has, from the ANSWER KEY first =====
+    // ===== STEP 0: Question structure — admin-provided marks win over AI detection =====
+    let questionCount = 0;
+    let marks: number[] = [];
+    const adminCount = Number((examRow as any).question_count);
+    const adminMarks = Array.isArray((examRow as any).question_marks)
+      ? ((examRow as any).question_marks as unknown[]).map((v) => Number(v)).filter((v) => Number.isFinite(v) && v > 0)
+      : [];
+    if (Number.isFinite(adminCount) && adminCount >= 1 && adminCount <= 40 && adminMarks.length === adminCount) {
+      questionCount = adminCount;
+      marks = adminMarks;
+    }
+
+    if (!questionCount) {
     const structureSource = answerPdf ?? examPdf;
     const structureContent: unknown[] = [
       {
@@ -179,7 +191,6 @@ question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`
       response_format: { type: "json_object" },
     }, STRUCTURE_TIMEOUT_MS);
 
-    let questionCount = 0;
     if (structureResult.ok) {
       const rawStruct = structureResult.data.choices?.[0]?.message?.content ?? "{}";
       try {
@@ -189,9 +200,14 @@ question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`
       } catch { /* fall back below */ }
     }
     if (!questionCount) questionCount = 6;
-    const perQuestionMax = TOTAL_MARKS / questionCount;
+    marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
+    }
+
+    const markFor = (n: number) => marks[n - 1] ?? TOTAL_MARKS / questionCount;
+    const totalPossible = Math.round(marks.reduce((a, b) => a + b, 0) * 100) / 100;
     const fmtMark = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(2));
-    console.log(`[grade-course-exam] questions=${questionCount} perQuestion=${perQuestionMax}`);
+    const marksList = marks.map((m, i) => `Q${i + 1}=${fmtMark(m)}`).join(", ");
+    console.log(`[grade-course-exam] questions=${questionCount} marks=${marksList}`);
 
     // ===== STEP 1: OCR the student's handwritten answer photos into plain text =====
     const ocrSystem = isAr
@@ -241,7 +257,7 @@ Strict rules:
     // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
     const hasKey = Boolean(answerPdf);
     const systemPrompt = isAr
-      ? `أنت مصحّح وزاري عراقي صارم جداً. لديك ورقة الامتحان PDF${hasKey ? " وورقة الإجابة النموذجية PDF" : ""} ونص إجابات الطالب المستخرج بالـ OCR. الامتحان يتكون من ${questionCount} أسئلة، والدرجة الكلية 100، أي أن كل سؤال من ${fmtMark(perQuestionMax)} درجة، وتُحتسب جميع الأسئلة.
+      ? `أنت مصحّح وزاري عراقي صارم جداً. لديك ورقة الامتحان PDF${hasKey ? " وورقة الإجابة النموذجية PDF" : ""} ونص إجابات الطالب المستخرج بالـ OCR. الامتحان يتكون من ${questionCount} أسئلة، والدرجة الكلية 100، وتوزيع الدرجات كالآتي: ${marksList}. المجموع الكلي ${fmtMark(totalPossible)}، وتُحتسب جميع الأسئلة.
 
 قواعد التصحيح الصارمة (إلزامية):
 - ${hasKey ? "ورقة الإجابة النموذجية PDF هي **المرجع الوحيد والمطلق والحصري**. لا تعتمد على معرفتك العامة ولا على المنهج، بل فقط على ما هو مكتوب حرفياً داخل ملف الإجابة النموذجية. أي إجابة لا تطابق ما في نموذج الإجابة = خطأ حتى لو بدت صحيحة علمياً." : "لا يوجد نموذج إجابة مرفق؛ صحّح بحذر شديد وفق المنهج الوزاري وحده."}
@@ -255,7 +271,7 @@ Strict rules:
 - استخدم نص الـ OCR كمصدر لإجابة الطالب فقط. لا تخترع نصاً غير موجود.
 - إذا كان النص [غير مقروء]، ضع attempted=true و score=null و feedback="يحتاج مراجعة يدوية".
 - في حقل corrections اكتب **الإجابة الصحيحة كما وردت في نموذج الإجابة** (اقتباس مباشر أو ملخص أمين لها)، وفي feedback اشرح لماذا خسر الطالب كل درجة بدقة.`
-      : `You are an extremely strict Iraqi ministerial grader. You have the exam PDF${hasKey ? ", the model-answer PDF" : ""}, and the student's OCR transcript. The paper has ${questionCount} questions and the total is 100 marks, so each question is out of ${fmtMark(perQuestionMax)}. All questions count.
+      : `You are an extremely strict Iraqi ministerial grader. You have the exam PDF${hasKey ? ", the model-answer PDF" : ""}, and the student's OCR transcript. The paper has ${questionCount} questions and the marks are distributed as follows: ${marksList} (total ${fmtMark(totalPossible)}). All questions count.
 
 Strict grading rules (mandatory):
 - ${hasKey ? "The model-answer PDF is the **single, absolute, exclusive reference**. Do NOT rely on your general knowledge or on the curriculum — only on what is literally written inside the answer-key PDF. Any answer that does not match the key = wrong, even if it looks scientifically plausible." : "No answer key is attached; grade cautiously using the official curriculum only."}
@@ -275,7 +291,7 @@ Strict grading rules (mandatory):
 MANDATORY OUTPUT RULES:
 - The exam has exactly ${questionCount} main questions numbered 1..${questionCount} (this was determined from the ${hasKey ? "answer key" : "exam"} PDF).
 - "per_question" MUST contain exactly ${questionCount} entries, one per question, even if the student did not answer some. For unanswered questions set attempted=false and score=0.
-- Each question is out of ${fmtMark(perQuestionMax)}. "graded_out_of" MUST be 100 (${questionCount} × ${fmtMark(perQuestionMax)}).
+- Each question has its OWN maximum mark: ${marksList}. Never give a question more than its own maximum. "graded_out_of" MUST be ${fmtMark(totalPossible)}.
 - "total" MUST equal the SUM of all per_question scores (ignoring any question with score=null). Never invent a higher total.
 - If all questions are 0, total = 0. Do NOT output 100 unless every question truly earned full marks.
 - For EVERY question also output "ocr_confidence": an integer 0-100 describing how clearly you could READ the student's handwriting for that question in the transcript (100 = perfectly legible, 0 = nothing readable). Judge legibility only, not correctness.
@@ -294,7 +310,7 @@ Grade each question by comparing the transcript above against the model-answer P
 Return ONLY valid JSON (no markdown fences) with this exact shape:
 {
   "total": number,
-  "graded_out_of": 100,
+  "graded_out_of": ${fmtMark(totalPossible)},
   "per_question": [
     { "n": number, "attempted": boolean, "score": number, "feedback": string, "corrections": string, "ocr_confidence": number, "needs_review": boolean }
   ],
@@ -344,7 +360,7 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
     for (let n = 1; n <= questionCount; n++) {
       const q = byN.get(n);
       if (q) {
-        const scoreNum = q.score === null || q.score === undefined ? null : Math.max(0, Math.min(perQuestionMax, Number(q.score)));
+        const scoreNum = q.score === null || q.score === undefined ? null : Math.max(0, Math.min(markFor(n), Number(q.score)));
         const confRaw = Number(q.ocr_confidence);
         const conf = Number.isFinite(confRaw) ? Math.max(0, Math.min(100, Math.round(confRaw))) : null;
         const needsReview = Boolean(q.needs_review) || scoreNum === null || (conf !== null && conf < 60);
@@ -352,23 +368,23 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
           n,
           attempted: Boolean(q.attempted),
           score: Number.isFinite(scoreNum as number) ? scoreNum : null,
-          out_of: perQuestionMax,
+          out_of: markFor(n),
           ocr_confidence: conf,
           needs_review: needsReview,
           feedback: String(q.feedback ?? ""),
           corrections: String(q.corrections ?? ""),
         });
       } else {
-        normalized.push({ n, attempted: false, score: 0, out_of: perQuestionMax, ocr_confidence: null, needs_review: false, feedback: isAr ? "لم يجب الطالب على هذا السؤال." : "Not answered.", corrections: "" });
+        normalized.push({ n, attempted: false, score: 0, out_of: markFor(n), ocr_confidence: null, needs_review: false, feedback: isAr ? "لم يجب الطالب على هذا السؤال." : "Not answered.", corrections: "" });
       }
     }
     const rawTotal = normalized.reduce((sum, q) => sum + (typeof q.score === "number" ? q.score : 0), 0);
-    const total = Math.max(0, Math.min(TOTAL_MARKS, Math.round(rawTotal * 100) / 100));
+    const total = Math.max(0, Math.min(totalPossible, Math.round(rawTotal * 100) / 100));
     (obj as any).per_question = normalized;
     (obj as any).total = total;
-    (obj as any).graded_out_of = TOTAL_MARKS;
+    (obj as any).graded_out_of = totalPossible;
     (obj as any).question_count = questionCount;
-    (obj as any).per_question_max = perQuestionMax;
+    (obj as any).per_question_max = marks;
     const confVals = normalized.map((q) => q.ocr_confidence).filter((v) => typeof v === "number") as number[];
     (obj as any).ocr_confidence_avg = confVals.length ? Math.round(confVals.reduce((a, b) => a + b, 0) / confVals.length) : null;
     (obj as any).review_count = normalized.filter((q) => q.needs_review).length;

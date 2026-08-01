@@ -331,6 +331,8 @@ export type Database = {
           created_by: string | null
           exam_path: string
           id: string
+          question_count: number | null
+          question_marks: Json | null
           title: string
         }
         Insert: {
@@ -341,6 +343,8 @@ export type Database = {
           created_by?: string | null
           exam_path: string
           id?: string
+          question_count?: number | null
+          question_marks?: Json | null
           title: string
         }
         Update: {
@@ -351,6 +355,8 @@ export type Database = {
           created_by?: string | null
           exam_path?: string
           id?: string
+          question_count?: number | null
+          question_marks?: Json | null
           title?: string
         }
         Relationships: []
