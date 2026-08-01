@@ -9,9 +9,10 @@ const corsHeaders = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const OCR_MODELS = [
-  // Most capable vision models first — accuracy matters more than latency here.
-  "google/gemini-2.5-pro",
+  // Fast-but-strong vision model first: the platform closes the HTTP connection
+  // if the whole request takes too long, so latency is part of correctness here.
   "google/gemini-3.5-flash",
+  "google/gemini-2.5-pro",
   "google/gemini-2.5-flash",
 ];
 const GRADE_MODELS = [
@@ -19,14 +20,21 @@ const GRADE_MODELS = [
   "google/gemini-3.5-flash",
 ];
 const STRUCTURE_MODELS = [
-  "google/gemini-2.5-pro",
   "google/gemini-3.5-flash",
+  "google/gemini-2.5-pro",
 ];
 const MAX_IMAGES = 10;
-const OCR_TIMEOUT_MS = 90_000;
-const GRADE_TIMEOUT_MS = 120_000;
-const STRUCTURE_TIMEOUT_MS = 60_000;
+// Whole-request budget. The edge runtime / proxy drops the connection well
+// before this, so every AI step must fit inside it.
+const TOTAL_BUDGET_MS = 130_000;
+const OCR_TIMEOUT_MS = 55_000;
+const GRADE_TIMEOUT_MS = 65_000;
+const STRUCTURE_TIMEOUT_MS = 25_000;
 const TOTAL_MARKS = 100;
+
+let deadline = 0;
+const msLeft = () => deadline - Date.now();
+const budgeted = (want: number) => Math.max(5_000, Math.min(want, msLeft() - 5_000));
 
 // Try each model in order. Retries on 5xx and 429. Stops immediately on 402 (credits).
 async function callAiWithFallback(
@@ -38,8 +46,12 @@ async function callAiWithFallback(
   let lastErr = "";
   let lastStatus = 500;
   for (const model of models) {
+    // Don't start another attempt we can't finish before the connection dies.
+    if (msLeft() < 8_000) {
+      return { ok: false, status: 504, error: lastErr || "Time budget exhausted." };
+    }
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), perCallTimeoutMs);
+    const timer = setTimeout(() => controller.abort(), budgeted(perCallTimeoutMs));
     try {
       const res = await fetch(AI_URL, {
         method: "POST",
