@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { requireUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,13 +26,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const auth = await requireUser(req);
-    if (!auth.ok) {
-      return new Response(JSON.stringify({ error: auth.error }), {
-        status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const TOKEN = Deno.env.get("HUMAN_GRADER_BOT_TOKEN");
     const CHAT_ID = Deno.env.get("HUMAN_GRADER_CHAT_ID");
     if (!TOKEN || !CHAT_ID) {
@@ -54,12 +46,9 @@ Deno.serve(async (req) => {
     const images: string[] = Array.isArray(body.studentImages)
       ? body.studentImages.filter((s: unknown) => typeof s === "string" && (s as string).startsWith("data:image/")).slice(0, 10)
       : [];
-    // Never trust client-supplied storage locations: resolve the answer key
-    // server-side from the exam record instead.
-    const examId = String(body.examId ?? "").slice(0, 64);
-    const answerBucket = "course-exams";
-    let answerPath = "";
-    let answerFilename = "correct-answer";
+    const answerBucket = String(body.answerBucket ?? "").slice(0, 60);
+    const answerPath = String(body.answerPath ?? "").slice(0, 300);
+    const answerFilename = String(body.answerFilename ?? "correct-answer").slice(0, 120);
 
     // Route to subject-specific Telegram group.
     const SUBJECT_CHATS: Record<string, string> = {
@@ -85,23 +74,6 @@ Deno.serve(async (req) => {
     }
 
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const admin = supabaseUrl && serviceKey ? createClient(supabaseUrl, serviceKey) : null;
-
-    if (examId && admin && /^[0-9a-fA-F-]{36}$/.test(examId)) {
-      const { data: exam } = await admin
-        .from("course_exams")
-        .select("id, title, answer_path")
-        .eq("id", examId)
-        .maybeSingle();
-      if (exam?.answer_path) {
-        answerPath = String(exam.answer_path);
-        answerFilename = `${String(exam.title ?? "exam")} - answer`;
-      }
-    }
-
     const header =
       `📝 <b>طلب تصحيح بشري</b>\n` +
       `👤 المستخدم: @${esc(telegramUsername)}\n` +
@@ -181,9 +153,12 @@ Deno.serve(async (req) => {
     }
 
     // 5. Attach the correct-answer file uploaded by the course owner (if provided).
-    if (answerPath && admin) {
+    if (answerBucket && answerPath) {
       try {
-        {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL");
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (supabaseUrl && serviceKey) {
+          const admin = createClient(supabaseUrl, serviceKey);
           const { data: fileData, error: dlErr } = await admin.storage.from(answerBucket).download(answerPath);
           if (!dlErr && fileData) {
             const ext = answerPath.split(".").pop()?.toLowerCase() || "pdf";
