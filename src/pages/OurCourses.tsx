@@ -1188,6 +1188,24 @@ function CourseRunner({
       }
       if ((data as any)?.error) throw new Error((data as any).error);
       setGradeResult(data);
+      // Mark this exam as completed so the student can tell it apart next time.
+      const score = Number((data as any)?.total);
+      const outOf = Number((data as any)?.graded_out_of) || 100;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await (supabase as any).from("course_exam_completions").upsert(
+          {
+            user_id: user.id,
+            exam_id: selected.id,
+            course_id: course.id,
+            score: Number.isFinite(score) ? score : null,
+            graded_out_of: outOf,
+            completed_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,exam_id" },
+        );
+        setCompleted((p) => ({ ...p, [selected.id]: { score: Number.isFinite(score) ? score : null, out_of: outOf } }));
+      }
     } catch (e: any) {
       toast.error(e?.message ?? (isAr ? "تعذّر التصحيح" : "Grading failed"));
     } finally {
