@@ -1327,22 +1327,30 @@ function CourseRunner({
                   </h2>
                   <ul className="space-y-3">
                     {exams.filter((e) => (e.chapter || "General") === ch).map((e) => (
-                      <li key={e.id} className="rounded-2xl border border-border bg-card p-4 flex flex-wrap items-center gap-3">
+                      <li key={e.id} className={`rounded-2xl border p-4 flex flex-wrap items-center gap-3 ${completed[e.id] ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}>
                         <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                          <FileText className="w-5 h-5" />
+                          {completed[e.id] ? <CheckCircle2 className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
                         </div>
                         <div className="flex-1 min-w-[140px]">
-                          <div className="font-semibold">{e.title}</div>
+                          <div className="font-semibold flex items-center gap-2 flex-wrap">
+                            {e.title}
+                            {completed[e.id] && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                                {isAr ? "مكتمل" : "Completed"}
+                                {completed[e.id].score !== null ? ` · ${Math.round(completed[e.id].score as number)}/${completed[e.id].out_of ?? 100}` : ""}
+                              </span>
+                            )}
+                          </div>
                           <div className="text-[11px] text-muted-foreground">
                             {new Date(e.created_at).toLocaleDateString(isAr ? "ar" : "en")}
                           </div>
                         </div>
                         <button
                           onClick={() => setSelected(e)}
-                          className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90"
+                          className={`h-9 px-4 rounded-lg text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 ${completed[e.id] ? "border border-border bg-card" : "bg-primary text-primary-foreground"}`}
                         >
                           <GraduationCap className="w-4 h-4" />
-                          {isAr ? "حلّ وصحّح" : "Solve & grade"}
+                          {completed[e.id] ? (isAr ? "إعادة الحل" : "Retake") : (isAr ? "حلّ وصحّح" : "Solve & grade")}
                         </button>
                       </li>
                     ))}
