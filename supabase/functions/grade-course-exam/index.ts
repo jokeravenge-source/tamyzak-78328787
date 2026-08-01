@@ -9,9 +9,10 @@ const corsHeaders = {
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const OCR_MODELS = [
-  // Most capable vision models first — accuracy matters more than latency here.
-  "google/gemini-2.5-pro",
+  // Fast-but-strong vision model first: the platform closes the HTTP connection
+  // if the whole request takes too long, so latency is part of correctness here.
   "google/gemini-3.5-flash",
+  "google/gemini-2.5-pro",
   "google/gemini-2.5-flash",
 ];
 const GRADE_MODELS = [
@@ -19,14 +20,21 @@ const GRADE_MODELS = [
   "google/gemini-3.5-flash",
 ];
 const STRUCTURE_MODELS = [
-  "google/gemini-2.5-pro",
   "google/gemini-3.5-flash",
+  "google/gemini-2.5-pro",
 ];
 const MAX_IMAGES = 10;
-const OCR_TIMEOUT_MS = 90_000;
-const GRADE_TIMEOUT_MS = 120_000;
-const STRUCTURE_TIMEOUT_MS = 60_000;
+// Whole-request budget. The edge runtime / proxy drops the connection well
+// before this, so every AI step must fit inside it.
+const TOTAL_BUDGET_MS = 130_000;
+const OCR_TIMEOUT_MS = 55_000;
+const GRADE_TIMEOUT_MS = 65_000;
+const STRUCTURE_TIMEOUT_MS = 25_000;
 const TOTAL_MARKS = 100;
+
+let deadline = 0;
+const msLeft = () => deadline - Date.now();
+const budgeted = (want: number) => Math.max(5_000, Math.min(want, msLeft() - 5_000));
 
 // Try each model in order. Retries on 5xx and 429. Stops immediately on 402 (credits).
 async function callAiWithFallback(
@@ -38,8 +46,12 @@ async function callAiWithFallback(
   let lastErr = "";
   let lastStatus = 500;
   for (const model of models) {
+    // Don't start another attempt we can't finish before the connection dies.
+    if (msLeft() < 8_000) {
+      return { ok: false, status: 504, error: lastErr || "Time budget exhausted." };
+    }
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), perCallTimeoutMs);
+    const timer = setTimeout(() => controller.abort(), budgeted(perCallTimeoutMs));
     try {
       const res = await fetch(AI_URL, {
         method: "POST",
@@ -87,6 +99,7 @@ async function pdfToDataUrl(supabase: { storage: ReturnType<typeof createClient>
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  deadline = Date.now() + TOTAL_BUDGET_MS;
 
   try {
     // Require a verified session before touching private exam files or the AI gateway.
@@ -172,7 +185,12 @@ Deno.serve(async (req) => {
       marks = adminMarks;
     }
 
-    if (!questionCount) {
+    // If the client already gave up, stop instead of burning AI credits.
+    if (req.signal?.aborted) return new Response(null, { status: 499, headers: corsHeaders });
+
+    // Only spend an extra AI round-trip on structure detection when there is
+    // enough time budget left; otherwise fall back to an even split.
+    if (!questionCount && msLeft() > 90_000) {
     const structureSource = answerPdf ?? examPdf;
     const structureContent: unknown[] = [
       {
@@ -201,6 +219,10 @@ question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`
     }
     if (!questionCount) questionCount = 6;
     marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
+    }
+    if (!questionCount) {
+      questionCount = 6;
+      marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
     }
 
     const markFor = (n: number) => marks[n - 1] ?? TOTAL_MARKS / questionCount;
@@ -243,7 +265,10 @@ Strict rules:
     }, OCR_TIMEOUT_MS);
     if (!ocrResult.ok) {
       const status = ocrResult.status === 402 ? 402 : 200;
-      return new Response(JSON.stringify({ error: `OCR failed: ${ocrResult.error}` }), {
+      const msg = ocrResult.status === 504
+        ? (isAr ? "استغرقت قراءة الصور وقتاً طويلاً. قلّل عدد الصور أو جرّب مرة أخرى." : "Reading your images took too long. Use fewer photos and try again.")
+        : `OCR failed: ${ocrResult.error}`;
+      return new Response(JSON.stringify({ error: msg }), {
         status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -335,7 +360,10 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
     }, GRADE_TIMEOUT_MS);
     if (!gradeResult.ok) {
       const status = gradeResult.status === 402 ? 402 : 200;
-      return new Response(JSON.stringify({ error: `Grading failed: ${gradeResult.error}` }), {
+      const msg = gradeResult.status === 504
+        ? (isAr ? "استغرق التصحيح وقتاً طويلاً. الرجاء المحاولة مرة أخرى." : "Grading took too long. Please try again.")
+        : `Grading failed: ${gradeResult.error}`;
+      return new Response(JSON.stringify({ error: msg }), {
         status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
