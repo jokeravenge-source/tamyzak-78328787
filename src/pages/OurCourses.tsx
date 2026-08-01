@@ -193,7 +193,10 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
 
   const deleteExam = async (exam: ExamRow) => {
     if (!confirm(isAr ? "حذف هذا الامتحان؟" : "Delete this exam?")) return;
-    await supabase.storage.from("course-exams").remove([exam.exam_path, exam.answer_path]);
+    // The answer-key path is admin-only and resolved server-side.
+    const { data: ansPath } = await (supabase as any).rpc("get_exam_answer_path", { _exam_id: exam.id });
+    const paths = [exam.exam_path, ...(typeof ansPath === "string" && ansPath ? [ansPath] : [])];
+    await supabase.storage.from("course-exams").remove(paths);
     const { error } = await supabase.from("course_exams").delete().eq("id", exam.id);
     if (error) { toast.error(error.message); return; }
     toast.success(isAr ? "تم الحذف" : "Deleted");
@@ -1171,8 +1174,8 @@ function CourseRunner({
     try {
       const { data, error } = await supabase.functions.invoke("grade-course-exam", {
         body: {
+          examId: selected.id,
           examPath: selected.exam_path,
-          answerPath: selected.answer_path,
           studentImages,
           examTitle: selected.title,
           language: isAr ? "ar" : "en",
@@ -1239,8 +1242,7 @@ function CourseRunner({
           subjectCode: groupOverride || course.id,
           chapter: selected.title,
           studentImages,
-          answerBucket: "course-exams",
-          answerPath: selected.answer_path,
+          examId: selected.id,
           answerFilename: `${selected.title} - answer`,
           aiScore: gradeResult
             ? `${Math.round(Number(gradeResult.total) || 0)} / ${Number(gradeResult.graded_out_of) || 100}`
