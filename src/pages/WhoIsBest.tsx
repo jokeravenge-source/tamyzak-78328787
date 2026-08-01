@@ -145,7 +145,7 @@ const WhoIsBest = ({ language, onBack, isAdmin }: { language: AppLanguage; onBac
 
 const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage; isAdmin: boolean; poll: Poll; onBack: () => void }) => {
   const [options, setOptions] = useState<Option[]>([]);
-  const [votes, setVotes] = useState<Vote[]>([]);
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({});
   const [myVote, setMyVote] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const guestKey = useMemo(() => getGuestKey(), []);
@@ -160,20 +160,21 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
 
   const load = async () => {
     setLoading(true);
-    const [{ data: opts }, { data: vts }, { data: userRes }] = await Promise.all([
+    const [{ data: opts }, { data: counts }, { data: mine }, { data: userRes }] = await Promise.all([
       supabase.from("poll_options").select("*").eq("poll_id", poll.id).order("sort_order").order("created_at"),
-      supabase.from("poll_votes").select("*").eq("poll_id", poll.id),
+      (supabase as any).rpc("poll_vote_counts", { _poll_id: poll.id }),
+      (supabase as any).rpc("my_poll_vote", { _poll_id: poll.id, _guest_key: guestKey }),
       supabase.auth.getUser(),
     ]);
     const uid = userRes.user?.id ?? null;
     setOptions((opts as Option[]) || []);
-    setVotes((vts as Vote[]) || []);
+    const cMap: Record<string, number> = {};
+    ((counts ?? []) as { option_id: string; votes: number }[]).forEach((r) => {
+      cMap[r.option_id] = Number(r.votes) || 0;
+    });
+    setVoteCounts(cMap);
     setUserId(uid);
-    setMyVote(
-      ((vts as Vote[]) || []).find((v) =>
-        uid ? v.user_id === uid : v.guest_key === guestKey,
-      )?.option_id ?? null,
-    );
+    setMyVote((mine as string | null) ?? null);
     if (uid) {
       const { data: reqs } = await (supabase as any)
         .from("poll_option_requests")
@@ -192,12 +193,11 @@ const PollDetail = ({ language, isAdmin, poll, onBack }: { language: AppLanguage
 
   useEffect(() => { load(); }, [poll.id]);
 
-  const totalVotes = votes.length;
-  const countByOption = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const v of votes) m[v.option_id] = (m[v.option_id] || 0) + 1;
-    return m;
-  }, [votes]);
+  const countByOption = voteCounts;
+  const totalVotes = useMemo(
+    () => Object.values(voteCounts).reduce((a, b) => a + b, 0),
+    [voteCounts],
+  );
 
   const sortedOptions = useMemo(
     () =>
