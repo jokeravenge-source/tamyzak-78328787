@@ -1,4 +1,4 @@
-import { claimFeature } from "../_shared/entitlement.ts";
+import { requireUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
