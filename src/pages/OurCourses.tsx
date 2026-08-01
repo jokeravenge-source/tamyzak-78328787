@@ -1117,6 +1117,23 @@ function CourseRunner({
     setHumanSent(false);
   }, [selected]);
 
+  // Which exams of this course the student already finished.
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await (supabase as any)
+        .from("course_exam_completions")
+        .select("exam_id, score, graded_out_of")
+        .eq("user_id", user.id);
+      const map: Record<string, { score: number | null; out_of: number | null }> = {};
+      ((data ?? []) as any[]).forEach((r) => {
+        map[r.exam_id] = { score: r.score === null ? null : Number(r.score), out_of: r.graded_out_of === null ? null : Number(r.graded_out_of) };
+      });
+      setCompleted(map);
+    })();
+  }, [course.id]);
+
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     const next: string[] = [];
