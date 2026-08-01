@@ -22,10 +22,6 @@ type NavItem = {
 
 const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKey?: MainMenuChoice; locked?: boolean }[] = [
   {
-    titleEn: "Home", titleAr: "الرئيسية",
-    items: [],
-  },
-  {
     titleEn: "Subjects", titleAr: "المواد",
     items: [
       { key: "ourCourses", labelEn: "Our Courses", labelAr: "دوراتنا", Icon: CoursesIcon },
@@ -36,20 +32,30 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     titleEn: "Study", titleAr: "الأدوات",
     items: [
       { key: "notes", labelEn: "Notes", labelAr: "ملاحظاتي", Icon: NotebookPen },
+      { key: "canvas", labelEn: "Canvas", labelAr: "اللوحة", Icon: Palette },
       { key: "summaries", labelEn: "Summaries", labelAr: "الملخصات", Icon: FileText },
       { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
       { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
       { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
+      { key: "textToVideo", labelEn: "Text → Video", labelAr: "نص إلى فيديو", Icon: Video },
+      { key: "youtube", labelEn: "YouTube Player", labelAr: "مشغّل يوتيوب", Icon: Youtube },
+      { key: "essay", labelEn: "Al-Musahhih", labelAr: "المُصحِّح", Icon: BookOpen },
       { key: "companion", labelEn: "AI Companion", labelAr: "المرافق الذكي", Icon: Sparkles },
-      { key: "more", labelEn: "All tools", labelAr: "كل الأدوات", Icon: Layers },
+      { key: "psych", labelEn: "Psych Assistant", labelAr: "المساعد النفسي", Icon: Heart },
     ],
+  },
+  {
+    titleEn: "Home", titleAr: "الرئيسية",
+    items: [],
   },
   {
     titleEn: "Community", titleAr: "المجتمع",
     items: [
       { key: "teachers", labelEn: "Our Teachers", labelAr: "مدرسينا", Icon: Users2 },
       { key: "news", labelEn: "News", labelAr: "الأخبار", Icon: Newspaper },
+      { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
       { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
+      { key: "sessions", labelEn: "Sessions", labelAr: "الجلسات", Icon: GraduationCap },
       { key: "leaderboard", labelEn: "Leaderboard", labelAr: "المتصدرون", Icon: Trophy },
     ],
   },
@@ -57,6 +63,11 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     titleEn: "Who is best?", titleAr: "من الأفضل؟",
     directKey: "whoIsBest",
     items: [],
+  },
+  {
+    titleEn: "Notes", titleAr: "الملاحظات",
+    items: [],
+    locked: true,
   },
 ];
 
@@ -130,11 +141,6 @@ const BottomGroupNav = ({
                     key={it.key}
                     whileTap={{ scale: 0.94 }}
                     onClick={() => {
-                      if (it.key === "more") {
-                        onSelect("basics");
-                        setTimeout(() => window.dispatchEvent(new Event("app:show-all-tools")), 60);
-                        return;
-                      }
                       if (it.subject) {
                         try {
                           localStorage.setItem("app_subject_focus_v1", it.subject);
