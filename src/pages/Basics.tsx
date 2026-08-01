@@ -272,6 +272,13 @@ const Basics = ({
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
 
+  // Allow the bottom nav "All tools" chip to open the full tools screen.
+  useEffect(() => {
+    const open = () => setShowAllTools(true);
+    window.addEventListener("app:show-all-tools", open);
+    return () => window.removeEventListener("app:show-all-tools", open);
+  }, []);
+
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
     let total = 0;
