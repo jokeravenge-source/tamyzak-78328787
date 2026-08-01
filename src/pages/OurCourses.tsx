@@ -632,6 +632,41 @@ function UploadModal({
         </button>
         <input ref={ansRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => setAnsFile(e.target.files?.[0] ?? null)} />
 
+        <label className="block text-xs font-semibold mb-1">{isAr ? "عدد الأسئلة" : "Number of questions"}</label>
+        <input
+          type="number"
+          min={1}
+          max={30}
+          value={qCount}
+          onChange={(e) => setCount(Number(e.target.value))}
+          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm mb-3"
+        />
+
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-xs font-semibold">{isAr ? "درجة كل سؤال" : "Marks per question"}</label>
+          <button type="button" onClick={distributeEvenly} className="text-[11px] font-semibold text-primary hover:underline">
+            {isAr ? "توزيع متساوٍ" : "Distribute evenly"}
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mb-1">
+          {Array.from({ length: qCount }, (_, i) => (
+            <div key={i} className="flex items-center gap-1">
+              <span className="text-[11px] text-muted-foreground w-6 shrink-0">{isAr ? `س${i + 1}` : `Q${i + 1}`}</span>
+              <input
+                type="number"
+                min={0}
+                step="0.5"
+                value={marks[i] ?? ""}
+                onChange={(e) => setMarks((prev) => { const n = [...prev]; n[i] = e.target.value; return n; })}
+                className="w-full h-9 px-2 rounded-lg border border-border bg-background text-sm"
+              />
+            </div>
+          ))}
+        </div>
+        <p className={`text-[11px] mb-3 ${Math.abs(marksTotal - 100) > 0.5 ? "text-destructive" : "text-muted-foreground"}`}>
+          {isAr ? `المجموع: ${marksTotal} / 100` : `Total: ${marksTotal} / 100`}
+        </p>
+
         <p className="text-[11px] text-muted-foreground mb-3">
           {isAr
             ? "سيستخدم الذكاء الاصطناعي ورقة الإجابة كمرجع لتصحيح أوراق الطلاب تلقائياً."
