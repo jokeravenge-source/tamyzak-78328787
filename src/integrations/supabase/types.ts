@@ -1776,6 +1776,7 @@ export type Database = {
       }
       increment_site_visits: { Args: never; Returns: number }
       is_course_enrolled: { Args: { _course: string }; Returns: boolean }
+      is_course_student: { Args: never; Returns: boolean }
       is_course_teacher: { Args: { _course: string }; Returns: boolean }
       list_subject_chapters: {
         Args: { _subject: string }
