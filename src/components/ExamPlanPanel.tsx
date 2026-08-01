@@ -294,6 +294,19 @@ const ExamPlanPanel = ({
       {loading && <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />...</div>}
 
       {!loading && dueItem && !editing && (
+        <></>
+      )}
+      {!loading && planExpired && !editing && (
+        <div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3.5">
+          <p className="text-sm font-semibold">{isAr ? "انتهت خطتك (5 أيام)" : "Your 5-day plan has ended"}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {isAr
+              ? "أعد اختيار موادك لخطة الـ 5 أيام القادمة قبل أن تتمكن من دخول الامتحانات."
+              : "Pick your subjects again for the next 5 days before you can take exams."}
+          </p>
+        </div>
+      )}
+      {!loading && dueItem && !editing && !planExpired && (
         <div className="mt-4 rounded-xl border border-primary/40 bg-primary/10 p-3.5 flex items-start gap-3">
           <Bell className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
           <div className="flex-1">
@@ -339,7 +352,7 @@ const ExamPlanPanel = ({
                   <div key={id} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
                     <span className="w-6 h-6 rounded-md bg-secondary text-xs font-bold flex items-center justify-center">{i + 1}</span>
                     <span className="flex-1 text-sm font-medium">{label(id)}</span>
-                    <span className="text-xs text-muted-foreground">{addDays(plan?.start_date ?? today, examOffsets(picked.length)[i])}</span>
+                    <span className="text-xs text-muted-foreground">{addDays(plan && !planExpired ? plan.start_date : today, examOffsets(picked.length)[i])}</span>
                     <button onClick={() => move(i, -1)} className="w-7 h-7 rounded-md border border-border flex items-center justify-center hover:bg-secondary"><ChevronUp className="w-3.5 h-3.5" /></button>
                     <button onClick={() => move(i, 1)} className="w-7 h-7 rounded-md border border-border flex items-center justify-center hover:bg-secondary"><ChevronDown className="w-3.5 h-3.5" /></button>
                   </div>
