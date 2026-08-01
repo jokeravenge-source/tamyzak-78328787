@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo, Video, BookOpen, Languages } from "lucide-react";
+import { Dna, FlaskConical, Sigma, Atom, FileText, ScanLine, Upload, Sparkles, ArrowLeft, Lock, Plus, Trash2, Loader2, X, ShieldCheck, Zap, ArrowRight, ImagePlus, GraduationCap, ExternalLink, Send, Youtube, ListVideo, Video, BookOpen, Languages, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppLanguage } from "@/components/LanguageGate";
