@@ -1127,6 +1127,27 @@ export type Database = {
         }
         Relationships: []
       }
+      request_rate_limits: {
+        Row: {
+          feature: string
+          id: string
+          requested_at: string
+          user_id: string
+        }
+        Insert: {
+          feature: string
+          id?: string
+          requested_at?: string
+          user_id: string
+        }
+        Update: {
+          feature?: string
+          id?: string
+          requested_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_stats: {
         Row: {
           count: number
@@ -1656,6 +1677,14 @@ export type Database = {
       award_points_safe: {
         Args: { _points: number; _ref_id?: string; _source: string }
         Returns: string
+      }
+      check_rate_limit: {
+        Args: {
+          _feature: string
+          _max_requests?: number
+          _window_seconds?: number
+        }
+        Returns: boolean
       }
       claim_daily_feature: { Args: { _feature: string }; Returns: boolean }
       feature_usage_today: { Args: { _feature: string }; Returns: number }

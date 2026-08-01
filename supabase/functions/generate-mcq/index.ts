@@ -2,6 +2,7 @@ import { generateText, Output } from "npm:ai";
 import { z } from "npm:zod";
 import { createLovableAiGatewayProvider } from "../_shared/ai-gateway.ts";
 import { claimFeature } from "../_shared/entitlement.ts";
+import { enforceRateLimit } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,6 +64,9 @@ Deno.serve(async (req) => {
       : "";
 
     if (!content && pageImages.length === 0 && !pdfData) return json({ error: "Missing study material" }, 400);
+
+    const limited = await enforceRateLimit(req, "mcq", 3, 60);
+    if (!limited.ok) return json({ error: limited.error }, limited.status);
 
     const entitlement = await claimFeature(req, "mcq");
     if (!entitlement.ok) return json({ error: entitlement.error, upgrade: entitlement.status === 429 }, entitlement.status);
