@@ -500,6 +500,7 @@ const Basics = ({
   const activeCopy = todoCopy;
   const toolsHeader = { en: "Study tools", ar: "أدوات الدراسة" }[language];
   const viewAll = { en: "View all tools", ar: "عرض كل الأدوات" }[language];
+  const startHere = { en: "Start here", ar: "ابدأ من هنا" }[language];
 
   const SidebarBody = () => (
     <>
