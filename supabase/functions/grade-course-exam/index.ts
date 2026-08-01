@@ -99,6 +99,7 @@ async function pdfToDataUrl(supabase: { storage: ReturnType<typeof createClient>
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  deadline = Date.now() + TOTAL_BUDGET_MS;
 
   try {
     // Require a verified session before touching private exam files or the AI gateway.
@@ -184,7 +185,12 @@ Deno.serve(async (req) => {
       marks = adminMarks;
     }
 
-    if (!questionCount) {
+    // If the client already gave up, stop instead of burning AI credits.
+    if (req.signal?.aborted) return new Response(null, { status: 499, headers: corsHeaders });
+
+    // Only spend an extra AI round-trip on structure detection when there is
+    // enough time budget left; otherwise fall back to an even split.
+    if (!questionCount && msLeft() > 90_000) {
     const structureSource = answerPdf ?? examPdf;
     const structureContent: unknown[] = [
       {
@@ -213,6 +219,10 @@ question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`
     }
     if (!questionCount) questionCount = 6;
     marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
+    }
+    if (!questionCount) {
+      questionCount = 6;
+      marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
     }
 
     const markFor = (n: number) => marks[n - 1] ?? TOTAL_MARKS / questionCount;
