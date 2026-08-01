@@ -34,7 +34,17 @@ const addDays = (iso: string, days: number): string => {
 const daysBetween = (from: string, to: string): number =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
 
-const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects: PlanSubject[] }) => {
+export const PLAN_VALID_DAYS = 5;
+
+const ExamPlanPanel = ({
+  language,
+  subjects,
+  onPlanStatus,
+}: {
+  language: AppLanguage;
+  subjects: PlanSubject[];
+  onPlanStatus?: (active: boolean) => void;
+}) => {
   const isAr = language === "ar";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,10 +86,14 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
         const row = data as PlanRow;
         setPlan(row);
         setPicked(row.subjects);
+        const expired = daysBetween(row.start_date, todayBaghdad()) >= PLAN_VALID_DAYS;
         if (!hasProfile) {
           setFullName(prof?.full_name ?? row.full_name ?? "");
           setTgUser(prof?.telegram_username ?? row.telegram_username ?? "");
           setEditing(true); setStage("profile");
+        } else if (expired) {
+          // The plan only lasts 5 days — after that the student must make a new one.
+          setEditing(true); setStage("subjects");
         }
       } else {
         setEditing(true);
@@ -100,6 +114,13 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
   }, [plan]);
 
   const today = todayBaghdad();
+  const planExpired = plan ? daysBetween(plan.start_date, today) >= PLAN_VALID_DAYS : false;
+  const planActive = Boolean(plan) && !planExpired;
+
+  useEffect(() => {
+    if (!loading) onPlanStatus?.(planActive);
+  }, [planActive, loading, onPlanStatus]);
+
   const dueItem = useMemo(() => {
     if (!plan) return null;
     const past = schedule.filter((s) => daysBetween(s.date, today) >= 0);
@@ -139,7 +160,7 @@ const ExamPlanPanel = ({ language, subjects }: { language: AppLanguage; subjects
     const row = {
       user_id: user.id,
       subjects: picked,
-      start_date: plan?.start_date ?? today,
+      start_date: plan && !planExpired ? plan.start_date : today,
       interval_days: 5,
       acknowledged_step: -1,
       full_name: cleanName,
