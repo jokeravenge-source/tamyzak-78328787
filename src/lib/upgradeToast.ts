@@ -19,8 +19,8 @@ export function handleAiError(err: any, opts?: { onUpgrade?: () => void; languag
   if (upgrade || /429|free uses|free daily use|Premium/i.test(String(message))) {
     toast.error(
       lang === "ar"
-        ? `استهلكت استخدامك اليومي المجاني. ${RESET_LABEL_AR}. رقّ إلى البريميوم للاستخدام غير المحدود.`
-        : `You've used your free daily use of this tool. It ${RESET_LABEL_EN}. Upgrade to Premium for unlimited access.`,
+        ? `استهلكت استخداماتك المجانية الخمسة اليومية. ${RESET_LABEL_AR}. رقّ إلى البريميوم للاستخدام غير المحدود.`
+        : `You've used your 5 free daily uses of this tool. It ${RESET_LABEL_EN}. Upgrade to Premium for unlimited access.`,
       {
         action: opts?.onUpgrade
           ? { label: lang === "ar" ? "ترقية" : "Upgrade", onClick: opts.onUpgrade }
