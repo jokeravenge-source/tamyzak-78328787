@@ -19,6 +19,8 @@ type Challenge = {
   status: string;
   seconds_per_question: number;
   created_at: string;
+  starts_at: string | null;
+  image_url: string | null;
 };
 
 type Question = {
@@ -42,6 +44,49 @@ type Attempt = {
 type Draft = { question: string; choices: string[]; answer_index: number; explanation?: string };
 
 const fmtMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
+
+const toLocalInput = (iso: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+const useCountdown = (target: string | null) => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!target) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [target]);
+  if (!target) return null;
+  const ms = new Date(target).getTime() - now;
+  if (Number.isNaN(ms)) return null;
+  return {
+    started: ms <= 0,
+    days: Math.floor(Math.max(0, ms) / 86400000),
+    hours: Math.floor((Math.max(0, ms) % 86400000) / 3600000),
+    minutes: Math.floor((Math.max(0, ms) % 3600000) / 60000),
+    seconds: Math.floor((Math.max(0, ms) % 60000) / 1000),
+  };
+};
+
+const Countdown = ({ language, target, className = "" }: { language: AppLanguage; target: string | null; className?: string }) => {
+  const c = useCountdown(target);
+  if (!c) return null;
+  if (c.started) {
+    return <span className={`inline-flex items-center gap-1 text-emerald-500 font-semibold ${className}`}>
+      <Play className="h-3.5 w-3.5" /> {T(language, "التحدي متاح الآن", "Live now")}
+    </span>;
+  }
+  const p = (n: number) => String(n).padStart(2, "0");
+  return (
+    <span className={`inline-flex items-center gap-1 font-semibold tabular-nums ${className}`} dir="ltr">
+      <CalendarClock className="h-3.5 w-3.5" />
+      {c.days > 0 ? `${c.days}${T(language, "ي", "d")} ` : ""}{p(c.hours)}:{p(c.minutes)}:{p(c.seconds)}
+    </span>
+  );
+};
 
 const ChallengePage = ({
   language, onBack, isAdmin,
