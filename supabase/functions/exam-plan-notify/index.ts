@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,6 +55,15 @@ Deno.serve(async (req) => {
     new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
+    // Server-side authorization: only an admin user, or an internal scheduler
+    // calling with the service-role key, may trigger this broadcast.
+    const bearer = (req.headers.get("Authorization") ?? "").replace("Bearer ", "").trim();
+    const isInternal = bearer.length > 0 && bearer === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!isInternal) {
+      const adminAuth = await requireAdmin(req);
+      if (!adminAuth.ok) return json({ error: adminAuth.error }, adminAuth.status);
+    }
+
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const baghdad = new Date(Date.now() + 3 * 60 * 60 * 1000);
