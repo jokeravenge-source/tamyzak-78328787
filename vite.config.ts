@@ -47,7 +47,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    headers: { ...securityHeaders, "X-Frame-Options": "ALLOWALL", "Content-Security-Policy": CSP_DEV },
+    headers: { ...securityHeaders, "Content-Security-Policy": CSP_DEV },
     hmr: {
       overlay: false,
     },
