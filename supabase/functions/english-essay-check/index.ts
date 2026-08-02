@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
@@ -10,6 +11,8 @@ const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const guard = await protect(req, "english-essay-check", { max: 8, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {

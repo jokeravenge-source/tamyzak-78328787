@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { requireUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
@@ -10,6 +11,8 @@ const AI_MODEL = "google/gemini-2.5-flash";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const guard = await protect(req, "simplify-reaction", { max: 10, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const auth = await requireUser(req);
     if (!auth.ok) {

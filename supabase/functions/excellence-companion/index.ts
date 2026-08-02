@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { requireUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
@@ -84,6 +85,8 @@ function systemFor(mode: string, language: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const guard = await protect(req, "excellence-companion", { max: 15, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const json200 = (obj: Record<string, unknown>) =>
     new Response(JSON.stringify(obj), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {

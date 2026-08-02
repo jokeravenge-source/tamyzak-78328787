@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 // Owner-only endpoint that asks the AI to design 30 distinct 2D mini-games
 // for the current Baghdad month. Each day 1..30 gets its own engine + spec
 // derived from that day's rotating subject and the admin-uploaded Ch1
@@ -13,6 +14,8 @@ type Card = { question: string; answer: string };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const guard = await protect(req, "generate-daily-games", { max: 5, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const auth = req.headers.get("Authorization") ?? "";
     if (!auth.startsWith("Bearer ")) {

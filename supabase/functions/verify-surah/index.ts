@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
@@ -22,6 +23,8 @@ function stripDiacritics(s: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const guard = await protect(req, "verify-surah", { max: 8, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const { surah, language, surahName, referenceText } = await req.json();
     if (!surah || typeof surah !== "string" || !surah.trim()) {

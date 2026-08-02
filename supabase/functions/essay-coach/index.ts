@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { claimFeature } from "../_shared/entitlement.ts";
 
@@ -13,6 +14,8 @@ const MAX_PAGE_IMAGES = 20;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const guard = await protect(req, "essay-coach", { max: 8, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const body = await req.json();
     const mode = body.mode as "generate" | "grade";
