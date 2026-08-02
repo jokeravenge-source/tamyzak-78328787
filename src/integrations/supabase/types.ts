@@ -269,8 +269,10 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          image_url: string | null
           language: string
           seconds_per_question: number
+          starts_at: string | null
           status: string
           title: string
           updated_at: string
@@ -280,8 +282,10 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           language?: string
           seconds_per_question?: number
+          starts_at?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -291,8 +295,10 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           language?: string
           seconds_per_question?: number
+          starts_at?: string | null
           status?: string
           title?: string
           updated_at?: string

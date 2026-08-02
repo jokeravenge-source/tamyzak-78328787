@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Upload, Loader2, Trophy, Timer, Check, X, Sparkles,
-  Trash2, Play, ChevronRight, Medal,
+  Trash2, Play, ChevronRight, Medal, CalendarClock, Lock, Image as ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ type Challenge = {
   status: string;
   seconds_per_question: number;
   created_at: string;
+  starts_at: string | null;
+  image_url: string | null;
 };
 
 type Question = {
@@ -42,6 +44,49 @@ type Attempt = {
 type Draft = { question: string; choices: string[]; answer_index: number; explanation?: string };
 
 const fmtMs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
+
+const toLocalInput = (iso: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+const useCountdown = (target: string | null) => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!target) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [target]);
+  if (!target) return null;
+  const ms = new Date(target).getTime() - now;
+  if (Number.isNaN(ms)) return null;
+  return {
+    started: ms <= 0,
+    days: Math.floor(Math.max(0, ms) / 86400000),
+    hours: Math.floor((Math.max(0, ms) % 86400000) / 3600000),
+    minutes: Math.floor((Math.max(0, ms) % 3600000) / 60000),
+    seconds: Math.floor((Math.max(0, ms) % 60000) / 1000),
+  };
+};
+
+const Countdown = ({ language, target, className = "" }: { language: AppLanguage; target: string | null; className?: string }) => {
+  const c = useCountdown(target);
+  if (!c) return null;
+  if (c.started) {
+    return <span className={`inline-flex items-center gap-1 text-emerald-500 font-semibold ${className}`}>
+      <Play className="h-3.5 w-3.5" /> {T(language, "التحدي متاح الآن", "Live now")}
+    </span>;
+  }
+  const p = (n: number) => String(n).padStart(2, "0");
+  return (
+    <span className={`inline-flex items-center gap-1 font-semibold tabular-nums ${className}`} dir="ltr">
+      <CalendarClock className="h-3.5 w-3.5" />
+      {c.days > 0 ? `${c.days}${T(language, "ي", "d")} ` : ""}{p(c.hours)}:{p(c.minutes)}:{p(c.seconds)}
+    </span>
+  );
+};
 
 const ChallengePage = ({
   language, onBack, isAdmin,
@@ -113,39 +158,124 @@ const ChallengePage = ({
         ) : (
           <div className="grid gap-3">
             {items.map((c) => (
-              <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-border bg-card p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">{c.title}</p>
-                    {c.description && <p className="text-sm text-muted-foreground line-clamp-2">{c.description}</p>}
-                    <p className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1">
-                      <Timer className="h-3 w-3" /> {c.seconds_per_question}s / {T(language, "سؤال", "question")}
-                      {c.status !== "published" && <span className="ms-2 px-2 py-0.5 rounded bg-amber-500/15 text-amber-600">{T(language, "مسودة", "Draft")}</span>}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isAdmin && (
-                      <>
-                        <button onClick={() => publish(c)} className="h-9 px-3 rounded-lg border border-border text-xs font-medium">
-                          {c.status === "published" ? T(language, "إخفاء", "Unpublish") : T(language, "نشر", "Publish")}
-                        </button>
-                        <button onClick={() => remove(c.id)} className="h-9 w-9 rounded-lg border border-border inline-flex items-center justify-center text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </>
-                    )}
-                    <button onClick={() => setSelected(c)} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-1">
-                      <Play className="h-4 w-4" /> {T(language, "ابدأ", "Start")}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
+              <ChallengeCard key={c.id} language={language} challenge={c} isAdmin={isAdmin}
+                onOpen={() => setSelected(c)} onPublish={() => publish(c)} onRemove={() => remove(c.id)}
+                onChanged={load} />
             ))}
           </div>
         )}
       </div>
     </main>
+  );
+};
+
+const ChallengeCard = ({
+  language, challenge: c, isAdmin, onOpen, onPublish, onRemove, onChanged,
+}: {
+  language: AppLanguage; challenge: Challenge; isAdmin: boolean;
+  onOpen: () => void; onPublish: () => void; onRemove: () => void; onChanged: () => void;
+}) => {
+  const cd = useCountdown(c.starts_at);
+  const locked = !!cd && !cd.started && !isAdmin;
+  const [when, setWhen] = useState(() => toLocalInput(c.starts_at));
+  const [saving, setSaving] = useState(false);
+
+  const saveStart = async (value: string) => {
+    setWhen(value);
+    setSaving(true);
+    const { error } = await supabase.from("challenges")
+      .update({ starts_at: value ? new Date(value).toISOString() : null }).eq("id", c.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(T(language, "تم تحديث وقت البدء", "Start time updated"));
+    onChanged();
+  };
+
+  const saveImage = async (f: File) => {
+    setSaving(true);
+    try {
+      const ext = f.name.split(".").pop() || "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("challenges").upload(path, f, { upsert: true });
+      if (upErr) throw upErr;
+      const url = supabase.storage.from("challenges").getPublicUrl(path).data.publicUrl;
+      const { error } = await supabase.from("challenges").update({ image_url: url }).eq("id", c.id);
+      if (error) throw error;
+      toast.success(T(language, "تم تحديث الصورة", "Image updated"));
+      onChanged();
+    } catch (e: any) {
+      toast.error(e.message || "Failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      className="relative rounded-2xl border border-border overflow-hidden bg-card">
+      {c.image_url && (
+        <>
+          <img src={c.image_url} alt={c.title} loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/50" />
+        </>
+      )}
+      <div className="relative p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-bold text-lg truncate">{c.title}</p>
+            {c.description && <p className="text-sm text-muted-foreground line-clamp-2">{c.description}</p>}
+            <p className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1 flex-wrap">
+              <Timer className="h-3 w-3" /> {c.seconds_per_question}s / {T(language, "سؤال", "question")}
+              {c.status !== "published" && <span className="ms-2 px-2 py-0.5 rounded bg-amber-500/15 text-amber-600">{T(language, "مسودة", "Draft")}</span>}
+            </p>
+            {c.starts_at && (
+              <div className="mt-2 text-xs">
+                <span className="text-muted-foreground me-2">
+                  {cd?.started ? "" : T(language, "يبدأ بعد", "Starts in")}
+                </span>
+                <Countdown language={language} target={c.starts_at} className="text-primary text-sm" />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {new Date(c.starts_at).toLocaleString(language === "ar" ? "ar-IQ" : "en-GB")}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {isAdmin && (
+              <>
+                <button onClick={onPublish} className="h-9 px-3 rounded-lg border border-border bg-card/70 text-xs font-medium">
+                  {c.status === "published" ? T(language, "إخفاء", "Unpublish") : T(language, "نشر", "Publish")}
+                </button>
+                <button onClick={onRemove} className="h-9 w-9 rounded-lg border border-border bg-card/70 inline-flex items-center justify-center text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
+            )}
+            <button onClick={onOpen}
+              className={`h-9 px-4 rounded-lg text-sm font-semibold inline-flex items-center gap-1 ${
+                locked ? "border border-border bg-card/70 text-muted-foreground" : "bg-primary text-primary-foreground"
+              }`}>
+              {locked ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {locked ? T(language, "قريباً", "Soon") : T(language, "ابدأ", "Start")}
+            </button>
+          </div>
+        </div>
+        {isAdmin && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+            <input type="datetime-local" value={when} disabled={saving}
+              onChange={(e) => saveStart(e.target.value)}
+              className="h-9 px-2 rounded-lg border border-border bg-background/80 text-xs" />
+            <label className="h-9 px-3 rounded-lg border border-border bg-background/80 text-xs font-medium inline-flex items-center gap-1 cursor-pointer">
+              <ImageIcon className="h-3.5 w-3.5" /> {T(language, "تغيير الصورة", "Change image")}
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) saveImage(f); }} />
+            </label>
+            {saving && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 };
 
@@ -156,6 +286,9 @@ const AdminCreate = ({ language, onDone }: { language: AppLanguage; onDone: () =
   const [seconds, setSeconds] = useState(15);
   const [qLang, setQLang] = useState<AppLanguage>(language);
   const [file, setFile] = useState<File | null>(null);
+  const [startsAt, setStartsAt] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [drafts, setDrafts] = useState<Draft[] | null>(null);
 
@@ -198,6 +331,14 @@ const AdminCreate = ({ language, onDone }: { language: AppLanguage; onDone: () =
     setBusy(true);
     try {
       const { data: userRes } = await supabase.auth.getUser();
+      let imageUrl: string | null = null;
+      if (image) {
+        const ext = image.name.split(".").pop() || "jpg";
+        const path = `${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("challenges").upload(path, image, { upsert: true });
+        if (upErr) throw upErr;
+        imageUrl = supabase.storage.from("challenges").getPublicUrl(path).data.publicUrl;
+      }
       const { data: ch, error } = await supabase
         .from("challenges")
         .insert({
@@ -206,6 +347,8 @@ const AdminCreate = ({ language, onDone }: { language: AppLanguage; onDone: () =
           language: qLang,
           status: "published",
           seconds_per_question: seconds,
+          starts_at: startsAt ? new Date(startsAt).toISOString() : null,
+          image_url: imageUrl,
           created_by: userRes.user?.id ?? null,
         })
         .select("id")
@@ -269,6 +412,29 @@ const AdminCreate = ({ language, onDone }: { language: AppLanguage; onDone: () =
                 </button>
               ))}
             </div>
+            <label className="block text-sm">
+              <span className="text-muted-foreground inline-flex items-center gap-1">
+                <CalendarClock className="h-4 w-4" /> {T(language, "وقت وتاريخ بدء التحدي", "Challenge start date & time")}
+              </span>
+              <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)}
+                className="mt-1 w-full h-11 px-3 rounded-lg border border-border bg-background" />
+            </label>
+            <label className="block rounded-xl border border-dashed border-border p-4 text-center cursor-pointer hover:bg-secondary/50">
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setImage(f);
+                  setImagePreview(f ? URL.createObjectURL(f) : null);
+                }} />
+              {imagePreview ? (
+                <img src={imagePreview} alt="" className="mx-auto h-28 w-full object-cover rounded-lg" />
+              ) : (
+                <>
+                  <ImageIcon className="h-5 w-5 mx-auto mb-2 text-primary" />
+                  <span className="text-sm">{T(language, "صورة التحدي (خلفية البطاقة)", "Challenge image (card background)")}</span>
+                </>
+              )}
+            </label>
             <label className="block rounded-xl border border-dashed border-border p-5 text-center cursor-pointer hover:bg-secondary/50">
               <input type="file" accept="application/pdf,.pdf,.docx,.txt" className="hidden"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
@@ -440,6 +606,8 @@ const ChallengeRunner = ({
   const answered = picked !== null || timedOut;
   const isRight = picked !== null && !!q && picked === q.answer_index;
   const board = useMemo(() => attempts.slice(0, 50), [attempts]);
+  const cd = useCountdown(challenge.starts_at);
+  const notStarted = !!cd && !cd.started;
 
   if (loading) {
     return <main className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></main>;
@@ -453,21 +621,43 @@ const ChallengeRunner = ({
         </button>
         {phase === "intro" && (
           <div className="space-y-5">
-            <div className="rounded-2xl border border-border bg-card p-6 text-center">
+            <div className="relative rounded-2xl border border-border bg-card p-6 text-center overflow-hidden">
+              {challenge.image_url && (
+                <>
+                  <img src={challenge.image_url} alt={challenge.title} className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px]" />
+                </>
+              )}
+              <div className="relative">
               <h1 className="text-2xl font-bold">{challenge.title}</h1>
               {challenge.description && <p className="text-muted-foreground mt-2 text-sm">{challenge.description}</p>}
               <p className="text-sm text-muted-foreground mt-3">
                 {questions.length} {T(language, "سؤال", "questions")} · {perQ}s {T(language, "لكل سؤال", "each")}
               </p>
+              {challenge.starts_at && (
+                <div className="mt-4">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {notStarted ? T(language, "يبدأ التحدي بعد", "Challenge starts in") : T(language, "بدأ في", "Started at")}
+                  </p>
+                  {notStarted
+                    ? <Countdown language={language} target={challenge.starts_at} className="text-2xl text-primary" />
+                    : <Countdown language={language} target={challenge.starts_at} className="text-sm" />}
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {new Date(challenge.starts_at).toLocaleString(language === "ar" ? "ar-IQ" : "en-GB")}
+                  </p>
+                </div>
+              )}
               {myAttempt && (
                 <p className="text-sm mt-2 text-primary font-medium">
                   {T(language, "أفضل نتيجة لك", "Your best")}: {myAttempt.correct_count}/{myAttempt.total_count} · {fmtMs(myAttempt.total_ms)}
                 </p>
               )}
-              <button onClick={begin} disabled={questions.length === 0}
+              <button onClick={begin} disabled={questions.length === 0 || notStarted}
                 className="mt-5 h-12 px-8 rounded-xl bg-primary text-primary-foreground font-semibold inline-flex items-center gap-2 disabled:opacity-60">
-                <Play className="h-4 w-4" /> {T(language, "ابدأ التحدي", "Start challenge")}
+                {notStarted ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                {notStarted ? T(language, "لم يبدأ بعد", "Not started yet") : T(language, "ابدأ التحدي", "Start challenge")}
               </button>
+              </div>
             </div>
             <LeaderboardCard language={language} rows={board} />
           </div>
