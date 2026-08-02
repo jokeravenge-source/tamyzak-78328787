@@ -365,6 +365,29 @@ const AdminCreate = ({ language, onDone }: { language: AppLanguage; onDone: () =
                 </button>
               ))}
             </div>
+            <label className="block text-sm">
+              <span className="text-muted-foreground inline-flex items-center gap-1">
+                <CalendarClock className="h-4 w-4" /> {T(language, "وقت وتاريخ بدء التحدي", "Challenge start date & time")}
+              </span>
+              <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)}
+                className="mt-1 w-full h-11 px-3 rounded-lg border border-border bg-background" />
+            </label>
+            <label className="block rounded-xl border border-dashed border-border p-4 text-center cursor-pointer hover:bg-secondary/50">
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setImage(f);
+                  setImagePreview(f ? URL.createObjectURL(f) : null);
+                }} />
+              {imagePreview ? (
+                <img src={imagePreview} alt="" className="mx-auto h-28 w-full object-cover rounded-lg" />
+              ) : (
+                <>
+                  <ImageIcon className="h-5 w-5 mx-auto mb-2 text-primary" />
+                  <span className="text-sm">{T(language, "صورة التحدي (خلفية البطاقة)", "Challenge image (card background)")}</span>
+                </>
+              )}
+            </label>
             <label className="block rounded-xl border border-dashed border-border p-5 text-center cursor-pointer hover:bg-secondary/50">
               <input type="file" accept="application/pdf,.pdf,.docx,.txt" className="hidden"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
