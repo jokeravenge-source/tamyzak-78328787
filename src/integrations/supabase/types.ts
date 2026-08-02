@@ -720,6 +720,30 @@ export type Database = {
         }
         Relationships: []
       }
+      edge_rate_limits: {
+        Row: {
+          bucket_key: string
+          feature: string
+          id: number
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          bucket_key: string
+          feature: string
+          id?: number
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          bucket_key?: string
+          feature?: string
+          id?: number
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       feature_usage: {
         Row: {
           created_at: string
@@ -1751,6 +1775,15 @@ export type Database = {
       award_points_safe: {
         Args: { _points: number; _ref_id?: string; _source: string }
         Returns: string
+      }
+      check_edge_rate_limit: {
+        Args: {
+          _feature: string
+          _key: string
+          _max_requests?: number
+          _window_seconds?: number
+        }
+        Returns: boolean
       }
       check_rate_limit: {
         Args: {

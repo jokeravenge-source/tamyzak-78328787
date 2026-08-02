@@ -1,8 +1,11 @@
+import { protect } from "../_shared/guard.ts";
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { requireUser } from '../_shared/auth.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const guard = await protect(req, "generate-note-image", { max: 6, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const auth = await requireUser(req);
     if (!auth.ok) {

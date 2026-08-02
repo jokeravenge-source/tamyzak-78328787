@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -38,6 +39,8 @@ async function getAuthUser(userId: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const guard = await protect(req, "admin-manage-users", { max: 10, windowSeconds: 60, maxBytes: 25 * 1024 * 1024 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const callerId = await getCallerUserId(req.headers.get("Authorization"));
     if (!callerId) {

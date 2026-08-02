@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { claimFeature } from "../_shared/entitlement.ts";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
@@ -226,6 +227,8 @@ async function fetchSubjectContext(subject: string, chapter?: string, clientCont
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const guard = await protect(req, "subject-agent", { max: 10, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const { subject, chapter, messages, language, clientContext } = await req.json();
     if (!subject || !Array.isArray(messages)) {

@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { enforceRateLimit } from "../_shared/rate-limit.ts";
 import { requireUser } from "../_shared/auth.ts";
@@ -99,6 +100,8 @@ async function pdfToDataUrl(supabase: { storage: ReturnType<typeof createClient>
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const guard = await protect(req, "grade-course-exam", { max: 4, windowSeconds: 60, maxBytes: 25 * 1024 * 1024 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   deadline = Date.now() + TOTAL_BUDGET_MS;
 
   try {

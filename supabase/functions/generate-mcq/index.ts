@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { generateText, Output } from "npm:ai";
 import { z } from "npm:zod";
 import { createLovableAiGatewayProvider } from "../_shared/ai-gateway.ts";
@@ -49,6 +50,8 @@ const shuffleChoices = (question: z.infer<typeof questionSchema>) => {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const guard = await protect(req, "generate-mcq", { max: 3, windowSeconds: 60, maxBytes: 25 * 1024 * 1024 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
     const body = await req.json();

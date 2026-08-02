@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
@@ -11,6 +12,8 @@ const MAX_PDF_BYTES = 15 * 1024 * 1024;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const guard = await protect(req, "index-subject-file", { max: 6, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const url = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

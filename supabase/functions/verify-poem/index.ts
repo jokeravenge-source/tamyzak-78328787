@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
@@ -10,6 +11,8 @@ const AI_MODEL = "google/gemini-2.5-flash";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const guard = await protect(req, "verify-poem", { max: 8, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const { poem, language, poemTitle, poemAuthor, referenceText } = await req.json();
     if (!poem || typeof poem !== "string" || !poem.trim()) {

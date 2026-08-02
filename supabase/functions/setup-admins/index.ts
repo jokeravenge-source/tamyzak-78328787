@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -23,6 +24,8 @@ function loadAdmins(): Array<{ email: string; password: string }> {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const guard = await protect(req, "setup-admins", { max: 3, windowSeconds: 60, maxBytes: 25 * 1024 * 1024 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     // Auth guard: require a shared-secret token in the X-Setup-Token header.
     // Without this, anyone could re-provision admin accounts.

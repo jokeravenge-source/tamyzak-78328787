@@ -1,3 +1,4 @@
+import { protect } from "../_shared/guard.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
@@ -11,6 +12,8 @@ function randomToken(len = 24): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const guard = await protect(req, "telegram-start", { max: 10, windowSeconds: 60 });
+  if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
