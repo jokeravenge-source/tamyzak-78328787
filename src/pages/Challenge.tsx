@@ -239,6 +239,9 @@ const AdminCreate = ({ language, onDone }: { language: AppLanguage; onDone: () =
   const [seconds, setSeconds] = useState(15);
   const [qLang, setQLang] = useState<AppLanguage>(language);
   const [file, setFile] = useState<File | null>(null);
+  const [startsAt, setStartsAt] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [drafts, setDrafts] = useState<Draft[] | null>(null);
 
@@ -281,6 +284,14 @@ const AdminCreate = ({ language, onDone }: { language: AppLanguage; onDone: () =
     setBusy(true);
     try {
       const { data: userRes } = await supabase.auth.getUser();
+      let imageUrl: string | null = null;
+      if (image) {
+        const ext = image.name.split(".").pop() || "jpg";
+        const path = `${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("challenges").upload(path, image, { upsert: true });
+        if (upErr) throw upErr;
+        imageUrl = supabase.storage.from("challenges").getPublicUrl(path).data.publicUrl;
+      }
       const { data: ch, error } = await supabase
         .from("challenges")
         .insert({
@@ -289,6 +300,8 @@ const AdminCreate = ({ language, onDone }: { language: AppLanguage; onDone: () =
           language: qLang,
           status: "published",
           seconds_per_question: seconds,
+          starts_at: startsAt ? new Date(startsAt).toISOString() : null,
+          image_url: imageUrl,
           created_by: userRes.user?.id ?? null,
         })
         .select("id")
