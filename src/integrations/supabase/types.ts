@@ -175,6 +175,130 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_attempts: {
+        Row: {
+          challenge_id: string
+          correct_count: number
+          created_at: string
+          display_name: string
+          id: string
+          total_count: number
+          total_ms: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          correct_count?: number
+          created_at?: string
+          display_name?: string
+          id?: string
+          total_count?: number
+          total_ms?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          correct_count?: number
+          created_at?: string
+          display_name?: string
+          id?: string
+          total_count?: number
+          total_ms?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_attempts_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_questions: {
+        Row: {
+          answer_index: number
+          challenge_id: string
+          choices: Json
+          created_at: string
+          explanation: string | null
+          id: string
+          question: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer_index: number
+          challenge_id: string
+          choices: Json
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          question: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          answer_index?: number
+          challenge_id?: string
+          choices?: Json
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          question?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_questions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          language: string
+          seconds_per_question: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          language?: string
+          seconds_per_question?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          language?: string
+          seconds_per_question?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       course_chapters: {
         Row: {
           course_id: string
