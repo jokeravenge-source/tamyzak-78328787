@@ -25,9 +25,10 @@ const CSP_PROD = [
 
 // Dev/HMR needs inline + eval scripts and websocket connections to the dev server.
 const CSP_DEV = CSP_PROD.replace(
-  "script-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  /script-src 'self'[^;]*/,
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://sdk.scdn.co https://cdn.paddle.com https://open.spotify.com",
 )
+  .replace("script-src-attr 'none'", "script-src-attr 'unsafe-inline'")
   .replace("connect-src 'self'", "connect-src 'self' ws: wss: http://localhost:* http://127.0.0.1:*")
   .replace("frame-ancestors 'self'", "frame-ancestors *")
   .replace("; upgrade-insecure-requests", "");
