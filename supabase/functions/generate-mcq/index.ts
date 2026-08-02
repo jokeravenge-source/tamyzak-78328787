@@ -12,7 +12,7 @@ const corsHeaders = {
 const MAX_STUDY_CHARS = 180_000;
 const MAX_PAGE_IMAGES = 20;
 const QUESTIONS_PER_BATCH = 15;
-const MODEL = "google/gemini-2.5-pro";
+const MODEL = "google/gemini-3.5-flash";
 
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
