@@ -559,6 +559,8 @@ const ChallengeRunner = ({
   const answered = picked !== null || timedOut;
   const isRight = picked !== null && !!q && picked === q.answer_index;
   const board = useMemo(() => attempts.slice(0, 50), [attempts]);
+  const cd = useCountdown(challenge.starts_at);
+  const notStarted = !!cd && !cd.started;
 
   if (loading) {
     return <main className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></main>;
@@ -572,21 +574,43 @@ const ChallengeRunner = ({
         </button>
         {phase === "intro" && (
           <div className="space-y-5">
-            <div className="rounded-2xl border border-border bg-card p-6 text-center">
+            <div className="relative rounded-2xl border border-border bg-card p-6 text-center overflow-hidden">
+              {challenge.image_url && (
+                <>
+                  <img src={challenge.image_url} alt={challenge.title} className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px]" />
+                </>
+              )}
+              <div className="relative">
               <h1 className="text-2xl font-bold">{challenge.title}</h1>
               {challenge.description && <p className="text-muted-foreground mt-2 text-sm">{challenge.description}</p>}
               <p className="text-sm text-muted-foreground mt-3">
                 {questions.length} {T(language, "سؤال", "questions")} · {perQ}s {T(language, "لكل سؤال", "each")}
               </p>
+              {challenge.starts_at && (
+                <div className="mt-4">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {notStarted ? T(language, "يبدأ التحدي بعد", "Challenge starts in") : T(language, "بدأ في", "Started at")}
+                  </p>
+                  {notStarted
+                    ? <Countdown language={language} target={challenge.starts_at} className="text-2xl text-primary" />
+                    : <Countdown language={language} target={challenge.starts_at} className="text-sm" />}
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {new Date(challenge.starts_at).toLocaleString(language === "ar" ? "ar-IQ" : "en-GB")}
+                  </p>
+                </div>
+              )}
               {myAttempt && (
                 <p className="text-sm mt-2 text-primary font-medium">
                   {T(language, "أفضل نتيجة لك", "Your best")}: {myAttempt.correct_count}/{myAttempt.total_count} · {fmtMs(myAttempt.total_ms)}
                 </p>
               )}
-              <button onClick={begin} disabled={questions.length === 0}
+              <button onClick={begin} disabled={questions.length === 0 || notStarted}
                 className="mt-5 h-12 px-8 rounded-xl bg-primary text-primary-foreground font-semibold inline-flex items-center gap-2 disabled:opacity-60">
-                <Play className="h-4 w-4" /> {T(language, "ابدأ التحدي", "Start challenge")}
+                {notStarted ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                {notStarted ? T(language, "لم يبدأ بعد", "Not started yet") : T(language, "ابدأ التحدي", "Start challenge")}
               </button>
+              </div>
             </div>
             <LeaderboardCard language={language} rows={board} />
           </div>
