@@ -69,6 +69,7 @@ const Teachers = lazy(() => import("./pages/Teachers"));
 const AdminNotes = lazy(() => import("./pages/AdminNotes"));
 const DailyGame = lazy(() => import("./pages/DailyGame"));
 const WhoIsBest = lazy(() => import("./pages/WhoIsBest"));
+const ChallengePage = lazy(() => import("./pages/Challenge"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
@@ -627,6 +628,8 @@ const App = () => {
         <DailyGame language={language} onBack={backToBasics} />
       ) : menuChoice === "whoIsBest" ? (
         <WhoIsBest language={language} onBack={resetMenu} isAdmin={isAdmin} />
+      ) : menuChoice === "challenge" ? (
+        <ChallengePage language={language} onBack={resetMenu} isAdmin={isAdmin} />
       ) : menuChoice === "companion" ? (
         <main className="min-h-screen bg-background pb-28">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
