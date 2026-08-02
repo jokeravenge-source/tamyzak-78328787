@@ -1,4 +1,5 @@
 import { protect } from "../_shared/guard.ts";
+import { requireUser } from "../_shared/auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 import { claimFeature } from "../_shared/entitlement.ts";
@@ -35,6 +36,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const guard = await protect(req, "verify-hadith", { max: 8, windowSeconds: 60 });
   if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const auth = await requireUser(req);
+  if (!auth.ok) return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const { hadith, language, hadithName, referenceText } = await req.json();
     if (!hadith || typeof hadith !== "string" || !hadith.trim()) {

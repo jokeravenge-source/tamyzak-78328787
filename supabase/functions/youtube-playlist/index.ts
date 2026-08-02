@@ -1,4 +1,5 @@
 import { protect } from "../_shared/guard.ts";
+import { requireUser } from "../_shared/auth.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -8,6 +9,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const guard = await protect(req, "youtube-playlist", { max: 15, windowSeconds: 60 });
   if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const auth = await requireUser(req);
+  if (!auth.ok) return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const url = new URL(req.url);
     let listId = url.searchParams.get("list") || url.searchParams.get("playlistId") || url.searchParams.get("playlist_id");
