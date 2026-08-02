@@ -1,4 +1,4 @@
-import { Shield, GraduationCap, ArrowRight, Sparkles, Eye } from "lucide-react";
+import { Shield, GraduationCap, ArrowRight, Sparkles } from "lucide-react";
 
 export type AuthRole = "student" | "admin" | "guest";
 
@@ -24,7 +24,7 @@ export const RoleGate = ({ onSelect }: { onSelect: (role: AuthRole) => void }) =
           Who are you?
         </h1>
         <p className="text-center text-muted-foreground mb-10">Choose how you want to continue.</p>
-        <div className="grid sm:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 gap-5">
           <button
             onClick={() => choose("student")}
             className="group rounded-2xl p-7 border border-border bg-card hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all duration-300 text-left"
@@ -48,19 +48,6 @@ export const RoleGate = ({ onSelect }: { onSelect: (role: AuthRole) => void }) =
             <h3 className="text-xl font-bold mb-1 text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>Admin</h3>
             <p className="text-sm text-muted-foreground mb-5">Manage and approve uploaded summaries.</p>
             <span className="inline-flex items-center gap-1 text-primary text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-              Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </button>
-          <button
-            onClick={() => choose("guest")}
-            className="group rounded-2xl p-7 border border-border bg-card hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all duration-300 text-left"
-          >
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-              <Eye className="w-6 h-6 text-primary group-hover:text-primary-foreground" />
-            </div>
-            <h3 className="text-xl font-bold mb-1 text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>Guest</h3>
-            <p className="text-sm text-muted-foreground mb-5">Browse our teachers without an account.</p>
-            <span className="inline-flex items-center gap-1 text-primary text-sm font-semibold">
               Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </span>
           </button>
