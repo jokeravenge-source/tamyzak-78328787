@@ -222,7 +222,69 @@ const BottomGroupNav = ({
     </div>
   );
 
-  return portalRoot ? createPortal(bar, portalRoot) : null;
+  const sheet = (
+    <AnimatePresence>
+      {openGroup && openGroup.items.length > 0 && (
+        <motion.div
+          className="fixed inset-0 z-[110] flex flex-col"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          dir={isRTL ? "rtl" : "ltr"}
+        >
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-xl" onClick={() => setSheetGroup(null)} />
+          <motion.div
+            initial={{ y: 24, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 24, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-10 flex-1 overflow-y-auto px-4 pt-8 pb-40"
+          >
+            <div className="max-w-3xl mx-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-foreground">
+                  {language === "ar" ? openGroup.titleAr : openGroup.titleEn}
+                </h2>
+                <button
+                  onClick={() => setSheetGroup(null)}
+                  className="px-3 py-1.5 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground border border-border"
+                >
+                  {language === "ar" ? "إغلاق" : "Close"}
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {openGroup.items.map((it) => {
+                  const Icon = it.Icon;
+                  const isActive = active === it.key;
+                  return (
+                    <motion.button
+                      key={it.key}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => handleItem(it)}
+                      className={`text-start rounded-2xl border p-4 min-h-[104px] flex flex-col justify-between transition-colors ${
+                        isActive
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-card/70 hover:border-primary/60"
+                      }`}
+                    >
+                      <span className="w-10 h-10 rounded-xl bg-primary/15 inline-flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-primary" />
+                      </span>
+                      <span className="text-sm font-semibold text-foreground mt-3">
+                        {language === "ar" ? it.labelAr : it.labelEn}
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  return portalRoot ? createPortal(<>{sheet}{bar}</>, portalRoot) : null;
 };
 
 export default BottomGroupNav;
