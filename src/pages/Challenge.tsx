@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Upload, Loader2, Trophy, Timer, Check, X, Sparkles,
-  Trash2, Play, ChevronRight, Medal,
+  Trash2, Play, ChevronRight, Medal, CalendarClock, Lock, Image as ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
