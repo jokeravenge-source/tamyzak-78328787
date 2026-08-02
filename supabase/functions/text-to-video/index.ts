@@ -1,4 +1,5 @@
 import { protect } from "../_shared/guard.ts";
+import { requireUser } from "../_shared/auth.ts";
 import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
@@ -13,6 +14,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const guard = await protect(req, "text-to-video", { max: 4, windowSeconds: 60 });
   if (!guard.ok) return new Response(JSON.stringify({ error: guard.error }), { status: guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const auth = await requireUser(req);
+  if (!auth.ok) return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
     const { text, language, length, voice } = await req.json();
     // Auto-detect language from text: if it contains Arabic chars -> ar, else en.
