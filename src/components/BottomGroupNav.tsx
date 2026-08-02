@@ -60,11 +60,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     ],
   },
   {
-    titleEn: "Who is best?", titleAr: "من الأفضل؟",
-    directKey: "whoIsBest",
-    items: [],
-  },
-  {
     titleEn: "Notes", titleAr: "الملاحظات",
     items: [],
     locked: true,
@@ -76,7 +71,6 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Study: Layers,
   Home: Home,
   Community: Users,
-  "Who is best?": Trophy,
   Notes: NotebookPen,
 };
 
@@ -100,8 +94,22 @@ const BottomGroupNav = ({
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   useEffect(() => { setPortalRoot(document.body); }, []);
   const navVisible = useNavVisibility();
+  const [sheetGroup, setSheetGroup] = useState<string | null>(null);
 
   const currentGroup = NAV_GROUPS.find((g) => g.titleEn === activeGroup) ?? NAV_GROUPS[0];
+  const openGroup = NAV_GROUPS.find((g) => g.titleEn === sheetGroup) ?? null;
+
+  const handleItem = (it: NavItem) => {
+    if (it.subject) {
+      try { localStorage.setItem("app_subject_focus_v1", it.subject); } catch { /* ignore */ }
+      window.dispatchEvent(new CustomEvent("app:open-subject", { detail: { code: it.subject } }));
+    } else if (it.key === "subjectsHub") {
+      try { localStorage.removeItem("app_subject_focus_v1"); } catch { /* ignore */ }
+      window.dispatchEvent(new CustomEvent("app:open-subject", { detail: { code: null } }));
+    }
+    setSheetGroup(null);
+    onSelect(it.key);
+  };
 
   const bar = (
     <div
@@ -140,18 +148,7 @@ const BottomGroupNav = ({
                   <motion.button
                     key={it.key}
                     whileTap={{ scale: 0.94 }}
-                    onClick={() => {
-                      if (it.subject) {
-                        try {
-                          localStorage.setItem("app_subject_focus_v1", it.subject);
-                        } catch { /* ignore */ }
-                        window.dispatchEvent(new CustomEvent("app:open-subject", { detail: { code: it.subject } }));
-                      } else if (it.key === "subjectsHub") {
-                        try { localStorage.removeItem("app_subject_focus_v1"); } catch { /* ignore */ }
-                        window.dispatchEvent(new CustomEvent("app:open-subject", { detail: { code: null } }));
-                      }
-                      onSelect(it.key);
-                    }}
+                    onClick={() => handleItem(it)}
                     className={`relative shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                       isActive ? "text-primary" : "text-foreground/60 hover:text-foreground"
                     }`}
@@ -187,8 +184,9 @@ const BottomGroupNav = ({
                   onClick={() => {
                     if (g.locked) return;
                     setActiveGroup(g.titleEn);
-                    if (g.directKey) onSelect(g.directKey);
-                    else if (g.items.length === 0) onSelect("basics");
+                    if (g.directKey) { setSheetGroup(null); onSelect(g.directKey); }
+                    else if (g.items.length === 0) { setSheetGroup(null); onSelect("basics"); }
+                    else setSheetGroup(g.titleEn);
                   }}
                   aria-disabled={g.locked || undefined}
                   className={`relative flex-1 h-12 inline-flex flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-semibold transition-colors ${
