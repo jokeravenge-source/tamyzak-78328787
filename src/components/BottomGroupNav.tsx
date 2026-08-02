@@ -52,7 +52,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     titleEn: "Community", titleAr: "المجتمع",
     items: [
       { key: "teachers", labelEn: "Our Teachers", labelAr: "مدرسينا", Icon: Users2 },
-      { key: "challenge", labelEn: "Challenge", labelAr: "التحدي", Icon: Swords },
       { key: "news", labelEn: "News", labelAr: "الأخبار", Icon: Newspaper },
       { key: "advices", labelEn: "Advices", labelAr: "النصائح", Icon: Lightbulb },
       { key: "liveBattle", labelEn: "Live Battle", labelAr: "المعركة المباشرة", Icon: Swords },
@@ -65,6 +64,11 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     items: [],
     locked: true,
   },
+  {
+    titleEn: "Challenge", titleAr: "التحدي",
+    items: [],
+    directKey: "challenge",
+  },
 ];
 
 const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -73,6 +77,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   Notes: NotebookPen,
+  Challenge: Swords,
 };
 
 const BottomGroupNav = ({
