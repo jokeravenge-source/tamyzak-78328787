@@ -1,0 +1,4 @@
+CREATE POLICY "Challenge images are public" ON storage.objects FOR SELECT USING (bucket_id = 'challenges');
+CREATE POLICY "Admins upload challenge images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'challenges' AND public.has_role(auth.uid(), 'admin'::app_role));
+CREATE POLICY "Admins update challenge images" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'challenges' AND public.has_role(auth.uid(), 'admin'::app_role));
+CREATE POLICY "Admins delete challenge images" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'challenges' AND public.has_role(auth.uid(), 'admin'::app_role));
