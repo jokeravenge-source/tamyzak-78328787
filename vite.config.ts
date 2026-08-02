@@ -10,7 +10,7 @@ const CSP_PROD = [
   "object-src 'none'",
   "form-action 'self'",
   "frame-ancestors 'self'",
-  "script-src 'self' https://cdn.jsdelivr.net https://sdk.scdn.co https://cdn.paddle.com https://open.spotify.com",
+  "script-src 'self' 'sha256-RKkUoTzKQ/Kb5+4dfgwXnrT0Ul4WZnShNRY9Dc4BF3U=' 'sha256-HTp0Flnv5dJ4pO+Mh/V05G8urc8qm8IraK6HSrBJCbg=' https://cdn.jsdelivr.net https://sdk.scdn.co https://cdn.paddle.com https://open.spotify.com",
   "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
