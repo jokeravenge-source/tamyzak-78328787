@@ -159,7 +159,8 @@ const ChallengePage = ({
           <div className="grid gap-3">
             {items.map((c) => (
               <ChallengeCard key={c.id} language={language} challenge={c} isAdmin={isAdmin}
-                onOpen={() => setSelected(c)} onPublish={() => publish(c)} onRemove={() => remove(c.id)} />
+                onOpen={() => setSelected(c)} onPublish={() => publish(c)} onRemove={() => remove(c.id)}
+                onChanged={load} />
             ))}
           </div>
         )}
@@ -169,13 +170,46 @@ const ChallengePage = ({
 };
 
 const ChallengeCard = ({
-  language, challenge: c, isAdmin, onOpen, onPublish, onRemove,
+  language, challenge: c, isAdmin, onOpen, onPublish, onRemove, onChanged,
 }: {
   language: AppLanguage; challenge: Challenge; isAdmin: boolean;
-  onOpen: () => void; onPublish: () => void; onRemove: () => void;
+  onOpen: () => void; onPublish: () => void; onRemove: () => void; onChanged: () => void;
 }) => {
   const cd = useCountdown(c.starts_at);
   const locked = !!cd && !cd.started && !isAdmin;
+  const [when, setWhen] = useState(() => toLocalInput(c.starts_at));
+  const [saving, setSaving] = useState(false);
+
+  const saveStart = async (value: string) => {
+    setWhen(value);
+    setSaving(true);
+    const { error } = await supabase.from("challenges")
+      .update({ starts_at: value ? new Date(value).toISOString() : null }).eq("id", c.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success(T(language, "تم تحديث وقت البدء", "Start time updated"));
+    onChanged();
+  };
+
+  const saveImage = async (f: File) => {
+    setSaving(true);
+    try {
+      const ext = f.name.split(".").pop() || "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("challenges").upload(path, f, { upsert: true });
+      if (upErr) throw upErr;
+      const url = supabase.storage.from("challenges").getPublicUrl(path).data.publicUrl;
+      const { error } = await supabase.from("challenges").update({ image_url: url }).eq("id", c.id);
+      if (error) throw error;
+      toast.success(T(language, "تم تحديث الصورة", "Image updated"));
+      onChanged();
+    } catch (e: any) {
+      toast.error(e.message || "Failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       className="relative rounded-2xl border border-border overflow-hidden bg-card">
@@ -227,6 +261,19 @@ const ChallengeCard = ({
             </button>
           </div>
         </div>
+        {isAdmin && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+            <input type="datetime-local" value={when} disabled={saving}
+              onChange={(e) => saveStart(e.target.value)}
+              className="h-9 px-2 rounded-lg border border-border bg-background/80 text-xs" />
+            <label className="h-9 px-3 rounded-lg border border-border bg-background/80 text-xs font-medium inline-flex items-center gap-1 cursor-pointer">
+              <ImageIcon className="h-3.5 w-3.5" /> {T(language, "تغيير الصورة", "Change image")}
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) saveImage(f); }} />
+            </label>
+            {saving && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+          </div>
+        )}
       </div>
     </motion.div>
   );
