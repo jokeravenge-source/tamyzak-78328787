@@ -158,39 +158,77 @@ const ChallengePage = ({
         ) : (
           <div className="grid gap-3">
             {items.map((c) => (
-              <motion.div key={c.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-border bg-card p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">{c.title}</p>
-                    {c.description && <p className="text-sm text-muted-foreground line-clamp-2">{c.description}</p>}
-                    <p className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1">
-                      <Timer className="h-3 w-3" /> {c.seconds_per_question}s / {T(language, "سؤال", "question")}
-                      {c.status !== "published" && <span className="ms-2 px-2 py-0.5 rounded bg-amber-500/15 text-amber-600">{T(language, "مسودة", "Draft")}</span>}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isAdmin && (
-                      <>
-                        <button onClick={() => publish(c)} className="h-9 px-3 rounded-lg border border-border text-xs font-medium">
-                          {c.status === "published" ? T(language, "إخفاء", "Unpublish") : T(language, "نشر", "Publish")}
-                        </button>
-                        <button onClick={() => remove(c.id)} className="h-9 w-9 rounded-lg border border-border inline-flex items-center justify-center text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </>
-                    )}
-                    <button onClick={() => setSelected(c)} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center gap-1">
-                      <Play className="h-4 w-4" /> {T(language, "ابدأ", "Start")}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
+              <ChallengeCard key={c.id} language={language} challenge={c} isAdmin={isAdmin}
+                onOpen={() => setSelected(c)} onPublish={() => publish(c)} onRemove={() => remove(c.id)} />
             ))}
           </div>
         )}
       </div>
     </main>
+  );
+};
+
+const ChallengeCard = ({
+  language, challenge: c, isAdmin, onOpen, onPublish, onRemove,
+}: {
+  language: AppLanguage; challenge: Challenge; isAdmin: boolean;
+  onOpen: () => void; onPublish: () => void; onRemove: () => void;
+}) => {
+  const cd = useCountdown(c.starts_at);
+  const locked = !!cd && !cd.started && !isAdmin;
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      className="relative rounded-2xl border border-border overflow-hidden bg-card">
+      {c.image_url && (
+        <>
+          <img src={c.image_url} alt={c.title} loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/50" />
+        </>
+      )}
+      <div className="relative p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-bold text-lg truncate">{c.title}</p>
+            {c.description && <p className="text-sm text-muted-foreground line-clamp-2">{c.description}</p>}
+            <p className="text-xs text-muted-foreground mt-1 inline-flex items-center gap-1 flex-wrap">
+              <Timer className="h-3 w-3" /> {c.seconds_per_question}s / {T(language, "سؤال", "question")}
+              {c.status !== "published" && <span className="ms-2 px-2 py-0.5 rounded bg-amber-500/15 text-amber-600">{T(language, "مسودة", "Draft")}</span>}
+            </p>
+            {c.starts_at && (
+              <div className="mt-2 text-xs">
+                <span className="text-muted-foreground me-2">
+                  {cd?.started ? "" : T(language, "يبدأ بعد", "Starts in")}
+                </span>
+                <Countdown language={language} target={c.starts_at} className="text-primary text-sm" />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {new Date(c.starts_at).toLocaleString(language === "ar" ? "ar-IQ" : "en-GB")}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {isAdmin && (
+              <>
+                <button onClick={onPublish} className="h-9 px-3 rounded-lg border border-border bg-card/70 text-xs font-medium">
+                  {c.status === "published" ? T(language, "إخفاء", "Unpublish") : T(language, "نشر", "Publish")}
+                </button>
+                <button onClick={onRemove} className="h-9 w-9 rounded-lg border border-border bg-card/70 inline-flex items-center justify-center text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
+            )}
+            <button onClick={onOpen}
+              className={`h-9 px-4 rounded-lg text-sm font-semibold inline-flex items-center gap-1 ${
+                locked ? "border border-border bg-card/70 text-muted-foreground" : "bg-primary text-primary-foreground"
+              }`}>
+              {locked ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {locked ? T(language, "قريباً", "Soon") : T(language, "ابدأ", "Start")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
