@@ -26,9 +26,37 @@ const questionSchema = z.object({
   question: z.string(),
   choices: z.array(z.string()),
   answer_index: z.number(),
-  hint: z.string(),
-  explanation: z.string(),
+  hint: z.string().optional().default(""),
+  explanation: z.string().optional().default(""),
 });
+
+type Question = z.infer<typeof questionSchema>;
+
+const parseQuestionsFromText = (raw: string): Question[] => {
+  if (!raw) return [];
+  let text = raw.trim();
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) text = fenced[1].trim();
+  const start = text.indexOf("{");
+  const arrStart = text.indexOf("[");
+  const from = start === -1 ? arrStart : arrStart === -1 ? start : Math.min(start, arrStart);
+  if (from > 0) text = text.slice(from);
+  const lastObj = text.lastIndexOf("}");
+  const lastArr = text.lastIndexOf("]");
+  const to = Math.max(lastObj, lastArr);
+  if (to !== -1) text = text.slice(0, to + 1);
+  try {
+    const parsed = JSON.parse(text);
+    const list = Array.isArray(parsed) ? parsed : parsed?.questions;
+    if (!Array.isArray(list)) return [];
+    return list
+      .map((item: unknown) => questionSchema.safeParse(item))
+      .filter((r) => r.success)
+      .map((r) => (r as { data: Question }).data);
+  } catch {
+    return [];
+  }
+};
 
 const cleanExtractedText = (value: unknown) => {
   if (typeof value !== "string") return "";
@@ -119,22 +147,29 @@ SOURCE RULES:
 - Write all question content only in ${language}.`;
 
     const outputs = await Promise.all(batchSizes.map(async (batchSize, batchIndex) => {
-      const { output } = await generateText({
-        model: gateway(MODEL),
-        system,
-        messages: [{
-          role: "user",
-          content: [
-            ...sourceParts,
-            {
-              type: "text",
-              text: `Generate ${batchSize} distinct MCQs. This is batch ${batchIndex + 1} of ${batchSizes.length}; vary the covered source concepts. Each question needs exactly four choices, one answer index from 0 to 3, a non-revealing hint, and a source-grounded explanation.`,
-            },
-          ],
-        }],
-        output: Output.object({ schema: z.object({ questions: z.array(questionSchema) }) }),
-      });
-      return output.questions;
+      const instruction = `Generate ${batchSize} distinct MCQs. This is batch ${batchIndex + 1} of ${batchSizes.length}; vary the covered source concepts. Each question needs exactly four choices, one answer index from 0 to 3, a non-revealing hint, and a source-grounded explanation.
+
+Respond with RAW JSON only (no markdown fences, no commentary) in exactly this shape:
+{"questions":[{"question":"...","choices":["...","...","...","..."],"answer_index":0,"hint":"...","explanation":"..."}]}`;
+      const messages = [{
+        role: "user" as const,
+        content: [...sourceParts, { type: "text", text: instruction }],
+      }];
+
+      try {
+        const { output } = await generateText({
+          model: gateway(MODEL),
+          system,
+          messages,
+          output: Output.object({ schema: z.object({ questions: z.array(questionSchema) }) }),
+        });
+        if (output?.questions?.length) return output.questions;
+      } catch (structuredError) {
+        console.error("structured output failed, falling back to text parsing", structuredError instanceof Error ? structuredError.message : structuredError);
+      }
+
+      const { text } = await generateText({ model: gateway(MODEL), system, messages });
+      return parseQuestionsFromText(text);
     }));
 
     const questions = outputs
