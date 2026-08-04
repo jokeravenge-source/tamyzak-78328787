@@ -40,7 +40,6 @@ export default function AdminMcqReview() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>(() => (localStorage.getItem("mcqReviewMode") as Mode) || "reviewer");
-  const [guestReviewer, setGuestReviewer] = useState(false);
 
   const isOwner = (userEmail ?? "").toLowerCase() === OWNER_EMAIL;
 
@@ -85,10 +84,6 @@ export default function AdminMcqReview() {
     return <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   }
 
-  if (guestReviewer && !userEmail) {
-    return <ReviewPanel userEmail="Guest reviewer" onSignOut={() => setGuestReviewer(false)} mode="reviewer" />;
-  }
-
   if (!userEmail) {
     return (
       <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground p-6">
@@ -108,29 +103,22 @@ export default function AdminMcqReview() {
           <p className="text-xs text-muted-foreground">
             {mode === "admin"
               ? "Admin can approve or reject pending changes (owner account only). Sign-in required."
-              : "Reviewer can propose add/delete requests. No sign-in needed — just tap Continue."}
+              : "Reviewer can propose add/delete requests. Sign in with your account to submit requests."}
           </p>
-          {mode === "admin" ? (
-            <>
-              <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-              <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-              <Button type="submit" disabled={busy} className="w-full">
-                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />} Sign in as Admin
-              </Button>
-            </>
-          ) : (
-            <Button type="button" onClick={() => setGuestReviewer(true)} className="w-full">
-              Continue as Reviewer
-            </Button>
-          )}
+          <input type="email" required placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
+            className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          <input type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
+            className="w-full h-10 px-3 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          <Button type="submit" disabled={busy} className="w-full">
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+            {mode === "admin" ? " Sign in as Admin" : " Sign in as Reviewer"}
+          </Button>
         </form>
       </div>
     );
   }
 
-  if (!isAdmin) {
+  if (mode === "admin" && !isAdmin) {
     return (
       <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground p-6">
         <div className="w-full max-w-md rounded-lg border border-destructive/40 bg-card text-card-foreground p-6 space-y-3 text-center shadow-card">
@@ -158,13 +146,15 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
 
   const load = async () => {
     setLoading(true);
-    const [{ data: s }, { data: p }] = await Promise.all([
+    const [{ data: s }, p] = await Promise.all([
       supabase.from("teacher_topic_mcqs").select("id, teacher_id, topic_key, title, questions, created_at")
         .eq("teacher_id", TEACHER_ID).order("topic_key"),
-      supabase.from("teacher_mcq_pending_changes").select("*").eq("status", "pending").order("created_at", { ascending: false }),
+      canModerate
+        ? supabase.from("teacher_mcq_pending_changes").select("*").eq("status", "pending").order("created_at", { ascending: false })
+        : Promise.resolve({ data: [] as unknown[] }),
     ]);
     setSets((s ?? []) as unknown as MCQSet[]);
-    setPending((p ?? []) as unknown as Pending[]);
+    setPending((p.data ?? []) as unknown as Pending[]);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
