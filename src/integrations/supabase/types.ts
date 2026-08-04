@@ -1454,6 +1454,109 @@ export type Database = {
         }
         Relationships: []
       }
+      study_room_members: {
+        Row: {
+          display_name: string
+          id: string
+          joined_at: string
+          last_seen_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          display_name?: string
+          id?: string
+          joined_at?: string
+          last_seen_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string
+          id?: string
+          joined_at?: string
+          last_seen_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "study_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_room_messages: {
+        Row: {
+          body: string
+          created_at: string
+          display_name: string
+          id: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_room_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "study_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_rooms: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          owner_id: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_id: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_id?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       study_sessions: {
         Row: {
           created_at: string
@@ -1941,6 +2044,7 @@ export type Database = {
       is_course_enrolled: { Args: { _course: string }; Returns: boolean }
       is_course_student: { Args: never; Returns: boolean }
       is_course_teacher: { Args: { _course: string }; Returns: boolean }
+      is_study_room_member: { Args: { _room: string }; Returns: boolean }
       list_subject_chapters: {
         Args: { _subject: string }
         Returns: {
