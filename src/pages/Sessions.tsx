@@ -24,6 +24,7 @@ import track6Asset from "@/assets/music/track6.mp3.asset.json";
 import quranTrackAsset from "@/assets/music/quran.mp3.asset.json";
 import SpotifyPlayerBlock from "@/components/SpotifyPlayerBlock";
 import StudyRoom from "@/components/StudyRoom";
+import PrivateStudyRooms from "@/components/PrivateStudyRooms";
 import { pushTodos, pullTodos } from "@/lib/todosSync";
 
 type TodoItem = { id: string; text: string; done: boolean; day?: string };
@@ -873,6 +874,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </ul>
         </div>
         <SessionsHistory language={language} userId={userId} />
+        <PrivateStudyRooms language={language} />
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {SUBJECTS.map((s) => {
             const SIcon = s.Icon;
