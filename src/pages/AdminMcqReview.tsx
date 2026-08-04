@@ -118,7 +118,7 @@ export default function AdminMcqReview() {
     );
   }
 
-  if (!isAdmin) {
+  if (mode === "admin" && !isAdmin) {
     return (
       <div className="theme-notion-dark min-h-screen grid place-items-center bg-background text-foreground p-6">
         <div className="w-full max-w-md rounded-lg border border-destructive/40 bg-card text-card-foreground p-6 space-y-3 text-center shadow-card">
@@ -146,13 +146,15 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
 
   const load = async () => {
     setLoading(true);
-    const [{ data: s }, { data: p }] = await Promise.all([
+    const [{ data: s }, p] = await Promise.all([
       supabase.from("teacher_topic_mcqs").select("id, teacher_id, topic_key, title, questions, created_at")
         .eq("teacher_id", TEACHER_ID).order("topic_key"),
-      supabase.from("teacher_mcq_pending_changes").select("*").eq("status", "pending").order("created_at", { ascending: false }),
+      canModerate
+        ? supabase.from("teacher_mcq_pending_changes").select("*").eq("status", "pending").order("created_at", { ascending: false })
+        : Promise.resolve({ data: [] as unknown[] }),
     ]);
     setSets((s ?? []) as unknown as MCQSet[]);
-    setPending((p ?? []) as unknown as Pending[]);
+    setPending((p.data ?? []) as unknown as Pending[]);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
