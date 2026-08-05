@@ -78,7 +78,26 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         .select("id,user_id,display_name,body,created_at")
         .eq("room_id", roomId).order("created_at", { ascending: true }).limit(200),
     ]);
-    setMembers((mem ?? []) as Member[]);
+    const base = (mem ?? []) as Member[];
+    if (base.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id,gender,character")
+        .in("user_id", base.map((m) => m.user_id));
+      const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      setMembers(
+        base.map((m) => {
+          const p = byId.get(m.user_id);
+          return {
+            ...m,
+            gender: (p?.gender === "female" ? "female" : "male") as Gender,
+            character: (p?.character ?? null) as CharacterTraits | null,
+          };
+        }),
+      );
+    } else {
+      setMembers(base);
+    }
     setMessages((msg ?? []) as Message[]);
   }, []);
 
