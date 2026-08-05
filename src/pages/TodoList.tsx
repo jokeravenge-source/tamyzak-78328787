@@ -200,6 +200,23 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </button>
         </form>
 
+        <div className="mb-4 flex flex-wrap gap-2">
+          {DAYS.map((d) => (
+            <button
+              key={d.key}
+              type="button"
+              onClick={() => setDayPick(d.key)}
+              className={`px-3 h-9 rounded-xl text-xs font-semibold border transition ${
+                dayPick === d.key
+                  ? "border-primary/60 bg-primary/20 text-foreground"
+                  : "border-white/10 bg-secondary/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {language === "ar" ? d.ar : d.en}
+            </button>
+          ))}
+        </div>
+
         <button
           onClick={sendToTelegram}
           disabled={sending}
