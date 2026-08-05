@@ -199,11 +199,21 @@ const SessionsHistory = ({ language, userId }: { language: AppLanguage; userId: 
   );
 };
 
-const SessionTodos = ({ language }: { language: AppLanguage }) => {
+const SessionTodos = ({
+  language,
+  onPick,
+  selectedText,
+  pickDisabled,
+}: {
+  language: AppLanguage;
+  onPick?: (text: string) => void;
+  selectedText?: string;
+  pickDisabled?: boolean;
+}) => {
   const [todos, setTodos] = useState<TodoItem[]>(() => {
     try { return JSON.parse(localStorage.getItem(TODO_STORAGE_KEY) || "[]"); } catch { return []; }
   });
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!onPick);
 
   useEffect(() => {
     const onChange = () => {
@@ -244,8 +254,8 @@ const SessionTodos = ({ language }: { language: AppLanguage }) => {
   };
 
   const L = language === "ar"
-    ? { title: "قائمة مهامي", empty: "لا توجد مهام. أضفها من صفحة المهام.", done: "منجزة" }
-    : { title: "My To-Do List", empty: "No tasks. Add some from the To-Do page.", done: "done" };
+    ? { title: "قائمة مهامي", empty: "لا توجد مهام. أضفها من صفحة المهام.", done: "منجزة", pick: "اختر كمهمة", picked: "المهمة الحالية", hint: "اضغط على مهمة لجعلها مهمة هذه الجلسة." }
+    : { title: "My To-Do List", empty: "No tasks. Add some from the To-Do page.", done: "done", pick: "Use as mission", picked: "Current mission", hint: "Tap a task to make it this session's mission." };
 
   const completed = todos.filter((t) => t.done).length;
 
@@ -263,12 +273,17 @@ const SessionTodos = ({ language }: { language: AppLanguage }) => {
       </button>
       {open && (
         <div className="border-t border-white/10 max-h-64 overflow-y-auto">
+          {onPick && todos.length > 0 && (
+            <p className="px-4 pt-3 text-[11px] text-muted-foreground">{L.hint}</p>
+          )}
           {todos.length === 0 ? (
             <p className="px-4 py-4 text-sm text-muted-foreground text-center">{L.empty}</p>
           ) : (
             <ul className="divide-y divide-white/5">
-              {todos.map((t) => (
-                <li key={t.id} className="flex items-center gap-3 px-4 py-2.5">
+              {todos.map((t) => {
+                const isPicked = !!onPick && !!selectedText && selectedText === t.text;
+                return (
+                <li key={t.id} className={`flex items-center gap-3 px-4 py-2.5 ${isPicked ? "bg-primary/10" : ""}`}>
                   <button
                     type="button"
                     onClick={() => toggle(t.id)}
@@ -279,10 +294,36 @@ const SessionTodos = ({ language }: { language: AppLanguage }) => {
                       ? <CheckCircle2 className="w-5 h-5 text-primary" />
                       : <Circle className="w-5 h-5 text-muted-foreground" />}
                   </button>
-                  <span className={`text-sm flex-1 ${t.done ? "line-through text-muted-foreground" : ""}`}>{t.text}</span>
+                  {onPick ? (
+                    <button
+                      type="button"
+                      disabled={pickDisabled}
+                      onClick={() => onPick(t.text)}
+                      className={`text-sm flex-1 text-start ${t.done ? "line-through text-muted-foreground" : ""} ${pickDisabled ? "opacity-60 cursor-not-allowed" : "hover:text-primary"}`}
+                    >
+                      {t.text}
+                    </button>
+                  ) : (
+                    <span className={`text-sm flex-1 ${t.done ? "line-through text-muted-foreground" : ""}`}>{t.text}</span>
+                  )}
+                  {onPick && (
+                    isPicked ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary shrink-0">{L.picked}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={pickDisabled}
+                        onClick={() => onPick(t.text)}
+                        className="text-[10px] px-2 py-0.5 rounded-full border border-primary/40 text-primary shrink-0 disabled:opacity-50"
+                      >
+                        {L.pick}
+                      </button>
+                    )
+                  )}
                   {t.day && <span className="text-[10px] text-muted-foreground">{t.day}</span>}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>
@@ -916,7 +957,12 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             <Input value={mission} onChange={(e) => setMission(e.target.value)} placeholder={L.missionPh} disabled={started} maxLength={200} />
           </label>
 
-          <SessionTodos language={language} />
+          <SessionTodos
+            language={language}
+            onPick={(text) => { if (!started) setMission(text.slice(0, 200)); }}
+            selectedText={mission}
+            pickDisabled={started}
+          />
 
           <div className="flex items-center justify-center gap-2">
             <button
