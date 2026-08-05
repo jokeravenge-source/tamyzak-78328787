@@ -53,7 +53,6 @@ const OrganicEquations = lazy(() => import("./pages/OrganicEquations"));
 const LiveBattle = lazy(() => import("./pages/LiveBattle"));
 const SubjectsHub = lazy(() => import("./pages/SubjectsHub"));
 const TextToVideo = lazy(() => import("./pages/TextToVideo"));
-const PsychAssistant = lazy(() => import("./pages/PsychAssistant"));
 const SubjectTutor = lazy(() => import("./pages/SubjectTutor"));
 const PhysicsLaws = lazy(() => import("./pages/PhysicsLaws"));
 const PhysicsQuickMcq = lazy(() => import("./pages/PhysicsQuickMcq"));
@@ -601,8 +600,6 @@ const App = () => {
         <SubjectsHub language={language} onBack={backToBasics} onSelect={chooseMenu} />
       ) : menuChoice === "textToVideo" ? (
         <TextToVideo language={language} onBack={resetMenu} />
-      ) : menuChoice === "psych" ? (
-        <PsychAssistant language={language} onBack={resetMenu} />
       ) : menuChoice === "subjectTutor" ? (
         <SubjectTutor language={language} onBack={resetMenu} />
       ) : menuChoice === "physicsLaws" ? (
@@ -635,7 +632,7 @@ const App = () => {
         <WhoIsBest language={language} onBack={resetMenu} isAdmin={isAdmin} />
       ) : menuChoice === "challenge" ? (
         <ChallengePage language={language} onBack={resetMenu} isAdmin={isAdmin} />
-      ) : menuChoice === "companion" ? (
+      ) : menuChoice === "companion" || menuChoice === "psych" ? (
         <main className="min-h-screen bg-background pb-28">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
             <button
