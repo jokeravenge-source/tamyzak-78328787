@@ -158,19 +158,72 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
     if (!userId) { toast.error(L.signIn); return; }
     const code = joinCode.trim().toUpperCase();
     if (!code) return;
+    await joinByCode(code);
+  };
+
+  const joinByCode = async (code: string) => {
+    if (!userId) { toast.error(L.signIn); return; }
     setBusy(true);
     try {
       const { data } = await supabase.from("study_rooms")
         .select("id,code,name,owner_id").eq("code", code).eq("is_active", true).maybeSingle();
       if (!data) { toast.error(L.notFound); return; }
-      await supabase.from("study_room_members")
+      const { error } = await supabase.from("study_room_members")
         .upsert({ room_id: data.id, user_id: userId, display_name: displayName }, { onConflict: "room_id,user_id" });
+      if (error) { toast.error(L.youBanned); return; }
       localStorage.setItem(LS_KEY, data.id);
       setRoom(data as Room);
       setJoinCode("");
       loadRoom(data.id);
       toast.success(L.joined);
     } finally { setBusy(false); }
+  };
+
+  // Auto-join from a shared invite link: /room?code=ABC123
+  const autoJoined = useRef(false);
+  useEffect(() => {
+    if (!userId || autoJoined.current) return;
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (!code) return;
+    autoJoined.current = true;
+    joinByCode(code.trim().toUpperCase());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  const isOwner = !!room && room.owner_id === userId;
+
+  const shareLink = () => {
+    if (!room) return;
+    const url = `${window.location.origin}/room?code=${room.code}`;
+    if (navigator.share) {
+      navigator.share({ title: room.name, url }).catch(() => {
+        navigator.clipboard?.writeText(url);
+        toast.success(L.linkCopied);
+      });
+    } else {
+      navigator.clipboard?.writeText(url);
+      toast.success(L.linkCopied);
+    }
+  };
+
+  const deleteMessage = async (id: string) => {
+    if (!room) return;
+    const { error } = await supabase.from("study_room_messages").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(L.deleted);
+    loadRoom(room.id);
+  };
+
+  const banMember = async (m: Member) => {
+    if (!room || !userId) return;
+    if (!window.confirm(L.banConfirm)) return;
+    const { error } = await supabase.from("study_room_bans")
+      .insert({ room_id: room.id, user_id: m.user_id, display_name: m.display_name, banned_by: userId });
+    if (error && !error.message.includes("duplicate")) { toast.error(error.message); return; }
+    await supabase.from("study_room_members").delete().eq("room_id", room.id).eq("user_id", m.user_id);
+    await supabase.from("study_room_messages").delete().eq("room_id", room.id).eq("user_id", m.user_id);
+    toast.success(L.banned);
+    loadRoom(room.id);
   };
 
   const leaveRoom = async () => {
