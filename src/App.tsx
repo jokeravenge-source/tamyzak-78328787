@@ -384,6 +384,11 @@ const App = () => {
       localStorage.setItem(MENU_STORAGE_KEY, "whoIsBest");
       return "whoIsBest";
     }
+    // Shared study-room invite link: /room?code=ABC123
+    if (window.location.pathname.startsWith("/room")) {
+      localStorage.setItem(MENU_STORAGE_KEY, "sessions");
+      return "sessions";
+    }
     return localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null;
   });
 

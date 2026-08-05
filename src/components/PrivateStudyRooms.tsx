@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Copy, DoorOpen, LogOut, MessageCircle, Plus, Send, Users } from "lucide-react";
+import { Ban, Copy, DoorOpen, Link2, LogOut, MessageCircle, Plus, Send, Trash2, Users } from "lucide-react";
 import { censorText, findBannedWords } from "@/lib/censor";
+import { CharacterAvatar, type CharacterTraits, type Gender } from "./CharacterAvatar";
 
 type Room = { id: string; code: string; name: string; owner_id: string };
-type Member = { user_id: string; display_name: string };
+type Member = { user_id: string; display_name: string; gender?: Gender; character?: CharacterTraits | null };
 type Message = { id: string; user_id: string; display_name: string; body: string; created_at: string };
 
 const LS_KEY = "study_room_active_v1";
@@ -38,6 +39,10 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         needName: "اكتب اسم الغرفة", signIn: "سجّل الدخول لاستخدام الغرف الخاصة",
         joined: "تم الانضمام إلى الغرفة", hint: "شارك الرمز مع أصدقائك ليدرسوا معك.",
         empty: "لا توجد رسائل بعد — ابدأ الحديث!",
+        share: "مشاركة الرابط", linkCopied: "تم نسخ رابط الغرفة",
+        owner: "صاحب الغرفة", del: "حذف الرسالة", ban: "حظر", banned: "تم حظر العضو",
+        banConfirm: "هل تريد حظر هذا الطالب من الغرفة؟", youBanned: "تم حظرك من هذه الغرفة",
+        deleted: "تم حذف الرسالة", roomView: "قاعة الدراسة",
       }
     : {
         title: "Private study rooms", create: "Create room", join: "Join",
@@ -48,6 +53,10 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         needName: "Type a room name", signIn: "Sign in to use private rooms",
         joined: "Joined the room", hint: "Share the code with friends so they can study with you.",
         empty: "No messages yet — say hi!",
+        share: "Share link", linkCopied: "Room link copied",
+        owner: "Owner", del: "Delete message", ban: "Ban", banned: "Member banned",
+        banConfirm: "Ban this student from the room?", youBanned: "You are banned from this room",
+        deleted: "Message deleted", roomView: "Study hall",
       };
 
   useEffect(() => {
@@ -69,7 +78,26 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         .select("id,user_id,display_name,body,created_at")
         .eq("room_id", roomId).order("created_at", { ascending: true }).limit(200),
     ]);
-    setMembers((mem ?? []) as Member[]);
+    const base = (mem ?? []) as Member[];
+    if (base.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id,gender,character")
+        .in("user_id", base.map((m) => m.user_id));
+      const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      setMembers(
+        base.map((m) => {
+          const p = byId.get(m.user_id);
+          return {
+            ...m,
+            gender: (p?.gender === "female" ? "female" : "male") as Gender,
+            character: (p?.character ?? null) as CharacterTraits | null,
+          };
+        }),
+      );
+    } else {
+      setMembers(base);
+    }
     setMessages((msg ?? []) as Message[]);
   }, []);
 
@@ -130,19 +158,72 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
     if (!userId) { toast.error(L.signIn); return; }
     const code = joinCode.trim().toUpperCase();
     if (!code) return;
+    await joinByCode(code);
+  };
+
+  const joinByCode = async (code: string) => {
+    if (!userId) { toast.error(L.signIn); return; }
     setBusy(true);
     try {
       const { data } = await supabase.from("study_rooms")
         .select("id,code,name,owner_id").eq("code", code).eq("is_active", true).maybeSingle();
       if (!data) { toast.error(L.notFound); return; }
-      await supabase.from("study_room_members")
+      const { error } = await supabase.from("study_room_members")
         .upsert({ room_id: data.id, user_id: userId, display_name: displayName }, { onConflict: "room_id,user_id" });
+      if (error) { toast.error(L.youBanned); return; }
       localStorage.setItem(LS_KEY, data.id);
       setRoom(data as Room);
       setJoinCode("");
       loadRoom(data.id);
       toast.success(L.joined);
     } finally { setBusy(false); }
+  };
+
+  // Auto-join from a shared invite link: /room?code=ABC123
+  const autoJoined = useRef(false);
+  useEffect(() => {
+    if (!userId || autoJoined.current) return;
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (!code) return;
+    autoJoined.current = true;
+    joinByCode(code.trim().toUpperCase());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  const isOwner = !!room && room.owner_id === userId;
+
+  const shareLink = () => {
+    if (!room) return;
+    const url = `${window.location.origin}/room?code=${room.code}`;
+    if (navigator.share) {
+      navigator.share({ title: room.name, url }).catch(() => {
+        navigator.clipboard?.writeText(url);
+        toast.success(L.linkCopied);
+      });
+    } else {
+      navigator.clipboard?.writeText(url);
+      toast.success(L.linkCopied);
+    }
+  };
+
+  const deleteMessage = async (id: string) => {
+    if (!room) return;
+    const { error } = await supabase.from("study_room_messages").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(L.deleted);
+    loadRoom(room.id);
+  };
+
+  const banMember = async (m: Member) => {
+    if (!room || !userId) return;
+    if (!window.confirm(L.banConfirm)) return;
+    const { error } = await supabase.from("study_room_bans")
+      .insert({ room_id: room.id, user_id: m.user_id, display_name: m.display_name, banned_by: userId });
+    if (error && !error.message.includes("duplicate")) { toast.error(error.message); return; }
+    await supabase.from("study_room_members").delete().eq("room_id", room.id).eq("user_id", m.user_id);
+    await supabase.from("study_room_messages").delete().eq("room_id", room.id).eq("user_id", m.user_id);
+    toast.success(L.banned);
+    loadRoom(room.id);
   };
 
   const leaveRoom = async () => {
@@ -206,9 +287,72 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+      <button
+        onClick={shareLink}
+        className="w-full mb-3 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-medium text-primary flex items-center justify-center gap-1.5">
+        <Link2 className="w-3.5 h-3.5" /> {L.share}
+      </button>
+
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
         <Users className="w-3.5 h-3.5" /> {L.members}: {members.length}
-        <span className="truncate">— {members.map((m) => m.display_name).join(", ")}</span>
+      </div>
+
+      {/* Traditional study hall */}
+      <div
+        className="relative rounded-2xl border border-primary/30 overflow-hidden mb-4"
+        style={{
+          background:
+            "linear-gradient(180deg, hsl(var(--secondary)) 0%, hsl(var(--secondary)) 52%, hsl(var(--muted)) 52%, hsl(var(--muted)) 100%)",
+          minHeight: 220,
+        }}
+      >
+        {/* Wall: chalkboard, clock, pennants */}
+        <div className="absolute inset-x-0 top-0 h-[52%] pointer-events-none">
+          <div className="absolute top-5 left-1/2 -translate-x-1/2 w-40 h-16 rounded-md border-4 border-primary/40 bg-primary/10 flex items-center justify-center">
+            <span className="text-[10px] tracking-[0.25em] text-primary/80">{L.roomView}</span>
+          </div>
+          <div className="absolute top-4 right-5 w-8 h-8 rounded-full border-4 border-primary/40 bg-background/40 flex items-center justify-center">
+            <span className="w-1 h-3 bg-primary/70 absolute" style={{ transformOrigin: "bottom", transform: "translateY(-25%) rotate(35deg)" }} />
+            <span className="w-1 h-2 bg-primary/70 absolute" style={{ transformOrigin: "bottom", transform: "translateY(-20%) rotate(-40deg)" }} />
+          </div>
+          <div className="absolute top-3 left-5 flex gap-1">
+            {["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#a855f7"].map((c, i) => (
+              <div key={i} className="w-2 h-4 rounded-sm" style={{ background: c, opacity: 0.85 }} />
+            ))}
+          </div>
+        </div>
+        <div className="absolute left-0 right-0 top-[52%] h-px bg-primary/30" />
+
+        <div className="relative z-10 pt-16 pb-5 px-3 flex flex-wrap gap-4 justify-center items-end">
+          {members.map((m) => {
+            const mine = m.user_id === userId;
+            const roomOwner = m.user_id === room.owner_id;
+            return (
+              <div key={m.user_id} className="flex flex-col items-center" style={{ width: 96 }}>
+                <div className={`mb-1 px-2 py-0.5 rounded-full backdrop-blur border text-[10px] font-medium max-w-[96px] truncate ${mine ? "bg-primary text-primary-foreground border-primary" : "bg-background/80 border-primary/30"}`}>
+                  {mine ? (ar ? "أنت" : "You") : m.display_name}
+                </div>
+                <div className="relative">
+                  <CharacterAvatar gender={m.gender ?? "male"} traits={m.character ?? undefined} size={76} />
+                  {/* Wooden desk */}
+                  <div className="w-20 h-3 -mt-2 mx-auto rounded-sm bg-gradient-to-b from-primary/40 to-primary/20 border border-primary/40" />
+                  <div className="flex justify-between w-16 mx-auto">
+                    <div className="w-0.5 h-3 bg-primary/40" />
+                    <div className="w-0.5 h-3 bg-primary/40" />
+                  </div>
+                </div>
+                {roomOwner && (
+                  <span className="mt-1 text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{L.owner}</span>
+                )}
+                {isOwner && !mine && (
+                  <button onClick={() => banMember(m)} className="mt-1 text-[10px] text-destructive/80 hover:text-destructive flex items-center gap-0.5">
+                    <Ban className="w-3 h-3" /> {L.ban}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex items-center gap-2 text-xs text-primary mb-2">
@@ -220,7 +364,13 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         ) : messages.map((m) => {
           const mine = m.user_id === userId;
           return (
-            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+            <div key={m.id} className={`flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>
+              {(isOwner || mine) && (
+                <button onClick={() => deleteMessage(m.id)} aria-label={L.del} title={L.del}
+                  className="order-first text-muted-foreground/60 hover:text-destructive shrink-0">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
               <div className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-secondary border border-primary/20"}`}>
                 {!mine && <div className="text-[10px] opacity-70 mb-0.5">{m.display_name}</div>}
                 <div className="whitespace-pre-wrap break-words">{censorText(m.body)}</div>

@@ -1492,6 +1492,41 @@ export type Database = {
         }
         Relationships: []
       }
+      study_room_bans: {
+        Row: {
+          banned_by: string
+          created_at: string
+          display_name: string | null
+          id: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          banned_by: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          banned_by?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_room_bans_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "study_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_room_members: {
         Row: {
           display_name: string
@@ -2083,10 +2118,12 @@ export type Database = {
         Returns: boolean
       }
       increment_site_visits: { Args: never; Returns: number }
+      is_banned_from_room: { Args: { _room: string }; Returns: boolean }
       is_course_enrolled: { Args: { _course: string }; Returns: boolean }
       is_course_student: { Args: never; Returns: boolean }
       is_course_teacher: { Args: { _course: string }; Returns: boolean }
       is_study_room_member: { Args: { _room: string }; Returns: boolean }
+      is_study_room_owner: { Args: { _room: string }; Returns: boolean }
       list_subject_chapters: {
         Args: { _subject: string }
         Returns: {
