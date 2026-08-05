@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, X, Send, CalendarDays, HeartHandshake, CheckCircle2 } from "lucide-react";
+import { Sparkles, X, Send, CalendarDays, HeartHandshake, CheckCircle2, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import GeminiStatus from "@/components/GeminiStatus";
 import ChatBlobBackground from "@/components/ChatBlobBackground";
@@ -7,7 +7,7 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import { pushTodos } from "@/lib/todosSync";
 
 type Msg = { role: "user" | "assistant"; content: string };
-type Mode = "schedule" | "problem";
+type Mode = "schedule" | "problem" | "psych";
 type PlanTask = { day: string; text: string };
 
 const TODOS_KEY = "app_todos_v1";
@@ -15,13 +15,16 @@ const WEEK_KEY = "app_todos_week_v1";
 
 const labels = {
   en: {
-    fab: "Excellence Companion",
-    title: "Excellence Companion",
+    fab: "Success Companion",
+    title: "Success Companion",
     subtitle: "Pick how I can help you today",
     schedule: "Organize my schedule",
     scheduleDesc: "Tell me your subjects and I'll plan your week.",
     problem: "Solve my problem",
     problemDesc: "Share what's on your mind and we'll fix it together.",
+    psych: "Psychological support",
+    psychDesc: "A safe space to talk about stress, anxiety and study pressure.",
+    welcomePsych: "Welcome. I'm here to listen and help you with stress, anxiety, and study pressure. Speak freely, everything is confidential.",
     placeholder: "Type your message…",
     welcomeSchedule: "Hi! Tell me which subjects you want to study this week, how many sessions for each, and which days work for you. I'll also ask if you have an upcoming exam in any of them and what grade you're aiming for, so I can tune the plan to your goal.",
     welcomeProblem: "Hi! I'm here to help. What's the problem you'd like to work on?",
@@ -36,13 +39,16 @@ const labels = {
     continueToApp: "Continue to the app",
   },
   ar: {
-    fab: "رفيق التميز",
-    title: "رفيق التميز",
+    fab: "رفيق النجاح",
+    title: "رفيق النجاح",
     subtitle: "اختر كيف أقدر أساعدك اليوم",
     schedule: "نظم جدولي",
     scheduleDesc: "أخبرني بموادك وسأنظّم لك أسبوعك.",
     problem: "حلي مشكلتي",
     problemDesc: "شاركني مشكلتك وسنحلها سوياً.",
+    psych: "الدعم النفسي",
+    psychDesc: "مساحة آمنة للحديث عن التوتر والقلق وضغوط الدراسة.",
+    welcomePsych: "أهلاً بك. أنا هنا للاستماع إليك ومساعدتك على تجاوز التوتر والقلق وضغوط الدراسة. تحدث بحرية، كل ما تقوله سرّي.",
     placeholder: "اكتب رسالتك…",
     welcomeSchedule: "أهلاً! أخبرني بالمواد التي تريد دراستها هذا الأسبوع، وكم مرة لكل مادة، وأي أيام مناسبة لك؟ سأسألك أيضاً إن كان لديك امتحان قريب في أيٍّ منها وما الدرجة التي تطمح إليها، حتى أبني الخطة على هدفك.",
     welcomeProblem: "أهلاً! أنا هنا لمساعدتك. ما المشكلة التي تريد العمل عليها؟",
@@ -162,7 +168,12 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
 
   const pickMode = (m: Mode) => {
     setMode(m);
-    setMessages([{ role: "assistant", content: m === "schedule" ? t.welcomeSchedule : t.welcomeProblem }]);
+    setMessages([
+      {
+        role: "assistant",
+        content: m === "schedule" ? t.welcomeSchedule : m === "psych" ? t.welcomePsych : t.welcomeProblem,
+      },
+    ]);
   };
 
   const send = async () => {
@@ -173,6 +184,18 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
     setInput("");
     setLoading(true);
     try {
+      if (mode === "psych") {
+        const { data, error } = await supabase.functions.invoke("psych-chat", {
+          body: { message: text, history: messages.slice(-20) },
+        });
+        const reply = (data as { reply?: string } | null)?.reply;
+        if (error && !reply) {
+          setMessages([...next, { role: "assistant", content: t.error }]);
+          return;
+        }
+        setMessages([...next, { role: "assistant", content: reply ?? t.error }]);
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("excellence-companion", {
         body: { mode, language, messages: next },
       });
@@ -308,6 +331,18 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
                     <h3 className="font-semibold">{t.problem}</h3>
                   </div>
                   <p className="text-xs text-muted-foreground">{t.problemDesc}</p>
+                </button>
+                <button
+                  onClick={() => pickMode("psych")}
+                  className="group rounded-2xl p-5 border border-primary/30 bg-secondary/40 hover:border-primary hover:-translate-y-1 transition-all text-start"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center">
+                      <Heart className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="font-semibold">{t.psych}</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t.psychDesc}</p>
                 </button>
               </div>
             ) : (

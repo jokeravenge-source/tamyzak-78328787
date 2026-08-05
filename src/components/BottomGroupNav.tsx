@@ -40,8 +40,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
       { key: "textToVideo", labelEn: "Text → Video", labelAr: "نص إلى فيديو", Icon: Video },
       { key: "youtube", labelEn: "YouTube Player", labelAr: "مشغّل يوتيوب", Icon: Youtube },
       { key: "essay", labelEn: "Al-Musahhih", labelAr: "المُصحِّح", Icon: BookOpen },
-      { key: "companion", labelEn: "AI Companion", labelAr: "المرافق الذكي", Icon: Sparkles },
-      { key: "psych", labelEn: "Psych Assistant", labelAr: "المساعد النفسي", Icon: Heart },
+      { key: "companion", labelEn: "Success Companion", labelAr: "رفيق النجاح", Icon: Sparkles },
     ],
   },
   {
