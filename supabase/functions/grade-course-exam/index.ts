@@ -189,22 +189,31 @@ Deno.serve(async (req) => {
     const examPath = examRow.exam_path as string;
     const answerPath = examRow.answer_path as string | null;
 
-    // Download both PDFs in parallel to cut latency.
-    const [examPdf, answerPdf] = await Promise.all([
-      pdfToDataUrl(admin, examPath),
-      answerPath ? pdfToDataUrl(admin, answerPath) : Promise.resolve(null),
-    ]);
-    if (!examPdf) {
-      return new Response(JSON.stringify({ error: "Could not load the exam PDF." }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const isAr = language !== "en";
 
-    // ===== STEP 0: Question structure — admin-provided marks win over AI detection =====
+    // ===== Answer-key extraction (cached per exam — the key never changes) =====
     let questionCount = 0;
     let marks: number[] = [];
+    let keyText = "";
+    let keyFromCache = false;
+
+    const { data: cached } = await admin
+      .from("course_exam_answer_keys")
+      .select("answer_path, question_count, marks, key_text")
+      .eq("exam_id", examId)
+      .maybeSingle();
+    if (cached && (cached.answer_path ?? null) === (answerPath ?? null) && String(cached.key_text ?? "").trim()) {
+      keyText = String(cached.key_text);
+      const n = Number(cached.question_count);
+      if (Number.isFinite(n) && n >= 1 && n <= 40) {
+        questionCount = Math.round(n);
+        const cm = Array.isArray(cached.marks) ? (cached.marks as unknown[]).map(Number).filter((v) => Number.isFinite(v) && v > 0) : [];
+        if (cm.length === questionCount) marks = cm;
+      }
+      keyFromCache = true;
+    }
+
+    // Admin-provided marks always win over anything detected by AI.
     const adminCount = Number((examRow as any).question_count);
     const adminMarks = Array.isArray((examRow as any).question_marks)
       ? ((examRow as any).question_marks as unknown[]).map((v) => Number(v)).filter((v) => Number.isFinite(v) && v > 0)
@@ -217,40 +226,77 @@ Deno.serve(async (req) => {
     // If the client already gave up, stop instead of burning AI credits.
     if (req.signal?.aborted) return new Response(null, { status: 499, headers: corsHeaders });
 
-    // Only spend an extra AI round-trip on structure detection when there is
-    // enough time budget left; otherwise fall back to an even split.
-    if (!questionCount && msLeft() > 90_000) {
-    const structureSource = answerPdf ?? examPdf;
-    const structureContent: unknown[] = [
-      {
-        type: "text",
-        text: `Look at the attached ${answerPdf ? "model-answer key" : "exam"} PDF and count how many MAIN questions it contains (top-level questions such as Q1, Q2, س1, س2 — do NOT count sub-parts a/b/c separately).
-Return ONLY valid JSON: {"question_count": number, "question_numbers": number[]}
-question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`,
-      },
-      { type: "file", file: { filename: answerPdf ? "answer-key.pdf" : "exam.pdf", file_data: structureSource } },
-    ];
-    const structureResult = await callAiWithFallback(LOVABLE_API_KEY, STRUCTURE_MODELS, {
-      messages: [
-        { role: "system", content: "You extract exam structure from PDFs. Answer with JSON only, no commentary." },
-        { role: "user", content: structureContent },
-      ],
-      response_format: { type: "json_object" },
-    }, STRUCTURE_TIMEOUT_MS);
+    // Cache miss: read the exam + answer PDFs ONCE and distill them into a
+    // reusable text key, then persist it so later gradings never touch the PDFs.
+    if (!keyFromCache) {
+      const [examPdf, answerPdf] = await Promise.all([
+        pdfToDataUrl(admin, examPath),
+        answerPath ? pdfToDataUrl(admin, answerPath) : Promise.resolve(null),
+      ]);
+      if (!examPdf) {
+        return new Response(JSON.stringify({ error: "Could not load the exam PDF." }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    if (structureResult.ok) {
-      const rawStruct = structureResult.data.choices?.[0]?.message?.content ?? "{}";
-      try {
-        const s = JSON.parse(String(rawStruct).match(/\{[\s\S]*\}/)?.[0] ?? "{}");
-        const n = Number(s?.question_count);
-        if (Number.isFinite(n) && n >= 1 && n <= 30) questionCount = Math.round(n);
-      } catch { /* fall back below */ }
+      const keyContent: unknown[] = [
+        {
+          type: "text",
+          text: `Read the attached exam PDF${answerPdf ? " and its model-answer PDF" : ""} and produce a complete, faithful grading key.
+Count only MAIN questions (Q1, Q2, س1, س2 — never count sub-parts a/b/c as separate questions).
+Return ONLY valid JSON:
+{"question_count": number, "questions":[{"n": number, "question": string, "model_answer": string}]}
+"question" = the question text (may be summarized, keep all data/values).
+"model_answer" = the correct answer copied VERBATIM from the answer key${answerPdf ? "" : " (no key attached: write the curriculum-correct answer)"}, including every required point, numeric value, unit and step.
+Write in the original language of the PDF.`,
+        },
+        { type: "file", file: { filename: "exam.pdf", file_data: examPdf } },
+      ];
+      if (answerPdf) keyContent.push({ type: "file", file: { filename: "answer-key.pdf", file_data: answerPdf } });
+
+      const keyResult = await callAiWithFallback(LOVABLE_API_KEY, STRUCTURE_MODELS, {
+        messages: [
+          { role: "system", content: "You extract exam questions and their model answers from PDFs. Answer with JSON only, no commentary." },
+          { role: "user", content: keyContent },
+        ],
+        response_format: { type: "json_object" },
+      }, STRUCTURE_TIMEOUT_MS);
+
+      if (keyResult.ok) {
+        const rawKey = keyResult.data.choices?.[0]?.message?.content ?? "{}";
+        try {
+          const s = JSON.parse(String(rawKey).match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+          const list = Array.isArray(s?.questions) ? s.questions : [];
+          const n = Number(s?.question_count) || list.length;
+          if (Number.isFinite(n) && n >= 1 && n <= 40) {
+            if (!questionCount) questionCount = Math.round(n);
+          }
+          keyText = list
+            .map((q: any, i: number) => `--- Q${Number(q?.n) || i + 1} ---\nQUESTION: ${String(q?.question ?? "").trim()}\nMODEL ANSWER: ${String(q?.model_answer ?? "").trim()}`)
+            .join("\n\n")
+            .slice(0, 60_000);
+        } catch { /* fall through to defaults */ }
+      }
+
+      if (!questionCount) questionCount = 6;
+      if (marks.length !== questionCount) {
+        marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
+      }
+
+      if (keyText) {
+        await admin.from("course_exam_answer_keys").upsert({
+          exam_id: examId,
+          answer_path: answerPath,
+          question_count: questionCount,
+          marks,
+          key_text: keyText,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "exam_id" });
+      }
     }
+
     if (!questionCount) questionCount = 6;
-    marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
-    }
-    if (!questionCount) {
-      questionCount = 6;
+    if (marks.length !== questionCount) {
       marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
     }
 
