@@ -1540,13 +1540,22 @@ function CourseRunner({
             {gradeResult && (
               <div className="rounded-2xl border border-border bg-card p-5 space-y-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold">{isAr ? "نتيجة التصحيح" : "Grading result"}</h3>
-                  <div className="text-right">
-                    <div className="text-[11px] uppercase tracking-widest text-muted-foreground">{isAr ? "المجموع" : "Total"}</div>
-                    <div className="text-3xl font-bold text-primary">
-                      {Math.round(Number(gradeResult.total) || 0)} / {Number(gradeResult.graded_out_of) || 100}
+                  <h3 className="text-xl font-bold">{isAr ? "ملاحظات التصحيح" : "Grading notes"}</h3>
+                  {revealScore ? (
+                    <div className="text-right">
+                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground">{isAr ? "المجموع" : "Total"}</div>
+                      <div className="text-3xl font-bold text-primary">
+                        {Math.round(Number(gradeResult.total) || 0)} / {Number(gradeResult.graded_out_of) || 100}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <button
+                      onClick={() => setRevealScore(true)}
+                      className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
+                    >
+                      {isAr ? "احصل على درجتي" : "Get my degree"}
+                    </button>
+                  )}
                 </div>
                 {gradeResult.overall_feedback && (
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{gradeResult.overall_feedback}</p>
