@@ -1145,6 +1145,7 @@ function CourseRunner({
   const [studentImages, setStudentImages] = useState<string[]>([]);
   const [grading, setGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState<any>(null);
+  const [revealScore, setRevealScore] = useState(false);
   const [showHumanForm, setShowHumanForm] = useState(false);
   const [tgUsername, setTgUsername] = useState("");
   const [humanReason, setHumanReason] = useState("");
