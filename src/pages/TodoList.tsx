@@ -86,6 +86,7 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
   });
   const [input, setInput] = useState("");
+  const [dayPick, setDayPick] = useState<string>(() => todayKey());
   const [showCongrats, setShowCongrats] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -154,7 +155,7 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     e.preventDefault();
     const v = input.trim();
     if (!v) return;
-    setTodos((prev) => [...prev, { id: crypto.randomUUID(), text: v, done: false }]);
+    setTodos((prev) => [...prev, { id: crypto.randomUUID(), text: v, done: false, day: dayPick }]);
     setInput("");
   };
   const toggle = (id: string) =>
