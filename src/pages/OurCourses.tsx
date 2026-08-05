@@ -1599,7 +1599,9 @@ function CourseRunner({
                               </span>
                             )}
                           </div>
-                          <div className="text-sm font-mono text-primary">{Math.round(Number(q.score) || 0)} / {Math.round(Number(q.out_of) || Number(gradeResult.per_question_max) || 20)}</div>
+                          {revealScore && (
+                            <div className="text-sm font-mono text-primary">{Math.round(Number(q.score) || 0)} / {Math.round(Number(q.out_of) || Number(gradeResult.per_question_max) || 20)}</div>
+                          )}
                         </div>
                         {q.feedback && <p className="text-sm whitespace-pre-wrap">{q.feedback}</p>}
                         {q.corrections && (
