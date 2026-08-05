@@ -200,7 +200,7 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
                 <label className="text-sm font-medium">{t.count}</label>
                 <span className="text-primary font-bold">{count}</span>
               </div>
-              <Slider value={[count]} min={1} max={100} step={1} onValueChange={(v) => setCount(v[0])} />
+              <Slider value={[count]} min={1} max={20} step={1} onValueChange={(v) => setCount(v[0])} />
             </div>
 
             <Button onClick={handleGenerate} disabled={!file || loading} className="w-full h-12 text-base">
