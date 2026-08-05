@@ -971,10 +971,9 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
         <StudyRoom language={language} subject={subject} currentUserId={userId} />
 
-        {/* Private room stays visible during the session so members keep chat + timer + music together */}
-        <PrivateStudyRooms language={language} />
-
-        <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur p-8 space-y-5">
+        {/* All session features live inside the private room card */}
+        <PrivateStudyRooms language={language}>
+        <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur p-6 md:p-8 space-y-5">
           <label className="block">
             <span className="text-sm text-muted-foreground flex items-center gap-2 mb-2"><Target className="w-4 h-4" /> {L.mission}</span>
             <Input value={mission} onChange={(e) => setMission(e.target.value)} placeholder={L.missionPh} disabled={started} maxLength={200} />
@@ -1109,6 +1108,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
         </div>
 
         <SpotifyPlayerBlock language={language} />
+        </PrivateStudyRooms>
 
         <section className="mt-10">
           <h2 className="text-xl font-semibold flex items-center gap-2 mb-4"><Trophy className="w-5 h-5 text-primary" /> {L.leaderboard}</h2>
