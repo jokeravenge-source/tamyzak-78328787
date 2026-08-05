@@ -2027,6 +2027,10 @@ export type Database = {
         Returns: boolean
       }
       claim_daily_feature: { Args: { _feature: string }; Returns: boolean }
+      claim_daily_feature_limit: {
+        Args: { _feature: string; _limit?: number }
+        Returns: boolean
+      }
       feature_usage_today: { Args: { _feature: string }; Returns: number }
       get_exam_answer_path: { Args: { _exam_id: string }; Returns: string }
       has_active_premium: {

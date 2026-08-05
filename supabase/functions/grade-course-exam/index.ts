@@ -127,13 +127,39 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Course exam grading has no daily usage limit, but is rate limited to
-    // avoid abuse / accidental request floods.
     const limited = await enforceRateLimit(req, "grade-course-exam", 3, 120);
     if (!limited.ok) {
       return new Response(JSON.stringify({ error: limited.error }), {
         status: limited.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // One AI paper scan per day for free students (premium is unlimited).
+    {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const db = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const { data: allowed, error: claimErr } = await db.rpc("claim_daily_feature_limit", {
+        _feature: "ocr_grade",
+        _limit: 1,
+      });
+      if (claimErr) {
+        return new Response(JSON.stringify({ error: claimErr.message }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!allowed) {
+        const isAr = language !== "en";
+        return new Response(JSON.stringify({
+          error: isAr
+            ? "لقد استخدمت تصحيح ورقة واحدة اليوم. يتجدد عند منتصف الليل بتوقيت بغداد، أو اشترك في النسخة المميزة للاستخدام غير المحدود."
+            : "You've used your 1 free paper scan for today. It resets at midnight Baghdad time, or upgrade to Premium for unlimited scans.",
+          upgrade: true,
+        }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
