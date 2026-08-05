@@ -285,17 +285,13 @@ CONTENT COVERAGE
 - Ignore unreadable sections rather than guessing their content.
 - Write every field only in ${language}.`;
 
-const buildBatchInstruction = (batchSize: number, batchIndex: number, batchCount: number, covered: string[]) => {
-  const avoid = covered.length
-    ? `\nDo NOT repeat these already-covered concepts: ${covered.slice(0, 40).join(" | ")}`
-    : "";
-  return `Generate up to ${batchSize} distinct multiple-choice questions. This is batch ${batchIndex + 1} of ${batchCount}; cover a different region and different concepts of the source than the other batches.${avoid}
+const buildBatchInstruction = (batchSize: number, batchIndex: number, batchCount: number) =>
+  `Generate up to ${batchSize} distinct multiple-choice questions. This is batch ${batchIndex + 1} of ${batchCount}; cover a different region and different concepts of the source than the other batches.
 
 Each question needs exactly four unique choices, one answer_index between 0 and 3, a hint that does not reveal the answer, and an explanation quoting or paraphrasing the supporting source statement.
 
 Respond with RAW JSON only (no markdown fences, no commentary) in exactly this shape:
 {"questions":[{"question":"...","choices":["...","...","...","..."],"answer_index":0,"hint":"...","explanation":"..."}]}`;
-};
 
 /* -------------------------------------------------------------------------- */
 /* Handler                                                                     */
@@ -385,7 +381,7 @@ Deno.serve(async (req) => {
         role: "user" as const,
         content: [
           ...sourceParts,
-          { type: "text", text: buildBatchInstruction(batchSize, batchIndex, batchSizes.length, []) },
+          { type: "text", text: buildBatchInstruction(batchSize, batchIndex, batchSizes.length) },
         ],
       }];
 
