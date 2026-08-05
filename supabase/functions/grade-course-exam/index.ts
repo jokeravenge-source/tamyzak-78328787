@@ -9,13 +9,6 @@ const corsHeaders = {
 };
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const OCR_MODELS = [
-  // Fast-but-strong vision model first: the platform closes the HTTP connection
-  // if the whole request takes too long, so latency is part of correctness here.
-  "google/gemini-3.5-flash",
-  "google/gemini-2.5-pro",
-  "google/gemini-2.5-flash",
-];
 const GRADE_MODELS = [
   "google/gemini-2.5-pro",
   "google/gemini-3.5-flash",
@@ -28,9 +21,10 @@ const MAX_IMAGES = 10;
 // Whole-request budget. The edge runtime / proxy drops the connection well
 // before this, so every AI step must fit inside it.
 const TOTAL_BUDGET_MS = 130_000;
-const OCR_TIMEOUT_MS = 55_000;
 const GRADE_TIMEOUT_MS = 65_000;
-const STRUCTURE_TIMEOUT_MS = 25_000;
+// Answer-key extraction runs once per exam (cached afterwards), so it gets a
+// generous slice of the budget.
+const STRUCTURE_TIMEOUT_MS = 55_000;
 const TOTAL_MARKS = 100;
 
 let deadline = 0;
