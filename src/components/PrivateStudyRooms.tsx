@@ -16,7 +16,7 @@ function makeCode() {
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
-export default function PrivateStudyRooms({ language }: { language: "en" | "ar" }) {
+export default function PrivateStudyRooms({ language, children }: { language: "en" | "ar"; children?: React.ReactNode }) {
   const ar = language === "ar";
   const [userId, setUserId] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState("Student");
@@ -247,7 +247,7 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
 
   if (!room) {
     return (
-      <section className="max-w-2xl mx-auto mb-8 rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5" dir={ar ? "rtl" : "ltr"}>
+      <section className="max-w-3xl mx-auto mb-8 rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5" dir={ar ? "rtl" : "ltr"}>
         <div className="flex items-center gap-2 mb-1 text-primary font-semibold">
           <DoorOpen className="w-4 h-4" /> <span>{L.title}</span>
         </div>
@@ -268,12 +268,13 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
               className="rounded-xl border border-primary/50 px-3 py-2 text-sm font-medium">{L.join}</button>
           </div>
         </div>
+        {children && <div className="mt-5 pt-5 border-t border-white/10">{children}</div>}
       </section>
     );
   }
 
   return (
-    <section className="max-w-2xl mx-auto mb-8 rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5" dir={ar ? "rtl" : "ltr"}>
+    <section className="max-w-3xl mx-auto mb-8 rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5" dir={ar ? "rtl" : "ltr"}>
       <div className="flex items-center gap-2 flex-wrap mb-3">
         <DoorOpen className="w-4 h-4 text-primary" />
         <span className="font-semibold">{room.name}</span>
