@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Copy, DoorOpen, LogOut, MessageCircle, Plus, Send, Users } from "lucide-react";
+import { Ban, Copy, DoorOpen, Link2, LogOut, MessageCircle, Plus, Send, Trash2, Users } from "lucide-react";
 import { censorText, findBannedWords } from "@/lib/censor";
+import { CharacterAvatar, type CharacterTraits, type Gender } from "./CharacterAvatar";
 
 type Room = { id: string; code: string; name: string; owner_id: string };
-type Member = { user_id: string; display_name: string };
+type Member = { user_id: string; display_name: string; gender?: Gender; character?: CharacterTraits | null };
 type Message = { id: string; user_id: string; display_name: string; body: string; created_at: string };
 
 const LS_KEY = "study_room_active_v1";
