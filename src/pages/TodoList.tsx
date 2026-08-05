@@ -11,15 +11,28 @@ type Todo = { id: string; text: string; done: boolean; day?: string };
 const STORAGE_KEY = "app_todos_v1";
 const CELEBRATED_KEY = "app_todos_celebrated_v1";
 
-const DAY_ORDER_EN = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-const DAY_ORDER_AR = ["السبت", "الأحد", "الإثنين", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
-function dayRank(day?: string): number {
-  if (!day) return 99;
-  const en = DAY_ORDER_EN.indexOf(day);
-  if (en >= 0) return en;
-  const ar = DAY_ORDER_AR.indexOf(day);
-  if (ar >= 0) return ar === 3 ? 2 : ar > 3 ? ar - 1 : ar;
-  return 50;
+const DAYS = [
+  { key: "Saturday", en: "Saturday", ar: "السبت", alt: ["السبت"] },
+  { key: "Sunday", en: "Sunday", ar: "الأحد", alt: ["الأحد", "الاحد"] },
+  { key: "Monday", en: "Monday", ar: "الإثنين", alt: ["الإثنين", "الاثنين"] },
+  { key: "Tuesday", en: "Tuesday", ar: "الثلاثاء", alt: ["الثلاثاء"] },
+  { key: "Wednesday", en: "Wednesday", ar: "الأربعاء", alt: ["الأربعاء", "الاربعاء"] },
+  { key: "Thursday", en: "Thursday", ar: "الخميس", alt: ["الخميس"] },
+  { key: "Friday", en: "Friday", ar: "الجمعة", alt: ["الجمعة"] },
+] as const;
+
+/** Map any stored day label (English or Arabic, legacy included) to a canonical key. */
+function normalizeDay(day?: string): string | null {
+  if (!day) return null;
+  const v = day.trim();
+  const hit = DAYS.find((d) => d.en === v || d.ar === v || (d.alt as readonly string[]).includes(v));
+  return hit ? hit.key : null;
+}
+
+function todayKey(): string {
+  // JS: 0=Sunday … 6=Saturday
+  const map = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return map[new Date().getDay()];
 }
 
 const t = {
@@ -35,6 +48,9 @@ const t = {
     congratsBody: "You completed every task on your list. Take a deep breath — you earned it.",
     close: "Awesome",
     clear: "Clear all",
+    unassigned: "Unassigned",
+    noTasksDay: "No tasks for this day.",
+    forDay: "Day",
     sendTelegram: "Send today's tasks to Telegram",
     sending: "Sending…",
     sentOk: "Sent to your Telegram ✓",
@@ -53,6 +69,9 @@ const t = {
     congratsBody: "لقد أنجزت كل المهام في قائمتك. خذ نفسًا عميقًا — أنت تستحق ذلك.",
     close: "ممتاز",
     clear: "مسح الكل",
+    unassigned: "بدون يوم",
+    noTasksDay: "لا توجد مهام لهذا اليوم.",
+    forDay: "اليوم",
     sendTelegram: "أرسل مهام اليوم إلى تيليجرام",
     sending: "جاري الإرسال…",
     sentOk: "تم الإرسال إلى تيليجرام ✓",
@@ -67,6 +86,7 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
   });
   const [input, setInput] = useState("");
+  const [dayPick, setDayPick] = useState<string>(() => todayKey());
   const [showCongrats, setShowCongrats] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -135,7 +155,7 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     e.preventDefault();
     const v = input.trim();
     if (!v) return;
-    setTodos((prev) => [...prev, { id: crypto.randomUUID(), text: v, done: false }]);
+    setTodos((prev) => [...prev, { id: crypto.randomUUID(), text: v, done: false, day: dayPick }]);
     setInput("");
   };
   const toggle = (id: string) =>
@@ -180,6 +200,23 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </button>
         </form>
 
+        <div className="mb-4 flex flex-wrap gap-2">
+          {DAYS.map((d) => (
+            <button
+              key={d.key}
+              type="button"
+              onClick={() => setDayPick(d.key)}
+              className={`px-3 h-9 rounded-xl text-xs font-semibold border transition ${
+                dayPick === d.key
+                  ? "border-primary/60 bg-primary/20 text-foreground"
+                  : "border-white/10 bg-secondary/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {language === "ar" ? d.ar : d.en}
+            </button>
+          ))}
+        </div>
+
         <button
           onClick={sendToTelegram}
           disabled={sending}
@@ -196,29 +233,33 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </div>
         )}
 
-        {todos.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 bg-secondary/30 p-6 text-center text-sm text-muted-foreground">
-            {text.empty}
-          </div>
-        ) : (() => {
+        {(() => {
           const groups = new Map<string, Todo[]>();
+          for (const d of DAYS) groups.set(d.key, []);
+          groups.set("__none__", []);
           for (const td of todos) {
-            const key = td.day || "__none__";
-            if (!groups.has(key)) groups.set(key, []);
+            const key = normalizeDay(td.day) || "__none__";
             groups.get(key)!.push(td);
           }
-          const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
-            if (a === "__none__") return 1;
-            if (b === "__none__") return -1;
-            return dayRank(a) - dayRank(b);
-          });
+          const sections = [
+            ...DAYS.map((d) => ({ key: d.key, label: language === "ar" ? d.ar : d.en })),
+            { key: "__none__", label: text.unassigned },
+          ].filter((s) => s.key !== "__none__" || groups.get("__none__")!.length > 0);
           return (
             <div className="space-y-6">
-              {sortedKeys.map((key) => (
+              {sections.map(({ key, label }) => (
                 <div key={key}>
-                  {key !== "__none__" && (
-                    <h3 className="text-xs uppercase tracking-[0.2em] text-primary mb-2 px-1">{key}</h3>
-                  )}
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <h3 className="text-xs uppercase tracking-[0.2em] text-primary">{label}</h3>
+                    <span className="text-[11px] text-muted-foreground">
+                      {groups.get(key)!.filter((x) => x.done).length}/{groups.get(key)!.length}
+                    </span>
+                  </div>
+                  {groups.get(key)!.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-secondary/20 p-3 text-center text-xs text-muted-foreground">
+                      {text.noTasksDay}
+                    </div>
+                  ) : (
                   <ul className="space-y-2">
                     <AnimatePresence initial={false}>
                       {groups.get(key)!.map((todo) => (
@@ -247,6 +288,7 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                       ))}
                     </AnimatePresence>
                   </ul>
+                  )}
                 </div>
               ))}
             </div>
