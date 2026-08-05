@@ -396,6 +396,10 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
 
     // Server-side normalization: enforce the detected question count and recompute the total out of 100.
     const obj = (parsed && typeof parsed === "object") ? { ...(parsed as Record<string, unknown>) } : {};
+    transcript = String((obj as any).transcript ?? "").trim();
+    delete (obj as any).transcript;
+    transcriptLooksUnreadable =
+      !transcript || transcript.length < 120 || /\[(?:غير مقروء|unreadable)\]/i.test(transcript);
     const rawQs = Array.isArray((obj as any).per_question) ? (obj as any).per_question : [];
     const byN = new Map<number, any>();
     for (const q of rawQs) {
