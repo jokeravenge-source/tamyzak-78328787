@@ -11,15 +11,28 @@ type Todo = { id: string; text: string; done: boolean; day?: string };
 const STORAGE_KEY = "app_todos_v1";
 const CELEBRATED_KEY = "app_todos_celebrated_v1";
 
-const DAY_ORDER_EN = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-const DAY_ORDER_AR = ["السبت", "الأحد", "الإثنين", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
-function dayRank(day?: string): number {
-  if (!day) return 99;
-  const en = DAY_ORDER_EN.indexOf(day);
-  if (en >= 0) return en;
-  const ar = DAY_ORDER_AR.indexOf(day);
-  if (ar >= 0) return ar === 3 ? 2 : ar > 3 ? ar - 1 : ar;
-  return 50;
+const DAYS = [
+  { key: "Saturday", en: "Saturday", ar: "السبت", alt: ["السبت"] },
+  { key: "Sunday", en: "Sunday", ar: "الأحد", alt: ["الأحد", "الاحد"] },
+  { key: "Monday", en: "Monday", ar: "الإثنين", alt: ["الإثنين", "الاثنين"] },
+  { key: "Tuesday", en: "Tuesday", ar: "الثلاثاء", alt: ["الثلاثاء"] },
+  { key: "Wednesday", en: "Wednesday", ar: "الأربعاء", alt: ["الأربعاء", "الاربعاء"] },
+  { key: "Thursday", en: "Thursday", ar: "الخميس", alt: ["الخميس"] },
+  { key: "Friday", en: "Friday", ar: "الجمعة", alt: ["الجمعة"] },
+] as const;
+
+/** Map any stored day label (English or Arabic, legacy included) to a canonical key. */
+function normalizeDay(day?: string): string | null {
+  if (!day) return null;
+  const v = day.trim();
+  const hit = DAYS.find((d) => d.en === v || d.ar === v || (d.alt as readonly string[]).includes(v));
+  return hit ? hit.key : null;
+}
+
+function todayKey(): string {
+  // JS: 0=Sunday … 6=Saturday
+  const map = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return map[new Date().getDay()];
 }
 
 const t = {
@@ -35,6 +48,9 @@ const t = {
     congratsBody: "You completed every task on your list. Take a deep breath — you earned it.",
     close: "Awesome",
     clear: "Clear all",
+    unassigned: "Unassigned",
+    noTasksDay: "No tasks for this day.",
+    forDay: "Day",
     sendTelegram: "Send today's tasks to Telegram",
     sending: "Sending…",
     sentOk: "Sent to your Telegram ✓",
@@ -53,6 +69,9 @@ const t = {
     congratsBody: "لقد أنجزت كل المهام في قائمتك. خذ نفسًا عميقًا — أنت تستحق ذلك.",
     close: "ممتاز",
     clear: "مسح الكل",
+    unassigned: "بدون يوم",
+    noTasksDay: "لا توجد مهام لهذا اليوم.",
+    forDay: "اليوم",
     sendTelegram: "أرسل مهام اليوم إلى تيليجرام",
     sending: "جاري الإرسال…",
     sentOk: "تم الإرسال إلى تيليجرام ✓",
