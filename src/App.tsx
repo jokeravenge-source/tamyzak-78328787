@@ -53,7 +53,6 @@ const OrganicEquations = lazy(() => import("./pages/OrganicEquations"));
 const LiveBattle = lazy(() => import("./pages/LiveBattle"));
 const SubjectsHub = lazy(() => import("./pages/SubjectsHub"));
 const TextToVideo = lazy(() => import("./pages/TextToVideo"));
-const PsychAssistant = lazy(() => import("./pages/PsychAssistant"));
 const SubjectTutor = lazy(() => import("./pages/SubjectTutor"));
 const PhysicsLaws = lazy(() => import("./pages/PhysicsLaws"));
 const PhysicsQuickMcq = lazy(() => import("./pages/PhysicsQuickMcq"));

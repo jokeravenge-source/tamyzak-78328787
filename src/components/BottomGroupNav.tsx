@@ -6,7 +6,7 @@ import {
   NotebookPen, FileText, HelpCircle, Network, Headphones, Video, Youtube,
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown,
-  Home, Palette, Heart, GraduationCap as CoursesIcon, Users2, Lock,
+  Home, Palette, GraduationCap as CoursesIcon, Users2, Lock,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
