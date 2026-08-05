@@ -1412,7 +1412,6 @@ function CourseRunner({
                             {completed[e.id] && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary">
                                 {isAr ? "مكتمل" : "Completed"}
-                                {completed[e.id].score !== null ? ` · ${Math.round(completed[e.id].score as number)}/${completed[e.id].out_of ?? 100}` : ""}
                               </span>
                             )}
                           </div>
