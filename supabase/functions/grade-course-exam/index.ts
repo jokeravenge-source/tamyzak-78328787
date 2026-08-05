@@ -9,13 +9,6 @@ const corsHeaders = {
 };
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const OCR_MODELS = [
-  // Fast-but-strong vision model first: the platform closes the HTTP connection
-  // if the whole request takes too long, so latency is part of correctness here.
-  "google/gemini-3.5-flash",
-  "google/gemini-2.5-pro",
-  "google/gemini-2.5-flash",
-];
 const GRADE_MODELS = [
   "google/gemini-2.5-pro",
   "google/gemini-3.5-flash",
@@ -28,9 +21,10 @@ const MAX_IMAGES = 10;
 // Whole-request budget. The edge runtime / proxy drops the connection well
 // before this, so every AI step must fit inside it.
 const TOTAL_BUDGET_MS = 130_000;
-const OCR_TIMEOUT_MS = 55_000;
 const GRADE_TIMEOUT_MS = 65_000;
-const STRUCTURE_TIMEOUT_MS = 25_000;
+// Answer-key extraction runs once per exam (cached afterwards), so it gets a
+// generous slice of the budget.
+const STRUCTURE_TIMEOUT_MS = 55_000;
 const TOTAL_MARKS = 100;
 
 let deadline = 0;
@@ -189,22 +183,31 @@ Deno.serve(async (req) => {
     const examPath = examRow.exam_path as string;
     const answerPath = examRow.answer_path as string | null;
 
-    // Download both PDFs in parallel to cut latency.
-    const [examPdf, answerPdf] = await Promise.all([
-      pdfToDataUrl(admin, examPath),
-      answerPath ? pdfToDataUrl(admin, answerPath) : Promise.resolve(null),
-    ]);
-    if (!examPdf) {
-      return new Response(JSON.stringify({ error: "Could not load the exam PDF." }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const isAr = language !== "en";
 
-    // ===== STEP 0: Question structure — admin-provided marks win over AI detection =====
+    // ===== Answer-key extraction (cached per exam — the key never changes) =====
     let questionCount = 0;
     let marks: number[] = [];
+    let keyText = "";
+    let keyFromCache = false;
+
+    const { data: cached } = await admin
+      .from("course_exam_answer_keys")
+      .select("answer_path, question_count, marks, key_text")
+      .eq("exam_id", examId)
+      .maybeSingle();
+    if (cached && (cached.answer_path ?? null) === (answerPath ?? null) && String(cached.key_text ?? "").trim()) {
+      keyText = String(cached.key_text);
+      const n = Number(cached.question_count);
+      if (Number.isFinite(n) && n >= 1 && n <= 40) {
+        questionCount = Math.round(n);
+        const cm = Array.isArray(cached.marks) ? (cached.marks as unknown[]).map(Number).filter((v) => Number.isFinite(v) && v > 0) : [];
+        if (cm.length === questionCount) marks = cm;
+      }
+      keyFromCache = true;
+    }
+
+    // Admin-provided marks always win over anything detected by AI.
     const adminCount = Number((examRow as any).question_count);
     const adminMarks = Array.isArray((examRow as any).question_marks)
       ? ((examRow as any).question_marks as unknown[]).map((v) => Number(v)).filter((v) => Number.isFinite(v) && v > 0)
@@ -217,40 +220,77 @@ Deno.serve(async (req) => {
     // If the client already gave up, stop instead of burning AI credits.
     if (req.signal?.aborted) return new Response(null, { status: 499, headers: corsHeaders });
 
-    // Only spend an extra AI round-trip on structure detection when there is
-    // enough time budget left; otherwise fall back to an even split.
-    if (!questionCount && msLeft() > 90_000) {
-    const structureSource = answerPdf ?? examPdf;
-    const structureContent: unknown[] = [
-      {
-        type: "text",
-        text: `Look at the attached ${answerPdf ? "model-answer key" : "exam"} PDF and count how many MAIN questions it contains (top-level questions such as Q1, Q2, س1, س2 — do NOT count sub-parts a/b/c separately).
-Return ONLY valid JSON: {"question_count": number, "question_numbers": number[]}
-question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`,
-      },
-      { type: "file", file: { filename: answerPdf ? "answer-key.pdf" : "exam.pdf", file_data: structureSource } },
-    ];
-    const structureResult = await callAiWithFallback(LOVABLE_API_KEY, STRUCTURE_MODELS, {
-      messages: [
-        { role: "system", content: "You extract exam structure from PDFs. Answer with JSON only, no commentary." },
-        { role: "user", content: structureContent },
-      ],
-      response_format: { type: "json_object" },
-    }, STRUCTURE_TIMEOUT_MS);
+    // Cache miss: read the exam + answer PDFs ONCE and distill them into a
+    // reusable text key, then persist it so later gradings never touch the PDFs.
+    if (!keyFromCache) {
+      const [examPdf, answerPdf] = await Promise.all([
+        pdfToDataUrl(admin, examPath),
+        answerPath ? pdfToDataUrl(admin, answerPath) : Promise.resolve(null),
+      ]);
+      if (!examPdf) {
+        return new Response(JSON.stringify({ error: "Could not load the exam PDF." }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    if (structureResult.ok) {
-      const rawStruct = structureResult.data.choices?.[0]?.message?.content ?? "{}";
-      try {
-        const s = JSON.parse(String(rawStruct).match(/\{[\s\S]*\}/)?.[0] ?? "{}");
-        const n = Number(s?.question_count);
-        if (Number.isFinite(n) && n >= 1 && n <= 30) questionCount = Math.round(n);
-      } catch { /* fall back below */ }
+      const keyContent: unknown[] = [
+        {
+          type: "text",
+          text: `Read the attached exam PDF${answerPdf ? " and its model-answer PDF" : ""} and produce a complete, faithful grading key.
+Count only MAIN questions (Q1, Q2, س1, س2 — never count sub-parts a/b/c as separate questions).
+Return ONLY valid JSON:
+{"question_count": number, "questions":[{"n": number, "question": string, "model_answer": string}]}
+"question" = the question text (may be summarized, keep all data/values).
+"model_answer" = the correct answer copied VERBATIM from the answer key${answerPdf ? "" : " (no key attached: write the curriculum-correct answer)"}, including every required point, numeric value, unit and step.
+Write in the original language of the PDF.`,
+        },
+        { type: "file", file: { filename: "exam.pdf", file_data: examPdf } },
+      ];
+      if (answerPdf) keyContent.push({ type: "file", file: { filename: "answer-key.pdf", file_data: answerPdf } });
+
+      const keyResult = await callAiWithFallback(LOVABLE_API_KEY, STRUCTURE_MODELS, {
+        messages: [
+          { role: "system", content: "You extract exam questions and their model answers from PDFs. Answer with JSON only, no commentary." },
+          { role: "user", content: keyContent },
+        ],
+        response_format: { type: "json_object" },
+      }, STRUCTURE_TIMEOUT_MS);
+
+      if (keyResult.ok) {
+        const rawKey = keyResult.data.choices?.[0]?.message?.content ?? "{}";
+        try {
+          const s = JSON.parse(String(rawKey).match(/\{[\s\S]*\}/)?.[0] ?? "{}");
+          const list = Array.isArray(s?.questions) ? s.questions : [];
+          const n = Number(s?.question_count) || list.length;
+          if (Number.isFinite(n) && n >= 1 && n <= 40) {
+            if (!questionCount) questionCount = Math.round(n);
+          }
+          keyText = list
+            .map((q: any, i: number) => `--- Q${Number(q?.n) || i + 1} ---\nQUESTION: ${String(q?.question ?? "").trim()}\nMODEL ANSWER: ${String(q?.model_answer ?? "").trim()}`)
+            .join("\n\n")
+            .slice(0, 60_000);
+        } catch { /* fall through to defaults */ }
+      }
+
+      if (!questionCount) questionCount = 6;
+      if (marks.length !== questionCount) {
+        marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
+      }
+
+      if (keyText) {
+        await admin.from("course_exam_answer_keys").upsert({
+          exam_id: examId,
+          answer_path: answerPath,
+          question_count: questionCount,
+          marks,
+          key_text: keyText,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "exam_id" });
+      }
     }
+
     if (!questionCount) questionCount = 6;
-    marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
-    }
-    if (!questionCount) {
-      questionCount = 6;
+    if (marks.length !== questionCount) {
       marks = Array.from({ length: questionCount }, () => TOTAL_MARKS / questionCount);
     }
 
@@ -260,111 +300,57 @@ question_numbers must list the main question numbers in order (e.g. [1,2,3,4]).`
     const marksList = marks.map((m, i) => `Q${i + 1}=${fmtMark(m)}`).join(", ");
     console.log(`[grade-course-exam] questions=${questionCount} marks=${marksList}`);
 
-    // ===== STEP 1: OCR the student's handwritten answer photos into plain text =====
-    const ocrSystem = isAr
-      ? `أنت محرك OCR متخصص في قراءة أوراق امتحانات الفيزياء بخط اليد باللغة العربية والرموز الرياضية والفيزيائية. مهمتك الوحيدة هي استخراج كل ما هو مكتوب على الصور حرفياً، بأمانة تامة، مع الحفاظ على ترتيب القراءة وأرقام الأسئلة والمعادلات والوحدات.
+    // ===== SINGLE CALL: read the student's photos AND grade them in one pass =====
+    const hasKey = Boolean(keyText);
+    let transcript = "";
+    let transcriptLooksUnreadable = false;
 
-قواعد صارمة:
-- انسخ ما هو مكتوب فقط، بدون شرح أو تصحيح أو إضافة.
-- ابدأ كل سؤال بسطر: "السؤال N:" حيث N هو رقم السؤال كما ظهر في ورقة الطالب.
-- اكتب المعادلات بصيغة نصية واضحة (مثال: E = h*f، λ = c/f).
-- إذا كان جزء من الكلام غير مقروء تماماً، اكتب مكانه: [غير مقروء].
-- لا تُخرج JSON ولا Markdown، فقط النص المُستخرج.`
-      : `You are an OCR engine specialized in reading handwritten physics exam papers with math and physics symbols. Your only job is to transcribe exactly what is written on the images, verbatim, preserving reading order, question numbers, equations, and units.
-
-Strict rules:
-- Transcribe only what is written; do NOT explain, correct, or add anything.
-- Start each question with a line: "Question N:" where N is the question number as written by the student.
-- Write equations as clear text (e.g., E = h*f, λ = c/f).
-- If a portion is truly unreadable, write [unreadable] in place.
-- Do NOT output JSON or Markdown, only the transcribed text.`;
-
-    const ocrContent: unknown[] = [
-      { type: "text", text: isAr
-          ? `مرفق ${images.length} صورة لأوراق إجابة الطالب. عالج كل صورة على حدة بالترتيب من الأولى إلى الأخيرة، ولا تتوقف بعد الصورة الأولى. لكل صورة اكتب أولاً سطراً: "===== الصفحة K من ${images.length} =====" ثم انسخ كل ما فيها من إجابات حرفياً، مع الحفاظ على أرقام الأسئلة كما كتبها الطالب. يجب أن تظهر جميع الصفحات في الناتج.`
-          : `You will receive ${images.length} images of the student's answer sheets. Process every image in order from first to last — do NOT stop after the first image. Before each image write a line: "===== Page K of ${images.length} =====" then transcribe everything on that page verbatim, preserving the question numbers the student wrote. All pages MUST appear in the output.` },
-    ];
-    for (const url of images) ocrContent.push({ type: "image_url", image_url: { url } });
-
-    const ocrResult = await callAiWithFallback(LOVABLE_API_KEY, OCR_MODELS, {
-      messages: [
-        { role: "system", content: ocrSystem },
-        { role: "user", content: ocrContent },
-      ],
-    }, OCR_TIMEOUT_MS);
-    if (!ocrResult.ok) {
-      const status = ocrResult.status === 402 ? 402 : 200;
-      const msg = ocrResult.status === 504
-        ? (isAr ? "استغرقت قراءة الصور وقتاً طويلاً. قلّل عدد الصور أو جرّب مرة أخرى." : "Reading your images took too long. Use fewer photos and try again.")
-        : `OCR failed: ${ocrResult.error}`;
-      return new Response(JSON.stringify({ error: msg }), {
-        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const transcript = String(ocrResult.data.choices?.[0]?.message?.content ?? "").trim();
-    console.log(`[grade-course-exam] OCR ok via ${ocrResult.model}`);
-    const transcriptLooksUnreadable =
-      !transcript ||
-      transcript.length < 120 ||
-      /\[(?:غير مقروء|unreadable)\]/i.test(transcript);
-
-    // ===== STEP 2: Grade the transcribed text against the exam + answer key =====
-    const hasKey = Boolean(answerPdf);
     const systemPrompt = isAr
-      ? `أنت مصحّح وزاري عراقي صارم جداً. لديك ورقة الامتحان PDF${hasKey ? " وورقة الإجابة النموذجية PDF" : ""} ونص إجابات الطالب المستخرج بالـ OCR. الامتحان يتكون من ${questionCount} أسئلة، والدرجة الكلية 100، وتوزيع الدرجات كالآتي: ${marksList}. المجموع الكلي ${fmtMark(totalPossible)}، وتُحتسب جميع الأسئلة.
+      ? `أنت مصحّح وزاري عراقي صارم جداً وقارئ خط يد خبير. ستستلم صور أوراق إجابة الطالب بخط اليد ومفتاح التصحيح النصي (الأسئلة + الإجابات النموذجية). مهمتك: قراءة ما كتبه الطالب حرفياً ثم تصحيحه في خطوة واحدة. الامتحان يتكون من ${questionCount} أسئلة وتوزيع الدرجات: ${marksList} (المجموع ${fmtMark(totalPossible)}).
 
-قواعد التصحيح الصارمة (إلزامية):
-- ${hasKey ? "ورقة الإجابة النموذجية PDF هي **المرجع الوحيد والمطلق والحصري**. لا تعتمد على معرفتك العامة ولا على المنهج، بل فقط على ما هو مكتوب حرفياً داخل ملف الإجابة النموذجية. أي إجابة لا تطابق ما في نموذج الإجابة = خطأ حتى لو بدت صحيحة علمياً." : "لا يوجد نموذج إجابة مرفق؛ صحّح بحذر شديد وفق المنهج الوزاري وحده."}
-- ${hasKey ? "قبل تصحيح كل سؤال، حدد أولاً في ذهنك الإجابة الصحيحة كما وردت **حرفياً** في نموذج الإجابة (النقاط، القيم العددية، الرموز، الوحدات، الرسم إن وُجد)، ثم قارن كل جملة من إجابة الطالب بها. أي انحراف = خصم." : ""}
-- ${hasKey ? "الأرقام والقيم النهائية يجب أن تطابق نموذج الإجابة تماماً (مع تسامح ±1% للتقريب فقط). أي رقم مختلف = خطأ صريح." : ""}
-- لا تمنح أي "درجات مجانية" أو مجاملة. لا تكافئ الجهد وحده.
-- إذا لم يجب الطالب أو كتب كلاماً لا علاقة له: score = 0.
-- الدرجة الجزئية مسموحة فقط عندما تطابق خطوة معينة خطوة موثّقة داخل نموذج الإجابة (قانون، تعويض، استنتاج). كل خطوة ناقصة = خصم.
-- التعريفات والقوانين يجب أن تكون كما في نموذج الإجابة؛ أي نقص كلمة جوهرية = خصم.
-- ممنوع التقريب للأعلى. لا تمنح الدرجة الكاملة إلا لإجابة مطابقة تماماً لنموذج الإجابة.
-- استخدم نص الـ OCR كمصدر لإجابة الطالب فقط. لا تخترع نصاً غير موجود.
-- إذا كان النص [غير مقروء]، ضع attempted=true و score=null و feedback="يحتاج مراجعة يدوية".
-- في حقل corrections اكتب **الإجابة الصحيحة كما وردت في نموذج الإجابة** (اقتباس مباشر أو ملخص أمين لها)، وفي feedback اشرح لماذا خسر الطالب كل درجة بدقة.`
-      : `You are an extremely strict Iraqi ministerial grader. You have the exam PDF${hasKey ? ", the model-answer PDF" : ""}, and the student's OCR transcript. The paper has ${questionCount} questions and the marks are distributed as follows: ${marksList} (total ${fmtMark(totalPossible)}). All questions count.
+قواعد صارمة (إلزامية):
+- ${hasKey ? "مفتاح التصحيح المرفق نصاً هو **المرجع الوحيد والمطلق**. أي إجابة لا تطابقه = خطأ حتى لو بدت صحيحة علمياً." : "لا يوجد مفتاح تصحيح؛ صحّح بحذر شديد وفق المنهج الوزاري."}
+- اقرأ الصور بدقة: انسخ ما هو مكتوب فقط بدون تصحيح أو إضافة، مع الحفاظ على المعادلات والوحدات وأرقام الأسئلة. إذا كان جزء غير مقروء اكتب [غير مقروء].
+- الأرقام والقيم النهائية يجب أن تطابق المفتاح (تسامح ±1% للتقريب فقط).
+- لا تمنح درجات مجانية. إذا لم يجب الطالب أو كتب كلاماً لا علاقة له: score = 0.
+- الدرجة الجزئية فقط عند مطابقة خطوة موثّقة في المفتاح. كل خطوة ناقصة = خصم.
+- إذا كان ما كتبه الطالب غير مقروء، ضع attempted=true و score=null و feedback="يحتاج مراجعة يدوية".
+- في corrections اكتب الإجابة الصحيحة كما في المفتاح، وفي feedback اشرح سبب خسارة كل درجة.`
+      : `You are an extremely strict Iraqi ministerial grader and an expert handwriting reader. You receive photos of the student's handwritten answer sheets plus a text grading key (questions + model answers). Transcribe what the student wrote and grade it in ONE pass. The paper has ${questionCount} questions with marks: ${marksList} (total ${fmtMark(totalPossible)}).
 
-Strict grading rules (mandatory):
-- ${hasKey ? "The model-answer PDF is the **single, absolute, exclusive reference**. Do NOT rely on your general knowledge or on the curriculum — only on what is literally written inside the answer-key PDF. Any answer that does not match the key = wrong, even if it looks scientifically plausible." : "No answer key is attached; grade cautiously using the official curriculum only."}
-- ${hasKey ? "Before grading each question, first identify the correct answer **verbatim** from the answer key (bullet points, numeric values, symbols, units, diagram if any), then compare every sentence of the student's answer against it. Any deviation = deduction." : ""}
-- ${hasKey ? "Final numerical values MUST match the answer key exactly (allow only ±1% rounding tolerance). Any different number = clear error." : ""}
-- Never award free marks or sympathy marks. Effort alone earns nothing.
-- If the student did not answer or wrote irrelevant content: score = 0.
-- Partial credit is allowed ONLY when a step exactly matches a step documented inside the answer key (law, substitution, conclusion). Every missing step = deduction.
-- Definitions and laws must match the answer key wording; any missing key word = deduction.
-- Do NOT round up. Give full marks ONLY for an answer that fully matches the answer key.
-- Use the OCR transcript as the student's answer source only. Do not fabricate text that isn't there.
-- If the transcript is [unreadable], set attempted=true, score=null, feedback="needs manual review".
-- In the "corrections" field, write **the correct answer as it appears in the answer key** (direct quote or faithful summary of it). In "feedback" explain precisely why each mark was lost.`;
+Strict rules (mandatory):
+- ${hasKey ? "The attached text grading key is the **single absolute reference**. Any answer that does not match it = wrong, even if scientifically plausible." : "No grading key is available; grade cautiously using the official curriculum only."}
+- Read the images carefully: transcribe exactly what is written, never correct or invent text; preserve equations, units and question numbers. Write [unreadable] for illegible parts.
+- Final numerical values MUST match the key (±1% rounding tolerance only).
+- Never award free marks. If the student did not answer or wrote irrelevant content: score = 0.
+- Partial credit only when a step matches a step documented in the key. Every missing step = deduction.
+- If the handwriting is illegible for a question, set attempted=true, score=null, feedback="needs manual review".
+- In "corrections" write the correct answer as in the key; in "feedback" explain precisely why each mark was lost.`;
 
     const forcedRules = `
 
 MANDATORY OUTPUT RULES:
-- The exam has exactly ${questionCount} main questions numbered 1..${questionCount} (this was determined from the ${hasKey ? "answer key" : "exam"} PDF).
+- The exam has exactly ${questionCount} main questions numbered 1..${questionCount}.
 - "per_question" MUST contain exactly ${questionCount} entries, one per question, even if the student did not answer some. For unanswered questions set attempted=false and score=0.
-- Each question has its OWN maximum mark: ${marksList}. Never give a question more than its own maximum. "graded_out_of" MUST be ${fmtMark(totalPossible)}.
-- "total" MUST equal the SUM of all per_question scores (ignoring any question with score=null). Never invent a higher total.
-- If all questions are 0, total = 0. Do NOT output 100 unless every question truly earned full marks.
-- For EVERY question also output "ocr_confidence": an integer 0-100 describing how clearly you could READ the student's handwriting for that question in the transcript (100 = perfectly legible, 0 = nothing readable). Judge legibility only, not correctness.
-- Also output "needs_review": true when ocr_confidence < 60, when the transcript for that question contains [unreadable]/[غير مقروء], or when you are not confident the grade is reliable. Otherwise false.`;
+- Each question has its OWN maximum mark: ${marksList}. Never exceed it. "graded_out_of" MUST be ${fmtMark(totalPossible)}.
+- "total" MUST equal the SUM of all per_question scores (ignoring score=null). Never invent a higher total.
+- For EVERY question output "ocr_confidence": integer 0-100 for how clearly you could READ the handwriting (legibility only, not correctness).
+- Output "needs_review": true when ocr_confidence < 60, when the handwriting is unreadable, or when the grade is not reliable. Otherwise false.
+- Also output "transcript": the full verbatim transcription of ALL pages, in reading order, each page preceded by "===== Page K =====".`;
 
     const systemPromptFinal = systemPrompt + forcedRules;
 
-    const userText = `The exam PDF, model-answer PDF (if any), and the student's OCR transcript are attached.
-${examTitle ? `Exam title: ${examTitle}\n` : ""}
-===== STUDENT OCR TRANSCRIPT (primary source) =====
-${transcript || "[empty transcript]"}
-===== END TRANSCRIPT =====
+    const userText = `${examTitle ? `Exam title: ${examTitle}\n` : ""}${images.length} photo(s) of the student's answer sheets are attached. Process EVERY image in order.
 
-Grade each question by comparing the transcript above against the model-answer PDF.${transcriptLooksUnreadable ? " If the transcript is too unreadable to grade a question, mark that question for manual review instead of trying to infer it." : ""}
+===== GRADING KEY (questions + model answers, the only reference) =====
+${keyText || "[no key available]"}
+===== END KEY =====
 
 Return ONLY valid JSON (no markdown fences) with this exact shape:
 {
   "total": number,
   "graded_out_of": ${fmtMark(totalPossible)},
+  "transcript": string,
   "per_question": [
     { "n": number, "attempted": boolean, "score": number, "feedback": string, "corrections": string, "ocr_confidence": number, "needs_review": boolean }
   ],
@@ -374,11 +360,8 @@ Return ONLY valid JSON (no markdown fences) with this exact shape:
 }
 All feedback strings in ${isAr ? "Arabic" : "English"}.`;
 
-    const content: unknown[] = [
-      { type: "text", text: userText },
-      { type: "file", file: { filename: "exam.pdf", file_data: examPdf } },
-    ];
-    if (answerPdf) content.push({ type: "file", file: { filename: "answer-key.pdf", file_data: answerPdf } });
+    const content: unknown[] = [{ type: "text", text: userText }];
+    for (const url of images) content.push({ type: "image_url", image_url: { url } });
 
     const gradeResult = await callAiWithFallback(LOVABLE_API_KEY, GRADE_MODELS, {
       messages: [
@@ -407,6 +390,10 @@ All feedback strings in ${isAr ? "Arabic" : "English"}.`;
 
     // Server-side normalization: enforce the detected question count and recompute the total out of 100.
     const obj = (parsed && typeof parsed === "object") ? { ...(parsed as Record<string, unknown>) } : {};
+    transcript = String((obj as any).transcript ?? "").trim();
+    delete (obj as any).transcript;
+    transcriptLooksUnreadable =
+      !transcript || transcript.length < 120 || /\[(?:غير مقروء|unreadable)\]/i.test(transcript);
     const rawQs = Array.isArray((obj as any).per_question) ? (obj as any).per_question : [];
     const byN = new Map<number, any>();
     for (const q of rawQs) {

@@ -372,6 +372,44 @@ export type Database = {
           },
         ]
       }
+      course_exam_answer_keys: {
+        Row: {
+          answer_path: string | null
+          created_at: string
+          exam_id: string
+          key_text: string
+          marks: Json
+          question_count: number
+          updated_at: string
+        }
+        Insert: {
+          answer_path?: string | null
+          created_at?: string
+          exam_id: string
+          key_text?: string
+          marks?: Json
+          question_count: number
+          updated_at?: string
+        }
+        Update: {
+          answer_path?: string | null
+          created_at?: string
+          exam_id?: string
+          key_text?: string
+          marks?: Json
+          question_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_exam_answer_keys_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: true
+            referencedRelation: "course_exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_exam_completions: {
         Row: {
           completed_at: string
