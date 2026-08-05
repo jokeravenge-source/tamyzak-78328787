@@ -916,6 +916,27 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
         </div>
         <SessionsHistory language={language} userId={userId} />
         <PrivateStudyRooms language={language} />
+        <div className="max-w-2xl mx-auto mb-8 rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5">
+          <div className="text-sm font-semibold mb-1">
+            {language === "ar" ? "ابدأ مؤقت الدراسة وأنت داخل غرفتك الخاصة" : "Start your study timer inside your private room"}
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            {language === "ar"
+              ? "اختر المادة وستبقى غرفتك الخاصة والدردشة ظاهرة مع المؤقت والبومودورو والموسيقى."
+              : "Pick a subject — your private room and chat stay visible along with the timer, pomodoro and music."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {SUBJECTS.map((s) => (
+              <button
+                key={s.code}
+                onClick={() => setSubject(s.code)}
+                className="px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-primary text-xs hover:bg-primary/20 transition-colors"
+              >
+                {language === "ar" ? s.ar : s.en}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {SUBJECTS.map((s) => {
             const SIcon = s.Icon;
