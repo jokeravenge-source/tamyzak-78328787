@@ -39,6 +39,10 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         needName: "اكتب اسم الغرفة", signIn: "سجّل الدخول لاستخدام الغرف الخاصة",
         joined: "تم الانضمام إلى الغرفة", hint: "شارك الرمز مع أصدقائك ليدرسوا معك.",
         empty: "لا توجد رسائل بعد — ابدأ الحديث!",
+        share: "مشاركة الرابط", linkCopied: "تم نسخ رابط الغرفة",
+        owner: "صاحب الغرفة", del: "حذف الرسالة", ban: "حظر", banned: "تم حظر العضو",
+        banConfirm: "هل تريد حظر هذا الطالب من الغرفة؟", youBanned: "تم حظرك من هذه الغرفة",
+        deleted: "تم حذف الرسالة", roomView: "قاعة الدراسة",
       }
     : {
         title: "Private study rooms", create: "Create room", join: "Join",
@@ -49,6 +53,10 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         needName: "Type a room name", signIn: "Sign in to use private rooms",
         joined: "Joined the room", hint: "Share the code with friends so they can study with you.",
         empty: "No messages yet — say hi!",
+        share: "Share link", linkCopied: "Room link copied",
+        owner: "Owner", del: "Delete message", ban: "Ban", banned: "Member banned",
+        banConfirm: "Ban this student from the room?", youBanned: "You are banned from this room",
+        deleted: "Message deleted", roomView: "Study hall",
       };
 
   useEffect(() => {
