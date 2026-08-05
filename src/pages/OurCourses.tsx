@@ -1187,6 +1187,7 @@ function CourseRunner({
     })();
     setStudentImages([]);
     setGradeResult(null);
+    setRevealScore(false);
     setShowHumanForm(false);
     setHumanSent(false);
   }, [selected]);
@@ -1230,6 +1231,7 @@ function CourseRunner({
     }
     setGrading(true);
     setGradeResult(null);
+    setRevealScore(false);
     setShowHumanForm(false);
     setHumanSent(false);
     try {
