@@ -601,8 +601,6 @@ const App = () => {
         <SubjectsHub language={language} onBack={backToBasics} onSelect={chooseMenu} />
       ) : menuChoice === "textToVideo" ? (
         <TextToVideo language={language} onBack={resetMenu} />
-      ) : menuChoice === "psych" ? (
-        <PsychAssistant language={language} onBack={resetMenu} />
       ) : menuChoice === "subjectTutor" ? (
         <SubjectTutor language={language} onBack={resetMenu} />
       ) : menuChoice === "physicsLaws" ? (
