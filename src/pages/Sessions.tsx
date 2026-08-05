@@ -915,8 +915,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </ul>
         </div>
         <SessionsHistory language={language} userId={userId} />
-        <PrivateStudyRooms language={language} />
-        <div className="max-w-2xl mx-auto mb-8 rounded-2xl border border-primary/30 bg-secondary/40 backdrop-blur p-5">
+        <PrivateStudyRooms language={language}>
           <div className="text-sm font-semibold mb-1">
             {language === "ar" ? "ابدأ مؤقت الدراسة وأنت داخل غرفتك الخاصة" : "Start your study timer inside your private room"}
           </div>
@@ -936,7 +935,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
               </button>
             ))}
           </div>
-        </div>
+        </PrivateStudyRooms>
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {SUBJECTS.map((s) => {
             const SIcon = s.Icon;
