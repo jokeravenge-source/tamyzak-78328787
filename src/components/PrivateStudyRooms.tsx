@@ -392,6 +392,8 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
           <Send className="w-4 h-4" /> {L.send}
         </button>
       </div>
+
+      {children && <div className="mt-5 pt-5 border-t border-white/10">{children}</div>}
     </section>
   );
 }
