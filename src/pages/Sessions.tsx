@@ -957,7 +957,12 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
             <Input value={mission} onChange={(e) => setMission(e.target.value)} placeholder={L.missionPh} disabled={started} maxLength={200} />
           </label>
 
-          <SessionTodos language={language} />
+          <SessionTodos
+            language={language}
+            onPick={(text) => { if (!started) setMission(text.slice(0, 200)); }}
+            selectedText={mission}
+            pickDisabled={started}
+          />
 
           <div className="flex items-center justify-center gap-2">
             <button
