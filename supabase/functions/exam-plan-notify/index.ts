@@ -58,7 +58,11 @@ Deno.serve(async (req) => {
     // Server-side authorization: only an admin user, or an internal scheduler
     // calling with the service-role key, may trigger this broadcast.
     const bearer = (req.headers.get("Authorization") ?? "").replace("Bearer ", "").trim();
-    const isInternal = bearer.length > 0 && bearer === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const cronToken = (req.headers.get("x-cron-token") ?? "").trim();
+    const expectedCron = Deno.env.get("CRON_INTERNAL_TOKEN") ?? "";
+    const isInternal =
+      (bearer.length > 0 && bearer === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) ||
+      (expectedCron.length > 0 && cronToken === expectedCron);
     if (!isInternal) {
       const adminAuth = await requireAdmin(req);
       if (!adminAuth.ok) return json({ error: adminAuth.error }, adminAuth.status);
