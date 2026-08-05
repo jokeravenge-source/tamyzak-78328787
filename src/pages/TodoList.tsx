@@ -233,29 +233,33 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
           </div>
         )}
 
-        {todos.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 bg-secondary/30 p-6 text-center text-sm text-muted-foreground">
-            {text.empty}
-          </div>
-        ) : (() => {
+        {(() => {
           const groups = new Map<string, Todo[]>();
+          for (const d of DAYS) groups.set(d.key, []);
+          groups.set("__none__", []);
           for (const td of todos) {
-            const key = td.day || "__none__";
-            if (!groups.has(key)) groups.set(key, []);
+            const key = normalizeDay(td.day) || "__none__";
             groups.get(key)!.push(td);
           }
-          const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
-            if (a === "__none__") return 1;
-            if (b === "__none__") return -1;
-            return dayRank(a) - dayRank(b);
-          });
+          const sections = [
+            ...DAYS.map((d) => ({ key: d.key, label: language === "ar" ? d.ar : d.en })),
+            { key: "__none__", label: text.unassigned },
+          ].filter((s) => s.key !== "__none__" || groups.get("__none__")!.length > 0);
           return (
             <div className="space-y-6">
-              {sortedKeys.map((key) => (
+              {sections.map(({ key, label }) => (
                 <div key={key}>
-                  {key !== "__none__" && (
-                    <h3 className="text-xs uppercase tracking-[0.2em] text-primary mb-2 px-1">{key}</h3>
-                  )}
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <h3 className="text-xs uppercase tracking-[0.2em] text-primary">{label}</h3>
+                    <span className="text-[11px] text-muted-foreground">
+                      {groups.get(key)!.filter((x) => x.done).length}/{groups.get(key)!.length}
+                    </span>
+                  </div>
+                  {groups.get(key)!.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-secondary/20 p-3 text-center text-xs text-muted-foreground">
+                      {text.noTasksDay}
+                    </div>
+                  ) : (
                   <ul className="space-y-2">
                     <AnimatePresence initial={false}>
                       {groups.get(key)!.map((todo) => (
@@ -284,6 +288,7 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
                       ))}
                     </AnimatePresence>
                   </ul>
+                  )}
                 </div>
               ))}
             </div>
