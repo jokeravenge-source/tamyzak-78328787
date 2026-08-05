@@ -287,9 +287,72 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+      <button
+        onClick={shareLink}
+        className="w-full mb-3 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-medium text-primary flex items-center justify-center gap-1.5">
+        <Link2 className="w-3.5 h-3.5" /> {L.share}
+      </button>
+
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
         <Users className="w-3.5 h-3.5" /> {L.members}: {members.length}
-        <span className="truncate">— {members.map((m) => m.display_name).join(", ")}</span>
+      </div>
+
+      {/* Traditional study hall */}
+      <div
+        className="relative rounded-2xl border border-primary/30 overflow-hidden mb-4"
+        style={{
+          background:
+            "linear-gradient(180deg, hsl(var(--secondary)) 0%, hsl(var(--secondary)) 52%, hsl(var(--muted)) 52%, hsl(var(--muted)) 100%)",
+          minHeight: 220,
+        }}
+      >
+        {/* Wall: chalkboard, clock, pennants */}
+        <div className="absolute inset-x-0 top-0 h-[52%] pointer-events-none">
+          <div className="absolute top-5 left-1/2 -translate-x-1/2 w-40 h-16 rounded-md border-4 border-primary/40 bg-primary/10 flex items-center justify-center">
+            <span className="text-[10px] tracking-[0.25em] text-primary/80">{L.roomView}</span>
+          </div>
+          <div className="absolute top-4 right-5 w-8 h-8 rounded-full border-4 border-primary/40 bg-background/40 flex items-center justify-center">
+            <span className="w-1 h-3 bg-primary/70 absolute" style={{ transformOrigin: "bottom", transform: "translateY(-25%) rotate(35deg)" }} />
+            <span className="w-1 h-2 bg-primary/70 absolute" style={{ transformOrigin: "bottom", transform: "translateY(-20%) rotate(-40deg)" }} />
+          </div>
+          <div className="absolute top-3 left-5 flex gap-1">
+            {["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#a855f7"].map((c, i) => (
+              <div key={i} className="w-2 h-4 rounded-sm" style={{ background: c, opacity: 0.85 }} />
+            ))}
+          </div>
+        </div>
+        <div className="absolute left-0 right-0 top-[52%] h-px bg-primary/30" />
+
+        <div className="relative z-10 pt-16 pb-5 px-3 flex flex-wrap gap-4 justify-center items-end">
+          {members.map((m) => {
+            const mine = m.user_id === userId;
+            const roomOwner = m.user_id === room.owner_id;
+            return (
+              <div key={m.user_id} className="flex flex-col items-center" style={{ width: 96 }}>
+                <div className={`mb-1 px-2 py-0.5 rounded-full backdrop-blur border text-[10px] font-medium max-w-[96px] truncate ${mine ? "bg-primary text-primary-foreground border-primary" : "bg-background/80 border-primary/30"}`}>
+                  {mine ? (ar ? "أنت" : "You") : m.display_name}
+                </div>
+                <div className="relative">
+                  <CharacterAvatar gender={m.gender ?? "male"} traits={m.character ?? undefined} size={76} />
+                  {/* Wooden desk */}
+                  <div className="w-20 h-3 -mt-2 mx-auto rounded-sm bg-gradient-to-b from-primary/40 to-primary/20 border border-primary/40" />
+                  <div className="flex justify-between w-16 mx-auto">
+                    <div className="w-0.5 h-3 bg-primary/40" />
+                    <div className="w-0.5 h-3 bg-primary/40" />
+                  </div>
+                </div>
+                {roomOwner && (
+                  <span className="mt-1 text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{L.owner}</span>
+                )}
+                {isOwner && !mine && (
+                  <button onClick={() => banMember(m)} className="mt-1 text-[10px] text-destructive/80 hover:text-destructive flex items-center gap-0.5">
+                    <Ban className="w-3 h-3" /> {L.ban}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex items-center gap-2 text-xs text-primary mb-2">
@@ -301,7 +364,13 @@ export default function PrivateStudyRooms({ language }: { language: "en" | "ar" 
         ) : messages.map((m) => {
           const mine = m.user_id === userId;
           return (
-            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+            <div key={m.id} className={`flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>
+              {(isOwner || mine) && (
+                <button onClick={() => deleteMessage(m.id)} aria-label={L.del} title={L.del}
+                  className="order-first text-muted-foreground/60 hover:text-destructive shrink-0">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
               <div className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-secondary border border-primary/20"}`}>
                 {!mine && <div className="text-[10px] opacity-70 mb-0.5">{m.display_name}</div>}
                 <div className="whitespace-pre-wrap break-words">{censorText(m.body)}</div>
