@@ -951,6 +951,9 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
 
         <StudyRoom language={language} subject={subject} currentUserId={userId} />
 
+        {/* Private room stays visible during the session so members keep chat + timer + music together */}
+        <PrivateStudyRooms language={language} />
+
         <div className="rounded-3xl border border-white/10 bg-secondary/40 backdrop-blur p-8 space-y-5">
           <label className="block">
             <span className="text-sm text-muted-foreground flex items-center gap-2 mb-2"><Target className="w-4 h-4" /> {L.mission}</span>
