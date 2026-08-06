@@ -38,6 +38,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [presence, setPresence] = useState<Record<string, Presence>>({});
+  const [isAdmin, setIsAdmin] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   const L = ar
@@ -56,6 +57,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
         deleted: "تم حذف الرسالة", roomView: "قاعة الدراسة",
         makeOwner: "تعيين كصاحب الغرفة", ownerChanged: "تم نقل ملكية الغرفة",
         transferConfirm: "هل تريد جعل هذا الطالب صاحب الغرفة؟", noTimer: "لا يوجد مؤقّت",
+        takeOwner: "استلام الملكية (مشرف)", takeConfirm: "هل تريد استلام ملكية هذه الغرفة؟",
       }
     : {
         title: "Private study rooms", create: "Create room", join: "Join",
@@ -72,6 +74,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
         deleted: "Message deleted", roomView: "Study hall",
         makeOwner: "Make owner", ownerChanged: "Room ownership transferred",
         transferConfirm: "Make this student the room owner?", noTimer: "No timer",
+        takeOwner: "Take ownership (admin)", takeConfirm: "Take ownership of this room?",
       };
 
   useEffect(() => {
@@ -83,6 +86,8 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
       const { data: prof } = await supabase
         .from("profiles").select("display_name").eq("user_id", u.id).maybeSingle();
       setDisplayName(prof?.display_name || u.email?.split("@")[0] || "Student");
+      const { data: adm } = await supabase.rpc("has_role", { _user_id: u.id, _role: "admin" });
+      setIsAdmin(!!adm);
     })();
   }, []);
 
@@ -244,7 +249,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const isOwner = !!room && room.owner_id === userId;
+  const isOwner = !!room && (room.owner_id === userId || isAdmin);
 
   const shareLink = () => {
     if (!room) return;
@@ -285,6 +290,16 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     if (!window.confirm(L.transferConfirm)) return;
     const { error } = await supabase.from("study_rooms")
       .update({ owner_id: m.user_id }).eq("id", room.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(L.ownerChanged);
+    loadRoom(room.id);
+  };
+
+  const takeOwnership = async () => {
+    if (!room || !userId) return;
+    if (!window.confirm(L.takeConfirm)) return;
+    const { error } = await supabase.from("study_rooms")
+      .update({ owner_id: userId }).eq("id", room.id);
     if (error) { toast.error(error.message); return; }
     toast.success(L.ownerChanged);
     loadRoom(room.id);
@@ -351,6 +366,13 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
           <LogOut className="w-3.5 h-3.5" /> {L.leave}
         </button>
       </div>
+
+      {isAdmin && room.owner_id !== userId && (
+        <button onClick={takeOwnership}
+          className="w-full mb-3 rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-medium text-primary flex items-center justify-center gap-1.5">
+          <Crown className="w-3.5 h-3.5" /> {L.takeOwner}
+        </button>
+      )}
 
       <button
         onClick={shareLink}
