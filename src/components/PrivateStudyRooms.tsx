@@ -1,15 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Ban, Copy, DoorOpen, Link2, LogOut, MessageCircle, Plus, Send, Trash2, Users } from "lucide-react";
+import { Ban, Copy, Crown, DoorOpen, Link2, LogOut, MessageCircle, Plus, Send, Timer, Trash2, Users } from "lucide-react";
 import { censorText, findBannedWords } from "@/lib/censor";
 import { CharacterAvatar, type CharacterTraits, type Gender } from "./CharacterAvatar";
 
 type Room = { id: string; code: string; name: string; owner_id: string };
 type Member = { user_id: string; display_name: string; gender?: Gender; character?: CharacterTraits | null };
 type Message = { id: string; user_id: string; display_name: string; body: string; created_at: string };
+type Presence = { elapsed_seconds: number; is_running: boolean; subject: string };
 
 const LS_KEY = "study_room_active_v1";
+
+const fmtClock = (s: number) => {
+  const t = Math.max(0, Math.floor(s));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const sec = t % 60;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return h > 0 ? `${p(h)}:${p(m)}:${p(sec)}` : `${p(m)}:${p(sec)}`;
+};
 
 function makeCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -27,6 +37,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
   const [joinCode, setJoinCode] = useState("");
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [presence, setPresence] = useState<Record<string, Presence>>({});
   const listRef = useRef<HTMLDivElement>(null);
 
   const L = ar
@@ -43,6 +54,8 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
         owner: "صاحب الغرفة", del: "حذف الرسالة", ban: "حظر", banned: "تم حظر العضو",
         banConfirm: "هل تريد حظر هذا الطالب من الغرفة؟", youBanned: "تم حظرك من هذه الغرفة",
         deleted: "تم حذف الرسالة", roomView: "قاعة الدراسة",
+        makeOwner: "تعيين كصاحب الغرفة", ownerChanged: "تم نقل ملكية الغرفة",
+        transferConfirm: "هل تريد جعل هذا الطالب صاحب الغرفة؟", noTimer: "لا يوجد مؤقّت",
       }
     : {
         title: "Private study rooms", create: "Create room", join: "Join",
@@ -57,6 +70,8 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
         owner: "Owner", del: "Delete message", ban: "Ban", banned: "Member banned",
         banConfirm: "Ban this student from the room?", youBanned: "You are banned from this room",
         deleted: "Message deleted", roomView: "Study hall",
+        makeOwner: "Make owner", ownerChanged: "Room ownership transferred",
+        transferConfirm: "Make this student the room owner?", noTimer: "No timer",
       };
 
   useEffect(() => {
@@ -72,18 +87,33 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
   }, []);
 
   const loadRoom = useCallback(async (roomId: string) => {
-    const [{ data: mem }, { data: msg }] = await Promise.all([
+    const [{ data: mem }, { data: msg }, { data: roomRow }] = await Promise.all([
       supabase.from("study_room_members").select("user_id,display_name").eq("room_id", roomId),
       supabase.from("study_room_messages")
         .select("id,user_id,display_name,body,created_at")
         .eq("room_id", roomId).order("created_at", { ascending: true }).limit(200),
+      supabase.from("study_rooms").select("id,code,name,owner_id").eq("id", roomId).maybeSingle(),
     ]);
+    if (roomRow) setRoom(roomRow as Room);
     const base = (mem ?? []) as Member[];
     if (base.length > 0) {
+      const ids = base.map((m) => m.user_id);
       const { data: profs } = await supabase
         .from("profiles")
         .select("user_id,gender,character")
-        .in("user_id", base.map((m) => m.user_id));
+        .in("user_id", ids);
+      const { data: sess } = await supabase
+        .from("active_sessions")
+        .select("user_id,elapsed_seconds,is_running,subject")
+        .in("user_id", ids);
+      setPresence(
+        Object.fromEntries(
+          (sess ?? []).map((s: any) => [
+            s.user_id,
+            { elapsed_seconds: s.elapsed_seconds ?? 0, is_running: !!s.is_running, subject: s.subject ?? "" },
+          ]),
+        ),
+      );
       const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
       setMembers(
         base.map((m) => {
@@ -97,6 +127,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
       );
     } else {
       setMembers(base);
+      setPresence({});
     }
     setMessages((msg ?? []) as Message[]);
   }, []);
@@ -128,6 +159,29 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length]);
+
+  // Refresh member timers periodically
+  useEffect(() => {
+    if (!room) return;
+    const id = setInterval(() => loadRoom(room.id), 15000);
+    return () => clearInterval(id);
+  }, [room, loadRoom]);
+
+  // Tick running timers locally between refreshes
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPresence((prev) => {
+        const next: Record<string, Presence> = {};
+        let changed = false;
+        for (const [k, v] of Object.entries(prev)) {
+          if (v.is_running) { next[k] = { ...v, elapsed_seconds: v.elapsed_seconds + 1 }; changed = true; }
+          else next[k] = v;
+        }
+        return changed ? next : prev;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const createRoom = async () => {
     if (!userId) { toast.error(L.signIn); return; }
@@ -223,6 +277,16 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     await supabase.from("study_room_members").delete().eq("room_id", room.id).eq("user_id", m.user_id);
     await supabase.from("study_room_messages").delete().eq("room_id", room.id).eq("user_id", m.user_id);
     toast.success(L.banned);
+    loadRoom(room.id);
+  };
+
+  const transferOwnership = async (m: Member) => {
+    if (!room || !userId) return;
+    if (!window.confirm(L.transferConfirm)) return;
+    const { error } = await supabase.from("study_rooms")
+      .update({ owner_id: m.user_id }).eq("id", room.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(L.ownerChanged);
     loadRoom(room.id);
   };
 
@@ -345,10 +409,19 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
                 {roomOwner && (
                   <span className="mt-1 text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{L.owner}</span>
                 )}
+                <span className={`mt-1 flex items-center gap-1 text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded-full border ${presence[m.user_id]?.is_running ? "bg-primary/15 text-primary border-primary/30" : "bg-background/60 text-muted-foreground border-white/10"}`}>
+                  <Timer className="w-2.5 h-2.5" />
+                  {presence[m.user_id] ? fmtClock(presence[m.user_id].elapsed_seconds) : "--:--"}
+                </span>
                 {isOwner && !mine && (
-                  <button onClick={() => banMember(m)} className="mt-1 text-[10px] text-destructive/80 hover:text-destructive flex items-center gap-0.5">
-                    <Ban className="w-3 h-3" /> {L.ban}
-                  </button>
+                  <div className="mt-1 flex flex-col items-center gap-0.5">
+                    <button onClick={() => transferOwnership(m)} className="text-[10px] text-primary/90 hover:text-primary flex items-center gap-0.5">
+                      <Crown className="w-3 h-3" /> {L.makeOwner}
+                    </button>
+                    <button onClick={() => banMember(m)} className="text-[10px] text-destructive/80 hover:text-destructive flex items-center gap-0.5">
+                      <Ban className="w-3 h-3" /> {L.ban}
+                    </button>
+                  </div>
                 )}
               </div>
             );
