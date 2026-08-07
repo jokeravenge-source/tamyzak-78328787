@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw, Bookmark, BookmarkCheck, Star } from "lucide-react";
+import { Brain } from "lucide-react";
 import { Plus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { setRedoRequired, clearRedoAndZombie } from "@/components/ZombieGuard";
@@ -68,6 +69,16 @@ import { groupFlashcardsByTopic } from "@/lib/flashcardTopics";
 import { explicitTopics, type TopicGroup } from "@/lib/flashcardTopics";
 import { buildPresetGroups } from "@/lib/flashcardTopicPresets";
 import { useTodos, topicProgress } from "@/lib/todoTopicProgress";
+import {
+  cardKey as srsCardKey,
+  defaultState,
+  isDue,
+  loadDeckStates,
+  previewInterval,
+  rateCard,
+  type SrsRating,
+  type SrsState,
+} from "@/lib/srs";
 import { PREVIOUS_SUBJECT_STORAGE_KEY } from "@/pages/Subjects";
 import CrossfadeSubjectTheme from "@/components/CrossfadeSubjectTheme";
 
@@ -418,6 +429,116 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   const [index, setIndex] = useState(() => readSavedIndex(activeTopicCards.length));
   const [direction, setDirection] = useState<"left" | "right">("right");
 
+  /* ---------------- spaced repetition ---------------- */
+  const [srs, setSrs] = useState<Map<string, SrsState>>(new Map());
+  const [reviewMode, setReviewMode] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    loadDeckStates(subject, String(chapter)).then((m) => {
+      if (active) setSrs(m);
+    });
+    return () => { active = false; };
+  }, [subject, chapter]);
+
+  const keyOf = (c: { q: string }) => srsCardKey(subject, String(chapter), c.q);
+
+  const { dueCards, newCards } = useMemo(() => {
+    const now = Date.now();
+    const due: typeof activeTopicCards = [];
+    const fresh: typeof activeTopicCards = [];
+    activeTopicCards.forEach((c) => {
+      const st = srs.get(keyOf(c));
+      if (!st) fresh.push(c);
+      else if (isDue(st, now)) due.push(c);
+    });
+    return { dueCards: due, newCards: fresh };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTopicCards, srs, subject, chapter]);
+
+  const queueSize = dueCards.length + Math.min(newCards.length, 10);
+
+  const startReview = () => {
+    const queue = [...dueCards, ...newCards.slice(0, 10)];
+    if (queue.length === 0) {
+      toast.success(language === "ar" ? "لا توجد بطاقات مستحقة الآن — عد لاحقاً!" : "Nothing due right now — come back later!");
+      return;
+    }
+    setReviewMode(true);
+    setSavedView(false);
+    setCards(queue);
+    setIndex(0);
+    setDirection("right");
+  };
+
+  const exitReview = () => {
+    setReviewMode(false);
+    setCards(activeTopicCards);
+    setIndex(0);
+  };
+
+  const handleRate = async (rating: SrsRating) => {
+    const current = cards[index];
+    if (!current) return;
+    const key = keyOf(current);
+    const prev = srs.get(key) ?? defaultState(key);
+    const updated = await rateCard({
+      subject,
+      chapter: String(chapter),
+      language,
+      card: current,
+      rating,
+      prev,
+    });
+    setSrs((m) => new Map(m).set(key, updated));
+
+    if (!reviewMode) {
+      next();
+      return;
+    }
+
+    // In review mode the card leaves the queue; forgotten cards come back last.
+    setCards((prevCards) => {
+      const rest = prevCards.filter((_, i) => i !== index);
+      const queue = rating === "forgot" ? [...rest, current] : rest;
+      if (queue.length === 0) {
+        toast.success(language === "ar" ? "أنهيت مراجعة اليوم — أحسنت!" : "Review finished for now — nice work!");
+        setReviewMode(false);
+        setIndex(0);
+        return activeTopicCards;
+      }
+      setIndex((i) => Math.min(i, queue.length - 1));
+      return queue;
+    });
+    setDirection("right");
+  };
+
+  const intervalHints = useMemo(() => {
+    const current = cards[index];
+    if (!current) return undefined;
+    const st = srs.get(keyOf(current)) ?? defaultState(keyOf(current));
+    return {
+      forgot: previewInterval(st, "forgot", language),
+      hard: previewInterval(st, "hard", language),
+      good: previewInterval(st, "good", language),
+      easy: previewInterval(st, "easy", language),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards, index, srs, language, subject, chapter]);
+
+  // Deep-link from the home screen's "due cards" banner.
+  const autoReviewDone = useRef(false);
+  useEffect(() => {
+    if (autoReviewDone.current || srs.size === 0) return;
+    let flag: string | null = null;
+    try { flag = sessionStorage.getItem("flashcards:review"); } catch { /* ignore */ }
+    if (flag !== "1") return;
+    autoReviewDone.current = true;
+    try { sessionStorage.removeItem("flashcards:review"); } catch { /* ignore */ }
+    startReview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [srs]);
+
   const next = () => {
     setDirection("right");
     setIndex((i) => {
@@ -682,6 +803,8 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           total={cards.length}
           direction={direction}
           language={language}
+          onRate={savedView ? undefined : handleRate}
+          intervalHints={intervalHints}
         />
 
         {/* Controls */}
@@ -755,6 +878,17 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       </section>
 
       <footer className="w-full max-w-2xl overflow-x-auto overflow-y-hidden flex items-center gap-3 z-10 animate-fade-up whitespace-nowrap px-1 pb-1 [scrollbar-width:thin]">
+        <Button
+          variant={reviewMode ? "default" : "ghost"}
+          size="sm"
+          onClick={reviewMode ? exitReview : startReview}
+          className="gap-2 shrink-0"
+        >
+          <Brain className="w-4 h-4" />
+          {reviewMode
+            ? (language === "ar" ? `إنهاء المراجعة (${cards.length})` : `Exit review (${cards.length})`)
+            : (language === "ar" ? `مراجعة اليوم (${queueSize})` : `Review today (${queueSize})`)}
+        </Button>
         <Button variant="ghost" size="sm" onClick={shuffle} className="gap-2 shrink-0">
           <Shuffle className="w-4 h-4" /> {text.shuffle}
         </Button>

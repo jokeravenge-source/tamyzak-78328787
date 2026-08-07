@@ -15,6 +15,7 @@ import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
 import RankStone, { rankFromPoints, RANK_LABELS, type StoneRank } from "@/components/RankStone";
+import { totalDueCount } from "@/lib/srs";
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
@@ -271,6 +272,13 @@ const Basics = ({
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
+  const [dueCards, setDueCards] = useState<number>(0);
+
+  useEffect(() => {
+    let active = true;
+    totalDueCount().then((n) => { if (active) setDueCards(n); });
+    return () => { active = false; };
+  }, []);
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
@@ -753,6 +761,41 @@ const Basics = ({
           </header>
 
           {/* Row A: progress ring (4) + core tools bento (8) */}
+          {dueCards > 0 && (
+            <motion.button
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ y: -2 }}
+              onClick={() => {
+                try { sessionStorage.setItem("flashcards:review", "1"); } catch { /* ignore */ }
+                navigate("flashcards");
+              }}
+              className={`mb-4 w-full ${isRTL ? "text-right" : "text-left"} rounded-3xl border border-primary/40 bg-primary/5 p-4 sm:p-5 flex items-center gap-4 hover:border-primary hover:shadow-[var(--shadow-card)] transition-all`}
+            >
+              <div className="w-12 h-12 shrink-0 rounded-2xl bg-primary/15 text-primary flex items-center justify-center">
+                <Layers className="w-6 h-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-0.5">
+                  {language === "ar" ? "المراجعة المتباعدة" : "Spaced repetition"}
+                </p>
+                <h3 className="text-foreground font-bold text-sm sm:text-base truncate">
+                  {language === "ar"
+                    ? `لديك ${dueCards} بطاقة مستحقة اليوم`
+                    : `${dueCards} card${dueCards === 1 ? "" : "s"} due for review today`}
+                </h3>
+                <p className="text-muted-foreground text-xs">
+                  {language === "ar"
+                    ? "راجعها الآن قبل أن تنساها."
+                    : "Review them now, before you forget them."}
+                </p>
+              </div>
+              <span className="shrink-0 text-primary">
+                {isRTL ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
+              </span>
+            </motion.button>
+          )}
+
           <section className="mb-6 grid grid-cols-12 gap-3 sm:gap-5">
             {/* Progress ring */}
             <div className="col-span-12 md:col-span-4 bg-card rounded-3xl p-4 sm:p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
