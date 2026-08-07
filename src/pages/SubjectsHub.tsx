@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap, RefreshCw, BookText, Beaker, Sigma, Atom as AtomIcon, FileQuestion, Volume2, Timer, TrendingDown, Repeat, FileText, Feather, Type, Music, Brain, HeartPulse, Table2, Sparkles as SparklesIcon, Languages, GaugeCircle, ListTodo, ClipboardList, Wand2, MessageCircle, BookHeart, Speech, PenTool, Boxes, GraduationCap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap, Boxes, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -9,7 +9,7 @@ import { TOOL_PLACEHOLDER_KEY } from "@/pages/ToolPlaceholder";
 
 const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam", "frenchSynonyms", "frenchAntonyms", "physicsActivities"]);
 
-type SubjectKey = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic" | "islamic" | "revision";
+type SubjectKey = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic" | "islamic";
 
 // A tool either points to a real MainMenuChoice route, or is a placeholder
 // with its own display metadata (routed through the shared ToolPlaceholder page).
@@ -22,15 +22,6 @@ type Tool = {
   descEn?: string;
   descAr?: string;
 };
-
-// Helper to declare a "coming soon" tool that routes to ToolPlaceholder.
-const soon = (
-  en: string,
-  ar: string,
-  Icon: React.ComponentType<{ className?: string }>,
-  descEn?: string,
-  descAr?: string,
-): Tool => ({ key: "toolPlaceholder", en, ar, Icon, placeholder: true, descEn, descAr });
 
 const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.ComponentType<{ className?: string }>; tools: Tool[] }[] = [
   {
@@ -45,12 +36,6 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
       { key: "ministerialBank", en: "Ministerial Bank", ar: "بنك الوزاريات", Icon: ScrollText },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
-      soon("Formula Sheet", "ورقة القوانين", BookText, "Searchable, chapter-indexed physics formulas.", "قوانين فيزياء مفهرسة حسب الفصل مع بحث."),
-      soon("Unit Converter", "محوّل الوحدات", GaugeCircle, "Convert between SI and common units.", "حوّل بين وحدات SI والوحدات الشائعة."),
-      soon("Diagram Reader", "قارئ المخططات", AtomIcon, "Upload a circuit or diagram and let AI explain it.", "ارفع دائرة أو مخطط ودع الذكاء يشرحه."),
-      soon("Mistake Journal", "سجل الأخطاء", ClipboardList, "Log wrong answers and review them with spaced repetition.", "سجّل الإجابات الخاطئة وراجعها بالتكرار المتباعد."),
-      soon("Concept Explainer", "شرح المفاهيم", Brain, "Ask for a plain-language walk-through of any concept.", "اطلب شرحاً مبسطاً لأي مفهوم."),
-      soon("Past Papers Solver", "حل الأسئلة السابقة", FileText, "Step-by-step solutions for past ministerial questions.", "حلول مفصلة للأسئلة الوزارية السابقة."),
     ],
   },
   {
@@ -62,12 +47,6 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
       { key: "organicEquations", en: "Organic Equations", ar: "تفاعلات العضوية", Icon: FlaskConical },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
-      soon("Periodic Table", "الجدول الدوري", Table2, "Interactive element cards with properties.", "بطاقات تفاعلية للعناصر مع خصائصها."),
-      soon("Reaction Balancer", "موازن التفاعلات", Beaker, "AI balances chemical equations for you.", "الذكاء يوازن المعادلات الكيميائية."),
-      soon("Nomenclature Trainer", "تدريب التسمية", Type, "Drill IUPAC naming for organic molecules.", "تدرّب على تسمية IUPAC للمركبات."),
-      soon("Molar Mass Calculator", "حاسبة الكتلة المولية", Sigma, "Enter a formula, get the molar mass.", "أدخل الصيغة واحصل على الكتلة المولية."),
-      soon("Lab Safety Cards", "بطاقات السلامة", HeartPulse, "Quick-reference cards for lab safety.", "بطاقات مرجعية لسلامة المختبر."),
-      soon("Quick MCQ", "اختبار سريع", Zap, "Rapid multiple-choice practice for chemistry.", "تدريب سريع على أسئلة الكيمياء."),
     ],
   },
   {
@@ -79,12 +58,6 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
       { key: "biologyDrawings", en: "Biology Drawings", ar: "رسومات الأحياء", Icon: Microscope },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
-      soon("Anatomy Explorer", "مستكشف التشريح", HeartPulse, "Interactive labeled body-system diagrams.", "مخططات تفاعلية لأجهزة الجسم مع تسميات."),
-      soon("Term Glossary", "قاموس المصطلحات", BookText, "Search biology terms with clear definitions.", "ابحث في مصطلحات الأحياء مع تعريفات واضحة."),
-      soon("Quick MCQ", "اختبار سريع", Zap, "Fast biology multiple-choice practice.", "تدريب سريع على أسئلة الأحياء."),
-      soon("Case Study Analyzer", "محلل حالات", Brain, "Break down clinical or ecological cases with AI.", "حلّل حالات سريرية أو بيئية مع الذكاء."),
-      soon("Mnemonics Pack", "حزمة الاختصارات", SparklesIcon, "Memory tricks for tough biology lists.", "حيل للحفظ للقوائم الصعبة في الأحياء."),
-      soon("Life-Cycle Diagrams", "دورات الحياة", Repeat, "Animated life-cycle walkthroughs.", "شرح متسلسل لدورات حياة الكائنات."),
     ],
   },
   {
@@ -96,12 +69,6 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
       { key: "englishIsqat", en: "Word Drops (Isqatat)", ar: "الإسقاطات", Icon: MousePointerClick },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
-      soon("Grammar Drills", "تمارين القواعد", Type, "Tenses, articles, prepositions — timed drills.", "تمارين موقوتة على الأزمنة وأدوات التعريف والحروف."),
-      soon("Vocabulary Builder", "بناء المفردات", BookHeart, "Level-based English vocabulary sets.", "مجموعات مفردات إنكليزية حسب المستوى."),
-      soon("Reading Comprehension", "الاستيعاب القرائي", FileText, "AI-generated passages with questions.", "قطع قراءة مولّدة بالذكاء مع أسئلة."),
-      soon("Pronunciation Coach", "مدرب النطق", Volume2, "Hear model pronunciation for any word or phrase.", "استمع للنطق النموذجي لأي كلمة أو عبارة."),
-      soon("Writing Feedback", "تقييم الكتابة", PenTool, "Get AI feedback on your English writing.", "احصل على تقييم ذكي لكتاباتك بالإنكليزية."),
-      soon("Idioms & Phrasal Verbs", "التعابير الاصطلاحية", MessageCircle, "Common idioms and phrasal verbs with examples.", "تعابير وأفعال مركّبة شائعة مع أمثلة."),
     ],
   },
   {
@@ -113,12 +80,6 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
       { key: "frenchAntonyms", en: "Antonyms", ar: "المعاكسات", Icon: MousePointerClick },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
-      soon("Conjugation Trainer", "تدريب التصريف", Repeat, "Practice French verbs across all tenses.", "تدرّب على تصريف الأفعال الفرنسية في كل الأزمنة."),
-      soon("Dictée", "الإملاء", Speech, "Listen to a passage and type what you hear.", "استمع لقطعة واكتب ما تسمع."),
-      soon("Grammar Rules", "قواعد القواعد", BookText, "Quick reference for French grammar.", "مرجع سريع لقواعد اللغة الفرنسية."),
-      soon("Reading Passages", "قطع قراءة", FileText, "Graded French reading passages.", "قطع قراءة فرنسية متدرجة الصعوبة."),
-      soon("Translation Practice", "تدريب الترجمة", Languages, "Translate between Arabic/English and French.", "ترجم بين العربية/الإنكليزية والفرنسية."),
-      soon("Pronunciation Coach", "مدرب النطق", Volume2, "Hear model French pronunciation.", "استمع للنطق الفرنسي النموذجي."),
     ],
   },
   {
@@ -130,12 +91,6 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
       { key: "poemsChecker", en: "Poems Checker", ar: "قصائد الأدب", Icon: ScrollText },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
-      soon("Grammar Drills (النحو)", "تمارين النحو", Type, "Timed drills on Arabic grammar rules.", "تمارين موقوتة على قواعد النحو."),
-      soon("Balaghah Cards", "بطاقات البلاغة", Feather, "Rhetorical devices with examples from literature.", "المحسّنات البلاغية مع أمثلة أدبية."),
-      soon("Diacritics Trainer (التشكيل)", "تدريب التشكيل", PenTool, "AI adds and checks tashkeel on your text.", "الذكاء يضيف ويصحّح التشكيل على نصك."),
-      soon("Composition Feedback", "تقييم الإنشاء", PenLine, "Get feedback on your Arabic composition.", "احصل على تقييم لإنشائك العربي."),
-      soon("Word Roots Explorer", "مستكشف الجذور", BookHeart, "Explore Arabic root families and derivations.", "استكشف عائلات الجذور العربية واشتقاقاتها."),
-      soon("Poetry Meter Analyzer", "محلل بحور الشعر", Music, "Analyze the meter of a line of poetry.", "حلّل بحر بيت من الشعر."),
     ],
   },
   {
@@ -147,24 +102,6 @@ const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.Componen
       { key: "hadithChecker", en: "Hadith Checker", ar: "فاحص الأحاديث", Icon: Moon },
       { key: "flashcards", en: "Flashcards", ar: "البطاقات", Icon: Layers },
       { key: "malazam", en: "Malazam", ar: "الملازم", Icon: BookMarked },
-      soon("Tajweed Rules", "أحكام التجويد", BookText, "Learn tajweed rules with clear examples.", "تعلّم أحكام التجويد مع أمثلة واضحة."),
-      soon("Fiqh Q&A", "أسئلة الفقه", MessageCircle, "Ask fiqh questions and get sourced answers.", "اسأل أسئلة فقهية واحصل على أجوبة موثّقة."),
-      soon("Seerah Timeline", "الخط الزمني للسيرة", ClipboardList, "Interactive timeline of the Prophet's life.", "خط زمني تفاعلي للسيرة النبوية."),
-      soon("Duaa Memorizer", "حافظ الأدعية", BookHeart, "Memorize essential duas with spaced repetition.", "احفظ الأدعية الأساسية بالتكرار المتباعد."),
-      soon("Aqeedah Explainer", "شرح العقيدة", Brain, "Plain-language explanations of core beliefs.", "شرح مبسّط لمواضيع العقيدة."),
-      soon("Islamic Quick MCQ", "اختبار إسلامي سريع", Zap, "Fast MCQ practice on Islamic Studies.", "تدريب سريع على أسئلة التربية الإسلامية."),
-    ],
-  },
-  {
-    code: "revision", en: "Revision", ar: "المراجعة", Icon: RefreshCw,
-    tools: [
-      soon("Full Exam Simulator", "محاكي الامتحان الكامل", Timer, "Timed mixed-subject mock exam.", "امتحان تجريبي موقوت متعدد المواد."),
-      soon("Weakness Report", "تقرير نقاط الضعف", TrendingDown, "AI analyzes your wrong answers and finds gaps.", "الذكاء يحلل أخطاءك ويحدد نقاط الضعف."),
-      soon("Spaced Repetition Queue", "طابور التكرار المتباعد", Repeat, "Auto-scheduled review of your due cards.", "مراجعة تلقائية للبطاقات المستحقة."),
-      soon("Cheatsheet Generator", "مولّد الملخصات", Wand2, "Generate a one-page cheatsheet for any chapter.", "أنشئ ملخصاً من صفحة واحدة لأي فصل."),
-      soon("Study Planner", "مخطط الدراسة", ListTodo, "Auto-build a study plan for exam week.", "خطة دراسية تلقائية لأسبوع الامتحان."),
-      soon("Mixed Flashcard Deck", "بطاقات مختلطة", Layers, "Shuffle flashcards across subjects.", "خلط بطاقات من كل المواد."),
-      soon("Mock MCQ Marathon", "ماراثون الاختبارات", FileQuestion, "Long-form mixed MCQ marathon.", "ماراثون طويل من أسئلة الاختيار من متعدد."),
     ],
   },
 ];
