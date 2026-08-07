@@ -865,6 +865,17 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       </section>
 
       <footer className="w-full max-w-2xl overflow-x-auto overflow-y-hidden flex items-center gap-3 z-10 animate-fade-up whitespace-nowrap px-1 pb-1 [scrollbar-width:thin]">
+        <Button
+          variant={reviewMode ? "default" : "ghost"}
+          size="sm"
+          onClick={reviewMode ? exitReview : startReview}
+          className="gap-2 shrink-0"
+        >
+          <Brain className="w-4 h-4" />
+          {reviewMode
+            ? (language === "ar" ? `إنهاء المراجعة (${cards.length})` : `Exit review (${cards.length})`)
+            : (language === "ar" ? `مراجعة اليوم (${queueSize})` : `Review today (${queueSize})`)}
+        </Button>
         <Button variant="ghost" size="sm" onClick={shuffle} className="gap-2 shrink-0">
           <Shuffle className="w-4 h-4" /> {text.shuffle}
         </Button>
