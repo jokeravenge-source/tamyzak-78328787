@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap, RefreshCw, BookText, Beaker, Sigma, Atom as AtomIcon, FileQuestion, Volume2, Timer, TrendingDown, Repeat, FileText, Feather, Type, Music, Brain, HeartPulse, Table2, Sparkles as SparklesIcon, Languages, GaugeCircle, ListTodo, ClipboardList, Wand2, MessageCircle, BookHeart, Speech, PenTool, Boxes, GraduationCap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap, Boxes, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -9,7 +9,7 @@ import { TOOL_PLACEHOLDER_KEY } from "@/pages/ToolPlaceholder";
 
 const FREE_TOOLS = new Set<MainMenuChoice>(["flashcards", "malazam", "frenchSynonyms", "frenchAntonyms", "physicsActivities"]);
 
-type SubjectKey = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic" | "islamic" | "revision";
+type SubjectKey = "physics" | "chemistry" | "biology" | "english" | "french" | "arabic" | "islamic";
 
 // A tool either points to a real MainMenuChoice route, or is a placeholder
 // with its own display metadata (routed through the shared ToolPlaceholder page).
@@ -22,15 +22,6 @@ type Tool = {
   descEn?: string;
   descAr?: string;
 };
-
-// Helper to declare a "coming soon" tool that routes to ToolPlaceholder.
-const soon = (
-  en: string,
-  ar: string,
-  Icon: React.ComponentType<{ className?: string }>,
-  descEn?: string,
-  descAr?: string,
-): Tool => ({ key: "toolPlaceholder", en, ar, Icon, placeholder: true, descEn, descAr });
 
 const SUBJECTS: { code: SubjectKey; en: string; ar: string; Icon: React.ComponentType<{ className?: string }>; tools: Tool[] }[] = [
   {
