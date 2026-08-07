@@ -429,6 +429,103 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
   const [index, setIndex] = useState(() => readSavedIndex(activeTopicCards.length));
   const [direction, setDirection] = useState<"left" | "right">("right");
 
+  /* ---------------- spaced repetition ---------------- */
+  const [srs, setSrs] = useState<Map<string, SrsState>>(new Map());
+  const [reviewMode, setReviewMode] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    loadDeckStates(subject, String(chapter)).then((m) => {
+      if (active) setSrs(m);
+    });
+    return () => { active = false; };
+  }, [subject, chapter]);
+
+  const keyOf = (c: { q: string }) => srsCardKey(subject, String(chapter), c.q);
+
+  const { dueCards, newCards } = useMemo(() => {
+    const now = Date.now();
+    const due: typeof activeTopicCards = [];
+    const fresh: typeof activeTopicCards = [];
+    activeTopicCards.forEach((c) => {
+      const st = srs.get(keyOf(c));
+      if (!st) fresh.push(c);
+      else if (isDue(st, now)) due.push(c);
+    });
+    return { dueCards: due, newCards: fresh };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTopicCards, srs, subject, chapter]);
+
+  const queueSize = dueCards.length + Math.min(newCards.length, 10);
+
+  const startReview = () => {
+    const queue = [...dueCards, ...newCards.slice(0, 10)];
+    if (queue.length === 0) {
+      toast.success(language === "ar" ? "لا توجد بطاقات مستحقة الآن — عد لاحقاً!" : "Nothing due right now — come back later!");
+      return;
+    }
+    setReviewMode(true);
+    setSavedView(false);
+    setCards(queue);
+    setIndex(0);
+    setDirection("right");
+  };
+
+  const exitReview = () => {
+    setReviewMode(false);
+    setCards(activeTopicCards);
+    setIndex(0);
+  };
+
+  const handleRate = async (rating: SrsRating) => {
+    const current = cards[index];
+    if (!current) return;
+    const key = keyOf(current);
+    const prev = srs.get(key) ?? defaultState(key);
+    const next = await rateCard({
+      subject,
+      chapter: String(chapter),
+      language,
+      card: current,
+      rating,
+      prev,
+    });
+    setSrs((m) => new Map(m).set(key, next));
+
+    if (!reviewMode) {
+      nextCard();
+      return;
+    }
+
+    // In review mode the card leaves the queue; forgotten cards come back last.
+    setCards((prevCards) => {
+      const rest = prevCards.filter((_, i) => i !== index);
+      const queue = rating === "forgot" ? [...rest, current] : rest;
+      if (queue.length === 0) {
+        toast.success(language === "ar" ? "أنهيت مراجعة اليوم — أحسنت!" : "Review finished for now — nice work!");
+        setReviewMode(false);
+        setIndex(0);
+        return activeTopicCards;
+      }
+      setIndex((i) => Math.min(i, queue.length - 1));
+      return queue;
+    });
+    setDirection("right");
+  };
+
+  const intervalHints = useMemo(() => {
+    const current = cards[index];
+    if (!current) return undefined;
+    const st = srs.get(keyOf(current)) ?? defaultState(keyOf(current));
+    return {
+      forgot: previewInterval(st, "forgot", language),
+      hard: previewInterval(st, "hard", language),
+      good: previewInterval(st, "good", language),
+      easy: previewInterval(st, "easy", language),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards, index, srs, language, subject, chapter]);
+
   const next = () => {
     setDirection("right");
     setIndex((i) => {
