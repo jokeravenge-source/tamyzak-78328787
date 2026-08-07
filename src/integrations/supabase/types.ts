@@ -936,6 +936,66 @@ export type Database = {
         }
         Relationships: []
       }
+      flashcard_reviews: {
+        Row: {
+          answer: string
+          card_key: string
+          chapter: string
+          created_at: string
+          due_at: string
+          ease: number
+          id: string
+          interval_days: number
+          language: string
+          lapses: number
+          last_rating: string | null
+          last_reviewed_at: string | null
+          question: string
+          reps: number
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          card_key: string
+          chapter: string
+          created_at?: string
+          due_at?: string
+          ease?: number
+          id?: string
+          interval_days?: number
+          language?: string
+          lapses?: number
+          last_rating?: string | null
+          last_reviewed_at?: string | null
+          question: string
+          reps?: number
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          card_key?: string
+          chapter?: string
+          created_at?: string
+          due_at?: string
+          ease?: number
+          id?: string
+          interval_days?: number
+          language?: string
+          lapses?: number
+          last_rating?: string | null
+          last_reviewed_at?: string | null
+          question?: string
+          reps?: number
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mission_progress: {
         Row: {
           completed: boolean
