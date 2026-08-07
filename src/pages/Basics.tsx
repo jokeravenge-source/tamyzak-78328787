@@ -15,6 +15,7 @@ import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
 import RankStone, { rankFromPoints, RANK_LABELS, type StoneRank } from "@/components/RankStone";
+import { totalDueCount } from "@/lib/srs";
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
