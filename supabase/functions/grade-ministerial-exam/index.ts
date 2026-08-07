@@ -1,6 +1,5 @@
 import { protect } from "../_shared/guard.ts";
 import { requireUser } from "../_shared/auth.ts";
-import { claimFeature } from "../_shared/entitlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,14 +33,6 @@ Deno.serve(async (req) => {
     if (!typed && !images.length) {
       return new Response(JSON.stringify({ error: "No student answer provided" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const ent = await claimFeature(req, "essay");
-    if (!ent.ok) {
-      return new Response(JSON.stringify({ error: ent.error, upgrade: ent.status === 429 }), {
-        status: ent.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
