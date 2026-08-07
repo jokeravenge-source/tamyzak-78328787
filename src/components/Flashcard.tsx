@@ -40,7 +40,7 @@ export const Flashcard = ({ question, answer, index, total, direction, language 
     stopRecording();
     stopSpeaking();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index]);
+  }, [index, question, answer]);
 
   useEffect(() => () => {
     if (recordedUrl) URL.revokeObjectURL(recordedUrl);
