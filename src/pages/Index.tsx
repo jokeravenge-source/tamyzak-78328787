@@ -492,6 +492,13 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     });
     setSrs((m) => new Map(m).set(key, updated));
 
+    const when = previewInterval(prev, rating, language);
+    if (rating === "forgot") {
+      toast(language === "ar" ? `نسيت — ستعود البطاقة بعد ${when}` : `Forgot — this card returns in ${when}`);
+    } else {
+      toast.success(language === "ar" ? `المراجعة القادمة بعد ${when}` : `Next review in ${when}`);
+    }
+
     if (!reviewMode) {
       next();
       return;
