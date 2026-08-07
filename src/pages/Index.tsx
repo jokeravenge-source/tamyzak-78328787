@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw, Bookmark, BookmarkCheck, Star } from "lucide-react";
+import { Brain } from "lucide-react";
 import { Plus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { setRedoRequired, clearRedoAndZombie } from "@/components/ZombieGuard";
@@ -68,6 +69,16 @@ import { groupFlashcardsByTopic } from "@/lib/flashcardTopics";
 import { explicitTopics, type TopicGroup } from "@/lib/flashcardTopics";
 import { buildPresetGroups } from "@/lib/flashcardTopicPresets";
 import { useTodos, topicProgress } from "@/lib/todoTopicProgress";
+import {
+  cardKey as srsCardKey,
+  defaultState,
+  isDue,
+  loadDeckStates,
+  previewInterval,
+  rateCard,
+  type SrsRating,
+  type SrsState,
+} from "@/lib/srs";
 import { PREVIOUS_SUBJECT_STORAGE_KEY } from "@/pages/Subjects";
 import CrossfadeSubjectTheme from "@/components/CrossfadeSubjectTheme";
 
