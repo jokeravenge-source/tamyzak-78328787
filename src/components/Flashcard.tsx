@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useRef } from "react";
 import { Mic, Square, Play, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { SrsRating } from "@/lib/srs";
 
 interface FlashcardProps {
   question: string;
@@ -10,9 +11,13 @@ interface FlashcardProps {
   total: number;
   direction: "left" | "right";
   language?: "ar" | "en";
+  /** When provided, rating buttons appear once the answer is revealed. */
+  onRate?: (rating: SrsRating) => void;
+  /** Short "next review in …" hints keyed by rating. */
+  intervalHints?: Partial<Record<SrsRating, string>>;
 }
 
-export const Flashcard = ({ question, answer, index, total, direction, language = "en" }: FlashcardProps) => {
+export const Flashcard = ({ question, answer, index, total, direction, language = "en", onRate, intervalHints }: FlashcardProps) => {
   const [flipped, setFlipped] = useState(false);
   const labels = language === "ar"
     ? { question: "السؤال", answer: "الإجابة", reveal: "اضغط لإظهار الإجابة", back: "اضغط لرؤية السؤال", record: "سجل صوتك", stop: "إيقاف التسجيل", play: "تشغيل تسجيلك", listen: "استمع للإجابة", stopAudio: "إيقاف الصوت", micError: "تعذّر الوصول إلى المايكروفون" }
