@@ -272,6 +272,13 @@ const Basics = ({
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
+  const [dueCards, setDueCards] = useState<number>(0);
+
+  useEffect(() => {
+    let active = true;
+    totalDueCount().then((n) => { if (active) setDueCards(n); });
+    return () => { active = false; };
+  }, []);
 
   // Total missions across all subjects/chapters
   const missionsTotal = (() => {
