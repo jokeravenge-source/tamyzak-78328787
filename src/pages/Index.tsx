@@ -482,7 +482,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     if (!current) return;
     const key = keyOf(current);
     const prev = srs.get(key) ?? defaultState(key);
-    const next = await rateCard({
+    const updated = await rateCard({
       subject,
       chapter: String(chapter),
       language,
@@ -490,7 +490,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       rating,
       prev,
     });
-    setSrs((m) => new Map(m).set(key, next));
+    setSrs((m) => new Map(m).set(key, updated));
 
     if (!reviewMode) {
       next();
