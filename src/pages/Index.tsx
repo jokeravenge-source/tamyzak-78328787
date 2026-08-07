@@ -790,6 +790,8 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           total={cards.length}
           direction={direction}
           language={language}
+          onRate={savedView ? undefined : handleRate}
+          intervalHints={intervalHints}
         />
 
         {/* Controls */}
