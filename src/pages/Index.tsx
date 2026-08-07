@@ -526,6 +526,19 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards, index, srs, language, subject, chapter]);
 
+  // Deep-link from the home screen's "due cards" banner.
+  const autoReviewDone = useRef(false);
+  useEffect(() => {
+    if (autoReviewDone.current || srs.size === 0) return;
+    let flag: string | null = null;
+    try { flag = sessionStorage.getItem("flashcards:review"); } catch { /* ignore */ }
+    if (flag !== "1") return;
+    autoReviewDone.current = true;
+    try { sessionStorage.removeItem("flashcards:review"); } catch { /* ignore */ }
+    startReview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [srs]);
+
   const next = () => {
     setDirection("right");
     setIndex((i) => {
