@@ -493,7 +493,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
     setSrs((m) => new Map(m).set(key, next));
 
     if (!reviewMode) {
-      nextCard();
+      next();
       return;
     }
 
