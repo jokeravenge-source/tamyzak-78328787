@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Flame, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import FeatureFacetCard from "@/components/FeatureFacetCard";
+import PointsExplainer from "@/components/PointsExplainer";
 import RankStone, { rankFromPoints, RANK_LABELS } from "@/components/RankStone";
 import {
   FEATURE_MENU,
@@ -120,11 +121,9 @@ const FeatureUnlocks = ({
             />
           ))}
         </div>
-        <p className="mt-8 text-center text-xs text-muted-foreground">
-          {isAr
-            ? "اكسب النقاط من الدخول اليومي، البطاقات، الاختبارات، الأسئلة الوزارية وتحويل الفيديو لملاحظات."
-            : "Earn points from daily logins, flashcards, quizzes, ministerial sets and video-to-notes."}
-        </p>
+        <div className="mt-10">
+          <PointsExplainer language={language} />
+        </div>
       </div>
     </main>
   );
