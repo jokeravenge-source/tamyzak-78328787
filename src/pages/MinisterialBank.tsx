@@ -29,6 +29,7 @@ import { ministerialArabicTaajjub } from "@/data/ministerialArabicTaajjub";
 import { ministerialArabicNida } from "@/data/ministerialArabicNida";
 import { ministerialBioCh1Ar } from "@/data/ministerialBioCh1Ar";
 import { ministerialIslamicUnit1 } from "@/data/ministerialIslamicUnit1";
+import { ministerialIslamicUnit2 } from "@/data/ministerialIslamicUnit2";
 import { Textarea } from "@/components/ui/textarea";
 
 const subjectIcons: Record<BankSubject, React.ComponentType<{ className?: string }>> = {
@@ -295,6 +296,8 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
                 ? ministerialBioCh1Ar
                 : subject === "islamic" && chapterN === 1
                 ? ministerialIslamicUnit1
+                : subject === "islamic" && chapterN === 2
+                ? ministerialIslamicUnit2
                 : [];
   const hasQuestionBank = questions.length > 0;
   const current = questions[qIndex];
