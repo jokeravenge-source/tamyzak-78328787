@@ -35,6 +35,7 @@ const Canvas = ({
   onBack: () => void;
   onOpenNotes?: () => void;
 }) => {
+  useFeatureUsed("canvas");
   const isRTL = language === "ar";
   const t = useMemo(() => ({
     title: isRTL ? "اللوحات" : "Canvases",
