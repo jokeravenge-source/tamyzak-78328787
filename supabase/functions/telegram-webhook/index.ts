@@ -16,6 +16,16 @@ function safeEqual(a: string | null, b: string): boolean {
   return diff === 0;
 }
 
+const SITE_URL = "https://tamyazak.site";
+const WELCOME_TEXT =
+  "👋 <b>أهلاً بك في تميّزك!</b>\n\n" +
+  "تم فتح البوت بنجاح ✅\n" +
+  "الآن انتقل إلى الموقع وأكمل تسجيل الدخول لربط حسابك واستلام التذكيرات:\n" +
+  `${SITE_URL}`;
+const WELCOME_KEYBOARD = {
+  inline_keyboard: [[{ text: "🌐 افتح الموقع وأكمل التسجيل", url: SITE_URL }]],
+};
+
 async function tg(method: string, body: unknown) {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
   const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY")!;
@@ -84,7 +94,10 @@ Deno.serve(async (req) => {
   if (!row) {
     await tg("sendMessage", {
       chat_id: chatId,
-      text: "👋 Please open the app and tap 'Verify with Telegram' first to get your personal link.",
+      text: WELCOME_TEXT,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+      reply_markup: WELCOME_KEYBOARD,
     });
     return new Response(JSON.stringify({ ok: true }));
   }
@@ -102,7 +115,10 @@ Deno.serve(async (req) => {
 
   await tg("sendMessage", {
     chat_id: chatId,
-    text: "✅ Linked! You can return to the app now.",
+    text: "✅ <b>تم الربط بنجاح!</b>\n\nارجع الآن إلى الموقع وأكمل تسجيل الدخول لتصلك تذكيرات الامتحانات والمهام.",
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    reply_markup: WELCOME_KEYBOARD,
   });
 
   return new Response(JSON.stringify({ ok: true }));
