@@ -732,7 +732,6 @@ const Basics = ({
           {/* === The Facet Stone hero === */}
           <header className="mb-8 md:mb-12">
             <div className="flex items-center gap-5 sm:gap-7">
-              <GiftMcqButton language={language} />
               <RankStone
                 rank={currentRank}
                 size={104}
@@ -761,6 +760,7 @@ const Basics = ({
                   <span>{language === "ar" ? "نقطة" : "pts"}</span>
                 </p>
               </div>
+              <GiftMcqButton language={language} />
             </div>
           </header>
 
@@ -793,6 +793,20 @@ const Basics = ({
                     ? "راجعها الآن قبل أن تنساها."
                     : "Review them now, before you forget them."}
                 </p>
+                {dueGroups.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {dueGroups.map((g) => (
+                      <span
+                        key={`${g.subject}-${g.chapter}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary"
+                      >
+                        {subjectLabel(g.subject, language)}
+                        {g.chapter ? ` · ${language === "ar" ? `الفصل ${g.chapter}` : `Ch ${g.chapter}`}` : ""}
+                        <span className="opacity-70">({g.count})</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <span className="shrink-0 text-primary">
                 {isRTL ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
