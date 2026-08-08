@@ -86,6 +86,7 @@ import TelegramChannelGate from "./components/TelegramChannelGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
 import { startAnalyticsSession, captureSignupSource } from "@/lib/analytics";
+import { captureReferralCode, redeemPendingReferral } from "@/lib/referral";
 
 captureSignupSource();
 
@@ -351,6 +352,7 @@ const App = () => {
   useEffect(() => {
     if (!authed) return;
     startAnalyticsSession();
+    void redeemPendingReferral(language === "ar" ? "ar" : "en");
   }, [authed]);
 
   useEffect(() => {
