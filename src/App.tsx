@@ -416,6 +416,22 @@ const App = () => {
     }
     return localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null;
   });
+  // Points-unlock state (lifetime points gate the 4 advanced tools)
+  const [unlockedKeys, setUnlockedKeys] = useState<FeatureKey[]>([]);
+  const [unlockHighlight, setUnlockHighlight] = useState<FeatureKey | null>(null);
+  useEffect(() => {
+    if (!authed) return;
+    const refresh = () => fetchUnlockedKeys().then(setUnlockedKeys).catch(() => {});
+    refresh();
+    ensureDailyLogin().catch(() => {});
+    const onUpdate = () => refresh();
+    window.addEventListener("app:progress-updated", onUpdate);
+    window.addEventListener("app:feature-unlocked", onUpdate);
+    return () => {
+      window.removeEventListener("app:progress-updated", onUpdate);
+      window.removeEventListener("app:feature-unlocked", onUpdate);
+    };
+  }, [authed]);
 
   // Admin "Play daily game" preview: when set, we render DailyGame directly
   // even for admins (which normally short-circuit to AdminDashboard).
