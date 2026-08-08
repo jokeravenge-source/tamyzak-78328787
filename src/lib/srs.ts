@@ -195,6 +195,41 @@ export async function totalDueCount(): Promise<number> {
 }
 
 /** Cards the student has repeatedly failed — the "leech" / weak-points list. */
+export type DueGroup = { subject: string; chapter: string; count: number };
+
+/** Due cards grouped by subject + chapter, so the student knows what is waiting. */
+export async function dueBreakdown(limit = 4): Promise<DueGroup[]> {
+  const now = Date.now();
+  const map = new Map<string, DueGroup>();
+  const add = (subject: string, chapter: string) => {
+    const key = `${subject}|${chapter}`;
+    const g = map.get(key) ?? { subject, chapter, count: 0 };
+    g.count += 1;
+    map.set(key, g);
+  };
+
+  Object.values(readLocal()).forEach((s) => {
+    if (s.dueAt > now) return;
+    const [subject, chapter] = s.cardKey.split(":");
+    if (subject) add(subject, chapter ?? "");
+  });
+
+  const user = await uid();
+  if (user) {
+    const { data } = await supabase
+      .from("flashcard_reviews")
+      .select("subject, chapter")
+      .eq("user_id", user)
+      .lte("due_at", new Date(now).toISOString());
+    if (data?.length) {
+      map.clear();
+      data.forEach((r) => add(r.subject, String(r.chapter ?? "")));
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.count - a.count).slice(0, limit);
+}
+
 export async function loadLeeches(limit = 20) {
   const user = await uid();
   if (!user) return [];
