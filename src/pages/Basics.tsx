@@ -807,13 +807,28 @@ const Basics = ({
                     <Crown className="inline-block w-4 h-4 ms-2 text-ember align-middle" />
                   )}
                 </h2>
-                <p className="mt-2 text-sm text-ash flex items-baseline gap-1.5">
-                  <span className="font-mono text-ember text-lg font-semibold tabular-nums">{streakDays || 0}</span>
-                  <span>{language === "ar" ? (streakDays === 1 ? "يوم متواصل" : "أيام متواصلة") : `day${streakDays === 1 ? "" : "s"} in a row`}</span>
-                  <span className="text-ash/60 mx-2">·</span>
-                  <span className="font-mono text-foreground tabular-nums">{totalPoints}</span>
-                  <span>{language === "ar" ? "نقطة" : "pts"}</span>
-                </p>
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                  <div className="rounded-2xl border border-border bg-card px-3 py-2.5">
+                    <p className="font-mono text-ember text-xl font-semibold tabular-nums leading-none">{streakDays || 0}</p>
+                    <p className="mt-1 text-[11px] text-ash">
+                      {language === "ar" ? (streakDays === 1 ? "يوم متواصل" : "أيام متواصلة") : `day${streakDays === 1 ? "" : "s"} in a row`}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card px-3 py-2.5">
+                    <p className="font-mono text-foreground text-xl font-semibold tabular-nums leading-none">{totalPoints}</p>
+                    <p className="mt-1 text-[11px] text-ash">{language === "ar" ? "نقطة" : "points"}</p>
+                  </div>
+                  <div className="col-span-2 sm:col-span-1 rounded-2xl border border-primary/40 bg-primary/5 px-3 py-2.5">
+                    <p className="font-mono text-primary text-xl font-semibold tabular-nums leading-none">
+                      {boardRank ? `#${boardRank}` : "—"}
+                    </p>
+                    <p className="mt-1 text-[11px] text-ash">
+                      {language === "ar"
+                        ? `ترتيبك بين ${boardTotal} طالب عراقي`
+                        : `your place among ${boardTotal} Iraqi students`}
+                    </p>
+                  </div>
+                </div>
               </div>
               <GiftMcqButton language={language} />
             </div>
