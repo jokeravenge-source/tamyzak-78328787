@@ -145,6 +145,123 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_problems: {
+        Row: {
+          chapter: number
+          chapter_title: string | null
+          created_at: string
+          created_by: string | null
+          difficulty: string
+          final_answer: string | null
+          formula: string | null
+          given_data: string | null
+          id: string
+          language: string
+          problem: string
+          section: string | null
+          solution: string
+          sort_order: number
+          source: string | null
+          subject: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          chapter: number
+          chapter_title?: string | null
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          final_answer?: string | null
+          formula?: string | null
+          given_data?: string | null
+          id?: string
+          language?: string
+          problem: string
+          section?: string | null
+          solution: string
+          sort_order?: number
+          source?: string | null
+          subject: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          chapter?: number
+          chapter_title?: string | null
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          final_answer?: string | null
+          formula?: string | null
+          given_data?: string | null
+          id?: string
+          language?: string
+          problem?: string
+          section?: string | null
+          solution?: string
+          sort_order?: number
+          source?: string | null
+          subject?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bank_text_questions: {
+        Row: {
+          answer: string
+          chapter: number
+          chapter_title: string | null
+          created_at: string
+          created_by: string | null
+          difficulty: string
+          id: string
+          language: string
+          question: string
+          section: string | null
+          sort_order: number
+          source: string | null
+          subject: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          chapter: number
+          chapter_title?: string | null
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          id?: string
+          language?: string
+          question: string
+          section?: string | null
+          sort_order?: number
+          source?: string | null
+          subject: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          chapter?: number
+          chapter_title?: string | null
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          id?: string
+          language?: string
+          question?: string
+          section?: string | null
+          sort_order?: number
+          source?: string | null
+          subject?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       canvases: {
         Row: {
           client_id: string
