@@ -171,9 +171,21 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
       .channel(`study_room_${room.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "study_room_messages", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
       .on("postgres_changes", { event: "*", schema: "public", table: "study_room_members", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => loadRoom(room.id))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [room, loadRoom]);
+
+  // Keep our stored membership name in sync with the profile name
+  useEffect(() => {
+    if (!room || !userId || !displayName) return;
+    supabase
+      .from("study_room_members")
+      .update({ display_name: displayName })
+      .eq("room_id", room.id)
+      .eq("user_id", userId)
+      .then(() => {});
+  }, [room, userId, displayName]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
