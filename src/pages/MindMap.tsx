@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -215,6 +216,7 @@ function Canvas({
 }
 
 const MindMap = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  useFeatureUsed("mind_map");
   const t = copy[language];
   const [topic, setTopic] = useState("");
   const [file, setFile] = useState<File | null>(null);

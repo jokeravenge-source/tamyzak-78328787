@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import { ArrowLeft, ArrowRight, Lock, Sparkles, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, ScrollText, Eye, ChevronLeft, ChevronRight, Check, X, Moon, Sigma, FileText, Loader2, RefreshCw, Printer, Upload, GraduationCap, ImagePlus, Trash2 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
@@ -140,6 +141,7 @@ const copy = {
 } as const;
 
 const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  useFeatureUsed("ministerial_questions");
   const t = copy[language];
   const [subject, setSubject] = useState<BankSubject | null>(null);
   const [chapterN, setChapterN] = useState<number | null>(null);

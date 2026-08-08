@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import { ArrowLeft, Swords, Users, Trophy, Copy, Loader2, Check, X, Sparkles, Upload, FileText, User, Shuffle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ const SUBJECT_OPTIONS: { key: BattleSubject; ar: string; en: string }[] = [
 ];
 
 export default function LiveBattle({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
+  useFeatureUsed("live_battle");
   const t = T(language);
   const [phase, setPhase] = useState<Phase>("menu");
   const [name, setName] = useState<string>(() => localStorage.getItem("app_display_name_v1") || (language === "ar" ? "لاعب" : "Player"));

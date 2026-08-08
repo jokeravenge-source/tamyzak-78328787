@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import { ArrowLeft, Loader2, Youtube, Copy, CheckCircle2, AlertTriangle, RefreshCw, ChevronDown, Layers, BrainCircuit, Sparkles, Check, X, Plus, Save, RotateCw, Lightbulb, type LucideIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -145,6 +146,7 @@ type Persisted = {
 };
 
 const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  useFeatureUsed("video_to_notes");
   const t = copy[language];
   const initial: Persisted = (() => {
     try {

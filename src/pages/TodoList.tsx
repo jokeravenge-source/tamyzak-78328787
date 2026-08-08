@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import { ArrowLeft, Plus, Trash2, CheckCircle2, Circle, PartyPopper, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -81,6 +82,7 @@ const t = {
 } as const;
 
 const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  useFeatureUsed("todo_list");
   const text = t[language];
   const [todos, setTodos] = useState<Todo[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
