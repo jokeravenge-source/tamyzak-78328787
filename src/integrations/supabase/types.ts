@@ -1627,6 +1627,48 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+        }
+        Relationships: []
+      }
       request_rate_limits: {
         Row: {
           feature: string
@@ -2454,6 +2496,7 @@ export type Database = {
       }
       feature_usage_today: { Args: { _feature: string }; Returns: number }
       get_exam_answer_path: { Args: { _exam_id: string }; Returns: string }
+      get_my_referral_code: { Args: never; Returns: string }
       has_active_premium: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
@@ -2483,6 +2526,7 @@ export type Database = {
         Args: { _guest_key?: string; _poll_id: string }
         Returns: string
       }
+      my_referral_stats: { Args: never; Returns: Json }
       poll_vote_counts: {
         Args: { _poll_id: string }
         Returns: {
@@ -2490,6 +2534,7 @@ export type Database = {
           votes: number
         }[]
       }
+      redeem_referral: { Args: { _code: string }; Returns: Json }
       set_site_visits: { Args: { _count: number }; Returns: number }
     }
     Enums: {
