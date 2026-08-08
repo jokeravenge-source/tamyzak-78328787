@@ -1,37 +1,110 @@
-import { useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { buildBattleMcqs, type BattleMCQ } from "@/lib/battleMcqBank";
+import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
 import giftAsset from "@/assets/gift-premium.json.asset.json";
-import { Check, X, Sparkles } from "lucide-react";
+import { Check, X, Sparkles, Loader2 } from "lucide-react";
+
+type GiftQuestion = {
+  q: string;
+  choices: string[];
+  answer: number;
+  subject: string;
+  chapter: number;
+  chapterTitle: string | null;
+};
+
+const SUBJECT_AR: Record<string, string> = {
+  arabic: "العربية", english: "الإنجليزية", math: "الرياضيات", chemistry: "الكيمياء",
+  biology: "الأحياء", physics: "الفيزياء", islamic: "التربية الإسلامية", french: "الفرنسية",
+};
+
+const clip = (s: string, n = 220) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
 
 /**
  * Gift animation in the profile row. Tapping it hands the student a surprise
- * MCQ drawn from the ministerial question bank.
+ * MCQ drawn from the ministerial question bank. The question, its correct
+ * answer and the distractors all come from the SAME subject and chapter, so
+ * nothing is ever mixed across subjects.
  */
 export default function GiftMcqButton({ language }: { language: AppLanguage }) {
   const isAr = language === "ar";
   const [open, setOpen] = useState(false);
-  const [seed, setSeed] = useState(() => Date.now() % 233280);
   const [picked, setPicked] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [question, setQuestion] = useState<GiftQuestion | null>(null);
 
-  const question: BattleMCQ | null = useMemo(() => {
-    const list = buildBattleMcqs("general", 1, seed || 1);
-    return list[0] ?? null;
-  }, [seed]);
+  const loadQuestion = useCallback(async () => {
+    setLoading(true);
+    setPicked(null);
+    setQuestion(null);
+    try {
+      const lang = isAr ? "ar" : "en";
+      const base = () =>
+        supabase.from("bank_text_questions").select("*", { count: "exact", head: true }).eq("language", lang);
+      const { count } = await base();
+      if (!count) { setQuestion(null); return; }
+
+      const offset = Math.floor(Math.random() * count);
+      const { data: picks } = await supabase
+        .from("bank_text_questions")
+        .select("id, subject, chapter, chapter_title, question, answer")
+        .eq("language", lang)
+        .order("id", { ascending: true })
+        .range(offset, offset);
+      const row = picks?.[0];
+      if (!row) { setQuestion(null); return; }
+
+      // Distractors strictly from the same subject + chapter + language.
+      const { data: siblings } = await supabase
+        .from("bank_text_questions")
+        .select("id, answer")
+        .eq("language", lang)
+        .eq("subject", row.subject)
+        .eq("chapter", row.chapter)
+        .neq("id", row.id)
+        .limit(60);
+
+      const pool = Array.from(
+        new Set(
+          (siblings ?? [])
+            .map((s) => (s.answer ?? "").trim())
+            .filter((a) => a && a !== row.answer.trim()),
+        ),
+      );
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      const distractors = pool.slice(0, 3);
+      const correct = row.answer.trim();
+      const choices = [correct, ...distractors].map((c) => clip(c));
+      for (let i = choices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [choices[i], choices[j]] = [choices[j], choices[i]];
+      }
+
+      setQuestion({
+        q: row.question,
+        choices,
+        answer: choices.indexOf(clip(correct)),
+        subject: row.subject,
+        chapter: row.chapter,
+        chapterTitle: row.chapter_title,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [isAr]);
 
   const openGift = () => {
-    setSeed(Math.floor(Math.random() * 233279) + 1);
-    setPicked(null);
     setOpen(true);
+    void loadQuestion();
   };
 
-  const next = () => {
-    setSeed(Math.floor(Math.random() * 233279) + 1);
-    setPicked(null);
-  };
+  const next = () => { void loadQuestion(); };
 
   return (
     <>
@@ -53,11 +126,19 @@ export default function GiftMcqButton({ language }: { language: AppLanguage }) {
               {isAr ? "سؤال هدية" : "Gift question"}
             </DialogTitle>
             <DialogDescription>
-              {isAr ? "من بنك الأسئلة الوزارية" : "From the ministerial question bank"}
+              {question
+                ? `${isAr ? "من بنك الأسئلة الوزارية" : "From the ministerial question bank"} · ${
+                    isAr ? SUBJECT_AR[question.subject] ?? question.subject : question.subject
+                  } · ${isAr ? `الفصل ${question.chapter}` : `Chapter ${question.chapter}`}`
+                : isAr ? "من بنك الأسئلة الوزارية" : "From the ministerial question bank"}
             </DialogDescription>
           </DialogHeader>
 
-          {!question ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-10 text-muted-foreground">
+              <Loader2 className="w-5 h-5 animate-spin" />
+            </div>
+          ) : !question ? (
             <p className="text-sm text-muted-foreground">
               {isAr ? "لا يوجد سؤال متاح الآن." : "No question available right now."}
             </p>
