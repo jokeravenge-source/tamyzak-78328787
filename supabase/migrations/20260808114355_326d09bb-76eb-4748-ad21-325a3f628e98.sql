@@ -1,0 +1,4 @@
+ALTER TABLE public.user_points REPLICA IDENTITY FULL;
+ALTER TABLE public.profiles REPLICA IDENTITY FULL;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.user_points;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
