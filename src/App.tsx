@@ -35,6 +35,9 @@ const BiologyDrawings = lazy(() => import("./pages/BiologyDrawings"));
 const More = lazy(() => import("./pages/More"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 import PointsAwardOverlay from "./components/PointsAwardOverlay";
+import FeatureUnlockCelebration from "./components/FeatureUnlockCelebration";
+import FeatureUnlocks from "./pages/FeatureUnlocks";
+import { ensureDailyLogin, fetchUnlockedKeys, isGatedMenu, type FeatureKey } from "@/lib/unlocks";
 const TodoList = lazy(() => import("./pages/TodoList"));
 const News = lazy(() => import("./pages/News"));
 const Premium = lazy(() => import("./pages/Premium"));
@@ -395,7 +398,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers" | "adminNotes" | "dailyGame" | "whoIsBest" | "challenge";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers" | "adminNotes" | "dailyGame" | "whoIsBest" | "challenge" | "unlocks";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(() => {
     if (typeof window === "undefined") return null;
     if (window.location.pathname.startsWith("/teachers")) {
@@ -446,6 +449,15 @@ const App = () => {
     localStorage.removeItem(MENU_STORAGE_KEY);
   };
   const chooseMenu = (choice: MenuChoice) => {
+    // Points-gated tools: send the student to the progress page instead of the tool.
+    const gated = isGatedMenu(choice);
+    if (gated && !unlockedKeys.includes(gated)) {
+      setUnlockHighlight(gated);
+      localStorage.setItem(MENU_STORAGE_KEY, "unlocks");
+      setMenuChoice("unlocks");
+      return;
+    }
+    if (choice !== "unlocks") setUnlockHighlight(null);
     localStorage.setItem(MENU_STORAGE_KEY, choice);
     setMenuChoice(choice);
   };
