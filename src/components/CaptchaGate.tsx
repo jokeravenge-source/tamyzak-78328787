@@ -34,24 +34,24 @@ const copy = {
   },
 } as const;
 
-const SCRIPT_ID = "recaptcha-v2-script";
+const SCRIPT_ID = "recaptcha-v3-script";
 
 const loadRecaptcha = () =>
   new Promise<void>((resolve, reject) => {
     const w = window as any;
-    if (w.grecaptcha?.render) return resolve();
+    if (w.grecaptcha?.execute) return resolve();
     let script = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (!script) {
       script = document.createElement("script");
       script.id = SCRIPT_ID;
-      script.src = "https://www.google.com/recaptcha/api.js?render=explicit";
+      script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);
     }
     const started = Date.now();
     const tick = () => {
-      if ((window as any).grecaptcha?.render) return resolve();
+      if ((window as any).grecaptcha?.execute) return resolve();
       if (Date.now() - started > 15000) return reject(new Error("recaptcha-timeout"));
       window.setTimeout(tick, 150);
     };
@@ -60,18 +60,30 @@ const loadRecaptcha = () =>
 
 const CaptchaGate = ({ language = "ar", onPassed }: { language?: AppLanguage; onPassed: () => void }) => {
   const t = copy[language] ?? copy.ar;
-  const boxRef = useRef<HTMLDivElement>(null);
-  const rendered = useRef(false);
+  const started = useRef(false);
   const [error, setError] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
 
-    const verify = async (token: string) => {
+    const run = async () => {
+      if (started.current) return;
+      started.current = true;
       setBusy(true);
       setError(false);
       try {
+        await loadRecaptcha();
+        const grecaptcha = (window as any).grecaptcha;
+        const token: string = await new Promise((resolve, reject) => {
+          grecaptcha.ready(() => {
+            grecaptcha
+              .execute(RECAPTCHA_SITE_KEY, { action: "enter" })
+              .then(resolve)
+              .catch(reject);
+          });
+        });
+        if (cancelled) return;
         const { data, error: fnError } = await supabase.functions.invoke("verify-captcha", {
           body: { token },
         });
@@ -81,28 +93,24 @@ const CaptchaGate = ({ language = "ar", onPassed }: { language?: AppLanguage; on
         } catch { /* ignore */ }
         onPassed();
       } catch {
+        if (cancelled) return;
         setError(true);
-        try { (window as any).grecaptcha?.reset(); } catch { /* ignore */ }
       } finally {
-        setBusy(false);
+        if (!cancelled) setBusy(false);
       }
     };
 
-    loadRecaptcha()
-      .then(() => {
-        if (cancelled || rendered.current || !boxRef.current) return;
-        rendered.current = true;
-        (window as any).grecaptcha.render(boxRef.current, {
-          sitekey: RECAPTCHA_SITE_KEY,
-          theme: "dark",
-          callback: verify,
-          "expired-callback": () => setError(true),
-        });
-      })
-      .catch(() => setError(true));
+    run();
 
     return () => { cancelled = true; };
   }, [onPassed]);
+
+  const retry = () => {
+    started.current = false;
+    setError(false);
+    setBusy(true);
+    window.location.reload();
+  };
 
   return (
     <main
@@ -120,12 +128,20 @@ const CaptchaGate = ({ language = "ar", onPassed }: { language?: AppLanguage; on
         <h1 className="text-2xl font-bold mb-2">{t.title}</h1>
         <p className="text-sm text-muted-foreground mb-6">{t.desc}</p>
 
-        <div className="flex justify-center min-h-[78px]">
-          <div ref={boxRef} />
+        <div className="flex flex-col items-center justify-center min-h-[78px] gap-3">
+          {busy && <p className="text-sm text-muted-foreground">{t.verifying}</p>}
+          {error && !busy && (
+            <>
+              <p className="text-sm text-destructive">{t.error}</p>
+              <button
+                onClick={retry}
+                className="px-4 py-2 rounded-xl border border-primary/40 bg-primary/10 text-sm hover:bg-primary/20 transition"
+              >
+                {language === "ar" ? "إعادة المحاولة" : "Try again"}
+              </button>
+            </>
+          )}
         </div>
-
-        {busy && <p className="mt-4 text-sm text-muted-foreground">{t.verifying}</p>}
-        {error && !busy && <p className="mt-4 text-sm text-destructive">{t.error}</p>}
       </section>
     </main>
   );

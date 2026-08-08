@@ -40,7 +40,13 @@ Deno.serve(async (req) => {
       body: new URLSearchParams({ secret, response: token }),
     });
     const data = await res.json();
-    return json({ success: !!data.success, errors: data["error-codes"] ?? [] }, data.success ? 200 : 400);
+    // reCAPTCHA v3 returns a score (0.0 bot → 1.0 human). Accept 0.3+ so real users aren't blocked.
+    const score = typeof data.score === "number" ? data.score : 1;
+    const ok = !!data.success && score >= 0.3;
+    return json(
+      { success: ok, score, errors: data["error-codes"] ?? [] },
+      ok ? 200 : 400,
+    );
   } catch (e) {
     console.error("[verify-captcha] verification failed", e);
     return json({ success: false, error: "verification-failed" }, 502);
