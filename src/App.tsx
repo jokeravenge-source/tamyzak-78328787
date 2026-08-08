@@ -82,6 +82,9 @@ import TelegramGate from "./components/TelegramGate";
 import TelegramChannelGate from "./components/TelegramChannelGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
+import { startAnalyticsSession, captureSignupSource } from "@/lib/analytics";
+
+captureSignupSource();
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
