@@ -137,3 +137,77 @@ export async function ensureDailyLogin() {
     try { localStorage.setItem(LOGIN_KEY, today); } catch { /* ignore */ }
   }
 }
+/** Human-readable earning rules — kept in sync with the `award_points` DB function. */
+export type PointRule = {
+  action: UnlockAction;
+  points: number;
+  dailyCap: number;
+  ar: string;
+  en: string;
+  hintAr: string;
+  hintEn: string;
+};
+
+export const POINT_RULES: Record<UnlockAction, PointRule> = {
+  daily_login: {
+    action: "daily_login",
+    points: 10,
+    dailyCap: 1,
+    ar: "الدخول اليومي",
+    en: "Daily login",
+    hintAr: "ادخل الموقع كل يوم",
+    hintEn: "Open the app each day",
+  },
+  flashcard_session: {
+    action: "flashcard_session",
+    points: 15,
+    dailyCap: 3,
+    ar: "جلسة بطاقات",
+    en: "Flashcard session",
+    hintAr: "أكمل مجموعة بطاقات وقيّمها بـ«فهمتها»",
+    hintEn: "Finish a deck and rate it as understood",
+  },
+  mcq_quiz: {
+    action: "mcq_quiz",
+    points: 15,
+    dailyCap: 3,
+    ar: "اختبار اختيار من متعدد",
+    en: "MCQ quiz",
+    hintAr: "أكمل اختباراً كاملاً",
+    hintEn: "Complete a full quiz",
+  },
+  ministerial_set: {
+    action: "ministerial_set",
+    points: 20,
+    dailyCap: 3,
+    ar: "مجموعة أسئلة وزارية",
+    en: "Ministerial set",
+    hintAr: "حل مجموعة وزارية وصححها",
+    hintEn: "Solve and grade a ministerial set",
+  },
+  video_to_notes: {
+    action: "video_to_notes",
+    points: 10,
+    dailyCap: 3,
+    ar: "تحويل فيديو إلى ملاحظات",
+    en: "Video to notes",
+    hintAr: "حوّل محاضرة يوتيوب إلى ملاحظات",
+    hintEn: "Turn a YouTube lecture into notes",
+  },
+  accuracy_bonus: {
+    action: "accuracy_bonus",
+    points: 10,
+    dailyCap: 3,
+    ar: "مكافأة الدقة (٨٠٪ فأكثر)",
+    en: "Accuracy bonus (80%+)",
+    hintAr: "احصل على ٨٠٪ فأكثر في الاختبار",
+    hintEn: "Score 80% or higher",
+  },
+};
+
+/** Streak milestones and their one-time bonuses. */
+export const STREAK_BONUSES: { days: number; bonus: number }[] = [
+  { days: 3, bonus: 50 },
+  { days: 7, bonus: 150 },
+  { days: 14, bonus: 400 },
+];
