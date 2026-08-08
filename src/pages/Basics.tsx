@@ -732,6 +732,7 @@ const Basics = ({
           {/* === The Facet Stone hero === */}
           <header className="mb-8 md:mb-12">
             <div className="flex items-center gap-5 sm:gap-7">
+              <GiftMcqButton language={language} />
               <RankStone
                 rank={currentRank}
                 size={104}
