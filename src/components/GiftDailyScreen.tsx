@@ -186,7 +186,7 @@ export default function GiftDailyScreen({ language, onClose }: { language: AppLa
         {result && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[130] flex items-center justify-center bg-background/80 backdrop-blur-sm px-6"
+            className="fixed inset-0 z-[130] flex items-start justify-center bg-background/80 backdrop-blur-sm px-6 pt-[6vh]"
           >
             <motion.div
               initial={{ scale: 0.7, y: 30, opacity: 0 }}
