@@ -89,6 +89,7 @@ import { startAnalyticsSession, captureSignupSource } from "@/lib/analytics";
 import { captureReferralCode, redeemPendingReferral } from "@/lib/referral";
 
 captureSignupSource();
+captureReferralCode();
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
@@ -352,7 +353,9 @@ const App = () => {
   useEffect(() => {
     if (!authed) return;
     startAnalyticsSession();
-    void redeemPendingReferral(language === "ar" ? "ar" : "en");
+    void redeemPendingReferral(
+      (typeof localStorage !== "undefined" && localStorage.getItem(LANGUAGE_STORAGE_KEY)) === "ar" ? "ar" : "en"
+    );
   }, [authed]);
 
   useEffect(() => {
