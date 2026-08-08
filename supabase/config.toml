@@ -52,3 +52,6 @@ verify_jwt = false
 
 [functions.exam-plan-notify]
 verify_jwt = false
+
+[functions.verify-captcha]
+verify_jwt = false

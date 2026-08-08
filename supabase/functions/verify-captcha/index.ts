@@ -15,8 +15,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  const guard = await protect(req, "verify-captcha", 20, 60);
-  if (guard) return guard;
+  const guard = await protect(req, "verify-captcha", { max: 30, windowSeconds: 60, maxBytes: 8_000 });
+  if (!guard.ok) return json({ error: guard.error }, guard.status);
 
   let token = "";
   try {
