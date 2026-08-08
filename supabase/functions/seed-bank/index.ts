@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   );
 
   // Authorize: either the internal seed token, or a signed-in admin.
-  const seedToken = Deno.env.get("SETUP_ADMINS_TOKEN");
+  const seedToken = Deno.env.get("BANK_SEED_TOKEN");
   const provided = req.headers.get("x-seed-token");
   let authorized = Boolean(seedToken && provided && provided === seedToken);
 
