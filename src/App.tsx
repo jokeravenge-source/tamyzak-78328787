@@ -530,6 +530,10 @@ const App = () => {
       <ZombieGuard />
       <SpotifyAuthCallback />
       <PointsAwardOverlay language={language ?? "en"} />
+      <FeatureUnlockCelebration
+        language={language ?? "en"}
+        onOpenFeature={(m) => chooseMenu(m as MenuChoice)}
+      />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
       {authed && language && authRole !== "admin" && channelVerified && (
@@ -601,6 +605,13 @@ const App = () => {
         />
       ) : menuChoice === "missions" ? (
         <Missions language={language} onBack={resetMenu} />
+      ) : menuChoice === "unlocks" ? (
+        <FeatureUnlocks
+          language={language}
+          onBack={backToBasics}
+          onNav={(m) => chooseMenu(m as MenuChoice)}
+          highlight={unlockHighlight}
+        />
       ) : menuChoice === "mcq" ? (
         <MCQ language={language} onBack={resetMenu} />
       ) : menuChoice === "summaries" ? (
