@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
+import { awardAction } from "@/lib/unlocks";
 
 const copy = {
   en: {
@@ -241,6 +242,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           setOpenIdx(0);
           if (typeof (data as any).transcript === "string") setTranscript((data as any).transcript);
           setStatus({ kind: "success" });
+          awardAction("video_to_notes", {});
           lastErr = null;
           break;
         } else {

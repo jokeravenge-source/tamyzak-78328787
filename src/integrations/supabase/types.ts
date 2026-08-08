@@ -1053,6 +1053,36 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_unlocks: {
+        Row: {
+          created_at: string
+          display_name_ar: string
+          display_name_en: string
+          feature_key: string
+          icon: string
+          sort_order: number
+          unlock_threshold: number
+        }
+        Insert: {
+          created_at?: string
+          display_name_ar: string
+          display_name_en: string
+          feature_key: string
+          icon?: string
+          sort_order: number
+          unlock_threshold: number
+        }
+        Update: {
+          created_at?: string
+          display_name_ar?: string
+          display_name_en?: string
+          feature_key?: string
+          icon?: string
+          sort_order?: number
+          unlock_threshold?: number
+        }
+        Relationships: []
+      }
       feature_usage: {
         Row: {
           created_at: string
@@ -2193,6 +2223,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feature_unlocks: {
+        Row: {
+          celebrated: boolean
+          feature_key: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          celebrated?: boolean
+          feature_key: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          celebrated?: boolean
+          feature_key?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feature_unlocks_feature_key_fkey"
+            columns: ["feature_key"]
+            isOneToOne: false
+            referencedRelation: "feature_unlocks"
+            referencedColumns: ["feature_key"]
+          },
+        ]
+      }
       user_points: {
         Row: {
           created_at: string
@@ -2216,6 +2275,36 @@ export type Database = {
           points?: number
           ref_id?: string | null
           source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          created_at: string
+          current_streak: number
+          last_active_date: string | null
+          lifetime_points: number
+          longest_streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          last_active_date?: string | null
+          lifetime_points?: number
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          last_active_date?: string | null
+          lifetime_points?: number
+          longest_streak?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -2332,6 +2421,10 @@ export type Database = {
           kind: string
           label: string
         }[]
+      }
+      award_points: {
+        Args: { _action_type: string; _metadata?: Json }
+        Returns: Json
       }
       award_points_safe: {
         Args: { _points: number; _ref_id?: string; _source: string }

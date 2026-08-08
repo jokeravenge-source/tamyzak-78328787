@@ -825,10 +825,16 @@ const Basics = ({
                       {language === "ar" ? (streakDays === 1 ? "يوم متواصل" : "أيام متواصلة") : `day${streakDays === 1 ? "" : "s"} in a row`}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-border bg-card px-3 py-2.5">
+                  <button
+                    type="button"
+                    onClick={() => onNav("unlocks")}
+                    className="text-start rounded-2xl border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/50 hover:bg-primary/5"
+                  >
                     <p className="font-mono text-foreground text-xl font-semibold tabular-nums leading-none">{totalPoints}</p>
-                    <p className="mt-1 text-[11px] text-ash">{language === "ar" ? "نقطة" : "points"}</p>
-                  </div>
+                    <p className="mt-1 text-[11px] text-ash">
+                      {language === "ar" ? "نقطة · افتح الأدوات" : "points · unlock tools"}
+                    </p>
+                  </button>
                   <div className="col-span-2 sm:col-span-1 rounded-2xl border border-primary/40 bg-primary/5 px-3 py-2.5">
                     <p className="font-mono text-primary text-xl font-semibold tabular-nums leading-none">
                       {boardRank ? `#${boardRank}` : "—"}

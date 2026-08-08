@@ -35,6 +35,9 @@ const BiologyDrawings = lazy(() => import("./pages/BiologyDrawings"));
 const More = lazy(() => import("./pages/More"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 import PointsAwardOverlay from "./components/PointsAwardOverlay";
+import FeatureUnlockCelebration from "./components/FeatureUnlockCelebration";
+import FeatureUnlocks from "./pages/FeatureUnlocks";
+import { ensureDailyLogin, fetchUnlockedKeys, isGatedMenu, type FeatureKey } from "@/lib/unlocks";
 const TodoList = lazy(() => import("./pages/TodoList"));
 const News = lazy(() => import("./pages/News"));
 const Premium = lazy(() => import("./pages/Premium"));
@@ -395,7 +398,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers" | "adminNotes" | "dailyGame" | "whoIsBest" | "challenge";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers" | "adminNotes" | "dailyGame" | "whoIsBest" | "challenge" | "unlocks";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(() => {
     if (typeof window === "undefined") return null;
     if (window.location.pathname.startsWith("/teachers")) {
@@ -413,6 +416,22 @@ const App = () => {
     }
     return localStorage.getItem(MENU_STORAGE_KEY) as MenuChoice | null;
   });
+  // Points-unlock state (lifetime points gate the 4 advanced tools)
+  const [unlockedKeys, setUnlockedKeys] = useState<FeatureKey[]>([]);
+  const [unlockHighlight, setUnlockHighlight] = useState<FeatureKey | null>(null);
+  useEffect(() => {
+    if (!authed) return;
+    const refresh = () => fetchUnlockedKeys().then(setUnlockedKeys).catch(() => {});
+    refresh();
+    ensureDailyLogin().catch(() => {});
+    const onUpdate = () => refresh();
+    window.addEventListener("app:progress-updated", onUpdate);
+    window.addEventListener("app:feature-unlocked", onUpdate);
+    return () => {
+      window.removeEventListener("app:progress-updated", onUpdate);
+      window.removeEventListener("app:feature-unlocked", onUpdate);
+    };
+  }, [authed]);
 
   // Admin "Play daily game" preview: when set, we render DailyGame directly
   // even for admins (which normally short-circuit to AdminDashboard).
@@ -446,6 +465,15 @@ const App = () => {
     localStorage.removeItem(MENU_STORAGE_KEY);
   };
   const chooseMenu = (choice: MenuChoice) => {
+    // Points-gated tools: send the student to the progress page instead of the tool.
+    const gated = isGatedMenu(choice);
+    if (gated && !unlockedKeys.includes(gated)) {
+      setUnlockHighlight(gated);
+      localStorage.setItem(MENU_STORAGE_KEY, "unlocks");
+      setMenuChoice("unlocks");
+      return;
+    }
+    if (choice !== "unlocks") setUnlockHighlight(null);
     localStorage.setItem(MENU_STORAGE_KEY, choice);
     setMenuChoice(choice);
   };
@@ -502,6 +530,10 @@ const App = () => {
       <ZombieGuard />
       <SpotifyAuthCallback />
       <PointsAwardOverlay language={language ?? "en"} />
+      <FeatureUnlockCelebration
+        language={language ?? "en"}
+        onOpenFeature={(m) => chooseMenu(m as MenuChoice)}
+      />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
       {authed && language && authRole !== "admin" && channelVerified && (
@@ -573,6 +605,13 @@ const App = () => {
         />
       ) : menuChoice === "missions" ? (
         <Missions language={language} onBack={resetMenu} />
+      ) : menuChoice === "unlocks" ? (
+        <FeatureUnlocks
+          language={language}
+          onBack={backToBasics}
+          onNav={(m) => chooseMenu(m as MenuChoice)}
+          highlight={unlockHighlight}
+        />
       ) : menuChoice === "mcq" ? (
         <MCQ language={language} onBack={resetMenu} />
       ) : menuChoice === "summaries" ? (

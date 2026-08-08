@@ -5,6 +5,7 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { awardAction } from "@/lib/unlocks";
 import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
 import { ministerialChemCh2 } from "@/data/ministerialChemCh2";
 import { ministerialChemCh3 } from "@/data/ministerialChemCh3";
@@ -247,6 +248,13 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setGradeResult(data);
+      // Progression points for completing a ministerial set (+ accuracy bonus at 80%)
+      const total = Number((data as any)?.total) || 0;
+      const outOf = Number((data as any)?.graded_out_of) || 100;
+      awardAction("ministerial_set", { total, out_of: outOf });
+      if (outOf > 0 && total / outOf >= 0.8) {
+        awardAction("accuracy_bonus", { total, out_of: outOf });
+      }
     } catch (e: any) {
       toast({ title: t.gradeError, description: e?.message ?? "", variant: "destructive" });
     } finally {
