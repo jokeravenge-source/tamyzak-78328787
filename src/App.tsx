@@ -268,6 +268,24 @@ const App = () => {
       console.error("[OAuth] failed to parse callback URL", e);
     }
 
+    // Detect a persisted Supabase session token in storage. On Android
+    // WebViews / slow networks getSession() can stall or the refresh call can
+    // fail; in that case we must NOT bounce a logged-in user to the sign-in
+    // screen just because the network was slow.
+    const hasStoredSession = () => {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith("sb-") && k.endsWith("-auth-token") && localStorage.getItem(k)) {
+            return true;
+          }
+        }
+      } catch {
+        // storage blocked (private mode / WebView) — treat as no session
+      }
+      return false;
+    };
+
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       console.log("[OAuth] onAuthStateChange", {
         event: _e,
@@ -277,7 +295,14 @@ const App = () => {
         providers: (session?.user as any)?.app_metadata?.providers,
         expiresAt: session?.expires_at,
       });
-      setAuthed(!!session);
+      // Only an explicit sign-out (or user deletion) may log the user out.
+      // Transient null sessions from failed token refreshes must not.
+      if (session) {
+        setAuthed(true);
+        setAuthLoading(false);
+      } else if (_e === "SIGNED_OUT" || _e === "USER_UPDATED") {
+        setAuthed(false);
+      }
       if (session?.user) {
         supabase
           .from("user_roles")
@@ -305,9 +330,13 @@ const App = () => {
     // storage/network so getSession() never settles — never trap the user on
     // an infinite spinner.
     const authTimeout = window.setTimeout(() => {
+      // If a session token exists in storage, keep the user "logged in" and
+      // let the client finish refreshing in the background instead of
+      // dropping them back on the sign-in screen.
+      if (hasStoredSession()) setAuthed(true);
       setAuthLoading(false);
       setTgLoading(false);
-    }, 6000);
+    }, 8000);
 
     supabase.auth.getSession().then(({ data, error }) => {
       console.log("[OAuth] initial getSession", {
@@ -316,7 +345,9 @@ const App = () => {
         provider: (data.session?.user as any)?.app_metadata?.provider,
         error: error ? { message: error.message, name: error.name } : null,
       });
-      setAuthed(!!data.session);
+      if (data.session) setAuthed(true);
+      else if (error && hasStoredSession()) setAuthed(true);
+      else setAuthed(false);
       if (data.session?.user) {
         supabase
           .from("user_roles")
@@ -339,6 +370,7 @@ const App = () => {
       setAuthLoading(false);
     }).catch((e) => {
       console.error("[OAuth] getSession failed", e);
+      if (hasStoredSession()) setAuthed(true);
       setAuthLoading(false);
       setTgLoading(false);
     });
