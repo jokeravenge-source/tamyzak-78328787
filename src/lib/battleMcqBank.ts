@@ -73,6 +73,7 @@ import { flashcardsFrenchNegationAr } from "@/data/flashcardsFrenchNegationAr";
 import { flashcardsFrenchPluralAr } from "@/data/flashcardsFrenchPluralAr";
 import { flashcardsFrenchRelativePronounsAr } from "@/data/flashcardsFrenchRelativePronounsAr";
 import { flashcardsIslamicMeaningsAr } from "@/data/flashcardsIslamicMeaningsAr";
+import { ministerialIslamicUnit1 } from "@/data/ministerialIslamicUnit1";
 
 export type BattleSubject =
   | "general"
@@ -133,6 +134,7 @@ const frenchPool: QA[] = [
 
 const islamicPool: QA[] = [
   ...flashcardsIslamicMeaningsAr,
+  ...ministerialIslamicUnit1,
 ];
 
 const isMcqFriendly = (qa: QA) =>
