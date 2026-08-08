@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, Trophy, Loader2, Medal } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowLeft, Trophy, Loader2, Medal, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -7,25 +7,6 @@ import { rankFor, RANKS } from "@/lib/points";
 import { CharacterAvatar, type Gender, type CharacterTraits } from "@/components/CharacterAvatar";
 
 type Row = { user_id: string; name: string; points: number; gender: Gender | null; traits: Partial<CharacterTraits> | null };
-
-// Start of the current month in Asia/Baghdad (UTC+3) as an ISO string
-function startOfMonthBaghdadISO(): string {
-  const now = new Date();
-  // Shift "now" into Baghdad wall time
-  const baghdad = new Date(now.getTime() + 3 * 3600 * 1000);
-  const y = baghdad.getUTCFullYear();
-  const m = baghdad.getUTCMonth();
-  // Midnight of the 1st in Baghdad = 21:00 UTC of the previous day
-  return new Date(Date.UTC(y, m, 1, -3, 0, 0)).toISOString();
-}
-
-function monthLabel(lang: "ar" | "en") {
-  const now = new Date();
-  return now.toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
-    month: "long",
-    year: "numeric",
-  });
-}
 
 const Leaderboard = ({
   language,
