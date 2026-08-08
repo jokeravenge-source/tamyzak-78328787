@@ -6,6 +6,7 @@ import { SUMMARY_SUBJECTS } from "./Summaries";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import AdminNotesTab from "@/components/AdminNotesTab";
+import AdminBankTab from "@/components/AdminBankTab";
 import RegenerateDailyGamesButton from "@/components/RegenerateDailyGamesButton";
 import DailyGamesListButton from "@/components/DailyGamesListButton";
 
@@ -23,7 +24,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes" | "bank";
   const [tab, setTab] = useState<Tab>("pending");
   // Owner gate: only this email sees every tab. Other admins are moderators
   // and only see acceptance/review-related tabs (summaries pending, flashcards
@@ -611,9 +612,14 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               <StickyNote className="w-4 h-4 inline mr-1.5" />Notes
             </button>
           )}
+          <button onClick={() => setTab("bank")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "bank" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+            <BookOpen className="w-4 h-4 inline mr-1.5" />Question Bank
+          </button>
         </div>
 
-        {tab === "notes" ? (
+        {tab === "bank" ? (
+          <AdminBankTab />
+        ) : tab === "notes" ? (
           <AdminNotesTab />
         ) : tab === "flashcards" ? (
           <div className="space-y-6">
