@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/subjectChapters";
 import { awardAction } from "@/lib/unlocks";
+import PointsHint from "@/components/PointsHint";
 
 const copy = {
   en: {
@@ -390,6 +391,9 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
             <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-xl">
               {t.subtitle}
             </p>
+            <div className="mt-4">
+              <PointsHint action="video_to_notes" language={language === "ar" ? "ar" : "en"} />
+            </div>
           </div>
         </div>
 

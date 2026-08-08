@@ -6,6 +6,7 @@ import { SUBJECTS_ORDER, getChaptersForSubject, type BankSubject } from "@/data/
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { awardAction } from "@/lib/unlocks";
+import PointsHint from "@/components/PointsHint";
 import { ministerialChemCh1 } from "@/data/ministerialChemCh1";
 import { ministerialChemCh2 } from "@/data/ministerialChemCh2";
 import { ministerialChemCh3 } from "@/data/ministerialChemCh3";
@@ -318,6 +319,9 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
         </h1>
         <p className="text-muted-foreground md:text-lg max-w-xl mx-auto">
           {subject ? t.chooseChapter : t.description}
+        </p>
+        <p className="mt-4 flex justify-center">
+          <PointsHint action="ministerial_set" language={language === "ar" ? "ar" : "en"} bonus />
         </p>
       </header>
 

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { setRedoRequired, clearRedoAndZombie } from "@/components/ZombieGuard";
 import { awardPoints } from "@/lib/points";
 import { awardAction } from "@/lib/unlocks";
+import PointsHint from "@/components/PointsHint";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh1Ar } from "@/data/flashcardsCh1Ar";
 import { flashcardsCh2Ar } from "@/data/flashcardsCh2Ar";
@@ -737,6 +738,9 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
           <span className="opacity-40">·</span>
           <span>{language === "ar" ? `الفصل ${chapter}` : `Chapter ${chapter}`}</span>
         </p>
+        <div className="mt-3 flex justify-center">
+          <PointsHint action="flashcard_session" language={language === "ar" ? "ar" : "en"} />
+        </div>
       </header>
 
       {hasTopics && !savedView && (
