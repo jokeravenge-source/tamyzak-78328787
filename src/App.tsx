@@ -293,6 +293,14 @@ const App = () => {
         setTgVerified(false);
       }
     });
+    // Safety net: some in-app browsers (Telegram/Android WebView) can stall
+    // storage/network so getSession() never settles — never trap the user on
+    // an infinite spinner.
+    const authTimeout = window.setTimeout(() => {
+      setAuthLoading(false);
+      setTgLoading(false);
+    }, 6000);
+
     supabase.auth.getSession().then(({ data, error }) => {
       console.log("[OAuth] initial getSession", {
         hasSession: !!data.session,
@@ -321,8 +329,15 @@ const App = () => {
           });
       }
       setAuthLoading(false);
+    }).catch((e) => {
+      console.error("[OAuth] getSession failed", e);
+      setAuthLoading(false);
+      setTgLoading(false);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      window.clearTimeout(authTimeout);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   // Re-verify Telegram channel membership on load. Only unverify (show gate)
