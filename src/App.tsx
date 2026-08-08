@@ -300,7 +300,7 @@ const App = () => {
       if (session) {
         setAuthed(true);
         setAuthLoading(false);
-      } else if (_e === "SIGNED_OUT" || _e === "USER_UPDATED") {
+      } else if (_e === "SIGNED_OUT") {
         setAuthed(false);
       }
       if (session?.user) {
