@@ -419,6 +419,8 @@ const Basics = ({
 
   const [username, setUsername] = useState<string>(() => localStorage.getItem("app_display_name_v1") || "");
   const [totalPoints, setTotalPoints] = useState<number>(0);
+  const [boardRank, setBoardRank] = useState<number | null>(null);
+  const [boardTotal, setBoardTotal] = useState<number>(0);
   useEffect(() => {
     let uid: string | null = null;
     const load = async () => {
@@ -431,6 +433,28 @@ const Basics = ({
         .eq("user_id", u.user.id);
       const total = (data ?? []).reduce((sum, r: { points: number | null }) => sum + (r.points ?? 0), 0);
       setTotalPoints(total);
+
+      // Standing among all students (all-time totals, same source as the leaderboard).
+      const pageSize = 1000;
+      const totals = new Map<string, number>();
+      let from = 0;
+      for (;;) {
+        const { data: page, error } = await supabase
+          .from("user_points")
+          .select("user_id, points")
+          .range(from, from + pageSize - 1);
+        if (error) break;
+        (page ?? []).forEach((r: { user_id: string; points: number | null }) => {
+          totals.set(r.user_id, (totals.get(r.user_id) ?? 0) + (r.points ?? 0));
+        });
+        if (!page || page.length < pageSize) break;
+        from += pageSize;
+      }
+      const mine = totals.get(u.user.id) ?? total;
+      let ahead = 0;
+      totals.forEach((v, k) => { if (k !== u.user!.id && v > mine) ahead += 1; });
+      setBoardTotal(totals.size);
+      setBoardRank(totals.size ? ahead + 1 : null);
     };
     load();
     const onFocus = () => load();
