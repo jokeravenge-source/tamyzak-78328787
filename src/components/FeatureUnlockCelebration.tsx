@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
-import { Flame, Lock, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { FEATURE_MENU, fetchTiers, type FeatureKey, type FeatureTier } from "@/lib/unlocks";
 import { FeatureIcon } from "@/components/FeatureFacetCard";
 
@@ -141,4 +141,3 @@ const FeatureUnlockCelebration = ({
 };
 
 export default FeatureUnlockCelebration;
-export { Flame, Lock };
