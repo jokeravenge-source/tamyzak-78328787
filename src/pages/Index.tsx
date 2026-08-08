@@ -8,6 +8,7 @@ import { Plus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { setRedoRequired, clearRedoAndZombie } from "@/components/ZombieGuard";
 import { awardPoints } from "@/lib/points";
+import { awardAction } from "@/lib/unlocks";
 import { flashcards } from "@/data/flashcards";
 import { flashcardsCh1Ar } from "@/data/flashcardsCh1Ar";
 import { flashcardsCh2Ar } from "@/data/flashcardsCh2Ar";
@@ -640,6 +641,7 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       clearRedoAndZombie();
       // Award 2 points per (subject, chapter) deck — unique per user via DB constraint
       awardPoints("flashcard", `${subject}:${chapter}`);
+      awardAction("flashcard_session", { subject, chapter });
       toast.success(language === "ar" ? "أحسنت! استمر." : "Great work — keep it up!");
     } else {
       setRedoRequired(subject, String(chapter), 10);

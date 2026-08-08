@@ -247,6 +247,13 @@ const MinisterialBank = ({ language, onBack }: { language: AppLanguage; onBack: 
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setGradeResult(data);
+      // Progression points for completing a ministerial set (+ accuracy bonus at 80%)
+      const total = Number((data as any)?.total) || 0;
+      const outOf = Number((data as any)?.graded_out_of) || 100;
+      awardAction("ministerial_set", { total, out_of: outOf });
+      if (outOf > 0 && total / outOf >= 0.8) {
+        awardAction("accuracy_bonus", { total, out_of: outOf });
+      }
     } catch (e: any) {
       toast({ title: t.gradeError, description: e?.message ?? "", variant: "destructive" });
     } finally {

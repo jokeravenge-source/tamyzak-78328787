@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { extractStudyMaterial } from "@/lib/fileText";
 import { awardPoints } from "@/lib/points";
+import { awardAction } from "@/lib/unlocks";
 
 const copy = {
   en: {
@@ -142,6 +143,12 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
   const nextQuestion = () => {
     if (current + 1 >= questions.length) {
       setPhase("result");
+      // Progression points: quiz completion + accuracy bonus (server-capped daily)
+      const finalScore = score;
+      awardAction("mcq_quiz", { total: questions.length, score: finalScore });
+      if (questions.length > 0 && finalScore / questions.length >= 0.8) {
+        awardAction("accuracy_bonus", { total: questions.length, score: finalScore });
+      }
       if (score === questions.length && questions.length > 0) {
         awardPoints("mcq");
       }

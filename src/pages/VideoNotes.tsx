@@ -241,6 +241,7 @@ const VideoNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           setOpenIdx(0);
           if (typeof (data as any).transcript === "string") setTranscript((data as any).transcript);
           setStatus({ kind: "success" });
+          awardAction("video_to_notes", {});
           lastErr = null;
           break;
         } else {
