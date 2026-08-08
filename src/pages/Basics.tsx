@@ -15,7 +15,8 @@ import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
 import RankStone, { rankFromPoints, RANK_LABELS, type StoneRank } from "@/components/RankStone";
-import { totalDueCount } from "@/lib/srs";
+import { totalDueCount, dueBreakdown, type DueGroup } from "@/lib/srs";
+import GiftMcqButton from "@/components/GiftMcqButton";
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
@@ -273,10 +274,12 @@ const Basics = ({
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
   const [dueCards, setDueCards] = useState<number>(0);
+  const [dueGroups, setDueGroups] = useState<DueGroup[]>([]);
 
   useEffect(() => {
     let active = true;
     totalDueCount().then((n) => { if (active) setDueCards(n); });
+    dueBreakdown().then((g) => { if (active) setDueGroups(g); });
     return () => { active = false; };
   }, []);
 
