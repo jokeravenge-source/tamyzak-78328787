@@ -420,16 +420,31 @@ const Basics = ({
   const [username, setUsername] = useState<string>(() => localStorage.getItem("app_display_name_v1") || "");
   const [totalPoints, setTotalPoints] = useState<number>(0);
   useEffect(() => {
-    (async () => {
+    let uid: string | null = null;
+    const load = async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
+      uid = u.user.id;
       const { data } = await supabase
         .from("user_points")
         .select("points")
         .eq("user_id", u.user.id);
       const total = (data ?? []).reduce((sum, r: { points: number | null }) => sum + (r.points ?? 0), 0);
       setTotalPoints(total);
-    })();
+    };
+    load();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    const channel = supabase
+      .channel("home-user-points")
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_points" }, (p: any) => {
+        if (!uid || p.new?.user_id === uid || p.old?.user_id === uid) load();
+      })
+      .subscribe();
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(channel);
+    };
   }, []);
   const currentRank = rankFromPoints(totalPoints);
   const rankLabel = RANK_LABELS[currentRank][language];
