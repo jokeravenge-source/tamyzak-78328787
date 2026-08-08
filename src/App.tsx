@@ -343,6 +343,11 @@ const App = () => {
   // Re-verify Telegram channel membership on load. Only unverify (show gate)
   // if the check explicitly reports the user has left the channel.
   useEffect(() => {
+    if (!authed) return;
+    startAnalyticsSession();
+  }, [authed]);
+
+  useEffect(() => {
     if (!authed || authRole === "admin") return;
     if (!channelVerified) return;
     let cancelled = false;
