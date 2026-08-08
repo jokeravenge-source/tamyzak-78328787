@@ -21,8 +21,21 @@ const SUBJECT_AR: Record<string, string> = {
 };
 
 const FEATURE = "gift_daily_mcq";
+const LOCAL_KEY = "gift_daily_state_v1";
 const clip = (s: string, n = 220) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
 const todayKey = () => new Date().toISOString().slice(0, 10);
+
+type LocalState = { day: string; question: GiftQuestion; picked: number | null };
+
+function readLocal(): LocalState | null {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null") as LocalState | null;
+    return raw && raw.day === todayKey() ? raw : null;
+  } catch { return null; }
+}
+function writeLocal(state: LocalState) {
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+}
 
 function celebrate() {
   const end = Date.now() + 1200;
@@ -45,8 +58,23 @@ export default function GiftDailyScreen({ language, onClose }: { language: AppLa
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      // One question per calendar day: reuse today's draw, and show the result
+      // again if it was already answered.
+      const cached = readLocal();
+      if (cached) {
+        setQuestion(cached.question);
+        if (cached.picked !== null) {
+          setPicked(cached.picked);
+          setResult(cached.picked === cached.question.answer ? "correct" : "wrong");
+        }
+        return;
+      }
+
       const { data: used } = await supabase.rpc("feature_usage_today", { _feature: FEATURE });
       if ((used ?? 0) > 0) { setAlreadyPlayed(true); return; }
+
+      // Consume the single daily attempt up front so the question can't be rerolled.
+      await supabase.rpc("claim_daily_feature_limit", { _feature: FEATURE, _limit: 1 });
 
       const lang = isAr ? "ar" : "en";
       const { count } = await supabase
@@ -89,7 +117,15 @@ export default function GiftDailyScreen({ language, onClose }: { language: AppLa
         const j = Math.floor(Math.random() * (i + 1));
         [choices[i], choices[j]] = [choices[j], choices[i]];
       }
-      setQuestion({ q: row.question, choices, answer: choices.indexOf(correct), subject: row.subject, chapter: row.chapter });
+      const drawn: GiftQuestion = {
+        q: row.question,
+        choices,
+        answer: choices.indexOf(correct),
+        subject: row.subject,
+        chapter: row.chapter,
+      };
+      setQuestion(drawn);
+      writeLocal({ day: todayKey(), question: drawn, picked: null });
     } finally {
       setLoading(false);
     }
@@ -100,8 +136,7 @@ export default function GiftDailyScreen({ language, onClose }: { language: AppLa
   const answer = async (i: number) => {
     if (picked !== null || !question) return;
     setPicked(i);
-    // Consume the one daily attempt server-side.
-    await supabase.rpc("claim_daily_feature_limit", { _feature: FEATURE, _limit: 1 });
+    writeLocal({ day: todayKey(), question, picked: i });
     const ok = i === question.answer;
     setResult(ok ? "correct" : "wrong");
     if (ok) {
