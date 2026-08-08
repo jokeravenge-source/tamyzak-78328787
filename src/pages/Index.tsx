@@ -723,6 +723,16 @@ const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubje
       <header className="text-center z-10 animate-fade-up">
         <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-3">{deck.eyebrow}</p>
         <h1 className="text-4xl md:text-5xl font-bold gradient-text">{deck.title}</h1>
+        <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-secondary/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
+          <span className="text-foreground">
+            {(language === "ar"
+              ? { physics: "الفيزياء", chemistry: "الكيمياء", biology: "الأحياء", english: "الإنجليزية", french: "الفرنسية", arabic: "العربية", islamic: "التربية الإسلامية", revision: "المراجعة" }
+              : { physics: "Physics", chemistry: "Chemistry", biology: "Biology", english: "English", french: "French", arabic: "Arabic", islamic: "Islamic", revision: "Revision" }
+            )[subject]}
+          </span>
+          <span className="opacity-40">·</span>
+          <span>{language === "ar" ? `الفصل ${chapter}` : `Chapter ${chapter}`}</span>
+        </p>
       </header>
 
       {hasTopics && !savedView && (
