@@ -43,8 +43,9 @@ Deno.serve(async (req) => {
 
   try {
     // Cron-only / admin-only: reject anonymous callers.
-    const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-    const provided = req.headers.get("x-cron-secret") ?? "";
+    // The scheduler sends `x-cron-token` with CRON_INTERNAL_TOKEN (same as exam-plan-notify).
+    const cronSecret = Deno.env.get("CRON_INTERNAL_TOKEN") ?? "";
+    const provided = (req.headers.get("x-cron-token") ?? req.headers.get("x-cron-secret") ?? "").trim();
     if (!(cronSecret && provided === cronSecret)) {
       const auth = await requireAdmin(req);
       if (!auth.ok) return json({ error: auth.error }, auth.status);
