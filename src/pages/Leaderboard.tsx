@@ -22,48 +22,81 @@ const Leaderboard = ({
   const [rows, setRows] = useState<Row[]>([]);
   const [me, setMe] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    const { data: u } = await supabase.auth.getUser();
+    setMe(u.user?.id ?? null);
+
+    // All-time totals, so the leaderboard matches the points shown in each profile.
+    const pageSize = 1000;
+    const totals = new Map<string, number>();
+    let from = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data: page, error } = await supabase
+        .from("user_points")
+        .select("user_id, points")
+        .range(from, from + pageSize - 1);
+      if (error) break;
+      (page ?? []).forEach((r: any) => {
+        totals.set(r.user_id, (totals.get(r.user_id) ?? 0) + (r.points ?? 0));
+      });
+      if (!page || page.length < pageSize) break;
+      from += pageSize;
+    }
+
+    // Profiles are also paged — the default 1000-row cap was dropping names.
+    const names = new Map<string, string>();
+    const genders = new Map<string, Gender | null>();
+    const characters = new Map<string, Partial<CharacterTraits> | null>();
+    let pFrom = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data: page, error } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, gender, character")
+        .order("updated_at", { ascending: false })
+        .range(pFrom, pFrom + pageSize - 1);
+      if (error) break;
+      (page ?? []).forEach((p: any) => {
+        if (!names.has(p.user_id)) {
+          names.set(p.user_id, (p.display_name || "").trim() || "Student");
+          genders.set(p.user_id, (p.gender as Gender) ?? null);
+          characters.set(p.user_id, (p.character as Partial<CharacterTraits>) ?? null);
+        }
+      });
+      if (!page || page.length < pageSize) break;
+      pFrom += pageSize;
+    }
+
+    const list: Row[] = Array.from(totals.entries())
+      .map(([user_id, points]) => ({
+        user_id,
+        points,
+        name: names.get(user_id) || "Student",
+        gender: genders.get(user_id) ?? null,
+        traits: characters.get(user_id) ?? null,
+      }))
+      .sort((a, b) => b.points - a.points);
+    setRows(list);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      setMe(u.user?.id ?? null);
-      // Only count points earned in the current month (Asia/Baghdad).
-      const monthStart = startOfMonthBaghdadISO();
-      const pageSize = 1000;
-      const totals = new Map<string, number>();
-      let from = 0;
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { data: page, error } = await supabase
-          .from("user_points")
-          .select("user_id, points, created_at")
-          .gte("created_at", monthStart)
-          .range(from, from + pageSize - 1);
-        if (error) break;
-        (page ?? []).forEach((r: any) => {
-          totals.set(r.user_id, (totals.get(r.user_id) ?? 0) + (r.points ?? 0));
-        });
-        if (!page || page.length < pageSize) break;
-        from += pageSize;
-      }
-      const profilesRes = await supabase
-        .from("profiles")
-        .select("user_id, display_name, gender, character");
-      const names = new Map<string, string>();
-      const genders = new Map<string, Gender | null>();
-      const characters = new Map<string, Partial<CharacterTraits> | null>();
-      (profilesRes.data ?? []).forEach((p: any) => {
-        names.set(p.user_id, p.display_name || "Student");
-        genders.set(p.user_id, (p.gender as Gender) ?? null);
-        characters.set(p.user_id, (p.character as Partial<CharacterTraits>) ?? null);
-      });
-      const list: Row[] = Array.from(totals.entries())
-        .map(([user_id, points]) => ({ user_id, points, name: names.get(user_id) || "Student", gender: genders.get(user_id) ?? null, traits: characters.get(user_id) ?? null }))
-        .sort((a, b) => b.points - a.points);
-      setRows(list);
-      setLoading(false);
-    })();
-  }, []);
+    load();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    const channel = supabase
+      .channel("leaderboard-points")
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_points" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => load())
+      .subscribe();
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      supabase.removeChannel(channel);
+    };
+  }, [load]);
 
   return (
     <main className="min-h-screen px-4 py-12 md:py-16 pb-32 relative overflow-hidden" dir={isAr ? "rtl" : "ltr"}>
@@ -78,14 +111,21 @@ const Leaderboard = ({
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-secondary/40 backdrop-blur mb-5">
           <Trophy className="w-3.5 h-3.5 text-primary" />
           <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            {t("Monthly Leaderboard", "متصدرو الشهر")} · {monthLabel(isAr ? "ar" : "en")}
+            {t("Leaderboard", "لوحة المتصدرين")}
           </span>
+          <button
+            onClick={async () => { setRefreshing(true); await load(); setRefreshing(false); }}
+            className="text-muted-foreground hover:text-primary transition"
+            aria-label={t("Refresh", "تحديث")}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+          </button>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold gradient-text mb-3">{t("Top Students", "أبطال النقاط")}</h1>
         <p className="text-muted-foreground">
           {t(
-            "Resets on the 1st of every month. Your all-time totals are saved in your profile.",
-            "تُصفَّر النقاط بداية كل شهر. أرشيف نقاطك محفوظ في ملفك الشخصي."
+            "Total points, updated live and matching the points on your profile.",
+            "مجموع نقاطك الكلي، يتحدّث مباشرة ويطابق النقاط في ملفك الشخصي."
           )}
         </p>
       </header>
