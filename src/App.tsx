@@ -24,7 +24,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 import AdminLogin from "./pages/AdminLogin";
 import AdminMcqReview from "./pages/AdminMcqReview";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
-import EquationGate, { isEquationSolved } from "./components/EquationGate";
+import CaptchaGate, { isCaptchaPassed } from "./components/CaptchaGate";
 const AccountCenter = lazy(() => import("./pages/AccountCenter"));
 const Essay = lazy(() => import("./pages/Essay"));
 const VideoNotes = lazy(() => import("./pages/VideoNotes"));
@@ -223,7 +223,7 @@ const App = () => {
   }, []);
   const [authed, setAuthed] = useState(() => hasPersistedAuthSession());
   const [authLoading, setAuthLoading] = useState(() => !hasPersistedAuthSession());
-  const [equationSolved, setEquationSolved] = useState<boolean>(() => isEquationSolved());
+  const [captchaPassed, setCaptchaPassed] = useState<boolean>(() => isCaptchaPassed());
   const [isAdmin, setIsAdmin] = useState(false);
   const [tgVerified, setTgVerified] = useState(false);
   const [tgLoading, setTgLoading] = useState(false);
@@ -603,8 +603,8 @@ const App = () => {
         <main className="min-h-screen flex items-center justify-center">
           <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
         </main>
-      ) : authRole !== "admin" && !equationSolved ? (
-        <EquationGate language={language ?? "ar"} onSolved={() => setEquationSolved(true)} />
+      ) : authRole !== "admin" && !captchaPassed ? (
+        <CaptchaGate language={language ?? "ar"} onPassed={() => setCaptchaPassed(true)} />
       ) : authRole === "admin" && !authed ? (
         <AdminLogin onAuthed={() => setAuthed(true)} onBack={resetRole} />
       ) : authRole === "admin" && authed && isAdmin ? (
