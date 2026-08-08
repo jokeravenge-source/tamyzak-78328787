@@ -101,12 +101,20 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     ]);
     if (roomRow) setRoom(roomRow as Room);
     const base = (mem ?? []) as Member[];
+    const rawMsgs = (msg ?? []) as Message[];
+    // Always resolve names/avatars from the live profile, not the snapshot stored on the row.
+    const allIds = Array.from(new Set([...base.map((m) => m.user_id), ...rawMsgs.map((m) => m.user_id)]));
+    const profById = new Map<string, any>();
+    if (allIds.length > 0) {
+      const { data: allProfs } = await supabase
+        .from("profiles")
+        .select("user_id,display_name,gender,character")
+        .in("user_id", allIds);
+      (allProfs ?? []).forEach((p: any) => profById.set(p.user_id, p));
+    }
     if (base.length > 0) {
       const ids = base.map((m) => m.user_id);
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("user_id,gender,character")
-        .in("user_id", ids);
+      const profs = ids.map((id) => profById.get(id)).filter(Boolean);
       const { data: sess } = await supabase
         .from("active_sessions")
         .select("user_id,elapsed_seconds,is_running,subject")
@@ -125,6 +133,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
           const p = byId.get(m.user_id);
           return {
             ...m,
+            display_name: (p?.display_name || "").trim() || m.display_name,
             gender: (p?.gender === "female" ? "female" : "male") as Gender,
             character: (p?.character ?? null) as CharacterTraits | null,
           };
@@ -134,7 +143,12 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
       setMembers(base);
       setPresence({});
     }
-    setMessages((msg ?? []) as Message[]);
+    setMessages(
+      rawMsgs.map((m) => ({
+        ...m,
+        display_name: (profById.get(m.user_id)?.display_name || "").trim() || m.display_name,
+      })),
+    );
   }, []);
 
   // Restore last room
