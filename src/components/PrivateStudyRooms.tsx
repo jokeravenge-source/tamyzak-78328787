@@ -296,7 +296,14 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
 
   const shareLink = () => {
     if (!room) return;
-    const url = `${window.location.origin}/room?code=${room.code}`;
+    // Always share the canonical domain so recipients land where their
+    // session (localStorage) already lives and are not asked to sign in again.
+    const host = window.location.hostname;
+    const origin =
+      host.endsWith("tamyazak.site") || host.endsWith(".lovable.app")
+        ? "https://tamyazak.site"
+        : window.location.origin;
+    const url = `${origin}/room?code=${room.code}`;
     if (navigator.share) {
       navigator.share({ title: room.name, url }).catch(() => {
         navigator.clipboard?.writeText(url);

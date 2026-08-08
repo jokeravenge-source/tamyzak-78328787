@@ -9,11 +9,20 @@ import "@fontsource/plus-jakarta-sans/600.css";
 import "@fontsource/plus-jakarta-sans/700.css";
 
 // Canonical host redirect: keep everyone on the apex domain so localStorage
-// (auth session, gate flags) is shared across visits.
-if (typeof window !== "undefined" && window.location.hostname === "www.tamyazak.site") {
-  const url = new URL(window.location.href);
-  url.hostname = "tamyazak.site";
-  window.location.replace(url.toString());
+// (auth session, gate flags) is shared across visits. The Lovable preview host
+// is left alone so the in-editor preview keeps working.
+if (typeof window !== "undefined") {
+  const host = window.location.hostname;
+  const shouldRedirect =
+    host === "www.tamyazak.site" ||
+    (host.endsWith(".lovable.app") && !host.startsWith("id-preview--"));
+  if (shouldRedirect) {
+    const url = new URL(window.location.href);
+    url.hostname = "tamyazak.site";
+    url.protocol = "https:";
+    url.port = "";
+    window.location.replace(url.toString());
+  }
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
