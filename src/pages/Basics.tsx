@@ -15,7 +15,24 @@ import VisitCounter from "@/components/VisitCounter";
 import { useTodos } from "@/lib/todoTopicProgress";
 import StreakTree from "@/components/StreakTree";
 import RankStone, { rankFromPoints, RANK_LABELS, type StoneRank } from "@/components/RankStone";
-import { totalDueCount } from "@/lib/srs";
+import { totalDueCount, dueBreakdown, type DueGroup } from "@/lib/srs";
+import GiftMcqButton from "@/components/GiftMcqButton";
+
+const SUBJECT_LABELS: Record<string, { ar: string; en: string }> = {
+  physics: { ar: "الفيزياء", en: "Physics" },
+  chemistry: { ar: "الكيمياء", en: "Chemistry" },
+  biology: { ar: "الأحياء", en: "Biology" },
+  english: { ar: "الإنجليزية", en: "English" },
+  french: { ar: "الفرنسية", en: "French" },
+  arabic: { ar: "العربية", en: "Arabic" },
+  islamic: { ar: "التربية الإسلامية", en: "Islamic" },
+  math: { ar: "الرياضيات", en: "Math" },
+};
+
+function subjectLabel(subject: string, language: AppLanguage): string {
+  const m = SUBJECT_LABELS[subject?.toLowerCase?.() ?? ""];
+  return m ? (language === "ar" ? m.ar : m.en) : subject;
+}
 
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
@@ -273,10 +290,12 @@ const Basics = ({
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
   const [dueCards, setDueCards] = useState<number>(0);
+  const [dueGroups, setDueGroups] = useState<DueGroup[]>([]);
 
   useEffect(() => {
     let active = true;
     totalDueCount().then((n) => { if (active) setDueCards(n); });
+    dueBreakdown().then((g) => { if (active) setDueGroups(g); });
     return () => { active = false; };
   }, []);
 
@@ -757,6 +776,7 @@ const Basics = ({
                   <span>{language === "ar" ? "نقطة" : "pts"}</span>
                 </p>
               </div>
+              <GiftMcqButton language={language} />
             </div>
           </header>
 
@@ -789,6 +809,20 @@ const Basics = ({
                     ? "راجعها الآن قبل أن تنساها."
                     : "Review them now, before you forget them."}
                 </p>
+                {dueGroups.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {dueGroups.map((g) => (
+                      <span
+                        key={`${g.subject}-${g.chapter}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary"
+                      >
+                        {subjectLabel(g.subject, language)}
+                        {g.chapter ? ` · ${language === "ar" ? `الفصل ${g.chapter}` : `Ch ${g.chapter}`}` : ""}
+                        <span className="opacity-70">({g.count})</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <span className="shrink-0 text-primary">
                 {isRTL ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
