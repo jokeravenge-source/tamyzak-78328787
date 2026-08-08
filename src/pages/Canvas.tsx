@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import { ArrowLeft, Plus, Trash2, Pencil, Check, X, FileInput, FileText, PanelLeftClose, PanelLeft, Cloud, CloudOff, Loader2, Palette, Sparkles } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import NotesCanvasBlock, { type CanvasData } from "@/components/NotesCanvasBlock";
