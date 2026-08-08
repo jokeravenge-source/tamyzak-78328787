@@ -94,6 +94,26 @@ captureReferralCode();
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
 
+// Reading the persisted auth snapshot is synchronous. This lets returning
+// users render immediately instead of waiting on a refresh request that can
+// be slow or stalled in Android in-app browsers.
+function hasPersistedAuthSession(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (!key || !key.startsWith("sb-") || !key.endsWith("-auth-token")) continue;
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+      const stored = JSON.parse(raw) as { access_token?: unknown; user?: { id?: unknown } };
+      if (typeof stored.access_token === "string" && typeof stored.user?.id === "string") return true;
+    }
+  } catch {
+    // Blocked or malformed storage is not a trusted persisted session.
+  }
+  return false;
+}
+
 function currentISOWeek(d = new Date()): string {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   const day = date.getUTCDay() || 7;
@@ -201,8 +221,8 @@ const App = () => {
   useEffect(() => {
     applyTheme(getInitialTheme());
   }, []);
-  const [authed, setAuthed] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [authed, setAuthed] = useState(() => hasPersistedAuthSession());
+  const [authLoading, setAuthLoading] = useState(() => !hasPersistedAuthSession());
   const [equationSolved, setEquationSolved] = useState<boolean>(() => isEquationSolved());
   const [isAdmin, setIsAdmin] = useState(false);
   const [tgVerified, setTgVerified] = useState(false);
@@ -272,20 +292,6 @@ const App = () => {
     // WebViews / slow networks getSession() can stall or the refresh call can
     // fail; in that case we must NOT bounce a logged-in user to the sign-in
     // screen just because the network was slow.
-    const hasStoredSession = () => {
-      try {
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith("sb-") && k.endsWith("-auth-token") && localStorage.getItem(k)) {
-            return true;
-          }
-        }
-      } catch {
-        // storage blocked (private mode / WebView) — treat as no session
-      }
-      return false;
-    };
-
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       console.log("[OAuth] onAuthStateChange", {
         event: _e,
@@ -333,10 +339,10 @@ const App = () => {
       // If a session token exists in storage, keep the user "logged in" and
       // let the client finish refreshing in the background instead of
       // dropping them back on the sign-in screen.
-      if (hasStoredSession()) setAuthed(true);
+      if (hasPersistedAuthSession()) setAuthed(true);
       setAuthLoading(false);
       setTgLoading(false);
-    }, 8000);
+    }, 4000);
 
     supabase.auth.getSession().then(({ data, error }) => {
       console.log("[OAuth] initial getSession", {
@@ -346,7 +352,9 @@ const App = () => {
         error: error ? { message: error.message, name: error.name } : null,
       });
       if (data.session) setAuthed(true);
-      else if (error && hasStoredSession()) setAuthed(true);
+      // A transient null result must not override a persisted signed-in user.
+      // Only the SIGNED_OUT auth event above is allowed to clear that state.
+      else if (hasPersistedAuthSession()) setAuthed(true);
       else setAuthed(false);
       if (data.session?.user) {
         supabase
@@ -370,7 +378,7 @@ const App = () => {
       setAuthLoading(false);
     }).catch((e) => {
       console.error("[OAuth] getSession failed", e);
-      if (hasStoredSession()) setAuthed(true);
+      if (hasPersistedAuthSession()) setAuthed(true);
       setAuthLoading(false);
       setTgLoading(false);
     });
