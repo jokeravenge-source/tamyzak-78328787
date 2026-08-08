@@ -11,6 +11,7 @@ import type { MainMenuChoice } from "@/pages/MainMenu";
 
 import { rankFor, RANKS } from "@/lib/points";
 import { ThemePicker } from "@/components/ThemePicker";
+import { ReferralCard } from "@/components/ReferralCard";
 import { getNavVisibilityMode, setNavVisibilityMode, type NavVisibilityMode } from "@/hooks/useNavVisibility";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -693,6 +694,8 @@ const AccountCenter = ({
           </div>
           <ThemePicker language={language} variant="inline" />
         </div>
+
+        <ReferralCard language={language} />
 
         <CountdownSettings language={language} />
 
