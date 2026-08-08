@@ -40,12 +40,11 @@ const PointsAwardOverlay = ({ language }: { language: "en" | "ar" }) => {
       {current && (
         <motion.div
           key={current.id}
-          initial={{ opacity: 0, y: -30, scale: 0.85 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
           transition={{ type: "spring", stiffness: 260, damping: 22 }}
-          className="fixed left-1/2 -translate-x-1/2 z-[100] pointer-events-none px-3"
-          style={{ top: "max(1rem, env(safe-area-inset-top))" }}
+          className="fixed inset-0 z-[100] pointer-events-none px-3 flex items-center justify-center"
           dir={isAr ? "rtl" : "ltr"}
         >
           <div className="relative w-[min(400px,calc(100vw-1.5rem))] overflow-hidden rounded-[28px] border border-primary/40 bg-gradient-to-br from-primary/25 via-background/90 to-accent/25 backdrop-blur-2xl p-4 sm:p-5 shadow-[0_25px_70px_-10px_hsl(var(--primary)/0.55)]">
