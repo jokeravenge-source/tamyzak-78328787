@@ -141,6 +141,17 @@ const SubjectsHub = ({
       onSelect("premium" as MainMenuChoice);
       return;
     }
+    trackFeature(`tool_${t.key}`);
+    if (!free && isPremium) {
+      try {
+        const key = "tmz_unlocked_tools_v1";
+        const seen: string[] = JSON.parse(localStorage.getItem(key) || "[]");
+        if (!seen.includes(t.key)) {
+          localStorage.setItem(key, JSON.stringify([...seen, t.key]));
+          trackFeatureUnlocked(t.key);
+        }
+      } catch { /* ignore */ }
+    }
     // If launched from a focused subject page, preset the subject so tools
     // that normally show a subject picker (e.g. flashcards) jump straight
     // to the chapters step.
