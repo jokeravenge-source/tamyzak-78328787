@@ -18,6 +18,22 @@ import RankStone, { rankFromPoints, RANK_LABELS, type StoneRank } from "@/compon
 import { totalDueCount, dueBreakdown, type DueGroup } from "@/lib/srs";
 import GiftMcqButton from "@/components/GiftMcqButton";
 
+const SUBJECT_LABELS: Record<string, { ar: string; en: string }> = {
+  physics: { ar: "الفيزياء", en: "Physics" },
+  chemistry: { ar: "الكيمياء", en: "Chemistry" },
+  biology: { ar: "الأحياء", en: "Biology" },
+  english: { ar: "الإنجليزية", en: "English" },
+  french: { ar: "الفرنسية", en: "French" },
+  arabic: { ar: "العربية", en: "Arabic" },
+  islamic: { ar: "التربية الإسلامية", en: "Islamic" },
+  math: { ar: "الرياضيات", en: "Math" },
+};
+
+function subjectLabel(subject: string, language: AppLanguage): string {
+  const m = SUBJECT_LABELS[subject?.toLowerCase?.() ?? ""];
+  return m ? (language === "ar" ? m.ar : m.en) : subject;
+}
+
 function useStreakDays(): number {
   const [days, setDays] = useState<number>(() => {
     try {
