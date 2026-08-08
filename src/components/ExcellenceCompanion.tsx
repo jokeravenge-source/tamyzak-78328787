@@ -74,16 +74,21 @@ function getISOWeek(d = new Date()): string {
 }
 
 function extractPlan(text: string): PlanTask[] | null {
-  const m = text.match(/```json\s*([\s\S]*?)```/i);
+  const m = text.match(/```(?:json|plan)\s*([\s\S]*?)```/i);
   if (!m) return null;
   try {
     const parsed = JSON.parse(m[1].trim());
     if (parsed && Array.isArray(parsed.tasks)) {
-      const tasks = parsed.tasks
-        .filter((t: unknown): t is PlanTask =>
-          !!t && typeof (t as PlanTask).day === "string" && typeof (t as PlanTask).text === "string"
-        )
-        .map((t) => ({ day: t.day.trim(), text: t.text.trim() }));
+      const tasks: PlanTask[] = parsed.tasks
+        .map((t: unknown): PlanTask | null => {
+          if (typeof t === "string" && t.trim()) return { day: "", text: t.trim() };
+          const o = t as Partial<PlanTask> | null;
+          if (o && typeof o.text === "string" && o.text.trim()) {
+            return { day: typeof o.day === "string" ? o.day.trim() : "", text: o.text.trim() };
+          }
+          return null;
+        })
+        .filter((t): t is PlanTask => t !== null);
       return tasks.length ? tasks : null;
     }
   } catch {
@@ -93,7 +98,7 @@ function extractPlan(text: string): PlanTask[] | null {
 }
 
 function stripPlanBlock(text: string): string {
-  return text.replace(/```json\s*[\s\S]*?```/gi, "").trim();
+  return text.replace(/```(?:json|plan)\s*[\s\S]*?```/gi, "").trim();
 }
 
 const INTRO_DONE_KEY = "app_companion_intro_v1";
@@ -168,12 +173,30 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
 
   const pickMode = (m: Mode) => {
     setMode(m);
-    setMessages([
-      {
-        role: "assistant",
-        content: m === "schedule" ? t.welcomeSchedule : m === "psych" ? t.welcomePsych : t.welcomeProblem,
-      },
-    ]);
+    const welcome: Msg = {
+      role: "assistant",
+      content: m === "schedule" ? t.welcomeSchedule : m === "psych" ? t.welcomePsych : t.welcomeProblem,
+    };
+    setMessages([welcome]);
+    if (m === "psych") {
+      setLoading(true);
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from("psych_messages")
+            .select("role, content, created_at")
+            .order("created_at", { ascending: true })
+            .limit(200);
+          if (Array.isArray(data) && data.length) {
+            const history: Msg[] = data
+              .filter((r) => r.role === "user" || r.role === "assistant")
+              .map((r) => ({ role: r.role as Msg["role"], content: r.content as string }));
+            setMessages([welcome, ...history]);
+          }
+        } catch { /* ignore */ }
+        setLoading(false);
+      })();
+    }
   };
 
   const send = async () => {
@@ -244,7 +267,7 @@ const ExcellenceCompanion = ({ language, embedded = false }: { language: AppLang
       id: crypto.randomUUID(),
       text: p.text,
       done: false,
-      day: p.day,
+      day: p.day || undefined,
     }));
     const merged = [...existing, ...newTodos];
     localStorage.setItem(TODOS_KEY, JSON.stringify(merged));
