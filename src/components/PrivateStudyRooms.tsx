@@ -91,6 +91,23 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     })();
   }, []);
 
+  // Live-refresh my own display name if I rename myself elsewhere
+  useEffect(() => {
+    if (!userId) return;
+    const ch = supabase
+      .channel(`my_profile_${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${userId}` },
+        (payload: any) => {
+          const name = (payload.new?.display_name || "").trim();
+          if (name) setDisplayName(name);
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [userId]);
+
   const loadRoom = useCallback(async (roomId: string) => {
     const [{ data: mem }, { data: msg }, { data: roomRow }] = await Promise.all([
       supabase.from("study_room_members").select("user_id,display_name").eq("room_id", roomId),
@@ -101,12 +118,20 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     ]);
     if (roomRow) setRoom(roomRow as Room);
     const base = (mem ?? []) as Member[];
+    const rawMsgs = (msg ?? []) as Message[];
+    // Always resolve names/avatars from the live profile, not the snapshot stored on the row.
+    const allIds = Array.from(new Set([...base.map((m) => m.user_id), ...rawMsgs.map((m) => m.user_id)]));
+    const profById = new Map<string, any>();
+    if (allIds.length > 0) {
+      const { data: allProfs } = await supabase
+        .from("profiles")
+        .select("user_id,display_name,gender,character")
+        .in("user_id", allIds);
+      (allProfs ?? []).forEach((p: any) => profById.set(p.user_id, p));
+    }
     if (base.length > 0) {
       const ids = base.map((m) => m.user_id);
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("user_id,gender,character")
-        .in("user_id", ids);
+      const profs = ids.map((id) => profById.get(id)).filter(Boolean);
       const { data: sess } = await supabase
         .from("active_sessions")
         .select("user_id,elapsed_seconds,is_running,subject")
@@ -125,6 +150,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
           const p = byId.get(m.user_id);
           return {
             ...m,
+            display_name: (p?.display_name || "").trim() || m.display_name,
             gender: (p?.gender === "female" ? "female" : "male") as Gender,
             character: (p?.character ?? null) as CharacterTraits | null,
           };
@@ -134,7 +160,12 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
       setMembers(base);
       setPresence({});
     }
-    setMessages((msg ?? []) as Message[]);
+    setMessages(
+      rawMsgs.map((m) => ({
+        ...m,
+        display_name: (profById.get(m.user_id)?.display_name || "").trim() || m.display_name,
+      })),
+    );
   }, []);
 
   // Restore last room
@@ -157,9 +188,21 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
       .channel(`study_room_${room.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "study_room_messages", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
       .on("postgres_changes", { event: "*", schema: "public", table: "study_room_members", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => loadRoom(room.id))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [room, loadRoom]);
+
+  // Keep our stored membership name in sync with the profile name
+  useEffect(() => {
+    if (!room || !userId || !displayName) return;
+    supabase
+      .from("study_room_members")
+      .update({ display_name: displayName })
+      .eq("room_id", room.id)
+      .eq("user_id", userId)
+      .then(() => {});
+  }, [room, userId, displayName]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });

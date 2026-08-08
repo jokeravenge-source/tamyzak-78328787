@@ -124,6 +124,7 @@ export default function StudyRoom({
     const ch = supabase
       .channel(`active_sessions_room_${subject}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "active_sessions", filter: `subject=eq.${subject}` }, () => load())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => load())
       .subscribe();
     const interval = window.setInterval(load, 30000);
     return () => { mounted = false; supabase.removeChannel(ch); window.clearInterval(interval); };
