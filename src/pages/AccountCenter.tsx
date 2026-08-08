@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getSignupSource } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle, Crown, Settings, Lock, LogOut, Globe } from "lucide-react";
 import { Clock } from "lucide-react";
@@ -233,7 +234,7 @@ const AccountCenter = ({
 
       if (!existing) {
         // First-time profile: create directly (no approval needed for initial name)
-        const { error } = await supabase.from("profiles").insert({ user_id: u.user.id, display_name: trimmed, gender });
+        const { error } = await supabase.from("profiles").insert({ user_id: u.user.id, display_name: trimmed, gender, source: getSignupSource() });
         if (error) throw error;
         setSavedName(trimmed);
         localStorage.setItem("app_display_name_v1", trimmed);
@@ -269,7 +270,7 @@ const AccountCenter = ({
       if (existing) {
         await supabase.from("profiles").update({ gender: g }).eq("user_id", u.user.id);
       } else {
-        await supabase.from("profiles").insert({ user_id: u.user.id, display_name: name.trim() || "Student", gender: g });
+        await supabase.from("profiles").insert({ user_id: u.user.id, display_name: name.trim() || "Student", gender: g, source: getSignupSource() });
       }
     } catch {}
   };

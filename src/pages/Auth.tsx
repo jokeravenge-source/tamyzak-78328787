@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { trackEvent, getSignupSource } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Sparkles, Mail, Lock, ArrowRight, Shield } from "lucide-react";
@@ -42,6 +43,7 @@ export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        void trackEvent("signup", { source: getSignupSource() });
         toast.success("Account created");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
