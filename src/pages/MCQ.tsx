@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { extractStudyMaterial } from "@/lib/fileText";
 import { awardPoints } from "@/lib/points";
 import { awardAction } from "@/lib/unlocks";
+import PointsHint from "@/components/PointsHint";
 
 const copy = {
   en: {
@@ -179,6 +180,9 @@ const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }
           </div>
           <h1 className="text-4xl md:text-6xl font-bold gradient-text mb-3">{t.title}</h1>
           <p className="text-muted-foreground md:text-lg">{t.desc}</p>
+          <div className="mt-4 flex justify-center">
+            <PointsHint action="mcq_quiz" language={rtl ? "ar" : "en"} bonus />
+          </div>
         </header>
 
         {phase === "setup" && (
