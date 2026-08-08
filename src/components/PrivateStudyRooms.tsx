@@ -91,6 +91,23 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     })();
   }, []);
 
+  // Live-refresh my own display name if I rename myself elsewhere
+  useEffect(() => {
+    if (!userId) return;
+    const ch = supabase
+      .channel(`my_profile_${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${userId}` },
+        (payload: any) => {
+          const name = (payload.new?.display_name || "").trim();
+          if (name) setDisplayName(name);
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [userId]);
+
   const loadRoom = useCallback(async (roomId: string) => {
     const [{ data: mem }, { data: msg }, { data: roomRow }] = await Promise.all([
       supabase.from("study_room_members").select("user_id,display_name").eq("room_id", roomId),
