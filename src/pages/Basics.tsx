@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { trackStreakUpdated } from "@/lib/analytics";
 import {
   ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network, Search,
@@ -54,6 +55,16 @@ function useStreakDays(): number {
     window.addEventListener("storage", read);
     return () => { window.clearInterval(id); window.removeEventListener("storage", read); };
   }, []);
+  useEffect(() => {
+    if (!days) return;
+    try {
+      const key = "tmz_streak_tracked_v1";
+      const today = new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem(key) === `${today}:${days}`) return;
+      localStorage.setItem(key, `${today}:${days}`);
+      trackStreakUpdated(days);
+    } catch { /* ignore */ }
+  }, [days]);
   return days;
 }
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Shuffle, RotateCcw, Bookmark, BookmarkCheck, Star } from "lucide-react";
@@ -100,6 +101,7 @@ const copy = {
 };
 
 const Index = ({ language, subject }: { language: AppLanguage; subject: AppSubject }) => {
+  useFeatureUsed("flashcards");
   const { chapter = "3" } = useParams();
   const baseDeck = decks[chapter] ?? decks["3"];
   const [extraCards, setExtraCards] = useState<typeof flashcards>([]);

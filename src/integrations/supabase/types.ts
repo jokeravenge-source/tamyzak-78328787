@@ -1029,6 +1029,30 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          metadata: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          metadata?: Json
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          metadata?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       feature_usage: {
         Row: {
           created_at: string
@@ -1523,6 +1547,7 @@ export type Database = {
           display_name: string
           gender: string | null
           id: string
+          source: string | null
           updated_at: string
           user_id: string
         }
@@ -1532,6 +1557,7 @@ export type Database = {
           display_name?: string
           gender?: string | null
           id?: string
+          source?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1541,6 +1567,7 @@ export type Database = {
           display_name?: string
           gender?: string | null
           id?: string
+          source?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2255,6 +2282,57 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_analytics_dropoff: { Args: never; Returns: Json }
+      admin_analytics_engagement: { Args: never; Returns: Json }
+      admin_analytics_features: {
+        Args: { _days?: number }
+        Returns: {
+          feature: string
+          users: number
+          uses: number
+        }[]
+      }
+      admin_analytics_overview: { Args: never; Returns: Json }
+      admin_analytics_search_users: {
+        Args: { _q: string }
+        Returns: {
+          display_name: string
+          email: string
+          last_seen: string
+          points: number
+          signed_up: string
+          source: string
+          user_id: string
+        }[]
+      }
+      admin_analytics_signups: {
+        Args: { _days?: number }
+        Returns: {
+          day: string
+          direct: number
+          instagram: number
+          other: number
+          referral: number
+          telegram: number
+          total: number
+        }[]
+      }
+      admin_analytics_sources: {
+        Args: never
+        Returns: {
+          source: string
+          users: number
+        }[]
+      }
+      admin_analytics_user_timeline: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          at: string
+          detail: string
+          kind: string
+          label: string
+        }[]
+      }
       award_points_safe: {
         Args: { _points: number; _ref_id?: string; _source: string }
         Returns: string

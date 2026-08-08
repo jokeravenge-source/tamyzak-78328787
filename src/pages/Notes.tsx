@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import {
   ArrowLeft, Plus, ChevronRight, ChevronDown, Trash2, FileText, Search,
   Type, Heading1, Heading2, Heading3, List, ListOrdered, CheckSquare,
@@ -568,6 +569,7 @@ const TreeItem = ({
 
 // ---------- Main page ----------
 const Notes = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  useFeatureUsed("notebooks");
   const t = copy[language];
   const isRTL = language === "ar";
   const [notes, setNotes] = useState<Note[]>([]);

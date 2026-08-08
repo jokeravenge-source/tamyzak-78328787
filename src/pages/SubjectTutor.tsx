@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import { ArrowLeft, Bot, Send, Upload, FileText, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -76,6 +77,7 @@ async function extractPdf(blob: Blob): Promise<string> {
 }
 
 const SubjectTutor = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  useFeatureUsed("ai_agent");
   const isRTL = language === "ar";
   const L = t[language];
   const [subject, setSubject] = useState<AppSubject>(() => {

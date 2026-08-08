@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { trackFeature, trackFeatureUnlocked } from "@/lib/analytics";
 import { ArrowLeft, ArrowRight, Atom, FlaskConical, Leaf, BookOpen, Languages as LangIcon, Moon, ScrollText, Microscope, PenLine, MousePointerClick, Layers, BookMarked, Lock, Bot, Calculator, Ruler, Zap, Boxes, GraduationCap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { AppLanguage } from "@/components/LanguageGate";
@@ -140,6 +141,17 @@ const SubjectsHub = ({
       toast.error(isRTL ? "هذه الأداة متاحة للمشتركين في البريميوم فقط." : "This tool is available for Premium members only.");
       onSelect("premium" as MainMenuChoice);
       return;
+    }
+    trackFeature(`tool_${t.key}`);
+    if (!free && isPremium) {
+      try {
+        const key = "tmz_unlocked_tools_v1";
+        const seen: string[] = JSON.parse(localStorage.getItem(key) || "[]");
+        if (!seen.includes(t.key)) {
+          localStorage.setItem(key, JSON.stringify([...seen, t.key]));
+          trackFeatureUnlocked(t.key);
+        }
+      } catch { /* ignore */ }
     }
     // If launched from a focused subject page, preset the subject so tools
     // that normally show a subject picker (e.g. flashcards) jump straight

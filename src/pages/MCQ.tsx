@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import { ArrowLeft, Upload, Sparkles, Loader2, FileText, Check, X, RotateCw, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -68,6 +69,7 @@ type MCQ = { question: string; choices: string[]; answer_index: number; explanat
 type Phase = "setup" | "quiz" | "result";
 
 const MCQ = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  useFeatureUsed("mcq");
   const t = copy[language];
   const rtl = language === "ar";
   const [file, setFile] = useState<File | null>(null);

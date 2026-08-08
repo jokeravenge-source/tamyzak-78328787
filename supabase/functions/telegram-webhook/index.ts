@@ -16,7 +16,7 @@ function safeEqual(a: string | null, b: string): boolean {
   return diff === 0;
 }
 
-const SITE_URL = "https://tamyazak.site";
+const SITE_URL = "https://tamyazak.site/?src=telegram";
 const WELCOME_TEXT =
   "👋 <b>أهلاً بك في تميّزك!</b>\n\n" +
   "تم فتح البوت بنجاح ✅\n" +

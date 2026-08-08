@@ -82,6 +82,9 @@ import TelegramGate from "./components/TelegramGate";
 import TelegramChannelGate from "./components/TelegramChannelGate";
 import PageTransition from "./components/PageTransition";
 import BottomGroupNav from "./components/BottomGroupNav";
+import { startAnalyticsSession, captureSignupSource } from "@/lib/analytics";
+
+captureSignupSource();
 
 const MENU_STORAGE_KEY = "app_menu_choice_v1";
 const COMPANION_PLANNED_WEEK_KEY = "app_companion_planned_week_v1";
@@ -342,6 +345,11 @@ const App = () => {
 
   // Re-verify Telegram channel membership on load. Only unverify (show gate)
   // if the check explicitly reports the user has left the channel.
+  useEffect(() => {
+    if (!authed) return;
+    startAnalyticsSession();
+  }, [authed]);
+
   useEffect(() => {
     if (!authed || authRole === "admin") return;
     if (!channelVerified) return;

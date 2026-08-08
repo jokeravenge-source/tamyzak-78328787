@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useFeatureUsed } from "@/hooks/useFeatureUsed";
 import { ArrowLeft, Upload, Heart, FileText, X, Loader2, Hash, Download, Sparkles, Bell, Clock, Check, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,7 @@ type SummaryRow = {
 };
 
 const Summaries = ({ language, onBack }: { language: AppLanguage; onBack: () => void }) => {
+  useFeatureUsed("summaries");
   const isAr = language === "ar";
   const [rows, setRows] = useState<SummaryRow[]>([]);
   const [likes, setLikes] = useState<Record<string, number>>({});

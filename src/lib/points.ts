@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { trackPointsEarned } from "@/lib/analytics";
 
 export type PointSource = "summary" | "flashcard" | "mcq" | "essay";
 
@@ -40,6 +41,7 @@ export async function awardPoints(source: PointSource, refId?: string) {
     return;
   }
   if (data) markSeen([data as string]);
+  trackPointsEarned(source, points);
   showAward(source, points);
 }
 
