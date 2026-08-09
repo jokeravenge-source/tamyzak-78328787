@@ -472,10 +472,18 @@ const Basics = ({
     window.addEventListener("focus", onFocus);
     const channel = supabase
       .channel("home-user-points")
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_points" }, (p: any) => {
-        if (!uid || p.new?.user_id === uid || p.old?.user_id === uid) load();
-      })
       .subscribe();
+    // Only listen to my own points rows (server-side filter) — global rank is
+    // recalculated on load/focus, so nothing visible changes.
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u?.user) return;
+      channel.on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_points", filter: `user_id=eq.${u.user.id}` },
+        () => load(),
+      );
+    })();
     return () => {
       window.removeEventListener("focus", onFocus);
       supabase.removeChannel(channel);
