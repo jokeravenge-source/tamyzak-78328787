@@ -4,6 +4,7 @@
  * Get it from https://www.google.com/recaptcha/admin (choose reCAPTCHA v2 → checkbox).
  * While it is empty, the human-check gate is skipped so the app stays usable.
  */
-export const RECAPTCHA_SITE_KEY = "6LcfKnwtAAAAAHA3wzZCtzUW_hWCZ-sBRhIHTEjZ";
+// Disabled for now — empty key skips the human-check gate entirely.
+export const RECAPTCHA_SITE_KEY = "";
 
 export const isCaptchaConfigured = () => RECAPTCHA_SITE_KEY.trim().length > 0;
