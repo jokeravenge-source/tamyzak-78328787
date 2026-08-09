@@ -470,23 +470,26 @@ const Basics = ({
     load();
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
-    const channel = supabase
-      .channel("home-user-points")
-      .subscribe();
-    // Only listen to my own points rows (server-side filter) — global rank is
-    // recalculated on load/focus, so nothing visible changes.
+    // Only listen to my own points rows (server-side filter) — the global rank
+    // is recalculated on load/focus, so nothing visible changes.
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let disposed = false;
     (async () => {
       const { data: u } = await supabase.auth.getUser();
-      if (!u?.user) return;
-      channel.on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "user_points", filter: `user_id=eq.${u.user.id}` },
-        () => load(),
-      );
+      if (!u?.user || disposed) return;
+      channel = supabase
+        .channel("home-user-points")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "user_points", filter: `user_id=eq.${u.user.id}` },
+          () => load(),
+        )
+        .subscribe();
     })();
     return () => {
+      disposed = true;
       window.removeEventListener("focus", onFocus);
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, []);
   const currentRank = rankFromPoints(totalPoints);
