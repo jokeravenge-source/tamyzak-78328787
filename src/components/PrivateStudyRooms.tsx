@@ -188,7 +188,6 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
       .channel(`study_room_${room.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "study_room_messages", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
       .on("postgres_changes", { event: "*", schema: "public", table: "study_room_members", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => loadRoom(room.id))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [room, loadRoom]);
