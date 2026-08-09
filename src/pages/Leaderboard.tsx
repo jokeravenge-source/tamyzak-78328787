@@ -87,14 +87,14 @@ const Leaderboard = ({
     load();
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
-    const channel = supabase
-      .channel("leaderboard-points")
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_points" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => load())
-      .subscribe();
+    // Poll while the board is open instead of holding two unfiltered realtime
+    // subscriptions open (same freshness, a fraction of the traffic).
+    const iv = window.setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 15000);
     return () => {
       window.removeEventListener("focus", onFocus);
-      supabase.removeChannel(channel);
+      window.clearInterval(iv);
     };
   }, [load]);
 
