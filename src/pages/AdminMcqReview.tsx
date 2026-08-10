@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, LogIn, LogOut, Plus, Trash2, Check, X, ShieldAlert, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, LogIn, LogOut, Plus, Trash2, Check, X, ShieldAlert, ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type MCQ = { question: string; choices: string[]; answer_index: number; hint?: string; explanation?: string };
@@ -143,6 +143,7 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
   const [pending, setPending] = useState<Pending[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [editing, setEditing] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -193,6 +194,17 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
     });
     if (error) return toast.error(error.message);
     toast.success("Add request submitted (needs approval)");
+    load();
+  };
+
+  const saveEdit = async (topicKey: string, index: number, q: MCQ) => {
+    const set = setsByKey.get(topicKey);
+    if (!set) return toast.error("Target set missing");
+    const next = set.questions.map((old, i) => (i === index ? { ...old, ...q } : old));
+    const { error } = await supabase.from("teacher_topic_mcqs").update({ questions: next as any }).eq("id", set.id);
+    if (error) return toast.error(error.message);
+    toast.success("Question updated");
+    setEditing(null);
     load();
   };
 
@@ -341,18 +353,33 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
                           <ol className="space-y-2">
                             {set.questions.map((q, i) => (
                                <li key={i} className="rounded-md border border-border bg-secondary text-secondary-foreground p-3">
+                                {canModerate && editing === `${topicKey}:${i}` ? (
+                                  <EditQuestionForm
+                                    initial={q}
+                                    onCancel={() => setEditing(null)}
+                                    onSave={(nq) => saveEdit(topicKey, i, nq)}
+                                  />
+                                ) : (
+                                <>
                                 <p className="text-sm font-medium">{i + 1}. {q.question}</p>
                                 <ul className="mt-1 ms-5 text-xs list-disc">
                                   {q.choices.map((c, j) => (
                                      <li key={j} className={j === q.answer_index ? "text-primary font-semibold" : "text-muted-foreground"}>{c}</li>
                                   ))}
                                 </ul>
-                                <div className="mt-2 flex justify-end">
+                                <div className="mt-2 flex justify-end gap-2">
+                                   {canModerate && (
+                                     <Button onClick={() => setEditing(`${topicKey}:${i}`)} variant="outline" size="sm" className="h-7 px-2 text-xs">
+                                       <Pencil className="w-3 h-3" /> Edit
+                                     </Button>
+                                   )}
                                    <Button onClick={() => requestDelete(topicKey, i)} variant="outline" size="sm"
                                      className="h-7 px-2 border-destructive/50 text-destructive text-xs hover:bg-destructive/10 hover:text-destructive">
                                     <Trash2 className="w-3 h-3" /> Request delete
                                    </Button>
                                 </div>
+                                </>
+                                )}
                               </li>
                             ))}
                           </ol>
@@ -374,6 +401,66 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
 }
 
 function AddQuestionForm({ onSubmit }: { onSubmit: (q: MCQ) => void }) {
+  return <AddForm onSubmit={onSubmit} />;
+}
+
+function EditQuestionForm({ initial, onSave, onCancel }: { initial: MCQ; onSave: (q: MCQ) => void; onCancel: () => void }) {
+  const [question, setQuestion] = useState(initial.question);
+  const [choices, setChoices] = useState<string[]>(initial.choices.length ? initial.choices : ["", "", "", ""]);
+  const [answer, setAnswer] = useState(initial.answer_index ?? 0);
+  const [explanation, setExplanation] = useState(initial.explanation ?? "");
+  const inputCls = "flex-1 h-9 px-2 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+  const save = () => {
+    const cleaned = choices.map((c) => c.trim()).filter((c) => c.length > 0);
+    if (!question.trim() || cleaned.length < 2) return toast.error("Question and at least 2 choices required");
+    const correct = choices[answer]?.trim();
+    const idx = correct ? cleaned.indexOf(correct) : 0;
+    onSave({
+      ...initial,
+      question: question.trim(),
+      choices: cleaned,
+      answer_index: idx >= 0 ? idx : 0,
+      explanation: explanation.trim() || undefined,
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-widest text-primary">Edit question</p>
+      <textarea value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Question"
+        className="w-full min-h-16 p-2 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {choices.map((c, i) => (
+          <div key={i} className="flex items-center gap-2 text-sm">
+            <input type="radio" checked={answer === i} onChange={() => setAnswer(i)} title="Correct answer" />
+            <input value={c} onChange={(e) => setChoices((cs) => cs.map((x, j) => (j === i ? e.target.value : x)))}
+              placeholder={`Choice ${i + 1}`} className={inputCls} />
+            {choices.length > 2 && (
+              <button type="button" onClick={() => {
+                setChoices((cs) => cs.filter((_, j) => j !== i));
+                setAnswer((a) => (a === i ? 0 : a > i ? a - 1 : a));
+              }} className="p-1 text-destructive hover:opacity-80" title="Remove choice">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <input value={explanation} onChange={(e) => setExplanation(e.target.value)} placeholder="Explanation (optional)"
+        className="w-full h-9 px-2 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+      <div className="flex justify-end gap-2">
+        <Button onClick={() => setChoices((cs) => [...cs, ""])} variant="outline" size="sm" className="h-8 px-3 text-xs">
+          <Plus className="w-3.5 h-3.5" /> Choice
+        </Button>
+        <Button onClick={onCancel} variant="outline" size="sm" className="h-8 px-3 text-xs">Cancel</Button>
+        <Button onClick={save} size="sm" className="h-8 px-3 text-xs"><Check className="w-3.5 h-3.5" /> Save</Button>
+      </div>
+    </div>
+  );
+}
+
+function AddForm({ onSubmit }: { onSubmit: (q: MCQ) => void }) {
   const [question, setQuestion] = useState("");
   const [choices, setChoices] = useState(["", "", "", ""]);
   const [answer, setAnswer] = useState(0);
