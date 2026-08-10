@@ -353,18 +353,33 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
                           <ol className="space-y-2">
                             {set.questions.map((q, i) => (
                                <li key={i} className="rounded-md border border-border bg-secondary text-secondary-foreground p-3">
+                                {canModerate && editing === `${topicKey}:${i}` ? (
+                                  <EditQuestionForm
+                                    initial={q}
+                                    onCancel={() => setEditing(null)}
+                                    onSave={(nq) => saveEdit(topicKey, i, nq)}
+                                  />
+                                ) : (
+                                <>
                                 <p className="text-sm font-medium">{i + 1}. {q.question}</p>
                                 <ul className="mt-1 ms-5 text-xs list-disc">
                                   {q.choices.map((c, j) => (
                                      <li key={j} className={j === q.answer_index ? "text-primary font-semibold" : "text-muted-foreground"}>{c}</li>
                                   ))}
                                 </ul>
-                                <div className="mt-2 flex justify-end">
+                                <div className="mt-2 flex justify-end gap-2">
+                                   {canModerate && (
+                                     <Button onClick={() => setEditing(`${topicKey}:${i}`)} variant="outline" size="sm" className="h-7 px-2 text-xs">
+                                       <Pencil className="w-3 h-3" /> Edit
+                                     </Button>
+                                   )}
                                    <Button onClick={() => requestDelete(topicKey, i)} variant="outline" size="sm"
                                      className="h-7 px-2 border-destructive/50 text-destructive text-xs hover:bg-destructive/10 hover:text-destructive">
                                     <Trash2 className="w-3 h-3" /> Request delete
                                    </Button>
                                 </div>
+                                </>
+                                )}
                               </li>
                             ))}
                           </ol>
