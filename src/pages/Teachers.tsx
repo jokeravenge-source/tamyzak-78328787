@@ -349,29 +349,6 @@ function TopicView({
   const [loading, setLoading] = useState(true);
   const [showGen, setShowGen] = useState(false);
   const [practice, setPractice] = useState<MCQSet | null>(null);
-  const [videoId, setVideoId] = useState<string | null>(null);
-
-  // Resolve the actual video for this lecture number (playlist index is unreliable)
-  useEffect(() => {
-    let cancelled = false;
-    setVideoId(null);
-    (async () => {
-      try {
-        const supaUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "";
-        const projectRef = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || "";
-        const base = supaUrl ? `${supaUrl}/functions/v1` : (projectRef ? `https://${projectRef}.functions.supabase.co` : "");
-        if (!base) return;
-        const res = await fetch(`${base}/youtube-playlist?list=${playlist}`, {
-          headers: { apikey: (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) || "" },
-        });
-        const json = await res.json();
-        const videos: { id: string }[] = Array.isArray(json?.videos) ? json.videos : [];
-        const v = videos[n - 1];
-        if (!cancelled && v?.id) setVideoId(v.id);
-      } catch { /* fall back to playlist embed */ }
-    })();
-    return () => { cancelled = true; };
-  }, [playlist, n]);
 
   const load = async () => {
     setLoading(true);
