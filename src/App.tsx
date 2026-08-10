@@ -243,7 +243,15 @@ const App = () => {
       if (typeof window === "undefined") return null;
       const stored = localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null;
       if (!stored && window.location.pathname.startsWith("/who-is-best")) return "guest";
-      if (!stored && window.location.pathname.startsWith("/teachers")) return "guest";
+      // Lecture deep links are always public: fall back to guest unless the
+      // visitor already has a real session (or is an admin).
+      if (
+        window.location.pathname.startsWith("/teachers") &&
+        stored !== "admin" &&
+        !hasPersistedAuthSession()
+      ) {
+        return "guest";
+      }
       return stored;
     }
   );
@@ -637,7 +645,11 @@ const App = () => {
           </>
         )
       ) : !authed ? (
-        <Auth onAuthed={() => setAuthed(true)} onGoAdmin={() => chooseRole("admin")} />
+        <Auth
+          onAuthed={() => setAuthed(true)}
+          onGoAdmin={() => chooseRole("admin")}
+          onGuest={() => chooseRole("guest")}
+        />
       ) : !language ? (
         <LanguageGate onSelect={setLanguage} />
       ) : authRole !== "admin" && !channelVerified ? (

@@ -20,7 +20,15 @@ const AppleIcon = () => (
   </svg>
 );
 
-export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?: () => void }) => {
+export const Auth = ({
+  onAuthed,
+  onGoAdmin,
+  onGuest,
+}: {
+  onAuthed: () => void;
+  onGoAdmin?: () => void;
+  onGuest?: () => void;
+}) => {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -221,6 +229,16 @@ export const Auth = ({ onAuthed, onGoAdmin }: { onAuthed: () => void; onGoAdmin?
             {mode === "signin" ? "Create one" : "Sign in"}
           </button>
         </p>
+
+        {onGuest && (
+          <button
+            type="button"
+            onClick={onGuest}
+            className="mt-4 w-full h-11 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
+          >
+            متابعة كضيف — Continue as guest (lectures)
+          </button>
+        )}
       </div>
       </section>
     </main>
