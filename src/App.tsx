@@ -630,19 +630,11 @@ const App = () => {
         menuChoice === "whoIsBest" ? (
           <WhoIsBest language={language ?? "ar"} onBack={resetRole} isAdmin={false} />
         ) : (
-          <>
-            <Teachers
-              language={language ?? "ar"}
-              onBack={resetRole}
-              isAdmin={false}
-            />
-            <button
-              onClick={() => chooseMenu("whoIsBest")}
-              className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 h-11 px-5 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-lg"
-            >
-              {(language ?? "ar") === "ar" ? "من الأفضل؟" : "Who is the best?"}
-            </button>
-          </>
+          <Teachers
+            language={language ?? "ar"}
+            onBack={resetRole}
+            isAdmin={false}
+          />
         )
       ) : !authed ? (
         <Auth
