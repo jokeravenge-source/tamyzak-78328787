@@ -1191,6 +1191,14 @@ function AnziLectureView({
     setVideoId(null);
     (async () => {
       try {
+        // Prefer a saved video row for this exact lecture
+        const { data: row } = await supabase
+          .from("teacher_topic_videos")
+          .select("video_id")
+          .eq("teacher_id", teacher.id)
+          .eq("topic_key", `anzi-${lang}-ch${ch}-lec${n}-study`)
+          .maybeSingle();
+        if (!cancelled && (row as any)?.video_id) { setVideoId((row as any).video_id); return; }
         const supaUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "";
         const projectRef = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || "";
         const base = supaUrl ? `${supaUrl}/functions/v1` : (projectRef ? `https://${projectRef}.functions.supabase.co` : "");
@@ -1205,7 +1213,7 @@ function AnziLectureView({
       } catch { /* fall back to playlist embed */ }
     })();
     return () => { cancelled = true; };
-  }, [playlist, n]);
+  }, [playlist, n, teacher.id, lang, ch]);
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"}>
