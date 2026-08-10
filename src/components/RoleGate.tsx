@@ -1,4 +1,4 @@
-import { Shield, GraduationCap, ArrowRight, Sparkles } from "lucide-react";
+import { Shield, GraduationCap, ArrowRight, Sparkles, PlayCircle } from "lucide-react";
 
 export type AuthRole = "student" | "admin" | "guest";
 
