@@ -55,3 +55,6 @@ verify_jwt = false
 
 [functions.verify-captcha]
 verify_jwt = false
+
+[functions.tmp-reset-pwd]
+verify_jwt = false
