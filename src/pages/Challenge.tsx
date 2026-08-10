@@ -528,6 +528,20 @@ const ChallengeRunner = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [challenge.id]);
 
+  // Refresh the leaderboard every minute (only while the tab is visible)
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === "visible") loadBoard();
+    };
+    const id = setInterval(tick, 60000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challenge.id]);
+
   useEffect(() => {
     if (phase !== "play" || picked !== null || timedOut) return;
     const id = setInterval(() => {
