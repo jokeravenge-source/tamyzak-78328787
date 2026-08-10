@@ -401,6 +401,66 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
 }
 
 function AddQuestionForm({ onSubmit }: { onSubmit: (q: MCQ) => void }) {
+  return <AddForm onSubmit={onSubmit} />;
+}
+
+function EditQuestionForm({ initial, onSave, onCancel }: { initial: MCQ; onSave: (q: MCQ) => void; onCancel: () => void }) {
+  const [question, setQuestion] = useState(initial.question);
+  const [choices, setChoices] = useState<string[]>(initial.choices.length ? initial.choices : ["", "", "", ""]);
+  const [answer, setAnswer] = useState(initial.answer_index ?? 0);
+  const [explanation, setExplanation] = useState(initial.explanation ?? "");
+  const inputCls = "flex-1 h-9 px-2 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+  const save = () => {
+    const cleaned = choices.map((c) => c.trim()).filter((c) => c.length > 0);
+    if (!question.trim() || cleaned.length < 2) return toast.error("Question and at least 2 choices required");
+    const correct = choices[answer]?.trim();
+    const idx = correct ? cleaned.indexOf(correct) : 0;
+    onSave({
+      ...initial,
+      question: question.trim(),
+      choices: cleaned,
+      answer_index: idx >= 0 ? idx : 0,
+      explanation: explanation.trim() || undefined,
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-widest text-primary">Edit question</p>
+      <textarea value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Question"
+        className="w-full min-h-16 p-2 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {choices.map((c, i) => (
+          <div key={i} className="flex items-center gap-2 text-sm">
+            <input type="radio" checked={answer === i} onChange={() => setAnswer(i)} title="Correct answer" />
+            <input value={c} onChange={(e) => setChoices((cs) => cs.map((x, j) => (j === i ? e.target.value : x)))}
+              placeholder={`Choice ${i + 1}`} className={inputCls} />
+            {choices.length > 2 && (
+              <button type="button" onClick={() => {
+                setChoices((cs) => cs.filter((_, j) => j !== i));
+                setAnswer((a) => (a === i ? 0 : a > i ? a - 1 : a));
+              }} className="p-1 text-destructive hover:opacity-80" title="Remove choice">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <input value={explanation} onChange={(e) => setExplanation(e.target.value)} placeholder="Explanation (optional)"
+        className="w-full h-9 px-2 rounded-md bg-background border border-input text-foreground placeholder:text-muted-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+      <div className="flex justify-end gap-2">
+        <Button onClick={() => setChoices((cs) => [...cs, ""])} variant="outline" size="sm" className="h-8 px-3 text-xs">
+          <Plus className="w-3.5 h-3.5" /> Choice
+        </Button>
+        <Button onClick={onCancel} variant="outline" size="sm" className="h-8 px-3 text-xs">Cancel</Button>
+        <Button onClick={save} size="sm" className="h-8 px-3 text-xs"><Check className="w-3.5 h-3.5" /> Save</Button>
+      </div>
+    </div>
+  );
+}
+
+function AddForm({ onSubmit }: { onSubmit: (q: MCQ) => void }) {
   const [question, setQuestion] = useState("");
   const [choices, setChoices] = useState(["", "", "", ""]);
   const [answer, setAnswer] = useState(0);
