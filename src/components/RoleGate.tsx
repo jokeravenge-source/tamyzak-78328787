@@ -1,4 +1,4 @@
-import { Shield, GraduationCap, ArrowRight, Sparkles } from "lucide-react";
+import { Shield, GraduationCap, ArrowRight, Sparkles, PlayCircle } from "lucide-react";
 
 export type AuthRole = "student" | "admin" | "guest";
 
@@ -52,6 +52,21 @@ export const RoleGate = ({ onSelect }: { onSelect: (role: AuthRole) => void }) =
             </span>
           </button>
         </div>
+        <button
+          onClick={() => choose("guest")}
+          className="mt-5 w-full group rounded-2xl p-6 border border-border bg-card hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all duration-300 text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary transition-colors">
+              <PlayCircle className="w-6 h-6 text-primary group-hover:text-primary-foreground" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-1 text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>Continue as guest</h3>
+              <p className="text-sm text-muted-foreground">Watch the lectures without signing in.</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+          </div>
+        </button>
       </section>
     </main>
   );
