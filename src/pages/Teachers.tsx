@@ -1168,6 +1168,7 @@ function AnziLectureView({
 
   useEffect(() => {
     if (tab !== "exam") return;
+    // marker
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
