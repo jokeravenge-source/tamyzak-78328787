@@ -545,6 +545,10 @@ const ChallengeRunner = ({
   }, [phase, picked, timedOut, index, perQ]);
 
   const begin = () => {
+    if (myAttempt) {
+      toast.error(T(language, "لقد شاركت في هذا التحدي مسبقًا — محاولة واحدة فقط.", "You already took this challenge — one attempt only."));
+      return;
+    }
     setPhase("play"); setIndex(0); setPicked(null); setTimedOut(false);
     setLeft(perQ); setCorrect(0); setTotalMs(0);
     startRef.current = Date.now();
@@ -580,11 +584,8 @@ const ChallengeRunner = ({
       };
       if (!existing) {
         await supabase.from("challenge_attempts").insert(payload);
-      } else {
-        const prev = existing as { id: string; correct_count: number; total_ms: number };
-        const better = finalCorrect > prev.correct_count || (finalCorrect === prev.correct_count && finalMs < prev.total_ms);
-        if (better) await supabase.from("challenge_attempts").update(payload).eq("id", prev.id);
       }
+      // One attempt only: an existing row is never overwritten.
       await loadBoard();
     } catch (e: any) {
       toast.error(e.message || "Failed to save result");
@@ -649,13 +650,20 @@ const ChallengeRunner = ({
               )}
               {myAttempt && (
                 <p className="text-sm mt-2 text-primary font-medium">
-                  {T(language, "أفضل نتيجة لك", "Your best")}: {myAttempt.correct_count}/{myAttempt.total_count} · {fmtMs(myAttempt.total_ms)}
+                  {T(language, "نتيجتك", "Your result")}: {myAttempt.correct_count}/{myAttempt.total_count} · {fmtMs(myAttempt.total_ms)}
                 </p>
               )}
-              <button onClick={begin} disabled={questions.length === 0 || notStarted}
+              {myAttempt && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {T(language, "محاولة واحدة فقط لكل طالب.", "One attempt only per student.")}
+                </p>
+              )}
+              <button onClick={begin} disabled={questions.length === 0 || notStarted || !!myAttempt}
                 className="mt-5 h-12 px-8 rounded-xl bg-primary text-primary-foreground font-semibold inline-flex items-center gap-2 disabled:opacity-60">
-                {notStarted ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                {notStarted ? T(language, "لم يبدأ بعد", "Not started yet") : T(language, "ابدأ التحدي", "Start challenge")}
+                {notStarted || myAttempt ? <Lock className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                {myAttempt
+                  ? T(language, "تمت المشاركة", "Already attempted")
+                  : notStarted ? T(language, "لم يبدأ بعد", "Not started yet") : T(language, "ابدأ التحدي", "Start challenge")}
               </button>
               </div>
             </div>
