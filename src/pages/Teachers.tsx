@@ -1168,6 +1168,8 @@ function AnziLectureView({
 
   useEffect(() => {
     if (tab !== "exam") return;
+    // marker
+    void 0;
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
@@ -1182,6 +1184,37 @@ function AnziLectureView({
     })();
   }, [teacher.id, topicKey, tab]);
 
+  // Resolve the real video for this lecture number (playlist index is unreliable)
+  const [videoId, setVideoId] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setVideoId(null);
+    (async () => {
+      try {
+        // Prefer a saved video row for this exact lecture
+        const { data: row } = await supabase
+          .from("teacher_topic_videos")
+          .select("video_id")
+          .eq("teacher_id", teacher.id)
+          .eq("topic_key", `anzi-${lang}-ch${ch}-lec${n}-study`)
+          .maybeSingle();
+        if (!cancelled && (row as any)?.video_id) { setVideoId((row as any).video_id); return; }
+        const supaUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "";
+        const projectRef = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || "";
+        const base = supaUrl ? `${supaUrl}/functions/v1` : (projectRef ? `https://${projectRef}.functions.supabase.co` : "");
+        if (!base) return;
+        const res = await fetch(`${base}/youtube-playlist?list=${playlist}`, {
+          headers: { apikey: (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) || "" },
+        });
+        const json = await res.json();
+        const videos: { id: string }[] = Array.isArray(json?.videos) ? json.videos : [];
+        const v = videos[n - 1];
+        if (!cancelled && v?.id) setVideoId(v.id);
+      } catch { /* fall back to playlist embed */ }
+    })();
+    return () => { cancelled = true; };
+  }, [playlist, n, teacher.id, lang, ch]);
+
   return (
     <div dir={isRTL ? "rtl" : "ltr"}>
       <header className="mb-4">
@@ -1193,8 +1226,13 @@ function AnziLectureView({
 
       <div className="aspect-video rounded-2xl overflow-hidden border border-border bg-black mb-6">
         <iframe
+          key={videoId || `pl-${n}`}
           className="w-full h-full"
-          src={`https://www.youtube.com/embed/videoseries?list=${playlist}&index=${n}`}
+          src={
+            videoId
+              ? `https://www.youtube.com/embed/${videoId}?rel=0`
+              : `https://www.youtube.com/embed/videoseries?list=${playlist}&index=${n}`
+          }
           title={label}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
