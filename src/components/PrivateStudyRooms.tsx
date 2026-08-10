@@ -184,12 +184,26 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
   // Realtime chat + members
   useEffect(() => {
     if (!room) return;
-    const ch = supabase
-      .channel(`study_room_${room.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "study_room_messages", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
-      .on("postgres_changes", { event: "*", schema: "public", table: "study_room_members", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    const open = () => {
+      if (ch) return;
+      ch = supabase
+        .channel(`study_room_${room.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "study_room_messages", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
+        .on("postgres_changes", { event: "*", schema: "public", table: "study_room_members", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
+        .subscribe();
+    };
+    const close = () => {
+      if (ch) { supabase.removeChannel(ch); ch = null; }
+    };
+    // Keep the socket open only while the tab is actually visible.
+    const onVisibility = () => {
+      if (document.hidden) close();
+      else { open(); loadRoom(room.id); }
+    };
+    if (!document.hidden) open();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => { document.removeEventListener("visibilitychange", onVisibility); close(); };
   }, [room, loadRoom]);
 
   // Keep our stored membership name in sync with the profile name
@@ -210,7 +224,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
   // Refresh member timers periodically
   useEffect(() => {
     if (!room) return;
-    const id = setInterval(() => loadRoom(room.id), 15000);
+    const id = setInterval(() => { if (!document.hidden) loadRoom(room.id); }, 20000);
     return () => clearInterval(id);
   }, [room, loadRoom]);
 

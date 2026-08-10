@@ -168,8 +168,25 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
+    if (matchmakingRef.current) {
+      supabase.removeChannel(matchmakingRef.current);
+      matchmakingRef.current = null;
+    }
   };
   useEffect(() => () => cleanup(), []);
+
+  // Close the realtime battle channel once the match is over — no reason to
+  // keep a subscription open on the results screen.
+  useEffect(() => {
+    if (phase !== "done") return;
+    const id = window.setTimeout(() => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    }, 3000);
+    return () => window.clearTimeout(id);
+  }, [phase]);
 
   // Question timer
   useEffect(() => {
