@@ -21,5 +21,6 @@ Deno.serve(async () => {
     headers: { ...h, "Content-Type": "application/json" },
     body: JSON.stringify({ password: NEW_PASSWORD }),
   });
-  return new Response(JSON.stringify({ ok: up.ok, status: up.status }), { headers: { "Content-Type": "application/json" } });
+  const txt = await up.text();
+  return new Response(JSON.stringify({ ok: up.ok, status: up.status, body: txt }), { headers: { "Content-Type": "application/json" } });
 });
