@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, LogIn, LogOut, Plus, Trash2, Check, X, ShieldAlert, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, LogIn, LogOut, Plus, Trash2, Check, X, ShieldAlert, ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type MCQ = { question: string; choices: string[]; answer_index: number; hint?: string; explanation?: string };
@@ -143,6 +143,7 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
   const [pending, setPending] = useState<Pending[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [editing, setEditing] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -193,6 +194,17 @@ function ReviewPanel({ userEmail, onSignOut, mode }: { userEmail: string; onSign
     });
     if (error) return toast.error(error.message);
     toast.success("Add request submitted (needs approval)");
+    load();
+  };
+
+  const saveEdit = async (topicKey: string, index: number, q: MCQ) => {
+    const set = setsByKey.get(topicKey);
+    if (!set) return toast.error("Target set missing");
+    const next = set.questions.map((old, i) => (i === index ? { ...old, ...q } : old));
+    const { error } = await supabase.from("teacher_topic_mcqs").update({ questions: next as any }).eq("id", set.id);
+    if (error) return toast.error(error.message);
+    toast.success("Question updated");
+    setEditing(null);
     load();
   };
 
