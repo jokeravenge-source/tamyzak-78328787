@@ -50,7 +50,6 @@ const More = ({
     { key: "mcq", Icon: HelpCircle },
     { key: "missions", Icon: ListChecks },
     { key: "advices", Icon: MessageSquareQuote },
-    { key: "essay", Icon: PenLine },
     { key: "videoNotes", Icon: Headphones },
   ];
 
