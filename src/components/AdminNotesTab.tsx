@@ -213,7 +213,7 @@ function NoteEditor({
       const ext = file.name.split(".").pop() || "jpg";
       const path = `note-covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const { error } = await supabase.storage.from("news").upload(path, file, {
-        contentType: file.type, upsert: true,
+        contentType: file.type,
       });
       if (error) throw error;
       const { data } = supabase.storage.from("news").getPublicUrl(path);
