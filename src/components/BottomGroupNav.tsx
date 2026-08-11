@@ -63,9 +63,9 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     locked: true,
   },
   {
-    titleEn: "Challenge", titleAr: "التحدي",
+    titleEn: "Join", titleAr: "انضم الى تميزك",
     items: [],
-    directKey: "challenge",
+    directKey: "joinTamayzak",
   },
 ];
 
@@ -75,7 +75,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   Notes: NotebookPen,
-  Challenge: Swords,
+  Join: Sparkles,
 };
 
 const BottomGroupNav = ({

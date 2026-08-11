@@ -72,6 +72,7 @@ const AdminNotes = lazy(() => import("./pages/AdminNotes"));
 const DailyGame = lazy(() => import("./pages/DailyGame"));
 const WhoIsBest = lazy(() => import("./pages/WhoIsBest"));
 const ChallengePage = lazy(() => import("./pages/Challenge"));
+const JoinTamayzak = lazy(() => import("./pages/JoinTamayzak"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
@@ -452,7 +453,7 @@ const App = () => {
   const [englishCategory, setEnglishCategory] = useState<EnglishCategory | null>(
     () => (typeof window !== "undefined" ? (localStorage.getItem(ENGLISH_CATEGORY_STORAGE_KEY) as EnglishCategory | null) : null)
   );
-  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers" | "adminNotes" | "dailyGame" | "whoIsBest" | "challenge" | "unlocks";
+  type MenuChoice = "flashcards" | "missions" | "mcq" | "malazam" | "summaries" | "advices" | "sessions" | "account" | "essay" | "videoNotes" | "basics" | "biologyDrawings" | "more" | "leaderboard" | "todo" | "news" | "premium" | "ministerialBank" | "mindmap" | "islamicSurahs" | "hadithChecker" | "poemsChecker" | "englishEssays" | "englishIsqat" | "report" | "notes" | "canvas" | "youtube" | "organicEquations" | "liveBattle" | "subjectsHub" | "textToVideo" | "psych" | "companion" | "subjectTutor" | "physicsLaws" | "physicsQuickMcq" | "physicsProblemSolver" | "problemGenerator" | "frenchSynonyms" | "frenchAntonyms" | "toolPlaceholder" | "physicsActivities" | "ourCourses" | "examGenerator" | "teachers" | "adminNotes" | "dailyGame" | "whoIsBest" | "challenge" | "joinTamayzak" | "unlocks";
   const [menuChoice, setMenuChoice] = useState<MenuChoice | null>(() => {
     if (typeof window === "undefined") return null;
     if (window.location.pathname.startsWith("/teachers")) {
@@ -744,6 +745,8 @@ const App = () => {
         <WhoIsBest language={language} onBack={resetMenu} isAdmin={isAdmin} />
       ) : menuChoice === "challenge" ? (
         <ChallengePage language={language} onBack={resetMenu} isAdmin={isAdmin} />
+      ) : menuChoice === "joinTamayzak" ? (
+        <JoinTamayzak language={language} onBack={resetMenu} />
       ) : menuChoice === "companion" || menuChoice === "psych" ? (
         <main className="min-h-screen bg-background pb-28">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
