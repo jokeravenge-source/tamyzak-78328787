@@ -407,6 +407,9 @@ const App = () => {
   useEffect(() => {
     if (!authed) return;
     startAnalyticsSession();
+    captureAttribution();
+    void syncAttribution();
+    void logSignupCompleted({ src: captureAttribution().src });
     void redeemPendingReferral(
       (typeof localStorage !== "undefined" && localStorage.getItem(LANGUAGE_STORAGE_KEY)) === "ar" ? "ar" : "en"
     );
