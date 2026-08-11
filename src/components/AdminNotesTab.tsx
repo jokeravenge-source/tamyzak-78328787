@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Plus, Trash2, Loader2, Eye, EyeOff, Save, X, FileText, ArrowUp, ArrowDown, Layout, Sparkles, Image as ImageIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Trash2, Loader2, Eye, EyeOff, Save, X, FileText, ArrowUp, ArrowDown, Layout, Sparkles, Image as ImageIcon, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -202,6 +202,29 @@ function NoteEditor({
   const [showPreview, setShowPreview] = useState(false);
   const [bgUrl, setBgUrl] = useState<string | null>(row.background_image_url ?? null);
   const [genBusy, setGenBusy] = useState(false);
+  const [upBusy, setUpBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const uploadCover = async (file: File) => {
+    if (!file.type.startsWith("image/")) return toast.error("Pick an image file");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Max 5MB");
+    setUpBusy(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `note-covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from("news").upload(path, file, {
+        contentType: file.type, upsert: true,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from("news").getPublicUrl(path);
+      setBgUrl(data.publicUrl);
+      toast.success("Cover uploaded");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    } finally {
+      setUpBusy(false);
+    }
+  };
 
   const generateBackground = async () => {
     const promptText = [title, ...blocks.map((b) => (b as any).text || (b as any).items?.join(", ") || "").filter(Boolean)].join(" — ").slice(0, 500);
@@ -327,9 +350,24 @@ function NoteEditor({
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <ImageIcon className="w-4 h-4 text-primary" />
-                  AI background image
+                  Cover image
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fileRef.current?.click()}
+                    disabled={upBusy}
+                    className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-xs disabled:opacity-60"
+                  >
+                    {upBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    Upload photo
+                  </button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.currentTarget.value = ""; }}
+                  />
                   {bgUrl && (
                     <button
                       onClick={() => setBgUrl(null)}

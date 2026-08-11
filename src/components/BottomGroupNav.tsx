@@ -60,7 +60,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
   {
     titleEn: "Notes", titleAr: "الملاحظات",
     items: [],
-    locked: true,
+    directKey: "adminNotes",
   },
   {
     titleEn: "Join", titleAr: "انضم الى تميزك",
