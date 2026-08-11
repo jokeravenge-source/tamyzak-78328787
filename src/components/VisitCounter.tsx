@@ -81,6 +81,7 @@ export default function VisitCounter({
   // Poll every 20s so the number stays roughly live for everyone
   useEffect(() => {
     const t = setInterval(async () => {
+      if (document.hidden) return;
       const { data } = await supabase
         .from("site_stats")
         .select("count")
@@ -96,7 +97,7 @@ export default function VisitCounter({
           return next;
         });
       }
-    }, 20000);
+    }, 120000);
     return () => clearInterval(t);
   }, []);
 
