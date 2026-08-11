@@ -527,6 +527,7 @@ const App = () => {
     localStorage.removeItem(MENU_STORAGE_KEY);
   };
   const chooseMenu = (choice: MenuChoice) => {
+    logFirstFeatureTouch(choice);
     // Points-gated tools: send the student to the progress page instead of the tool.
     const gated = isGatedMenu(choice);
     if (gated && !unlockedKeys.includes(gated)) {
