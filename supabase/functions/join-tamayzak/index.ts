@@ -1,7 +1,7 @@
 import { protect } from "../_shared/guard.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const OWNER_CHAT = Deno.env.get("OWNER_TELEGRAM_CHAT_ID") || "@ias404";
+const OWNER_CHAT: string | number = Deno.env.get("OWNER_TELEGRAM_CHAT_ID") || 8086307499;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
