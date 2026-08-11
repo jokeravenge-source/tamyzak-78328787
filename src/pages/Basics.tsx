@@ -351,8 +351,15 @@ const Basics = ({
       setNotifs((data ?? []) as Notif[]);
     };
     load();
-    const ch = supabase.channel("notifs").on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, load).subscribe();
-    return () => { supabase.removeChannel(ch); };
+    // Cost: no always-on realtime channel here. Notifications refresh when the
+    // tab becomes visible again — new items still show up without a reload.
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, []);
   const unread = notifs.filter((n) => !readIds.includes(n.id));
   const dismiss = (id: string) => {
@@ -470,26 +477,14 @@ const Basics = ({
     load();
     const onFocus = () => load();
     window.addEventListener("focus", onFocus);
-    // Only listen to my own points rows (server-side filter) — the global rank
-    // is recalculated on load/focus, so nothing visible changes.
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let disposed = false;
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u?.user || disposed) return;
-      channel = supabase
-        .channel("home-user-points")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "user_points", filter: `user_id=eq.${u.user.id}` },
-          () => load(),
-        )
-        .subscribe();
-    })();
+    // Cost: points changes are always triggered locally, so we listen to the
+    // in-app event instead of keeping a realtime channel open.
+    window.addEventListener("app:progress-updated", onFocus);
+    window.addEventListener("app:feature-unlocked", onFocus);
     return () => {
-      disposed = true;
       window.removeEventListener("focus", onFocus);
-      if (channel) supabase.removeChannel(channel);
+      window.removeEventListener("app:progress-updated", onFocus);
+      window.removeEventListener("app:feature-unlocked", onFocus);
     };
   }, []);
   const currentRank = rankFromPoints(totalPoints);
