@@ -616,13 +616,13 @@ const App = () => {
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
       {authed && language && <NewFeatureAnnouncement language={language} />}
-      {authed && language && authRole !== "admin" && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && onboarded && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
-      {authed && language && authRole !== "admin" && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && onboarded && (
         <CompanionWelcomeTrigger />
       )}
-      {authed && language && authRole !== "admin" && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && onboarded && (
         <BottomGroupNav
           language={language}
           active={(menuChoice as any) ?? "basics"}
