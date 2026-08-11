@@ -1410,6 +1410,39 @@ export type Database = {
         }
         Relationships: []
       }
+      player_teachers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          playlist_id: string
+          playlist_url: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          playlist_id: string
+          playlist_url?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          playlist_id?: string
+          playlist_url?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       point_redemptions: {
         Row: {
           created_at: string
