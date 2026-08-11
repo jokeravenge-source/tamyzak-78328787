@@ -43,25 +43,31 @@ export function useSubscription() {
       }
     };
 
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let uid: string | null = null;
+    let lastFetch = 0;
+    const onFocus = () => {
+      if (!uid || document.hidden) return;
+      if (Date.now() - lastFetch < 30000) return;
+      lastFetch = Date.now();
+      fetchSub(uid);
+    };
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) { setLoading(false); return; }
       setUserId(u.user.id);
+      uid = u.user.id;
+      lastFetch = Date.now();
       await fetchSub(u.user.id);
-      channel = supabase
-        .channel(`sub:${u.user.id}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${u.user.id}` },
-          () => fetchSub(u.user.id),
-        )
-        .subscribe();
+      // Cost: subscription rows change rarely, so we re-check on focus
+      // (throttled) instead of holding a realtime channel open.
+      window.addEventListener("focus", onFocus);
+      document.addEventListener("visibilitychange", onFocus);
     })();
 
     return () => {
       active = false;
-      if (channel) supabase.removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
     };
   }, []);
 
