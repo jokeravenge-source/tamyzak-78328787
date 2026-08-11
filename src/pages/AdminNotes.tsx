@@ -121,7 +121,7 @@ const AdminNotes = ({ language, onBack }: { language: AppLanguage; onBack: () =>
                     alt=""
                     className="absolute inset-0 w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-background/85 backdrop-blur-sm" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/50 to-background/70" />
                 </>
               )}
               <div className={`relative p-6 md:p-10 ${open.background_image_url ? "" : "bg-secondary/30"}`}>
