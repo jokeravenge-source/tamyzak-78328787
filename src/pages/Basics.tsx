@@ -906,6 +906,66 @@ const Basics = ({
             </motion.button>
           )}
 
+          {/* Personalized: weak-subject flashcards + MCQ, above the to-do card */}
+          {onboarding?.completed && (
+            <section className="mb-4 rounded-3xl border border-primary/30 bg-card/75 backdrop-blur-xl p-4 sm:p-5 shadow-[var(--shadow-card)]">
+              <div className="flex items-center gap-2 mb-3">
+                <Target className="w-4 h-4 text-primary" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                  {language === "ar" ? "مخصص لك" : "Personalized for you"}
+                </p>
+                <span className="ms-auto text-xs font-semibold text-muted-foreground truncate">
+                  {subjectLabel(onboarding.subject, language)}
+                  {weakTopicLabel ? ` · ${weakTopicLabel}` : ""}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    try {
+                      sessionStorage.setItem("flashcards:review", "1");
+                      localStorage.setItem("app_subject_v1", onboarding.subject);
+                    } catch { /* ignore */ }
+                    window.dispatchEvent(new CustomEvent("app:set-subject", { detail: { subject: onboarding.subject } }));
+                    navigate("flashcards");
+                  }}
+                  className={`min-h-[76px] rounded-2xl border border-border bg-card p-3 flex items-center gap-3 ${isRTL ? "text-right" : "text-left"} hover:border-primary transition-all`}
+                >
+                  <span className="w-10 h-10 shrink-0 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
+                    <Layers className="w-5 h-5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold text-foreground truncate">
+                      {language === "ar" ? "بطاقات نقاط ضعفك" : "Weak-topic flashcards"}
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground truncate">
+                      {language === "ar" ? "راجعها الآن" : "Review them now"}
+                    </span>
+                  </span>
+                </button>
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent("app:set-subject", { detail: { subject: onboarding.subject } }));
+                    navigate("mcq");
+                  }}
+                  className={`min-h-[76px] rounded-2xl border border-border bg-card p-3 flex items-center gap-3 ${isRTL ? "text-right" : "text-left"} hover:border-primary transition-all`}
+                >
+                  <span className="w-10 h-10 shrink-0 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
+                    <ListChecks className="w-5 h-5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold text-foreground truncate">
+                      {language === "ar" ? "أسئلة اختيار من متعدد" : "MCQ practice"}
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground truncate">
+                      {language === "ar" ? "على مادتك الأضعف" : "On your weakest subject"}
+                    </span>
+                  </span>
+                </button>
+              </div>
+            </section>
+          )}
+
           <section className="mb-6 grid grid-cols-12 gap-3 sm:gap-5">
             {/* Progress ring */}
             <div className="col-span-12 md:col-span-4 bg-card rounded-3xl p-4 sm:p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
