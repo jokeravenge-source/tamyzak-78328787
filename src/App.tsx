@@ -703,7 +703,7 @@ const App = () => {
       ) : menuChoice === "canvas" ? (
         <Canvas language={language} onBack={resetMenu} onOpenNotes={() => chooseMenu("notes")} />
       ) : menuChoice === "youtube" ? (
-        <YoutubePlayer language={language} onBack={resetMenu} />
+        <YoutubePlayer language={language} onBack={resetMenu} isAdmin={isAdmin} />
       ) : menuChoice === "organicEquations" ? (
         <OrganicEquations language={language} onBack={resetMenu} />
       ) : menuChoice === "liveBattle" ? (
