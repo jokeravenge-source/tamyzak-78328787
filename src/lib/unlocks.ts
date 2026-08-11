@@ -47,8 +47,6 @@ export const FEATURE_MENU: Record<FeatureKey, string | null> = {
 /** Reverse lookup: is this menu key gated, and by which feature? */
 export const MENU_FEATURE: Record<string, FeatureKey> = {
   mindmap: "mind_maps",
-  notes: "notebooks",
-  canvas: "canvas",
 };
 
 export function isGatedMenu(menu: string): FeatureKey | null {
