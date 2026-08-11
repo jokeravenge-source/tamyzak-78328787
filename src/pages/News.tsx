@@ -24,11 +24,18 @@ const News = ({ language, onBack }: { language: AppLanguage; onBack: () => void 
       setItems((data ?? []) as NewsItem[]);
       setLoading(false);
     })();
-    const ch = supabase.channel("news_feed").on("postgres_changes", { event: "*", schema: "public", table: "news" }, async () => {
+    // Cost: no persistent realtime channel — refresh when the tab regains focus.
+    const onFocus = async () => {
+      if (document.hidden) return;
       const { data } = await supabase.from("news").select("*").order("created_at", { ascending: false });
       setItems((data ?? []) as NewsItem[]);
-    }).subscribe();
-    return () => { supabase.removeChannel(ch); };
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
   }, []);
 
   const cur = items[idx];
