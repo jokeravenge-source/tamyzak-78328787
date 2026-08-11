@@ -570,6 +570,22 @@ const App = () => {
     }
   };
   const backToBasics = () => chooseMenu("basics");
+  // First-run onboarding (subject picker → diagnostic → results → streak → dashboard)
+  const [onboarded, setOnboarded] = useState<boolean>(() => isOnboardingDone());
+  const finishOnboarding = ({ subject: s, chapter, startStudying }: { subject: OnboardingSubject; chapter: number; startStudying: boolean }) => {
+    setOnboarded(true);
+    if (startStudying) {
+      try {
+        sessionStorage.setItem("flashcards:review", "1");
+        localStorage.setItem(SUBJECT_STORAGE_KEY, s);
+      } catch { /* ignore */ }
+      setSubject(s as AppSubject);
+      chooseMenu("flashcards");
+      window.history.replaceState({}, "", `/flashcards/${chapter}`);
+    } else {
+      chooseMenu("basics");
+    }
+  };
   const resetRole = () => {
     localStorage.removeItem(ROLE_GATE_STORAGE_KEY);
     setAuthRole(null);
