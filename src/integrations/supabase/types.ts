@@ -1410,6 +1410,30 @@ export type Database = {
         }
         Relationships: []
       }
+      point_redemptions: {
+        Row: {
+          created_at: string
+          id: string
+          points_spent: number
+          reward: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_spent: number
+          reward: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_spent?: number
+          reward?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       poll_option_requests: {
         Row: {
           created_at: string
@@ -2527,12 +2551,17 @@ export type Database = {
         Returns: string
       }
       my_referral_stats: { Args: never; Returns: Json }
+      points_balance: { Args: never; Returns: number }
       poll_vote_counts: {
         Args: { _poll_id: string }
         Returns: {
           option_id: string
           votes: number
         }[]
+      }
+      redeem_premium_with_points: {
+        Args: { _environment?: string }
+        Returns: Json
       }
       redeem_referral: { Args: { _code: string }; Returns: Json }
       set_site_visits: { Args: { _count: number }; Returns: number }
