@@ -72,6 +72,7 @@ const AdminNotes = lazy(() => import("./pages/AdminNotes"));
 const DailyGame = lazy(() => import("./pages/DailyGame"));
 const WhoIsBest = lazy(() => import("./pages/WhoIsBest"));
 const ChallengePage = lazy(() => import("./pages/Challenge"));
+const JoinTamayzak = lazy(() => import("./pages/JoinTamayzak"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 // Onboarding page removed
 import ParentFollow from "./pages/ParentFollow";
