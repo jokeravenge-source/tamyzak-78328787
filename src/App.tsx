@@ -31,6 +31,9 @@ const VideoNotes = lazy(() => import("./pages/VideoNotes"));
 import ZombieGuard from "./components/ZombieGuard";
 import EnglishCategoryPage, { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "./pages/EnglishCategory";
 import Basics, { type BasicsChoice } from "./pages/Basics";
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+import { isOnboardingDone, type OnboardingSubject } from "@/lib/onboarding";
+import { captureAttribution, syncAttribution, logSignupCompleted, logFirstFeatureTouch } from "@/lib/userEvents";
 const BiologyDrawings = lazy(() => import("./pages/BiologyDrawings"));
 const More = lazy(() => import("./pages/More"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
@@ -404,6 +407,9 @@ const App = () => {
   useEffect(() => {
     if (!authed) return;
     startAnalyticsSession();
+    captureAttribution();
+    void syncAttribution();
+    void logSignupCompleted({ src: captureAttribution().src });
     void redeemPendingReferral(
       (typeof localStorage !== "undefined" && localStorage.getItem(LANGUAGE_STORAGE_KEY)) === "ar" ? "ar" : "en"
     );
@@ -521,6 +527,7 @@ const App = () => {
     localStorage.removeItem(MENU_STORAGE_KEY);
   };
   const chooseMenu = (choice: MenuChoice) => {
+    logFirstFeatureTouch(choice);
     // Points-gated tools: send the student to the progress page instead of the tool.
     const gated = isGatedMenu(choice);
     if (gated && !unlockedKeys.includes(gated)) {
@@ -563,6 +570,22 @@ const App = () => {
     }
   };
   const backToBasics = () => chooseMenu("basics");
+  // First-run onboarding (subject picker → diagnostic → results → streak → dashboard)
+  const [onboarded, setOnboarded] = useState<boolean>(() => isOnboardingDone());
+  const finishOnboarding = ({ subject: s, chapter, startStudying }: { subject: OnboardingSubject; chapter: number; startStudying: boolean }) => {
+    setOnboarded(true);
+    if (startStudying) {
+      try {
+        sessionStorage.setItem("flashcards:review", "1");
+        localStorage.setItem(SUBJECT_STORAGE_KEY, s);
+      } catch { /* ignore */ }
+      setSubject(s as AppSubject);
+      chooseMenu("flashcards");
+      window.history.replaceState({}, "", `/flashcards/${chapter}`);
+    } else {
+      chooseMenu("basics");
+    }
+  };
   const resetRole = () => {
     localStorage.removeItem(ROLE_GATE_STORAGE_KEY);
     setAuthRole(null);
@@ -593,13 +616,13 @@ const App = () => {
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
       {authed && language && <NewFeatureAnnouncement language={language} />}
-      {authed && language && authRole !== "admin" && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && onboarded && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
-      {authed && language && authRole !== "admin" && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && onboarded && (
         <CompanionWelcomeTrigger />
       )}
-      {authed && language && authRole !== "admin" && channelVerified && (
+      {authed && language && authRole !== "admin" && channelVerified && onboarded && (
         <BottomGroupNav
           language={language}
           active={(menuChoice as any) ?? "basics"}
@@ -649,6 +672,8 @@ const App = () => {
         <LanguageGate onSelect={setLanguage} />
       ) : authRole !== "admin" && !channelVerified ? (
         <TelegramChannelGate language={language} onVerified={() => setChannelVerified(true)} />
+      ) : authRole !== "admin" && !onboarded ? (
+        <Onboarding language={language} onFinish={finishOnboarding} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
           language={language}

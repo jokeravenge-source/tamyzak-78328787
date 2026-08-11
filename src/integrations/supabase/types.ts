@@ -1747,6 +1747,39 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_attribution: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          landing_path: string | null
+          referrer: string | null
+          src: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          landing_path?: string | null
+          referrer?: string | null
+          src?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          landing_path?: string | null
+          referrer?: string | null
+          src?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_stats: {
         Row: {
           count: number
@@ -2319,6 +2352,30 @@ export type Database = {
           updated_at?: string
           user_id?: string
           verified?: boolean
+        }
+        Relationships: []
+      }
+      user_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          props: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          props?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          props?: Json
+          user_id?: string
         }
         Relationships: []
       }
