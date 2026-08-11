@@ -513,6 +513,18 @@ const Basics = ({
   }, []);
 
   const isRTL = language === "ar";
+  // Onboarding-driven personalization (weak subject / weakest topic)
+  const [onboarding, setOnboarding] = useState(() => readOnboarding());
+  useEffect(() => {
+    const sync = () => setOnboarding(readOnboarding());
+    window.addEventListener("app:onboarding-updated", sync);
+    return () => window.removeEventListener("app:onboarding-updated", sync);
+  }, []);
+  const weakTopicLabel = useMemo(() => {
+    if (!onboarding?.completed) return "";
+    const meta = weakTopicsFor(onboarding.subject).find((c) => c.n === onboarding.weakestTopic);
+    return meta ? topicLabel(meta, language === "ar" ? "ar" : "en") : "";
+  }, [onboarding, language]);
   const navigate = (k: MainMenuChoice) => {
     setActiveKey(k);
     // sync active group
