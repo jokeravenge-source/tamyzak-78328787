@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { trackStreakUpdated } from "@/lib/analytics";
+import { readOnboarding, weakTopicsFor, topicLabel } from "@/lib/onboarding";
 import {
   ArrowRight, ArrowLeft, Layers, BookMarked, FileText, GraduationCap, Microscope,
   LogOut, Bell, X, ListChecks, Newspaper, Timer, ScrollText, Network, Search,
