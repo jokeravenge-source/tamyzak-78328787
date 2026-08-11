@@ -36,6 +36,7 @@ const More = lazy(() => import("./pages/More"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 import PointsAwardOverlay from "./components/PointsAwardOverlay";
 import FeatureUnlockCelebration from "./components/FeatureUnlockCelebration";
+import NewFeatureAnnouncement from "./components/NewFeatureAnnouncement";
 import FeatureUnlocks from "./pages/FeatureUnlocks";
 import { ensureDailyLogin, fetchUnlockedKeys, isGatedMenu, type FeatureKey } from "@/lib/unlocks";
 const TodoList = lazy(() => import("./pages/TodoList"));
@@ -591,6 +592,7 @@ const App = () => {
       />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
+      {authed && language && <NewFeatureAnnouncement language={language} />}
       {authed && language && authRole !== "admin" && channelVerified && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
