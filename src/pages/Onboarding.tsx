@@ -8,7 +8,7 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ONBOARDING_SUBJECTS, weakTopicsFor, topicLabel, subjectLabelFor,
-  buildDiagnostic, seedWeakTopicDeck, addSuggestedTodos, saveOnboarding,
+  seedWeakTopicDeck, addSuggestedTodos, saveOnboarding,
   type OnboardingSubject,
 } from "@/lib/onboarding";
 import { pushTodos } from "@/lib/todosSync";
@@ -16,11 +16,13 @@ import {
   logOnboardingStepViewed, logOnboardingStepCompleted,
   logContentUnitCompleted, logFirstFeatureTouch,
 } from "@/lib/userEvents";
-import type { BattleMCQ } from "@/lib/battleMcqBank";
 import type { ChapterMeta } from "@/data/subjectChapters";
 
 const CHANNEL_URL = "https://t.me/Tamayuzak";
 const STEP_NAMES = ["subject_picker", "diagnostic", "results", "streak_hook", "dashboard_ready"];
+/** MCQ diagnostic (step 2) is disabled until the new MCQ bank lands. */
+const STEP_DISPLAY: Record<number, number> = { 1: 1, 3: 2, 4: 3, 5: 4 };
+const TOTAL_STEPS = 4;
 
 const ICONS: Record<OnboardingSubject, React.ComponentType<{ className?: string }>> = {
   physics: Atom, chemistry: FlaskConical, biology: Leaf,
@@ -74,10 +76,7 @@ export default function Onboarding({
   const [step, setStep] = useState(1);
   const [subject, setSubject] = useState<OnboardingSubject | null>(null);
   const [topics, setTopics] = useState<number[]>([]);
-  const [questions, setQuestions] = useState<BattleMCQ[]>([]);
-  const [qIndex, setQIndex] = useState(0);
-  const [picked, setPicked] = useState<number | null>(null);
-  const [answers, setAnswers] = useState<boolean[]>([]);
+  const answers: boolean[] = [];
   const [deckCount, setDeckCount] = useState(0);
   const [stats, setStats] = useState<{ streak: number; points: number }>({ streak: 0, points: 0 });
   const [tgOptIn, setTgOptIn] = useState(false);
@@ -89,28 +88,8 @@ export default function Onboarding({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
-  /* per-topic diagnostic scoring (round-robin question → topic) */
-  const perTopic = useMemo(() => {
-    const map = new Map<number, { right: number; total: number }>();
-    topics.forEach((n) => map.set(n, { right: 0, total: 0 }));
-    answers.forEach((ok, i) => {
-      const n = topics[i % Math.max(topics.length, 1)];
-      const cur = map.get(n) ?? { right: 0, total: 0 };
-      cur.total += 1;
-      if (ok) cur.right += 1;
-      map.set(n, cur);
-    });
-    return map;
-  }, [answers, topics]);
-
-  const weakestTopic = useMemo(() => {
-    let best: { n: number; ratio: number } | null = null;
-    perTopic.forEach((v, n) => {
-      const ratio = v.total ? v.right / v.total : 0;
-      if (!best || ratio < best.ratio) best = { n, ratio };
-    });
-    return best?.n ?? topics[0] ?? 1;
-  }, [perTopic, topics]);
+  /* Without the diagnostic, the first picked weak topic is treated as weakest. */
+  const weakestTopic = useMemo(() => topics[0] ?? 1, [topics]);
 
   const weakestMeta = topicList.find((c) => c.n === weakestTopic) ?? topicList[0];
 
@@ -119,30 +98,7 @@ export default function Onboarding({
   const startDiagnostic = () => {
     if (!subject || topics.length === 0) return;
     logOnboardingStepCompleted(1, STEP_NAMES[0], { subject, topics });
-    setQuestions(buildDiagnostic(subject, 5));
-    setQIndex(0);
-    setAnswers([]);
-    setPicked(null);
-    setStep(2);
-  };
-
-  const answerQuestion = (choice: number) => {
-    if (picked !== null) return;
-    setPicked(choice);
-    const ok = choice === questions[qIndex].answer;
-    const next = [...answers, ok];
-    setAnswers(next);
-    setTimeout(async () => {
-      if (qIndex + 1 < questions.length) {
-        setQIndex(qIndex + 1);
-        setPicked(null);
-        return;
-      }
-      logOnboardingStepCompleted(2, STEP_NAMES[1], {
-        subject, score: next.filter(Boolean).length, total: next.length,
-      });
-      setStep(3);
-    }, 650);
+    setStep(3);
   };
 
   /* auto-generate the deck as soon as the results screen opens */
@@ -225,13 +181,13 @@ export default function Onboarding({
         {/* progress */}
         <div className="mb-6">
           <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground mb-2">
-            <span>{t.step} {step} {t.of} 5</span>
+            <span>{t.step} {STEP_DISPLAY[step] ?? 1} {t.of} {TOTAL_STEPS}</span>
             <span className="text-primary">Tamayzak</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
             <motion.div
               className="h-full rounded-full bg-primary"
-              animate={{ width: `${(step / 5) * 100}%` }}
+              animate={{ width: `${((STEP_DISPLAY[step] ?? 1) / TOTAL_STEPS) * 100}%` }}
               transition={{ duration: 0.4 }}
             />
           </div>
@@ -299,63 +255,26 @@ export default function Onboarding({
             </motion.section>
           )}
 
-          {/* ---------- 2. diagnostic ---------- */}
-          {step === 2 && (
-            <motion.section key="s2" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className={`${glass} p-5 sm:p-7`}>
-              <div className="flex items-center justify-between">
-                <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full border border-primary/20">{t.s2Tag}</span>
-                <span className="font-mono text-sm font-bold text-primary tabular-nums">{Math.min(qIndex + 1, questions.length)}/{questions.length || 5}</span>
-              </div>
-
-              {questions.length === 0 ? (
-                <p className="mt-6 text-sm text-muted-foreground">{t.noQuestions}</p>
-              ) : (
-                <>
-                  <h2 className="mt-4 text-base sm:text-lg font-bold text-foreground leading-relaxed">{questions[qIndex].q}</h2>
-                  <div className="mt-5 space-y-3">
-                    {questions[qIndex].choices.map((c, i) => {
-                      const isRight = i === questions[qIndex].answer;
-                      const state = picked === null ? "idle" : isRight ? "right" : picked === i ? "wrong" : "idle";
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => answerQuestion(i)}
-                          className={`w-full min-h-[52px] rounded-2xl border px-4 py-3 text-start text-sm transition-all ${
-                            state === "right" ? "border-emerald-500 bg-emerald-500/10 text-foreground"
-                            : state === "wrong" ? "border-destructive bg-destructive/10 text-foreground"
-                            : "border-border bg-card text-foreground hover:border-primary/50"}`}
-                        >
-                          {c}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </motion.section>
-          )}
-
           {/* ---------- 3. results ---------- */}
           {step === 3 && (
             <motion.section key="s3" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className={`${glass} p-5 sm:p-7`}>
               <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full border border-primary/20">{t.s3Tag}</span>
               <h2 className="mt-3 text-xl font-bold text-foreground">{t.s3Title}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {subjectLabelFor(subject!, lang)} · {answers.filter(Boolean).length}/{answers.length}
+                {subjectLabelFor(subject!, lang)}
               </p>
 
               <div className="mt-5 space-y-3">
                 {topics.map((n) => {
                   const meta = topicList.find((c) => c.n === n);
-                  const v = perTopic.get(n) ?? { right: 0, total: 0 };
-                  const pct = v.total ? Math.round((v.right / v.total) * 100) : 0;
-                  const strong = pct >= 60;
+                  const strong = false;
+                  const pct = 100;
                   return (
                     <div key={n} className="rounded-2xl border border-border bg-card p-3">
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-sm font-semibold text-foreground">{meta ? topicLabel(meta, lang) : n}</span>
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${strong ? "bg-emerald-500/15 text-emerald-600" : "bg-amber-500/15 text-amber-600"}`}>
-                          {strong ? t.strong : t.weak} · {pct}%
+                          {t.weak}
                         </span>
                       </div>
                       <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">

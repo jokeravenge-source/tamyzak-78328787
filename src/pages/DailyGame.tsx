@@ -1,32 +1,36 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Heart, Trophy, Sparkles, Timer } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Trophy, Sparkles, Eye, Check, X } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { SUBJECT_LABEL, DAILY_GAME_REF_PREFIX, todayKey } from "@/lib/dailyGame";
 import { loadTodayGame, baghdadDayOfMonth } from "@/lib/dailyGames/manifest";
-import { buildCh1Pool, toBattleShape } from "@/lib/dailyGames/pool";
-import type { DailyGameRow, GameSpec } from "@/lib/dailyGames/types";
-import type { BattleMCQ, BattleSubject } from "@/lib/battleMcqBank";
+import type { DailyGameRow } from "@/lib/dailyGames/types";
+import type { BattleSubject } from "@/lib/battleMcqBank";
+import { buildWrittenSet, type WrittenQuestion } from "@/lib/ministerialWritten";
 import { awardPoints } from "@/lib/points";
 import { supabase } from "@/integrations/supabase/client";
 
 type Props = { language: AppLanguage; onBack: () => void; previewDay?: number };
 
 const T = (language: AppLanguage) => ({
-  title: language === "ar" ? "لعبة اليوم" : "Daily Game",
+  title: language === "ar" ? "تحدي اليوم" : "Daily Challenge",
   subjectOfDay: language === "ar" ? "مادة اليوم" : "Today's subject",
   back: language === "ar" ? "رجوع" : "Back",
-  start: language === "ar" ? "ابدأ اللعب" : "Start playing",
-  playAgain: language === "ar" ? "العب مجدداً" : "Play again",
-  score: language === "ar" ? "النقاط" : "Score",
-  lives: language === "ar" ? "المحاولات" : "Lives",
-  time: language === "ar" ? "الوقت" : "Time",
-  gameOver: language === "ar" ? "انتهت اللعبة" : "Game over",
+  start: language === "ar" ? "ابدأ" : "Start",
+  playAgain: language === "ar" ? "أعد المحاولة" : "Try again",
+  score: language === "ar" ? "النتيجة" : "Score",
+  gameOver: language === "ar" ? "انتهى التحدي" : "Challenge over",
   youWon: language === "ar" ? "أحسنت!" : "Well done!",
   earned: language === "ar" ? "حصلت على 5 نقاط 🎉" : "You earned 5 points 🎉",
   alreadyClaimed: language === "ar" ? "لعبت اليوم بالفعل — عد غداً لجائزة جديدة." : "You've already claimed today — come back tomorrow.",
   tryTomorrow: language === "ar" ? "لم تصل للحد الأدنى — حاول مجدداً غداً." : "Below the threshold — try again tomorrow.",
-  fallingHint: language === "ar" ? "اضغط على الإجابة الصحيحة قبل أن تسقط للأسفل." : "Tap the correct answer before it hits the floor.",
-  matchHint: language === "ar" ? "طابق كل سؤال مع إجابته الصحيحة." : "Match each question with its correct answer.",
+  hint: language === "ar"
+    ? "أسئلة وزارية كتابية — اكتب أو استرجع الإجابة ذهنياً ثم اكشف الإجابة النموذجية وقيّم نفسك بصدق."
+    : "Written ministerial questions — recall or write your answer, then reveal the model answer and grade yourself honestly.",
+  yourAnswer: language === "ar" ? "اكتب إجابتك هنا (اختياري)" : "Write your answer here (optional)",
+  reveal: language === "ar" ? "اكشف الإجابة النموذجية" : "Reveal model answer",
+  modelAnswer: language === "ar" ? "الإجابة النموذجية" : "Model answer",
+  knew: language === "ar" ? "عرفتها" : "I knew it",
+  didnt: language === "ar" ? "لم أعرفها" : "I didn't",
 });
 
 function ShellHeader({ language, onBack, subjectLabel }: { language: AppLanguage; onBack: () => void; subjectLabel: string }) {
@@ -45,262 +49,99 @@ function ShellHeader({ language, onBack, subjectLabel }: { language: AppLanguage
   );
 }
 
-/* -------------------- Falling Answers -------------------- */
+/* -------------------- Written recall game -------------------- */
 
-function FallingGame({
-  mcqs,
+function WrittenGame({
+  questions,
   language,
   onFinish,
 }: {
-  mcqs: BattleMCQ[];
+  questions: WrittenQuestion[];
   language: AppLanguage;
   onFinish: (score: number, max: number) => void;
 }) {
   const t = T(language);
-  const [qIdx, setQIdx] = useState(0);
-  const [lives, setLives] = useState(3);
+  const [idx, setIdx] = useState(0);
+  const [draft, setDraft] = useState("");
+  const [revealed, setRevealed] = useState(false);
   const [score, setScore] = useState(0);
-  const [combo, setCombo] = useState(0);
-  const [tick, setTick] = useState(0);
-  const [feedback, setFeedback] = useState<"ok" | "bad" | null>(null);
 
-  const q = mcqs[qIdx];
-  // deterministic per-question start offsets so bubbles don't overlap
-  const layout = useMemo(() => {
-    if (!q) return [] as { left: number; offset: number }[];
-    return q.choices.map((_, i) => ({ left: 5 + i * 22 + (i % 2 === 0 ? 2 : 6), offset: i * 12 }));
-  }, [q]);
-
-  const speed = 0.28 + Math.min(qIdx, 8) * 0.05; // % of container height per tick
-  const startedAt = useRef<number>(Date.now());
-
-  useEffect(() => {
-    startedAt.current = Date.now();
-    setFeedback(null);
-  }, [qIdx]);
-
-  useEffect(() => {
-    if (!q) return;
-    const id = window.setInterval(() => setTick((x) => x + 1), 60);
-    return () => window.clearInterval(id);
-  }, [q]);
-
-  const progress = ((Date.now() - startedAt.current) / 1000) * speed * 100;
-
-  useEffect(() => {
-    if (progress > 100 && q) {
-      const nextLives = lives - 1;
-      setLives(nextLives);
-      setCombo(0);
-      setFeedback("bad");
-      window.setTimeout(() => {
-        if (nextLives <= 0 || qIdx + 1 >= mcqs.length) onFinish(score, mcqs.length);
-        else setQIdx((i) => i + 1);
-      }, 500);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tick]);
-
+  const q = questions[idx];
   if (!q) return null;
 
-  const handlePick = (i: number) => {
-    if (feedback) return;
-    const correct = i === q.answer;
-    if (correct) {
-      const newCombo = combo + 1;
-      const bonus = newCombo >= 5 ? 3 : newCombo >= 3 ? 2 : 1;
-      setScore((s) => s + bonus);
-      setCombo(newCombo);
-      setFeedback("ok");
-    } else {
-      setLives((l) => l - 1);
-      setCombo(0);
-      setFeedback("bad");
+  const grade = (knew: boolean) => {
+    const nextScore = score + (knew ? 1 : 0);
+    setScore(nextScore);
+    if (idx + 1 >= questions.length) {
+      onFinish(nextScore, questions.length);
+      return;
     }
-    window.setTimeout(() => {
-      const lastLives = correct ? lives : lives - 1;
-      if (lastLives <= 0 || qIdx + 1 >= mcqs.length) onFinish(score + (correct ? (combo >= 5 ? 3 : combo >= 3 ? 2 : 1) : 0), mcqs.length);
-      else setQIdx((i) => i + 1);
-    }, 450);
+    setIdx(idx + 1);
+    setDraft("");
+    setRevealed(false);
   };
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between mb-3 text-sm">
         <div className="inline-flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-500" />{t.score}: <b>{score}</b></div>
-        <div className="inline-flex items-center gap-1 text-rose-500">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Heart key={i} className={`w-4 h-4 ${i < lives ? "fill-rose-500" : "opacity-30"}`} />
-          ))}
-        </div>
-        {combo >= 2 && <div className="text-xs font-bold text-fuchsia-500 animate-pulse">×{combo} combo</div>}
+        <div className="text-xs text-muted-foreground tabular-nums">{idx + 1} / {questions.length}</div>
       </div>
 
-      <div className="text-base font-semibold text-center mb-2 leading-snug min-h-[3.5em]">{q.q}</div>
-      <p className="text-center text-xs text-muted-foreground mb-3">{t.fallingHint}</p>
+      <p className="text-center text-xs text-muted-foreground mb-3">{t.hint}</p>
 
-      <div
-        className={`relative h-[340px] rounded-xl border overflow-hidden transition-colors ${
-          feedback === "ok" ? "border-emerald-400 bg-emerald-500/5"
-          : feedback === "bad" ? "border-rose-400 bg-rose-500/5"
-          : "border-border bg-gradient-to-b from-sky-500/5 to-transparent"
-        }`}
-      >
-        {/* floor line */}
-        <div className="absolute bottom-0 inset-x-0 h-8 border-t border-dashed border-border/60 bg-background/40" />
+      <div className="rounded-xl border border-border bg-secondary/40 p-4 text-sm font-semibold leading-relaxed whitespace-pre-wrap">
+        {q.q}
+      </div>
 
-        {q.choices.map((c, i) => {
-          const y = Math.max(0, Math.min(100, progress - (layout[i]?.offset ?? 0)));
-          const isCorrect = i === q.answer;
-          return (
-            <button
-              key={i}
-              onClick={() => handlePick(i)}
-              className={`absolute px-3 py-2 rounded-full shadow-lg text-xs sm:text-sm font-semibold border transition-transform active:scale-95 ${
-                feedback === "ok" && isCorrect
-                  ? "bg-emerald-500 text-white border-emerald-600 scale-110"
-                  : feedback === "bad" && isCorrect
-                  ? "bg-emerald-400/40 border-emerald-500/60"
-                  : "bg-primary/90 text-primary-foreground border-primary/70 hover:scale-105"
-              }`}
-              style={{ left: `${layout[i]?.left ?? 10}%`, top: `${y}%`, maxWidth: "40%" }}
-            >
-              <span className="line-clamp-2">{c}</span>
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        placeholder={t.yourAnswer}
+        rows={4}
+        className="mt-3 w-full rounded-xl border border-border bg-background p-3 text-sm outline-none focus:border-primary"
+      />
+
+      {!revealed ? (
+        <button
+          onClick={() => setRevealed(true)}
+          className="mt-3 w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold inline-flex items-center justify-center gap-2"
+        >
+          <Eye className="w-4 h-4" /> {t.reveal}
+        </button>
+      ) : (
+        <>
+          <div className="mt-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-4">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mb-1">{t.modelAnswer}</div>
+            <div className="text-sm leading-relaxed whitespace-pre-wrap">{q.a}</div>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => grade(true)} className="flex-1 h-12 rounded-xl bg-emerald-500 text-white font-bold inline-flex items-center justify-center gap-2">
+              <Check className="w-4 h-4" /> {t.knew}
             </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-3 text-center text-xs text-muted-foreground">
-        {qIdx + 1} / {mcqs.length}
-      </div>
+            <button onClick={() => grade(false)} className="flex-1 h-12 rounded-xl border border-border bg-secondary font-bold inline-flex items-center justify-center gap-2">
+              <X className="w-4 h-4" /> {t.didnt}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-/* -------------------- Term Match Blitz -------------------- */
-
-type Tile = { id: string; pairId: number; text: string; kind: "q" | "a"; done: boolean };
-
-function shuffle<T>(arr: T[], seed: number): T[] {
-  let s = seed || 1;
-  const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function MatchGame({
-  mcqs,
-  language,
-  seed,
-  onFinish,
-}: {
-  mcqs: BattleMCQ[];
-  language: AppLanguage;
-  seed: number;
-  onFinish: (score: number, max: number) => void;
-}) {
-  const t = T(language);
-  const pairs = mcqs.slice(0, 6);
-  const [tiles, setTiles] = useState<Tile[]>(() => {
-    const raw: Tile[] = [];
-    pairs.forEach((m, idx) => {
-      raw.push({ id: `q${idx}`, pairId: idx, text: m.q, kind: "q", done: false });
-      raw.push({ id: `a${idx}`, pairId: idx, text: m.choices[m.answer], kind: "a", done: false });
-    });
-    return shuffle(raw, seed);
-  });
-  const [picked, setPicked] = useState<Tile | null>(null);
-  const [wrong, setWrong] = useState<Set<string>>(new Set());
-  const [score, setScore] = useState(0);
-  const [misses, setMisses] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(75);
-
-  useEffect(() => {
-    const id = window.setInterval(() => setTimeLeft((x) => Math.max(0, x - 1)), 1000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    if (timeLeft === 0 || tiles.every((t) => t.done)) {
-      const max = pairs.length;
-      window.setTimeout(() => onFinish(score, max), 300);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, tiles]);
-
-  const onTap = (tile: Tile) => {
-    if (tile.done || timeLeft === 0) return;
-    if (!picked) { setPicked(tile); return; }
-    if (picked.id === tile.id) { setPicked(null); return; }
-    if (picked.pairId === tile.pairId && picked.kind !== tile.kind) {
-      setTiles((prev) => prev.map((x) => (x.pairId === tile.pairId ? { ...x, done: true } : x)));
-      setScore((s) => s + 1);
-      setPicked(null);
-    } else {
-      const s = new Set([picked.id, tile.id]);
-      setWrong(s);
-      setMisses((m) => m + 1);
-      window.setTimeout(() => { setWrong(new Set()); setPicked(null); }, 500);
-    }
-  };
-
-  return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center justify-between mb-3 text-sm">
-        <div className="inline-flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-500" />{t.score}: <b>{score}</b> / {pairs.length}</div>
-        <div className="inline-flex items-center gap-2 text-primary"><Timer className="w-4 h-4" />{timeLeft}s</div>
-        <div className="text-xs text-muted-foreground">✗ {misses}</div>
-      </div>
-      <p className="text-center text-xs text-muted-foreground mb-3">{t.matchHint}</p>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {tiles.map((tile) => {
-          const isPicked = picked?.id === tile.id;
-          const isWrong = wrong.has(tile.id);
-          return (
-            <button
-              key={tile.id}
-              onClick={() => onTap(tile)}
-              disabled={tile.done}
-              className={`min-h-[74px] px-2 py-2 rounded-xl border text-xs font-semibold text-center transition-all ${
-                tile.done
-                  ? "opacity-40 bg-emerald-500/10 border-emerald-500/40 line-through"
-                  : isWrong
-                  ? "bg-rose-500/15 border-rose-500 animate-pulse"
-                  : isPicked
-                  ? "bg-primary text-primary-foreground border-primary scale-[1.02] shadow-md"
-                  : tile.kind === "q"
-                  ? "bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20"
-                  : "bg-fuchsia-500/10 border-fuchsia-500/30 hover:bg-fuchsia-500/20"
-              }`}
-            >
-              <span className="line-clamp-4 leading-tight">{tile.text}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* -------------------- Page shell -------------------- */
+/* -------------------- Page -------------------- */
 
 export default function DailyGame({ language, onBack, previewDay }: Props) {
   const t = T(language);
-  const [phase, setPhase] = useState<"intro" | "play" | "done">("intro");
+  const lang: "ar" | "en" = language === "ar" ? "ar" : "en";
   const [loading, setLoading] = useState(true);
   const [today, setToday] = useState<DailyGameRow | null>(null);
-  const [mcqs, setMcqs] = useState<BattleMCQ[]>([]);
+  const [questions, setQuestions] = useState<WrittenQuestion[]>([]);
+  const [phase, setPhase] = useState<"intro" | "play" | "done">("intro");
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
   const [result, setResult] = useState<{ score: number; max: number; awarded: boolean } | null>(null);
   const refId = `${DAILY_GAME_REF_PREFIX}${todayKey()}`;
-  // Admin preview: opening a specific day from the admin modal sets
-  // sessionStorage("daily_game_preview_day"). We consume it once here.
+
   const [sessionPreview] = useState<number | undefined>(() => {
     try {
       const raw = sessionStorage.getItem("daily_game_preview_day");
@@ -323,14 +164,13 @@ export default function DailyGame({ language, onBack, previewDay }: Props) {
       setLoading(true);
       const row = await loadTodayGame(new Date(), activePreviewDay);
       if (cancel) return;
-      const cards = await buildCh1Pool(row.subject as BattleSubject, row.spec.count ?? 8, seed);
-      if (cancel) return;
+      const count = Math.min(6, row.spec.count ?? 5);
       setToday(row);
-      setMcqs(toBattleShape(cards, row.subject as BattleSubject));
+      setQuestions(buildWrittenSet(row.subject as BattleSubject, count, seed, lang));
       setLoading(false);
     })();
     return () => { cancel = true; };
-  }, [seed, activePreviewDay]);
+  }, [seed, activePreviewDay, lang]);
 
   useEffect(() => {
     (async () => {
@@ -365,7 +205,7 @@ export default function DailyGame({ language, onBack, previewDay }: Props) {
       <main className="min-h-screen bg-background pb-28">
         <div className="max-w-2xl mx-auto px-4 pt-6" dir={language === "ar" ? "rtl" : "ltr"}>
           <div className="rounded-2xl border border-border bg-card p-6 text-center text-muted-foreground animate-pulse">
-            {language === "ar" ? "جاري تحضير لعبة اليوم…" : "Preparing today's game…"}
+            {language === "ar" ? "جاري تحضير تحدي اليوم…" : "Preparing today's challenge…"}
           </div>
         </div>
       </main>
@@ -373,25 +213,22 @@ export default function DailyGame({ language, onBack, previewDay }: Props) {
   }
 
   const subjectLabel = today ? SUBJECT_LABEL[today.subject][language] : "";
-  const spec: GameSpec | null = today?.spec ?? null;
 
-  if (!today || mcqs.length < 4) {
+  if (!today || questions.length < 3) {
     return (
       <main className="min-h-screen bg-background pb-28">
         <div className="max-w-2xl mx-auto px-4 pt-6" dir={language === "ar" ? "rtl" : "ltr"}>
           <ShellHeader language={language} onBack={onBack} subjectLabel={subjectLabel} />
           <div className="rounded-2xl border border-border bg-card p-6 text-center text-muted-foreground">
-            {language === "ar" ? "لا توجد أسئلة كافية لهذه المادة اليوم — عد غداً." : "Not enough questions for today's subject — come back tomorrow."}
+            {language === "ar" ? "لا توجد أسئلة وزارية كافية لهذه المادة اليوم — عد غداً." : "Not enough ministerial questions for today's subject — come back tomorrow."}
           </div>
         </div>
       </main>
     );
   }
 
-  const gradient = spec?.theme.gradient ?? "from-primary/10 via-fuchsia-500/5 to-amber-500/10";
-  const motif = spec?.theme.motif ?? "✨";
-  const gameTitle = spec ? spec.title[language] : t.title;
-  const gameTutorial = spec ? spec.tutorial[language] : (today.engine === "falling" ? t.fallingHint : t.matchHint);
+  const gradient = today.spec?.theme?.gradient ?? "from-primary/10 via-fuchsia-500/5 to-amber-500/10";
+  const motif = today.spec?.theme?.motif ?? "✨";
 
   return (
     <main className="min-h-screen bg-background pb-28">
@@ -404,14 +241,16 @@ export default function DailyGame({ language, onBack, previewDay }: Props) {
             {t.title}
             <span className="text-xl">{motif}</span>
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">{gameTitle}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {language === "ar" ? "أسئلة وزارية كتابية" : "Written ministerial questions"}
+          </p>
         </div>
 
         {phase === "intro" && (
           <div className={`rounded-2xl border border-border bg-gradient-to-br ${gradient} p-6 text-center`}>
             <p className="text-sm text-muted-foreground mb-1">{t.subjectOfDay}</p>
             <p className="text-3xl font-black mb-4">{subjectLabel}</p>
-            <p className="text-sm mb-6">{gameTutorial}</p>
+            <p className="text-sm mb-6">{t.hint}</p>
             {alreadyClaimed && (
               <p className="text-xs text-amber-600 dark:text-amber-400 mb-4">{t.alreadyClaimed}</p>
             )}
@@ -424,15 +263,8 @@ export default function DailyGame({ language, onBack, previewDay }: Props) {
           </div>
         )}
 
-        {phase === "play" && today.engine === "falling" && (
-          <FallingGame mcqs={mcqs} language={language} onFinish={onFinish} />
-        )}
-        {phase === "play" && today.engine === "match" && (
-          <MatchGame mcqs={mcqs} language={language} seed={seed} onFinish={onFinish} />
-        )}
-        {phase === "play" && today.engine !== "falling" && today.engine !== "match" && (
-          // Engine not yet implemented → fall back to falling so the day is playable
-          <FallingGame mcqs={mcqs} language={language} onFinish={onFinish} />
+        {phase === "play" && (
+          <WrittenGame questions={questions} language={language} onFinish={onFinish} />
         )}
 
         {phase === "done" && result && (
