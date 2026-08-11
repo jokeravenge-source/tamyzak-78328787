@@ -44,26 +44,14 @@ const FeatureUnlocks = ({
     load();
     const onUpdate = () => load();
     window.addEventListener("app:progress-updated", onUpdate);
-    // Subscribe only to my own progress row — everyone else's updates were
-    // being broadcast to every open client.
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let disposed = false;
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u?.user || disposed) return;
-      channel = supabase
-        .channel("feature-unlocks-progress")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "user_progress", filter: `user_id=eq.${u.user.id}` },
-          onUpdate,
-        )
-        .subscribe();
-    })();
+    // Cost: progress only changes from this client's own actions, so the
+    // in-app event + focus refresh replaces the realtime channel.
+    window.addEventListener("app:feature-unlocked", onUpdate);
+    window.addEventListener("focus", onUpdate);
     return () => {
-      disposed = true;
       window.removeEventListener("app:progress-updated", onUpdate);
-      if (channel) supabase.removeChannel(channel);
+      window.removeEventListener("app:feature-unlocked", onUpdate);
+      window.removeEventListener("focus", onUpdate);
     };
   }, []);
   const points = progress.lifetime_points;
