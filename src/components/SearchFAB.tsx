@@ -37,8 +37,6 @@ const ENTRIES: Entry[] = [
     keywords: ["youtube", "video", "transcript", "lecture", "summarize", "notes", "فيديو", "يوتيوب", "محاضرة", "ملاحظات"] },
   { key: "account", en: { title: "Account Center", desc: "Settings, countdown event, profile" }, ar: { title: "مركز الحساب", desc: "الإعدادات والملف الشخصي" },
     keywords: ["profile", "settings", "username", "name", "avatar", "countdown", "timer", "event", "exam date", "theme", "language", "preferences", "signout", "logout", "telegram", "linked", "حساب", "إعدادات", "اسم", "ملف شخصي", "موعد", "عد تنازلي", "امتحان", "تليغرام", "خروج"] },
-  { key: "essay", en: { title: "Al-Musahhih", desc: "AI answer-sheet grading" }, ar: { title: "المُصحِّح", desc: "تصحيح ورقة الإجابة" },
-    keywords: ["writing", "essays", "grade", "score", "feedback", "ai", "كتابة", "مقال", "تصحيح", "علامة"] },
   { key: "biologyDrawings", en: { title: "Biology Drawings", desc: "Labeled diagrams" }, ar: { title: "رسومات الأحياء", desc: "رسومات معنونة" },
     keywords: ["biology", "diagrams", "drawings", "labels", "anatomy", "cell", "أحياء", "رسومات", "تشريح", "خلية"] },
   { key: "todo", en: { title: "To-Do List", desc: "Daily tasks" }, ar: { title: "قائمة المهام", desc: "مهام اليوم" },
