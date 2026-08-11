@@ -744,6 +744,8 @@ const App = () => {
         <WhoIsBest language={language} onBack={resetMenu} isAdmin={isAdmin} />
       ) : menuChoice === "challenge" ? (
         <ChallengePage language={language} onBack={resetMenu} isAdmin={isAdmin} />
+      ) : menuChoice === "joinTamayzak" ? (
+        <JoinTamayzak language={language} onBack={resetMenu} />
       ) : menuChoice === "companion" || menuChoice === "psych" ? (
         <main className="min-h-screen bg-background pb-28">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
