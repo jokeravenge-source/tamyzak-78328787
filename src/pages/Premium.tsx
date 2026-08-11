@@ -1,12 +1,15 @@
-import { useEffect } from "react";
-import { ArrowLeft, Check, Crown, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Check, Coins, Crown, Loader2, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
+import { getPaddleEnvironment } from "@/lib/paddle";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import type { AppLanguage } from "@/components/LanguageGate";
 
 const TELEGRAM_URL = "https://t.me/ias404";
+const POINTS_COST = 500;
 
 const copy = {
   en: {
@@ -20,6 +23,13 @@ const copy = {
     ctaSub: "Message @ias404 on Telegram to activate",
     active: "You're a Premium member",
     activeDesc: "Enjoy unlimited AI and your premium perks.",
+    pointsTitle: "Or unlock with points",
+    pointsDesc: `Spend ${POINTS_COST} points to get 30 days of Premium.`,
+    pointsBalance: "Your balance",
+    pointsCta: `Redeem ${POINTS_COST} points`,
+    pointsShort: "Not enough points yet",
+    pointsSuccess: "🎉 Premium unlocked for 30 days!",
+    pointsError: "Could not redeem right now",
     features: [
       "Unlimited Al-Musahhih, MCQ Generator & Video to Notes",
       "Animated Premium badge next to your name",
@@ -38,6 +48,13 @@ const copy = {
     ctaSub: "راسل @ias404 على تيليجرام للتفعيل",
     active: "أنت عضو بريميوم",
     activeDesc: "استمتع بذكاء اصطناعي غير محدود ومميزاتك البريميوم.",
+    pointsTitle: "أو افتحه بالنقاط",
+    pointsDesc: `استبدل ${POINTS_COST} نقطة واحصل على ٣٠ يوم بريميوم.`,
+    pointsBalance: "رصيدك",
+    pointsCta: `استبدال ${POINTS_COST} نقطة`,
+    pointsShort: "نقاطك غير كافية بعد",
+    pointsSuccess: "🎉 تم تفعيل البريميوم لمدة ٣٠ يوم!",
+    pointsError: "تعذر الاستبدال حالياً",
     features: [
       "استخدام غير محدود لمدرّب المقالات ومولد الأسئلة وملاحظات الفيديو",
       "شارة بريميوم متحركة بجانب اسمك",
@@ -50,6 +67,31 @@ const copy = {
 export default function Premium({ language, onBack }: { language: AppLanguage; onBack: () => void }) {
   const t = copy[language];
   const { isPremium, loading: subLoading } = useSubscription();
+  const [balance, setBalance] = useState<number | null>(null);
+  const [redeeming, setRedeeming] = useState(false);
+
+  const loadBalance = async () => {
+    const { data } = await supabase.rpc("points_balance");
+    setBalance(typeof data === "number" ? data : 0);
+  };
+
+  useEffect(() => { loadBalance(); }, []);
+
+  const redeem = async () => {
+    setRedeeming(true);
+    const { data, error } = await supabase.rpc("redeem_premium_with_points", {
+      _environment: getPaddleEnvironment(),
+    });
+    setRedeeming(false);
+    const res = data as { ok?: boolean; reason?: string; balance?: number } | null;
+    if (error || !res?.ok) {
+      toast.error(res?.reason === "not_enough_points" ? t.pointsShort : t.pointsError);
+      return;
+    }
+    setBalance(res.balance ?? 0);
+    toast.success(t.pointsSuccess);
+    setTimeout(() => window.location.reload(), 1200);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -142,6 +184,30 @@ export default function Premium({ language, onBack }: { language: AppLanguage; o
             </div>
           )}
         </motion.div>
+
+        {!isPremium && !subLoading && (
+          <div className="mt-6 rounded-3xl border border-border bg-card/70 p-6">
+            <div className="flex items-center gap-2 mb-1">
+              <Coins className="w-5 h-5 text-primary" />
+              <h2 className="font-bold text-foreground">{t.pointsTitle}</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">{t.pointsDesc}</p>
+            <div className="mt-4 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{t.pointsBalance}</span>
+              <span className="font-mono text-xl font-black tabular-nums text-foreground">
+                {balance ?? "—"}
+              </span>
+            </div>
+            <button
+              onClick={redeem}
+              disabled={redeeming || (balance ?? 0) < POINTS_COST}
+              className="mt-4 w-full h-12 rounded-xl font-bold inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground transition disabled:opacity-50"
+            >
+              {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Coins className="w-4 h-4" />}
+              {(balance ?? 0) < POINTS_COST ? t.pointsShort : t.pointsCta}
+            </button>
+          </div>
+        )}
       </motion.section>
     </main>
   );
