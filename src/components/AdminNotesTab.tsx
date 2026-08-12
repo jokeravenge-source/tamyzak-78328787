@@ -408,6 +408,7 @@ function NoteEditor({
         cover_emoji: emoji,
         published,
         background_image_url: bgUrl,
+        notebook_id: row.notebook_id,
         created_by: u.user?.id,
       };
       const q = row.id
