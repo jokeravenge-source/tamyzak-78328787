@@ -106,6 +106,16 @@ const teachers: Teacher[] = [
   },
 ];
 
+// Chapter 4 course (same concept, separate playlists/lecture count)
+teachers.push({
+  id: "mohammed-anzi-ch4",
+  nameAr: "محمد العنزي — الفصل الرابع",
+  nameEn: "Mohammed Al-Anzi — Chapter 4",
+  photo: anziAsset.url,
+  subject: "biology",
+  chapterKey: "bio-1",
+});
+
 type MCQItem = {
   question: string;
   choices: string[];
@@ -236,8 +246,13 @@ const Teachers = ({
           )}
 
           {view.kind === "topics" && (
-            view.teacher.id === "mohammed-anzi" ? (
-              <AnziFlow key="anzi" teacher={view.teacher} isAdmin={!!isAdmin} />
+            view.teacher.id.startsWith("mohammed-anzi") ? (
+              <AnziFlow
+                key={view.teacher.id}
+                teacher={view.teacher}
+                isAdmin={!!isAdmin}
+                ch={view.teacher.id === "mohammed-anzi-ch4" ? 4 : 3}
+              />
             ) : (
               <TopicsView
                 key="topics"
@@ -836,12 +851,17 @@ function PracticeModal({
 export default Teachers;
 
 // ================= Mohammed Al-Anzi flow =================
-const ANZI_PLAYLISTS = {
-  ar: "PL8aWGashaQUhrL8s3uNqTCwDQgvCu35za",
-  en: "PLsYLu8VyivsT1nBmS7r8OPLYpNJXqbsAs",
-} as const;
-
-const ANZI_LECTURE_COUNT: Record<AnziLang, number> = { ar: 23, en: 22 };
+const ANZI_CHAPTERS: Record<number, { playlists: Record<AnziLang, string>; counts: Record<AnziLang, number> }> = {
+  3: {
+    playlists: { ar: "PL8aWGashaQUhrL8s3uNqTCwDQgvCu35za", en: "PLsYLu8VyivsT1nBmS7r8OPLYpNJXqbsAs" },
+    counts: { ar: 23, en: 22 },
+  },
+  4: {
+    playlists: { ar: "PL8aWGashaQUh0VHenzw39Mbs0bwy9bQQi", en: "" },
+    counts: { ar: 7, en: 0 },
+  },
+};
+const chapterCfg = (ch: number) => ANZI_CHAPTERS[ch] ?? ANZI_CHAPTERS[3];
 
 type AnziLang = "ar" | "en";
 type AnziStage =
@@ -849,11 +869,9 @@ type AnziStage =
   | { s: "lectures"; lang: AnziLang }
   | { s: "lecture"; lang: AnziLang; n: number };
 
-// Chapter 3 is the only unlocked chapter — kept as a constant so existing
-// stored MCQ / notes topic keys (anzi-<lang>-ch3-lec<N>-<mode>) still match.
-const ANZI_CH = 3;
-
-function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) {
+function AnziFlow({ teacher, isAdmin, ch = 3 }: { teacher: Teacher; isAdmin: boolean; ch?: number }) {
+  const cfg = chapterCfg(ch);
+  const langs = (["ar", "en"] as const).filter((l) => !!cfg.playlists[l]);
   const [stage, setStage] = useState<AnziStage>({ s: "language" });
 
   // Deep-link support: /teachers?anzi=1&lang=ar&lec=5
@@ -862,7 +880,8 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
     const lang = p.get("lang");
     const lec = parseInt(p.get("lec") || "", 10);
     if (lang === "ar" || lang === "en") {
-      if (lec && lec >= 1 && lec <= ANZI_LECTURE_COUNT[lang]) {
+      if (!cfg.playlists[lang]) return;
+      if (lec && lec >= 1 && lec <= cfg.counts[lang]) {
         setStage({ s: "lecture", lang, n: lec });
       } else {
         setStage({ s: "lectures", lang });
@@ -937,7 +956,7 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
         <section>
           <h2 className="text-xl font-bold mb-4">{tr.pickLang}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {(["ar", "en"] as const).map((l) => (
+            {langs.map((l) => (
               <button
                 key={l}
                 onClick={() => setStage({ s: "lectures", lang: l })}
@@ -964,12 +983,12 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
               <AnziBulkNotesGenerator
                 teacherId={teacher.id}
                 lang={stage.lang}
-                ch={ANZI_CH}
+                ch={ch}
               />
             </div>
           )}
           <ul className="grid gap-2 sm:grid-cols-2">
-            {Array.from({ length: ANZI_LECTURE_COUNT[stage.lang] }, (_, i) => i + 1).map((n) => (
+            {Array.from({ length: cfg.counts[stage.lang] }, (_, i) => i + 1).map((n) => (
               <li key={n}>
                 <button
                   onClick={() =>
@@ -992,7 +1011,7 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
         <AnziLectureView
           teacher={teacher}
           lang={stage.lang}
-          ch={ANZI_CH}
+          ch={ch}
           n={stage.n}
           isAdmin={isAdmin}
         />
@@ -1035,7 +1054,7 @@ function AnziBulkNotesGenerator({
       const projectRef = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || "";
       const supaUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "";
       const base = supaUrl ? `${supaUrl}/functions/v1` : (projectRef ? `https://${projectRef}.functions.supabase.co` : "");
-      const res = await fetch(`${base}/youtube-playlist?list=${ANZI_PLAYLISTS[lang]}`, {
+      const res = await fetch(`${base}/youtube-playlist?list=${chapterCfg(ch).playlists[lang]}`, {
         headers: { apikey: (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) || "" },
       });
       const listJson = await res.json();
@@ -1043,7 +1062,7 @@ function AnziBulkNotesGenerator({
       if (!videos.length) { toast.error(noFetch); return; }
 
       // 2) Existing rows so we skip lectures that already have a video saved
-      const total = Math.min(ANZI_LECTURE_COUNT[lang], videos.length);
+      const total = Math.min(chapterCfg(ch).counts[lang], videos.length);
       const topicKeys = Array.from({ length: total }, (_, i) => `anzi-${lang}-ch${ch}-lec${i + 1}-study`);
       const { data: existing } = await supabase
         .from("teacher_topic_videos")
@@ -1157,7 +1176,7 @@ function AnziLectureView({
   const [tab, setTab] = useState<"notes" | "exam">("notes");
   const topicKey = `anzi-${lang}-ch${ch}-lec${n}-${tab === "notes" ? "study" : "exam"}`;
   const label = lang === "ar" ? `المحاضرة ${n}` : `Lecture ${n}`;
-  const playlist = ANZI_PLAYLISTS[lang];
+  const playlist = chapterCfg(ch).playlists[lang];
   const L2 = t[lang];
 
   // MCQ state (exam mode)
