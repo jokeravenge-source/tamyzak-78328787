@@ -325,6 +325,135 @@ export default function AdminNotesTab() {
   );
 }
 
+function NotebookEditor({
+  row,
+  onClose,
+  onSaved,
+}: {
+  row: NotebookRow;
+  onClose: () => void;
+  onSaved: (row: NotebookRow) => void;
+}) {
+  const [title, setTitle] = useState(row.title);
+  const [description, setDescription] = useState(row.description || "");
+  const [emoji, setEmoji] = useState(row.cover_emoji || "📚");
+  const [published, setPublished] = useState(row.published);
+  const [cover, setCover] = useState<string | null>(row.cover_image_url);
+  const [busy, setBusy] = useState(false);
+  const [upBusy, setUpBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const pick = async (file: File) => {
+    if (!file.type.startsWith("image/")) return toast.error("Pick an image file");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Max 5MB");
+    setUpBusy(true);
+    try {
+      setCover(await uploadImage(file));
+      toast.success("Cover uploaded");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    } finally {
+      setUpBusy(false);
+    }
+  };
+
+  const save = async () => {
+    if (!title.trim()) return toast.error("Title required");
+    setBusy(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const payload = {
+        title: title.trim(),
+        description: description.trim() || null,
+        cover_emoji: emoji,
+        cover_image_url: cover,
+        published,
+        created_by: u.user?.id,
+      };
+      const q = row.id
+        ? (supabase as any).from("admin_notebooks").update(payload).eq("id", row.id).select("*").single()
+        : (supabase as any).from("admin_notebooks").insert(payload).select("*").single();
+      const { data, error } = await q;
+      if (error) throw error;
+      toast.success("Notebook saved");
+      onSaved(data as NotebookRow);
+    } catch (e: any) {
+      toast.error(e.message || "Save failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <button onClick={onClose} className="inline-flex items-center gap-2 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-sm">
+          <X className="w-4 h-4" /> Close
+        </button>
+        <div className="flex items-center gap-2">
+          <label className="inline-flex items-center gap-2 px-3 h-9 rounded-lg border border-white/10 text-sm cursor-pointer">
+            <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+            Publish
+          </label>
+          <button onClick={save} disabled={busy} className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm disabled:opacity-60">
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-secondary/40 backdrop-blur p-4 md:p-6 space-y-3">
+        <input
+          value={emoji}
+          onChange={(e) => setEmoji(e.target.value.slice(0, 4))}
+          className="w-24 h-14 text-4xl text-center rounded-xl bg-background border border-white/10"
+        />
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Notebook title"
+          className="w-full h-14 px-4 rounded-xl bg-background border border-white/10 text-2xl font-semibold"
+        />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={2}
+          placeholder="Short description"
+          className="w-full px-3 py-2 rounded-xl bg-background border border-white/10 text-sm"
+        />
+        <div className="pt-2 border-t border-white/10 flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-muted-foreground inline-flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-primary" /> Cover image
+          </span>
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={upBusy}
+            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-xs disabled:opacity-60"
+          >
+            {upBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Upload photo
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); e.currentTarget.value = ""; }}
+          />
+          {cover && (
+            <button onClick={() => setCover(null)} className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs">
+              <Trash2 className="w-3.5 h-3.5" /> Remove
+            </button>
+          )}
+        </div>
+        {cover && (
+          <div className="rounded-xl overflow-hidden border border-white/10 aspect-[16/9] bg-black">
+            <img src={cover} alt="Notebook cover" className="w-full h-full object-cover" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function NoteEditor({
   row,
   onClose,
@@ -334,7 +463,6 @@ function NoteEditor({
   onClose: () => void;
   onSaved: (row: NoteRow) => void;
 }) {
-  // note editor below
   const [title, setTitle] = useState(row.title);
   const [emoji, setEmoji] = useState(row.cover_emoji || "📘");
   const [published, setPublished] = useState(row.published);
