@@ -250,6 +250,20 @@ const STUDY_TOOLS: { key: MainMenuChoice; Icon: React.ComponentType<{ className?
   { key: "mcq",        Icon: HelpCircle },
 ];
 
+// Icons for any tool that can show up in "recently used"
+const TOOL_ICONS: Partial<Record<MainMenuChoice, React.ComponentType<{ className?: string }>>> = {
+  videoNotes: Headphones,
+  youtube: Youtube,
+  canvas: Palette,
+  notes: NotebookPen,
+  companion: Sparkles,
+  mcq: HelpCircle,
+  report: Sparkles,
+  summaries: FileText,
+  todo: ListChecks,
+  missions: Target,
+};
+
 const FEATURED_COPY = {
   en: {
     report: { title: "Daily Report", subtitle: "AI insights + parent follow-up link." },
