@@ -106,6 +106,16 @@ const teachers: Teacher[] = [
   },
 ];
 
+// Chapter 4 course (same concept, separate playlists/lecture count)
+teachers.push({
+  id: "mohammed-anzi-ch4",
+  nameAr: "محمد العنزي — الفصل الرابع",
+  nameEn: "Mohammed Al-Anzi — Chapter 4",
+  photo: anziAsset.url,
+  subject: "biology",
+  chapterKey: "bio-1",
+});
+
 type MCQItem = {
   question: string;
   choices: string[];
@@ -236,8 +246,13 @@ const Teachers = ({
           )}
 
           {view.kind === "topics" && (
-            view.teacher.id === "mohammed-anzi" ? (
-              <AnziFlow key="anzi" teacher={view.teacher} isAdmin={!!isAdmin} />
+            view.teacher.id.startsWith("mohammed-anzi") ? (
+              <AnziFlow
+                key={view.teacher.id}
+                teacher={view.teacher}
+                isAdmin={!!isAdmin}
+                ch={view.teacher.id === "mohammed-anzi-ch4" ? 4 : 3}
+              />
             ) : (
               <TopicsView
                 key="topics"
