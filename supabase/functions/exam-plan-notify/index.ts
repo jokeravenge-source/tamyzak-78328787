@@ -98,8 +98,16 @@ Deno.serve(async (req) => {
     let sent = 0, skipped = 0, failed = 0, nodue = 0;
 
     for (const p of (plans ?? []) as { user_id: string; subjects: string[]; start_date: string; interval_days: number }[]) {
-      const offsets = examOffsets((p.subjects ?? []).length);
-      const step = (p.subjects ?? []).findIndex((_, i) => addDays(p.start_date, offsets[i]) === todayKey);
+      const subjects = p.subjects ?? [];
+      if (subjects.length === 0) { nodue++; continue; }
+      // The plan repeats: once the cycle ends it starts over, so students keep
+      // getting reminders instead of the plan silently going dead after 5 days.
+      const cycle = Math.max(p.interval_days || CYCLE_DAYS, subjects.length);
+      const elapsed = daysBetween(p.start_date, todayKey);
+      if (elapsed < 0) { nodue++; continue; }
+      const dayInCycle = ((elapsed % cycle) + cycle) % cycle;
+      const offsets = examOffsets(subjects.length, cycle);
+      const step = offsets.indexOf(dayInCycle);
       if (step < 0) { nodue++; continue; }
 
       const { data: tg } = await admin
@@ -116,16 +124,23 @@ Deno.serve(async (req) => {
         .insert({ notification_key: key, telegram_user_id: chatId });
       if (dupErr) { skipped++; continue; }
 
-      const subject = p.subjects[step];
+      const subject = subjects[step];
       const name = SUBJECT_AR[subject] ?? subject;
+      const total = subjects.length;
       const msg =
         phase.key === "morning"
-          ? `<b>📚 اليوم امتحانك</b>\n\nامتحان <b>${esc(name)}</b> اليوم الساعة <b>9:00 مساءً</b> بتوقيت بغداد (المرحلة ${step + 1} من ${p.subjects.length}).\n\nجهّز نفسك 💪`
+          ? `<b>📚 اليوم امتحانك</b>\n\nامتحان <b>${esc(name)}</b> اليوم الساعة <b>9:00 مساءً</b> بتوقيت بغداد (المرحلة ${step + 1} من ${total}).\n\nجهّز نفسك 💪`
           : phase.key === "h1"
             ? `<b>⏰ باقي ساعة</b>\n\nامتحان <b>${esc(name)}</b> يبدأ الساعة <b>9:00 مساءً</b> — بعد ساعة من الآن.`
             : `<b>🔔 باقي 15 دقيقة</b>\n\nامتحان <b>${esc(name)}</b> يبدأ الساعة <b>9:00 مساءً</b>. افتح تميزك ← الدورات الآن.`;
       const ok = await tgSend(chatId, msg);
-      if (ok) sent++; else failed++;
+      if (ok) {
+        sent++;
+      } else {
+        // Release the dedupe key so the next run can retry this reminder.
+        failed++;
+        await admin.from("telegram_notifications_sent").delete().eq("notification_key", key);
+      }
       await new Promise((r) => setTimeout(r, 40));
     }
 
