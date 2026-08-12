@@ -25,11 +25,17 @@ function addDays(iso: string, days: number): string {
 
 const CYCLE_DAYS = 5;
 // 1 -> [0]; 2 -> [0,4]; 3 -> [0,2,4]; 4 -> [0,1,3,4]; 5 -> [0..4]; >5 -> consecutive days
-function examOffsets(count: number): number[] {
+function examOffsets(count: number, cycle: number): number[] {
   if (count <= 0) return [];
   if (count === 1) return [0];
-  if (count > CYCLE_DAYS) return Array.from({ length: count }, (_, i) => i);
-  return Array.from({ length: count }, (_, i) => Math.round((i * (CYCLE_DAYS - 1)) / (count - 1)));
+  if (count > cycle) return Array.from({ length: count }, (_, i) => i);
+  return Array.from({ length: count }, (_, i) => Math.round((i * (cycle - 1)) / (count - 1)));
+}
+
+function daysBetween(fromIso: string, toIso: string): number {
+  const a = Date.parse(`${fromIso}T00:00:00Z`);
+  const b = Date.parse(`${toIso}T00:00:00Z`);
+  return Math.round((b - a) / 86_400_000);
 }
 
 async function tgSend(chatId: number, text: string) {
