@@ -614,6 +614,14 @@ const Basics = ({
   }[language];
   const activeCopy = todoCopy;
   const toolsHeader = { en: "Study tools", ar: "أدوات الدراسة" }[language];
+  const recentTools = recentKeys
+    .filter((k) => k !== "liveBattle" && TOOL_ICONS[k as MainMenuChoice] && (fc as any)[k])
+    .slice(0, 6)
+    .map((k) => ({ key: k as MainMenuChoice, Icon: TOOL_ICONS[k as MainMenuChoice]! }));
+  const displayedTools = recentTools.length > 0 ? recentTools : STUDY_TOOLS;
+  const displayedToolsHeader = recentTools.length > 0
+    ? { en: "Recently used", ar: "المستخدمة مؤخراً" }[language]
+    : toolsHeader;
   const viewAll = { en: "View all tools", ar: "عرض كل الأدوات" }[language];
 
   const SidebarBody = () => (
