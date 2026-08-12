@@ -34,6 +34,7 @@ import Basics, { type BasicsChoice } from "./pages/Basics";
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 import { isOnboardingDone, type OnboardingSubject } from "@/lib/onboarding";
 import { captureAttribution, syncAttribution, logSignupCompleted, logFirstFeatureTouch } from "@/lib/userEvents";
+import { recordToolUse } from "@/lib/recentTools";
 const BiologyDrawings = lazy(() => import("./pages/BiologyDrawings"));
 const More = lazy(() => import("./pages/More"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
@@ -528,6 +529,7 @@ const App = () => {
   };
   const chooseMenu = (choice: MenuChoice) => {
     logFirstFeatureTouch(choice);
+    recordToolUse(choice);
     // Points-gated tools: send the student to the progress page instead of the tool.
     const gated = isGatedMenu(choice);
     if (gated && !unlockedKeys.includes(gated)) {
