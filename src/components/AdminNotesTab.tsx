@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus, Trash2, Loader2, Eye, EyeOff, Save, X, FileText, ArrowUp, ArrowDown, Layout, Sparkles, Image as ImageIcon, Upload } from "lucide-react";
+import { Plus, Trash2, Loader2, Eye, EyeOff, Save, X, FileText, ArrowUp, ArrowDown, Layout, Sparkles, Image as ImageIcon, Upload, BookOpen, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -16,9 +16,29 @@ type NoteRow = {
   cover_emoji: string | null;
   published: boolean;
   background_image_url: string | null;
+  notebook_id: string | null;
   created_at: string;
   updated_at: string;
 };
+
+type NotebookRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  cover_emoji: string | null;
+  cover_image_url: string | null;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+async function uploadImage(file: File): Promise<string> {
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `note-covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from("news").upload(path, file, { contentType: file.type });
+  if (error) throw error;
+  return supabase.storage.from("news").getPublicUrl(path).data.publicUrl;
+}
 
 const TEMPLATES: Record<string, { label: string; blocks: AdminNoteBlock[] }> = {
   "study-guide": { label: "Study guide", blocks: STUDY_GUIDE_TEMPLATE },
@@ -41,15 +61,20 @@ export default function AdminNotesTab() {
   const [rows, setRows] = useState<NoteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editor, setEditor] = useState<NoteRow | null>(null);
+  const [notebooks, setNotebooks] = useState<NotebookRow[]>([]);
+  const [activeNotebook, setActiveNotebook] = useState<NotebookRow | null>(null);
+  const [nbEditor, setNbEditor] = useState<NotebookRow | null>(null);
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any)
-      .from("admin_notes")
-      .select("*")
-      .order("updated_at", { ascending: false });
-    if (error) toast.error(error.message);
-    setRows((data ?? []) as NoteRow[]);
+    const [notesRes, nbRes] = await Promise.all([
+      (supabase as any).from("admin_notes").select("*").order("updated_at", { ascending: false }),
+      (supabase as any).from("admin_notebooks").select("*").order("created_at", { ascending: false }),
+    ]);
+    if (notesRes.error) toast.error(notesRes.error.message);
+    if (nbRes.error) toast.error(nbRes.error.message);
+    setRows((notesRes.data ?? []) as NoteRow[]);
+    setNotebooks((nbRes.data ?? []) as NotebookRow[]);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -64,6 +89,7 @@ export default function AdminNotesTab() {
       cover_emoji: "📘",
       published: false,
       background_image_url: null,
+      notebook_id: activeNotebook?.id ?? null,
       created_at: "",
       updated_at: "",
     });
@@ -101,8 +127,122 @@ export default function AdminNotesTab() {
     );
   }
 
+  if (nbEditor) {
+    return (
+      <NotebookEditor
+        row={nbEditor}
+        onClose={() => setNbEditor(null)}
+        onSaved={(saved) => {
+          setNbEditor(null);
+          setNotebooks((n) => [saved, ...n.filter((x) => x.id !== saved.id)]);
+          setActiveNotebook((a) => (a && a.id === saved.id ? saved : a));
+        }}
+      />
+    );
+  }
+
+  if (!activeNotebook) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur flex items-center justify-between flex-wrap gap-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-primary" /> Notebooks
+          </h3>
+          <button
+            onClick={() =>
+              setNbEditor({
+                id: "",
+                title: "New notebook",
+                description: "",
+                cover_emoji: "📚",
+                cover_image_url: null,
+                published: false,
+                created_at: "",
+                updated_at: "",
+              })
+            }
+            className="inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm"
+          >
+            <Plus className="w-4 h-4" /> New notebook
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : notebooks.length === 0 ? (
+          <p className="text-center text-muted-foreground py-10">No notebooks yet.</p>
+        ) : (
+          <div className="grid gap-3">
+            {notebooks.map((nb) => (
+              <article key={nb.id} className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-center gap-4">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-primary/15 flex items-center justify-center text-2xl">
+                  {nb.cover_image_url ? (
+                    <img src={nb.cover_image_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    nb.cover_emoji || "📚"
+                  )}
+                </div>
+                <div className="flex-1 min-w-[200px]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold">{nb.title}</h3>
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${nb.published ? "border-emerald-500/40 text-emerald-400" : "border-amber-500/40 text-amber-400"}`}>
+                      {nb.published ? "Published" : "Draft"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {rows.filter((r) => r.notebook_id === nb.id).length} notes
+                    </span>
+                  </div>
+                  {nb.description && <p className="text-xs text-muted-foreground mt-0.5">{nb.description}</p>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveNotebook(nb)}
+                    className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm"
+                  >
+                    <FileText className="w-4 h-4" /> Open
+                  </button>
+                  <button
+                    onClick={() => setNbEditor(nb)}
+                    className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Delete this notebook and its notes?")) return;
+                      const { error } = await (supabase as any).from("admin_notebooks").delete().eq("id", nb.id);
+                      if (error) return toast.error(error.message);
+                      setNotebooks((n) => n.filter((x) => x.id !== nb.id));
+                      setRows((r) => r.filter((x) => x.notebook_id !== nb.id));
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const visibleRows = rows.filter((r) => r.notebook_id === activeNotebook.id);
+
   return (
     <div className="space-y-6">
+      <button
+        onClick={() => setActiveNotebook(null)}
+        className="inline-flex items-center gap-2 px-3 h-9 rounded-lg border border-white/10 hover:border-primary/40 text-sm"
+      >
+        <ArrowLeft className="w-4 h-4" /> All notebooks
+      </button>
+      <h2 className="text-lg font-semibold">
+        {activeNotebook.cover_emoji} {activeNotebook.title}
+      </h2>
       <div className="rounded-2xl p-5 border border-white/10 bg-secondary/40 backdrop-blur">
         <h3 className="font-semibold flex items-center gap-2 mb-3">
           <Layout className="w-4 h-4 text-primary" /> Create note from template
@@ -124,11 +264,11 @@ export default function AdminNotesTab() {
         <div className="flex justify-center py-10">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
-      ) : rows.length === 0 ? (
+      ) : visibleRows.length === 0 ? (
         <p className="text-center text-muted-foreground py-10">No notes yet. Pick a template above.</p>
       ) : (
         <div className="grid gap-3">
-          {rows.map((r) => (
+          {visibleRows.map((r) => (
             <article
               key={r.id}
               className="rounded-2xl p-4 border border-white/10 bg-secondary/40 backdrop-blur flex flex-wrap items-center gap-4"
