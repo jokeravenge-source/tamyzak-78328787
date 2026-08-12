@@ -528,6 +528,7 @@ const App = () => {
   };
   const chooseMenu = (choice: MenuChoice) => {
     logFirstFeatureTouch(choice);
+    recordToolUse(choice);
     // Points-gated tools: send the student to the progress page instead of the tool.
     const gated = isGatedMenu(choice);
     if (gated && !unlockedKeys.includes(gated)) {
