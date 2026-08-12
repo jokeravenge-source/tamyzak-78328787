@@ -32,7 +32,7 @@ import ZombieGuard from "./components/ZombieGuard";
 import EnglishCategoryPage, { ENGLISH_CATEGORY_STORAGE_KEY, type EnglishCategory } from "./pages/EnglishCategory";
 import Basics, { type BasicsChoice } from "./pages/Basics";
 const Onboarding = lazy(() => import("./pages/Onboarding"));
-import { isOnboardingDone, type OnboardingSubject } from "@/lib/onboarding";
+import { isOnboardingDone, markOnboardedRemote, syncOnboardingWithServer, type OnboardingSubject } from "@/lib/onboarding";
 import { captureAttribution, syncAttribution, logSignupCompleted, logFirstFeatureTouch } from "@/lib/userEvents";
 import { recordToolUse } from "@/lib/recentTools";
 const BiologyDrawings = lazy(() => import("./pages/BiologyDrawings"));
@@ -574,8 +574,21 @@ const App = () => {
   const backToBasics = () => chooseMenu("basics");
   // First-run onboarding (subject picker → diagnostic → results → streak → dashboard)
   const [onboarded, setOnboarded] = useState<boolean>(() => isOnboardingDone());
+  // Only ever show onboarding once per account (checked against the server flag).
+  const [onboardChecked, setOnboardChecked] = useState<boolean>(false);
+  useEffect(() => {
+    let alive = true;
+    if (!authed) { setOnboardChecked(false); return; }
+    syncOnboardingWithServer().then((done) => {
+      if (!alive) return;
+      if (done) setOnboarded(true);
+      setOnboardChecked(true);
+    });
+    return () => { alive = false; };
+  }, [authed]);
   const finishOnboarding = ({ subject: s, chapter, startStudying }: { subject: OnboardingSubject; chapter: number; startStudying: boolean }) => {
     setOnboarded(true);
+    void markOnboardedRemote();
     if (startStudying) {
       try {
         sessionStorage.setItem("flashcards:review", "1");
@@ -676,7 +689,7 @@ const App = () => {
         <LanguageGate onSelect={setLanguage} />
       ) : authRole !== "admin" && !channelVerified ? (
         <TelegramChannelGate language={language} onVerified={() => setChannelVerified(true)} />
-      ) : authRole !== "admin" && !onboarded ? (
+      ) : authRole !== "admin" && onboardChecked && !onboarded ? (
         <Onboarding language={language} onFinish={finishOnboarding} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
