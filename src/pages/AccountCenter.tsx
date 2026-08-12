@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
 import { getSignupSource } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Loader2, Save, Trophy, Medal, Palette, MessageCircle, Crown, Settings, Lock, LogOut, Globe } from "lucide-react";
-import { Clock } from "lucide-react";
+import { User, Loader2, Save, Palette, MessageCircle, Crown, Settings, Lock, LogOut, Globe } from "lucide-react";
 import { CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import { LANGUAGE_STORAGE_KEY } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 
-import { rankFor, RANKS } from "@/lib/points";
 import { ThemePicker } from "@/components/ThemePicker";
 import { ReferralCard } from "@/components/ReferralCard";
 import { getNavVisibilityMode, setNavVisibilityMode, type NavVisibilityMode } from "@/hooks/useNavVisibility";
@@ -89,7 +87,6 @@ const AccountCenter = ({
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [points, setPoints] = useState(0);
   const [userId, setUserId] = useState<string>("");
   const [gender, setGender] = useState<Gender | null>(null);
   const [traits, setTraits] = useState<CharacterTraits | null>(null);
@@ -97,11 +94,6 @@ const AccountCenter = ({
   const [portalLoading, setPortalLoading] = useState(false);
   const [savedName, setSavedName] = useState("");
   const [pendingRequest, setPendingRequest] = useState<{ id: string; requested_name: string } | null>(null);
-  const [subjectSeconds, setSubjectSeconds] = useState<Record<string, number>>({});
-  const [todaySubjectSeconds, setTodaySubjectSeconds] = useState<Record<string, number>>({});
-  const [weeklyTotals, setWeeklyTotals] = useState<{ key: string; date: Date; seconds: number }[]>([]);
-  const [monthlyPoints, setMonthlyPoints] = useState<{ key: string; label: string; points: number }[]>([]);
-  const [currentMonthPoints, setCurrentMonthPoints] = useState(0);
 
   const tryPremium = (apply: () => void) => {
     if (!isPremium) {
@@ -129,85 +121,6 @@ const AccountCenter = ({
       setSavedName(p?.display_name ?? "");
       setGender((p?.gender as Gender) ?? null);
       setTraits(((p as any)?.character as CharacterTraits) ?? null);
-      const { data: pts } = await supabase
-        .from("user_points")
-        .select("points, created_at")
-        .eq("user_id", u.user.id);
-      const all = (pts ?? []) as { points: number; created_at: string }[];
-      setPoints(all.reduce((s, r) => s + (r.points ?? 0), 0));
-      // Group by Baghdad year-month
-      const byMonth = new Map<string, number>();
-      all.forEach((r) => {
-        if (!r.created_at) return;
-        const d = new Date(new Date(r.created_at).getTime() + 3 * 3600 * 1000);
-        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-        byMonth.set(key, (byMonth.get(key) ?? 0) + (r.points ?? 0));
-      });
-      const nowB = new Date(Date.now() + 3 * 3600 * 1000);
-      const curKey = `${nowB.getUTCFullYear()}-${String(nowB.getUTCMonth() + 1).padStart(2, "0")}`;
-      setCurrentMonthPoints(byMonth.get(curKey) ?? 0);
-      const list = Array.from(byMonth.entries())
-        .sort((a, b) => (a[0] < b[0] ? 1 : -1))
-        .map(([key, points]) => {
-          const [y, m] = key.split("-").map(Number);
-          const label = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(
-            language === "ar" ? "ar-EG" : "en-US",
-            { month: "long", year: "numeric" }
-          );
-          return { key, label, points };
-        });
-      setMonthlyPoints(list);
-      // Aggregate study time per subject across all sessions
-      {
-        const totals: Record<string, number> = {};
-        const todayTotals: Record<string, number> = {};
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-        const startMs = startOfDay.getTime();
-        // Build last-7-day buckets (oldest -> today)
-        const dayBuckets: { key: string; date: Date; seconds: number }[] = [];
-        const dayIndex: Record<string, number> = {};
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date(startOfDay);
-          d.setDate(d.getDate() - i);
-          const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-          dayIndex[key] = dayBuckets.length;
-          dayBuckets.push({ key, date: d, seconds: 0 });
-        }
-        const weekStartMs = dayBuckets[0].date.getTime();
-        const pageSize = 1000;
-        let from = 0;
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { data: page, error } = await supabase
-            .from("study_sessions")
-            .select("subject,duration_seconds,created_at")
-            .eq("user_id", u.user.id)
-            .range(from, from + pageSize - 1);
-          if (error) break;
-          (page ?? []).forEach((r: any) => {
-            const secs = r.duration_seconds ?? 0;
-            totals[r.subject] = (totals[r.subject] ?? 0) + secs;
-            if (r.created_at) {
-              const t = new Date(r.created_at);
-              const tMs = t.getTime();
-              if (tMs >= startMs) {
-                todayTotals[r.subject] = (todayTotals[r.subject] ?? 0) + secs;
-              }
-              if (tMs >= weekStartMs) {
-                const k = `${t.getFullYear()}-${t.getMonth() + 1}-${t.getDate()}`;
-                const idx = dayIndex[k];
-                if (idx !== undefined) dayBuckets[idx].seconds += secs;
-              }
-            }
-          });
-          if (!page || page.length < pageSize) break;
-          from += pageSize;
-        }
-        setSubjectSeconds(totals);
-        setTodaySubjectSeconds(todayTotals);
-        setWeeklyTotals(dayBuckets);
-      }
       const { data: pend } = await supabase
         .from("username_requests")
         .select("id, requested_name")
@@ -311,9 +224,6 @@ const AccountCenter = ({
     : null;
   const hairOptions = gender === "female" ? FEMALE_HAIRSTYLES : MALE_HAIRSTYLES;
 
-  const rank = rankFor(points);
-  const nextRank = RANKS.find((r) => r.min > points);
-  const toNext = nextRank ? nextRank.min - points : 0;
 
   return (
     <main className="min-h-screen px-4 py-12 md:py-20 pb-32 relative overflow-hidden" dir={language === "ar" ? "rtl" : "ltr"}>
