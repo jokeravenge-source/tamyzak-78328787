@@ -851,12 +851,17 @@ function PracticeModal({
 export default Teachers;
 
 // ================= Mohammed Al-Anzi flow =================
-const ANZI_PLAYLISTS = {
-  ar: "PL8aWGashaQUhrL8s3uNqTCwDQgvCu35za",
-  en: "PLsYLu8VyivsT1nBmS7r8OPLYpNJXqbsAs",
-} as const;
-
-const ANZI_LECTURE_COUNT: Record<AnziLang, number> = { ar: 23, en: 22 };
+const ANZI_CHAPTERS: Record<number, { playlists: Record<AnziLang, string>; counts: Record<AnziLang, number> }> = {
+  3: {
+    playlists: { ar: "PL8aWGashaQUhrL8s3uNqTCwDQgvCu35za", en: "PLsYLu8VyivsT1nBmS7r8OPLYpNJXqbsAs" },
+    counts: { ar: 23, en: 22 },
+  },
+  4: {
+    playlists: { ar: "PL8aWGashaQUh0VHenzw39Mbs0bwy9bQQi", en: "" },
+    counts: { ar: 7, en: 0 },
+  },
+};
+const chapterCfg = (ch: number) => ANZI_CHAPTERS[ch] ?? ANZI_CHAPTERS[3];
 
 type AnziLang = "ar" | "en";
 type AnziStage =
@@ -864,11 +869,9 @@ type AnziStage =
   | { s: "lectures"; lang: AnziLang }
   | { s: "lecture"; lang: AnziLang; n: number };
 
-// Chapter 3 is the only unlocked chapter — kept as a constant so existing
-// stored MCQ / notes topic keys (anzi-<lang>-ch3-lec<N>-<mode>) still match.
-const ANZI_CH = 3;
-
-function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) {
+function AnziFlow({ teacher, isAdmin, ch = 3 }: { teacher: Teacher; isAdmin: boolean; ch?: number }) {
+  const cfg = chapterCfg(ch);
+  const langs = (["ar", "en"] as const).filter((l) => !!cfg.playlists[l]);
   const [stage, setStage] = useState<AnziStage>({ s: "language" });
 
   // Deep-link support: /teachers?anzi=1&lang=ar&lec=5
@@ -877,7 +880,8 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
     const lang = p.get("lang");
     const lec = parseInt(p.get("lec") || "", 10);
     if (lang === "ar" || lang === "en") {
-      if (lec && lec >= 1 && lec <= ANZI_LECTURE_COUNT[lang]) {
+      if (!cfg.playlists[lang]) return;
+      if (lec && lec >= 1 && lec <= cfg.counts[lang]) {
         setStage({ s: "lecture", lang, n: lec });
       } else {
         setStage({ s: "lectures", lang });
@@ -952,7 +956,7 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
         <section>
           <h2 className="text-xl font-bold mb-4">{tr.pickLang}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {(["ar", "en"] as const).map((l) => (
+            {langs.map((l) => (
               <button
                 key={l}
                 onClick={() => setStage({ s: "lectures", lang: l })}
@@ -979,12 +983,12 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
               <AnziBulkNotesGenerator
                 teacherId={teacher.id}
                 lang={stage.lang}
-                ch={ANZI_CH}
+                ch={ch}
               />
             </div>
           )}
           <ul className="grid gap-2 sm:grid-cols-2">
-            {Array.from({ length: ANZI_LECTURE_COUNT[stage.lang] }, (_, i) => i + 1).map((n) => (
+            {Array.from({ length: cfg.counts[stage.lang] }, (_, i) => i + 1).map((n) => (
               <li key={n}>
                 <button
                   onClick={() =>
@@ -1007,7 +1011,7 @@ function AnziFlow({ teacher, isAdmin }: { teacher: Teacher; isAdmin: boolean }) 
         <AnziLectureView
           teacher={teacher}
           lang={stage.lang}
-          ch={ANZI_CH}
+          ch={ch}
           n={stage.n}
           isAdmin={isAdmin}
         />
