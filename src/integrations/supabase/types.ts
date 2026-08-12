@@ -44,6 +44,45 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notebooks: {
+        Row: {
+          cover_emoji: string | null
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          published: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_emoji?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          published?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_emoji?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          published?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_notes: {
         Row: {
           background_image_url: string | null
@@ -52,6 +91,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          notebook_id: string | null
           published: boolean
           template: string
           title: string
@@ -64,6 +104,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          notebook_id?: string | null
           published?: boolean
           template?: string
           title: string
@@ -76,12 +117,21 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          notebook_id?: string | null
           published?: boolean
           template?: string
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "admin_notes_notebook_id_fkey"
+            columns: ["notebook_id"]
+            isOneToOne: false
+            referencedRelation: "admin_notebooks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       advice_comments: {
         Row: {
