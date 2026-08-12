@@ -34,6 +34,7 @@ import Basics, { type BasicsChoice } from "./pages/Basics";
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 import { isOnboardingDone, type OnboardingSubject } from "@/lib/onboarding";
 import { captureAttribution, syncAttribution, logSignupCompleted, logFirstFeatureTouch } from "@/lib/userEvents";
+import { recordToolUse } from "@/lib/recentTools";
 const BiologyDrawings = lazy(() => import("./pages/BiologyDrawings"));
 const More = lazy(() => import("./pages/More"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
