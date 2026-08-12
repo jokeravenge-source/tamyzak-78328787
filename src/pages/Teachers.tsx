@@ -153,7 +153,8 @@ const Teachers = ({
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search);
       if (p.get("anzi") || p.get("lec")) {
-        const anzi = teachers.find((t) => t.id === "mohammed-anzi");
+        const wantCh4 = p.get("ch") === "4";
+        const anzi = teachers.find((t) => t.id === (wantCh4 ? "mohammed-anzi-ch4" : "mohammed-anzi"));
         if (anzi) return { kind: "topics", teacher: anzi };
       }
     }
