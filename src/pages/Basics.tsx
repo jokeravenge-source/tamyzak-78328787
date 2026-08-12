@@ -1016,7 +1016,7 @@ const Basics = ({
 
           <section className="mb-6 grid grid-cols-12 gap-3 sm:gap-5">
             {/* Progress ring */}
-            <div className="col-span-12 md:col-span-4 bg-card rounded-3xl p-4 sm:p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
+            <div className="col-span-12 md:col-span-6 bg-card rounded-3xl p-4 sm:p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
               <div
                 aria-hidden
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
@@ -1070,8 +1070,58 @@ const Basics = ({
               </div>
             </div>
 
-            {/* Core tools (right of ring) */}
-            <div className="col-span-12 md:col-span-8 grid grid-cols-2 gap-3 sm:gap-4">
+            {/* Daily report brief (right of ring) */}
+            <div className="col-span-12 md:col-span-6 bg-card rounded-3xl p-4 sm:p-6 border border-border shadow-[var(--shadow-card)] flex flex-col">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <Sparkles className="w-4 h-4" />
+                </span>
+                <h3 className="text-foreground font-bold text-sm sm:text-base">
+                  {language === "ar" ? "تقريري اليومي" : "Daily report"}
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                <div className="rounded-2xl border border-border bg-secondary/30 p-3 text-center">
+                  <p className="text-xl font-bold text-foreground tabular-nums">{heroProgressDone}</p>
+                  <p className="text-[11px] text-muted-foreground">{language === "ar" ? "مهام منجزة" : "Tasks done"}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-secondary/30 p-3 text-center">
+                  <p className="text-xl font-bold text-foreground tabular-nums">{pendingTodos}</p>
+                  <p className="text-[11px] text-muted-foreground">{language === "ar" ? "مهام متبقية" : "Tasks left"}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-secondary/30 p-3 text-center">
+                  <p className="text-xl font-bold text-foreground tabular-nums">{dueCards}</p>
+                  <p className="text-[11px] text-muted-foreground">{language === "ar" ? "بطاقات مستحقة" : "Cards due"}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-secondary/30 p-3 text-center">
+                  <p className="text-xl font-bold text-foreground tabular-nums">{heroProgressPct}%</p>
+                  <p className="text-[11px] text-muted-foreground">{language === "ar" ? "نسبة التقدم" : "Progress"}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {language === "ar"
+                  ? "ملخص سريع ليومك الدراسي — افتح التقرير للتحليل الكامل."
+                  : "A quick snapshot of your study day — open the report for full insights."}
+              </p>
+            </div>
+          </section>
+
+          {/* Want more information */}
+          <section className="mb-6 flex flex-col items-center text-center">
+            <p className="text-sm font-semibold text-foreground mb-2">
+              {language === "ar" ? "تريد معلومات أكثر؟" : "Wants more information"}
+            </p>
+            <button
+              onClick={() => onNav("report")}
+              className="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-[var(--shadow-glow)] hover:opacity-90 transition-opacity"
+            >
+              {language === "ar" ? "اضغط هنا" : "Click here"}
+            </button>
+          </section>
+
+          {/* Core tools */}
+          <section className="mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {FEATURED.filter((it) => it.key !== "liveBattle").map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];

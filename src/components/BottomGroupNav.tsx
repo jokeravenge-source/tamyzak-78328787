@@ -7,6 +7,7 @@ import {
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown,
   Home, Palette, GraduationCap as CoursesIcon, Users2, Lock,
+  Menu as MenuIcon, MessageCircle, LineChart,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -63,9 +64,13 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     directKey: "adminNotes",
   },
   {
-    titleEn: "Join", titleAr: "انضم الى تميزك",
-    items: [],
-    directKey: "joinTamayzak",
+    titleEn: "Menu", titleAr: "القائمة",
+    items: [
+      { key: "account", labelEn: "Settings", labelAr: "الإعدادات", Icon: Settings },
+      { key: "joinTamayzak", labelEn: "Join Tamayzak", labelAr: "انضم الى تميزك", Icon: Sparkles },
+      { key: "support" as MainMenuChoice, labelEn: "Support", labelAr: "الدعم", Icon: MessageCircle },
+      { key: "report", labelEn: "Daily Report", labelAr: "تقريري اليومي", Icon: LineChart },
+    ],
   },
 ];
 
@@ -75,7 +80,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   Notes: NotebookPen,
-  Join: Sparkles,
+  Menu: MenuIcon,
 };
 
 const BottomGroupNav = ({
@@ -104,6 +109,11 @@ const BottomGroupNav = ({
   const openGroup = NAV_GROUPS.find((g) => g.titleEn === sheetGroup) ?? null;
 
   const handleItem = (it: NavItem) => {
+    if ((it.key as string) === "support") {
+      setSheetGroup(null);
+      window.open("https://t.me/ias404", "_blank", "noopener,noreferrer");
+      return;
+    }
     if (it.subject) {
       try { localStorage.setItem("app_subject_focus_v1", it.subject); } catch { /* ignore */ }
       window.dispatchEvent(new CustomEvent("app:open-subject", { detail: { code: it.subject } }));
