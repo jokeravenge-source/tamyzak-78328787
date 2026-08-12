@@ -334,6 +334,7 @@ function NoteEditor({
   onClose: () => void;
   onSaved: (row: NoteRow) => void;
 }) {
+  // note editor below
   const [title, setTitle] = useState(row.title);
   const [emoji, setEmoji] = useState(row.cover_emoji || "📘");
   const [published, setPublished] = useState(row.published);
