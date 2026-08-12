@@ -314,6 +314,17 @@ const Basics = ({
   const [missionsDone, setMissionsDone] = useState<number>(0);
   const streakDays = useStreakDays();
   const [showAllTools, setShowAllTools] = useState<boolean>(false);
+  const [recentKeys, setRecentKeys] = useState<string[]>(() => getRecentTools());
+
+  useEffect(() => {
+    const sync = () => setRecentKeys(getRecentTools());
+    window.addEventListener("app:recent-tools-updated", sync);
+    window.addEventListener("focus", sync);
+    return () => {
+      window.removeEventListener("app:recent-tools-updated", sync);
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
   const [dueCards, setDueCards] = useState<number>(0);
   const [dueGroups, setDueGroups] = useState<DueGroup[]>([]);
 
@@ -542,6 +553,7 @@ const Basics = ({
   }, [onboarding, language]);
   const navigate = (k: MainMenuChoice) => {
     setActiveKey(k);
+    recordToolUse(k);
     // sync active group
     const grp = NAV_GROUPS.find((g) => g.items.some((it) => it.key === k));
     if (grp) setActiveGroup(grp.titleEn);
