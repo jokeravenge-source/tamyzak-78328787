@@ -1054,7 +1054,7 @@ function AnziBulkNotesGenerator({
       const projectRef = (import.meta.env.VITE_SUPABASE_PROJECT_ID as string) || "";
       const supaUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "";
       const base = supaUrl ? `${supaUrl}/functions/v1` : (projectRef ? `https://${projectRef}.functions.supabase.co` : "");
-      const res = await fetch(`${base}/youtube-playlist?list=${ANZI_PLAYLISTS[lang]}`, {
+      const res = await fetch(`${base}/youtube-playlist?list=${chapterCfg(ch).playlists[lang]}`, {
         headers: { apikey: (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) || "" },
       });
       const listJson = await res.json();
@@ -1062,7 +1062,7 @@ function AnziBulkNotesGenerator({
       if (!videos.length) { toast.error(noFetch); return; }
 
       // 2) Existing rows so we skip lectures that already have a video saved
-      const total = Math.min(ANZI_LECTURE_COUNT[lang], videos.length);
+      const total = Math.min(chapterCfg(ch).counts[lang], videos.length);
       const topicKeys = Array.from({ length: total }, (_, i) => `anzi-${lang}-ch${ch}-lec${i + 1}-study`);
       const { data: existing } = await supabase
         .from("teacher_topic_videos")
@@ -1176,7 +1176,7 @@ function AnziLectureView({
   const [tab, setTab] = useState<"notes" | "exam">("notes");
   const topicKey = `anzi-${lang}-ch${ch}-lec${n}-${tab === "notes" ? "study" : "exam"}`;
   const label = lang === "ar" ? `المحاضرة ${n}` : `Lecture ${n}`;
-  const playlist = ANZI_PLAYLISTS[lang];
+  const playlist = chapterCfg(ch).playlists[lang];
   const L2 = t[lang];
 
   // MCQ state (exam mode)
