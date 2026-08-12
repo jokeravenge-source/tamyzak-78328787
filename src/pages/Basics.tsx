@@ -19,6 +19,7 @@ import StreakTree from "@/components/StreakTree";
 import RankStone, { rankFromPoints, RANK_LABELS, type StoneRank } from "@/components/RankStone";
 import { totalDueCount, dueBreakdown, type DueGroup } from "@/lib/srs";
 import GiftMcqButton from "@/components/GiftMcqButton";
+import { getRecentTools, recordToolUse } from "@/lib/recentTools";
 
 const SUBJECT_LABELS: Record<string, { ar: string; en: string }> = {
   physics: { ar: "الفيزياء", en: "Physics" },
