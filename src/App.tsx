@@ -689,7 +689,7 @@ const App = () => {
         <LanguageGate onSelect={setLanguage} />
       ) : authRole !== "admin" && !channelVerified ? (
         <TelegramChannelGate language={language} onVerified={() => setChannelVerified(true)} />
-      ) : authRole !== "admin" && !onboarded ? (
+      ) : authRole !== "admin" && onboardChecked && !onboarded ? (
         <Onboarding language={language} onFinish={finishOnboarding} />
       ) : !menuChoice || menuChoice === "basics" ? (
         <Basics
