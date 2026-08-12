@@ -1070,7 +1070,7 @@ const Basics = ({
               </div>
             </div>
 
-            {/* Core tools + Live battle (right of ring) */}
+            {/* Core tools (right of ring) */}
             <div className="col-span-12 md:col-span-8 grid grid-cols-2 gap-3 sm:gap-4">
               {FEATURED.filter((it) => it.key !== "liveBattle").map((it) => {
                 const Icon = it.Icon;
@@ -1092,51 +1092,6 @@ const Basics = ({
                   </motion.button>
                 );
               })}
-
-              {/* Live battle highlight – spans both cols */}
-              {(() => {
-                const it = FEATURED.find((x) => x.key === "liveBattle");
-                if (!it) return null;
-                const Icon = it.Icon;
-                const meta = (fc as any).liveBattle;
-                return (
-                  <div
-                    className="col-span-2 p-[1px] rounded-2xl sm:rounded-3xl"
-                    style={{ background: "var(--gradient-primary)" }}
-                  >
-                    <div className="bg-card rounded-[calc(1rem-1px)] sm:rounded-[calc(1.5rem-1px)] p-3 sm:p-5 flex flex-row items-center justify-between gap-3 sm:gap-4">
-                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                        <motion.div
-                          animate={{ scale: [1, 1.06, 1] }}
-                          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                          className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center shadow-[var(--shadow-glow)] shrink-0"
-                        >
-                          <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-primary-foreground" />
-                        </motion.div>
-                        <div className={`${isRTL ? "text-right" : "text-left"} min-w-0`}>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="relative flex h-2 w-2">
-                              <span className="absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
-                              <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
-                            </span>
-                            <span className="text-[10px] font-extrabold tracking-wider text-rose-400">
-                              {language === "ar" ? "مباشر" : "LIVE"}
-                            </span>
-                          </div>
-                          <h3 className="text-primary font-bold text-sm sm:text-lg leading-tight line-clamp-1">{meta.title}</h3>
-                          <p className="text-muted-foreground text-xs sm:text-sm line-clamp-1">{meta.subtitle}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => navigate("liveBattle")}
-                        className="px-3 sm:px-6 py-2 sm:py-2.5 bg-primary text-primary-foreground text-xs sm:text-base font-bold rounded-lg sm:rounded-xl hover:opacity-90 transition-all active:scale-95 shrink-0"
-                      >
-                        {language === "ar" ? "انضم الآن" : "Join now"}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })()}
             </div>
           </section>
 
@@ -1216,11 +1171,11 @@ const Basics = ({
             </div>
           )}
 
-          {/* More tools */}
+          {/* Recently used tools (falls back to the tools menu) */}
           <section className="mb-6">
             <div className="flex items-center justify-between mb-4 sm:mb-5 gap-2">
               <h4 className="text-base sm:text-lg font-bold text-foreground" style={{ fontFamily: "'Syne', sans-serif" }}>
-                {toolsHeader}
+                {displayedToolsHeader}
               </h4>
               <button
                 onClick={() => setShowAllTools(true)}
@@ -1237,7 +1192,7 @@ const Basics = ({
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
               className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
             >
-              {STUDY_TOOLS.map((it) => {
+              {displayedTools.map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 if (!meta) return null;
