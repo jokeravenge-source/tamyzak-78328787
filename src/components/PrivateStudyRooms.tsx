@@ -529,6 +529,31 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
         </div>
       </div>
 
+      {isOwner && (
+        <div className="mb-3 rounded-xl border border-primary/20 bg-background/40 p-3">
+          <div className="flex items-center gap-2 text-xs text-primary mb-2">
+            <Ban className="w-3.5 h-3.5" /> {L.bannedList}
+          </div>
+          {bans.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">{L.noBans}</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {bans.map((b) => (
+                <li key={b.user_id} className="flex items-center justify-between gap-2">
+                  <span className="text-xs truncate">{b.display_name || b.user_id.slice(0, 8)}</span>
+                  <button
+                    onClick={() => unbanMember(b.user_id)}
+                    className="text-[11px] px-2 py-0.5 rounded-full border border-primary/30 text-primary hover:bg-primary/10"
+                  >
+                    {L.unban}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center gap-2 text-xs text-primary mb-2">
         <MessageCircle className="w-3.5 h-3.5" /> {L.chat}
       </div>
