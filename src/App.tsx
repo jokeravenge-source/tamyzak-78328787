@@ -615,7 +615,9 @@ const App = () => {
       />
       <PaymentTestModeBanner />
       {language && <PremiumWelcomeOverlay language={language} />}
-      {authed && language && <NewFeatureAnnouncement language={language} />}
+      {authed && language && channelVerified && onboarded && (
+        <NewFeatureAnnouncement language={language} />
+      )}
       {authed && language && authRole !== "admin" && channelVerified && onboarded && (
         <SearchFAB language={language} onSelect={(c) => chooseMenu(c as MenuChoice)} />
       )}
