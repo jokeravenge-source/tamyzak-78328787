@@ -17,12 +17,6 @@ function esc(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function addDays(iso: string, days: number): string {
-  const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
 const CYCLE_DAYS = 5;
 // 1 -> [0]; 2 -> [0,4]; 3 -> [0,2,4]; 4 -> [0,1,3,4]; 5 -> [0..4]; >5 -> consecutive days
 function examOffsets(count: number, cycle: number): number[] {
@@ -51,8 +45,14 @@ async function tgSend(chatId: number, text: string) {
     },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
   });
-  const data = await res.json().catch(() => ({}));
-  return res.ok && (data as { ok?: boolean })?.ok;
+  const raw = await res.text();
+  let data: { ok?: boolean } = {};
+  try { data = JSON.parse(raw); } catch { /* non-JSON error page */ }
+  if (!res.ok || !data.ok) {
+    console.error(`telegram sendMessage failed [${res.status}]: ${raw.slice(0, 500)}`);
+    return false;
+  }
+  return true;
 }
 
 Deno.serve(async (req) => {
