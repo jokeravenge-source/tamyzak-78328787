@@ -68,6 +68,57 @@ export function isOnboardingDone(): boolean {
   return !!readOnboarding()?.completed;
 }
 
+/** Marks onboarding as done locally (minimal record) without a full profile. */
+function markLocalDone() {
+  const cur = readOnboarding();
+  saveOnboarding({
+    completed: true,
+    subject: cur?.subject ?? "physics",
+    topics: cur?.topics ?? [],
+    weakestTopic: cur?.weakestTopic ?? 1,
+    score: cur?.score ?? 0,
+    total: cur?.total ?? 0,
+    telegramOptIn: cur?.telegramOptIn ?? false,
+    completedAt: cur?.completedAt ?? new Date().toISOString(),
+  });
+}
+
+/** Persists the "onboarded" flag on the account so it never shows again, on any device. */
+export async function markOnboardedRemote(): Promise<void> {
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    await supabase
+      .from("student_profile")
+      .upsert({ user_id: u.user.id, onboarded: true }, { onConflict: "user_id" });
+  } catch { /* ignore */ }
+}
+
+/**
+ * Returns true when this account already completed onboarding (ever).
+ * Also backfills the server flag when only the local record exists.
+ */
+export async function syncOnboardingWithServer(): Promise<boolean> {
+  const localDone = isOnboardingDone();
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return localDone;
+    const { data } = await supabase
+      .from("student_profile")
+      .select("onboarded")
+      .eq("user_id", u.user.id)
+      .maybeSingle();
+    if (data?.onboarded) {
+      if (!localDone) markLocalDone();
+      return true;
+    }
+    if (localDone) await markOnboardedRemote();
+    return localDone;
+  } catch {
+    return localDone;
+  }
+}
+
 /* ---------------- diagnostic questions ---------------- */
 
 export function buildDiagnostic(subject: OnboardingSubject, count = 5): BattleMCQ[] {
