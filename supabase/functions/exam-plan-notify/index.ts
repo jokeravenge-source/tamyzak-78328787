@@ -17,19 +17,19 @@ function esc(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function addDays(iso: string, days: number): string {
-  const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
 const CYCLE_DAYS = 5;
 // 1 -> [0]; 2 -> [0,4]; 3 -> [0,2,4]; 4 -> [0,1,3,4]; 5 -> [0..4]; >5 -> consecutive days
-function examOffsets(count: number): number[] {
+function examOffsets(count: number, cycle: number): number[] {
   if (count <= 0) return [];
   if (count === 1) return [0];
-  if (count > CYCLE_DAYS) return Array.from({ length: count }, (_, i) => i);
-  return Array.from({ length: count }, (_, i) => Math.round((i * (CYCLE_DAYS - 1)) / (count - 1)));
+  if (count > cycle) return Array.from({ length: count }, (_, i) => i);
+  return Array.from({ length: count }, (_, i) => Math.round((i * (cycle - 1)) / (count - 1)));
+}
+
+function daysBetween(fromIso: string, toIso: string): number {
+  const a = Date.parse(`${fromIso}T00:00:00Z`);
+  const b = Date.parse(`${toIso}T00:00:00Z`);
+  return Math.round((b - a) / 86_400_000);
 }
 
 async function tgSend(chatId: number, text: string) {
@@ -45,8 +45,14 @@ async function tgSend(chatId: number, text: string) {
     },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
   });
-  const data = await res.json().catch(() => ({}));
-  return res.ok && (data as { ok?: boolean })?.ok;
+  const raw = await res.text();
+  let data: { ok?: boolean } = {};
+  try { data = JSON.parse(raw); } catch { /* non-JSON error page */ }
+  if (!res.ok || !data.ok) {
+    console.error(`telegram sendMessage failed [${res.status}]: ${raw.slice(0, 500)}`);
+    return false;
+  }
+  return true;
 }
 
 Deno.serve(async (req) => {
@@ -92,8 +98,14 @@ Deno.serve(async (req) => {
     let sent = 0, skipped = 0, failed = 0, nodue = 0;
 
     for (const p of (plans ?? []) as { user_id: string; subjects: string[]; start_date: string; interval_days: number }[]) {
-      const offsets = examOffsets((p.subjects ?? []).length);
-      const step = (p.subjects ?? []).findIndex((_, i) => addDays(p.start_date, offsets[i]) === todayKey);
+      const subjects = p.subjects ?? [];
+      if (subjects.length === 0) { nodue++; continue; }
+      // Plans run for a single cycle (same rule the UI uses to expire them).
+      const cycle = Math.max(p.interval_days || CYCLE_DAYS, subjects.length);
+      const elapsed = daysBetween(p.start_date, todayKey);
+      if (elapsed < 0 || elapsed >= cycle) { nodue++; continue; }
+      const offsets = examOffsets(subjects.length, cycle);
+      const step = offsets.indexOf(elapsed);
       if (step < 0) { nodue++; continue; }
 
       const { data: tg } = await admin
@@ -110,16 +122,29 @@ Deno.serve(async (req) => {
         .insert({ notification_key: key, telegram_user_id: chatId });
       if (dupErr) { skipped++; continue; }
 
-      const subject = p.subjects[step];
+      const subject = subjects[step];
       const name = SUBJECT_AR[subject] ?? subject;
+      const total = subjects.length;
       const msg =
         phase.key === "morning"
-          ? `<b>📚 اليوم امتحانك</b>\n\nامتحان <b>${esc(name)}</b> اليوم الساعة <b>9:00 مساءً</b> بتوقيت بغداد (المرحلة ${step + 1} من ${p.subjects.length}).\n\nجهّز نفسك 💪`
+          ? `<b>📚 اليوم امتحانك</b>\n\nامتحان <b>${esc(name)}</b> اليوم الساعة <b>9:00 مساءً</b> بتوقيت بغداد (المرحلة ${step + 1} من ${total}).\n\nجهّز نفسك 💪`
           : phase.key === "h1"
             ? `<b>⏰ باقي ساعة</b>\n\nامتحان <b>${esc(name)}</b> يبدأ الساعة <b>9:00 مساءً</b> — بعد ساعة من الآن.`
             : `<b>🔔 باقي 15 دقيقة</b>\n\nامتحان <b>${esc(name)}</b> يبدأ الساعة <b>9:00 مساءً</b>. افتح تميزك ← الدورات الآن.`;
-      const ok = await tgSend(chatId, msg);
-      if (ok) sent++; else failed++;
+      let ok = false;
+      try {
+        ok = await tgSend(chatId, msg);
+      } catch (sendErr) {
+        console.error("exam-plan-notify send failed", p.user_id, sendErr instanceof Error ? sendErr.message : sendErr);
+      }
+      if (ok) {
+        sent++;
+      } else {
+        // Release the dedupe key so the next run retries instead of permanently
+        // swallowing this reminder.
+        failed++;
+        await admin.from("telegram_notifications_sent").delete().eq("notification_key", key);
+      }
       await new Promise((r) => setTimeout(r, 40));
     }
 
