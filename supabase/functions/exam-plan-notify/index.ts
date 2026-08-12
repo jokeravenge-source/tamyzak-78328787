@@ -100,14 +100,12 @@ Deno.serve(async (req) => {
     for (const p of (plans ?? []) as { user_id: string; subjects: string[]; start_date: string; interval_days: number }[]) {
       const subjects = p.subjects ?? [];
       if (subjects.length === 0) { nodue++; continue; }
-      // The plan repeats: once the cycle ends it starts over, so students keep
-      // getting reminders instead of the plan silently going dead after 5 days.
+      // Plans run for a single cycle (same rule the UI uses to expire them).
       const cycle = Math.max(p.interval_days || CYCLE_DAYS, subjects.length);
       const elapsed = daysBetween(p.start_date, todayKey);
-      if (elapsed < 0) { nodue++; continue; }
-      const dayInCycle = ((elapsed % cycle) + cycle) % cycle;
+      if (elapsed < 0 || elapsed >= cycle) { nodue++; continue; }
       const offsets = examOffsets(subjects.length, cycle);
-      const step = offsets.indexOf(dayInCycle);
+      const step = offsets.indexOf(elapsed);
       if (step < 0) { nodue++; continue; }
 
       const { data: tg } = await admin
@@ -133,11 +131,17 @@ Deno.serve(async (req) => {
           : phase.key === "h1"
             ? `<b>⏰ باقي ساعة</b>\n\nامتحان <b>${esc(name)}</b> يبدأ الساعة <b>9:00 مساءً</b> — بعد ساعة من الآن.`
             : `<b>🔔 باقي 15 دقيقة</b>\n\nامتحان <b>${esc(name)}</b> يبدأ الساعة <b>9:00 مساءً</b>. افتح تميزك ← الدورات الآن.`;
-      const ok = await tgSend(chatId, msg);
+      let ok = false;
+      try {
+        ok = await tgSend(chatId, msg);
+      } catch (sendErr) {
+        console.error("exam-plan-notify send failed", p.user_id, sendErr instanceof Error ? sendErr.message : sendErr);
+      }
       if (ok) {
         sent++;
       } else {
-        // Release the dedupe key so the next run can retry this reminder.
+        // Release the dedupe key so the next run retries instead of permanently
+        // swallowing this reminder.
         failed++;
         await admin.from("telegram_notifications_sent").delete().eq("notification_key", key);
       }
