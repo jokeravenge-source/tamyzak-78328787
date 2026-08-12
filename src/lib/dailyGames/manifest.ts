@@ -3,8 +3,10 @@ import type { BattleSubject } from "@/lib/battleMcqBank";
 import type { DailyGameRow, EngineKey, GameSpec } from "./types";
 import { IMPLEMENTED_ENGINES } from "./types";
 
+/** Only subjects that actually have a written ministerial pool — english/french
+ *  have none, which made the daily game unplayable on those days. */
 const SUBJECT_ROTATION: BattleSubject[] = [
-  "physics", "chemistry", "biology", "arabic", "english", "french", "islamic",
+  "physics", "chemistry", "biology", "arabic", "islamic",
 ];
 
 /** Baghdad-time day-of-month (1..31). */
@@ -65,12 +67,15 @@ export async function loadTodayGame(now = new Date(), overrideDay?: number): Pro
     if (data) {
       const engine = coerceEngine(String(data.engine));
       const spec = (data.spec ?? {}) as Partial<GameSpec>;
+      const fb = fallbackForDay(day);
+      const rawSubject = (data.subject as BattleSubject) ?? fb.subject;
+      const subject = SUBJECT_ROTATION.includes(rawSubject) ? rawSubject : fb.subject;
       return {
         day,
         month_key: monthKey,
-        subject: (data.subject as BattleSubject) ?? SUBJECT_ROTATION[0],
+        subject,
         engine,
-        spec: { ...fallbackForDay(day).spec, ...spec, engine },
+        spec: { ...fb.spec, ...spec, engine },
       };
     }
   } catch {

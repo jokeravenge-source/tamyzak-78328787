@@ -1,5 +1,6 @@
 import { protect } from "../_shared/guard.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const OWNER_CHAT: string | number = Deno.env.get("OWNER_TELEGRAM_CHAT_ID") || 8086307499;
 
@@ -18,28 +19,53 @@ Deno.serve(async (req) => {
     const teacher = String(body.teacher_name ?? "").trim().slice(0, 120);
     if (!fullName || !telegram || !teacher) return json({ error: "missing_fields" }, 400);
 
+    // Always persist the request first so a Telegram failure never loses a signup.
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+    const { data: saved } = await admin
+      .from("join_requests")
+      .insert({ full_name: fullName, telegram_username: telegram, teacher_name: teacher })
+      .select("id")
+      .maybeSingle();
+
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     const tgKey = Deno.env.get("TELEGRAM_API_KEY");
-    if (!lovableKey || !tgKey) return json({ error: "telegram_not_configured" }, 500);
+    if (!lovableKey || !tgKey) return json({ ok: true, notified: false });
 
     const handle = telegram.startsWith("@") ? telegram : `@${telegram}`;
     const text = `🌟 طلب انضمام إلى تميزك\n\n👤 الاسم الكامل: ${fullName}\n💬 تيليجرام: ${handle}\n👨‍🏫 اسم المدرس: ${teacher}`;
 
-    const res = await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": tgKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ chat_id: OWNER_CHAT, text, disable_web_page_preview: true }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data?.ok) {
-      console.error("join-tamayzak telegram failed", res.status, JSON.stringify(data));
-      return json({ error: "telegram_failed", status: res.status, details: data }, 502);
+    let notified = false;
+    let notifyError: string | null = null;
+    try {
+      const res = await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": tgKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ chat_id: OWNER_CHAT, text, disable_web_page_preview: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      notified = res.ok && !!data?.ok;
+      if (!notified) {
+        notifyError = `${res.status} ${JSON.stringify(data)}`.slice(0, 500);
+        console.error("join-tamayzak telegram failed", notifyError);
+      }
+    } catch (e) {
+      notifyError = (e instanceof Error ? e.message : String(e)).slice(0, 500);
+      console.error("join-tamayzak telegram error", notifyError);
     }
-    return json({ ok: true });
+
+    if (saved?.id) {
+      await admin.from("join_requests").update({ notified, notify_error: notifyError }).eq("id", saved.id);
+    }
+
+    // The request is stored either way — report success to the student.
+    return json({ ok: true, notified });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
