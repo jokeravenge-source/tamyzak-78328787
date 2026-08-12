@@ -39,6 +39,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
   const [busy, setBusy] = useState(false);
   const [presence, setPresence] = useState<Record<string, Presence>>({});
   const [isAdmin, setIsAdmin] = useState(false);
+  const [bans, setBans] = useState<{ user_id: string; display_name: string | null }[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
 
   const L = ar
@@ -58,6 +59,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
         makeOwner: "تعيين كصاحب الغرفة", ownerChanged: "تم نقل ملكية الغرفة",
         transferConfirm: "هل تريد جعل هذا الطالب صاحب الغرفة؟", noTimer: "لا يوجد مؤقّت",
         takeOwner: "استلام الملكية (مشرف)", takeConfirm: "هل تريد استلام ملكية هذه الغرفة؟",
+        bannedList: "المحظورون", unban: "رفع الحظر", unbanned: "تم رفع الحظر", noBans: "لا يوجد محظورون",
       }
     : {
         title: "Private study rooms", create: "Create room", join: "Join",
@@ -75,6 +77,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
         makeOwner: "Make owner", ownerChanged: "Room ownership transferred",
         transferConfirm: "Make this student the room owner?", noTimer: "No timer",
         takeOwner: "Take ownership (admin)", takeConfirm: "Take ownership of this room?",
+        bannedList: "Banned members", unban: "Unban", unbanned: "Member unbanned", noBans: "No banned members",
       };
 
   useEffect(() => {
@@ -117,6 +120,9 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
       supabase.from("study_rooms").select("id,code,name,owner_id").eq("id", roomId).maybeSingle(),
     ]);
     if (roomRow) setRoom(roomRow as Room);
+    const { data: banRows } = await supabase
+      .from("study_room_bans").select("user_id,display_name").eq("room_id", roomId);
+    setBans((banRows ?? []) as { user_id: string; display_name: string | null }[]);
     const base = (mem ?? []) as Member[];
     const rawMsgs = (msg ?? []) as Message[];
     // Always resolve names/avatars from the live profile, not the snapshot stored on the row.
@@ -345,6 +351,15 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     await supabase.from("study_room_members").delete().eq("room_id", room.id).eq("user_id", m.user_id);
     await supabase.from("study_room_messages").delete().eq("room_id", room.id).eq("user_id", m.user_id);
     toast.success(L.banned);
+    loadRoom(room.id);
+  };
+
+  const unbanMember = async (userIdToUnban: string) => {
+    if (!room) return;
+    const { error } = await supabase.from("study_room_bans")
+      .delete().eq("room_id", room.id).eq("user_id", userIdToUnban);
+    if (error) { toast.error(error.message); return; }
+    toast.success(L.unbanned);
     loadRoom(room.id);
   };
 
