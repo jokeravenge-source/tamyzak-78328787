@@ -69,7 +69,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
       { key: "account", labelEn: "Settings", labelAr: "الإعدادات", Icon: Settings },
       { key: "joinTamayzak", labelEn: "Join Tamayzak", labelAr: "انضم الى تميزك", Icon: Sparkles },
       { key: "support" as MainMenuChoice, labelEn: "Support", labelAr: "الدعم", Icon: MessageCircle },
-      { key: "report", labelEn: "Daily Report", labelAr: "تقريري اليومي", Icon: LineChart },
+      { key: "report", labelEn: "Progress", labelAr: "تقدمي", Icon: LineChart },
     ],
   },
 ];

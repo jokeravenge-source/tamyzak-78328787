@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { AppLanguage } from "@/components/LanguageGate";
 import ExcellenceCompanion from "@/components/ExcellenceCompanion";
+import ProgressStats from "@/components/ProgressStats";
 import { useSubscription } from "@/hooks/useSubscription";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 
@@ -360,6 +361,11 @@ export default function DailyReport({ language, onBack, onNav }: { language: App
             </Panel>
           </div>
         )}
+
+        {/* Points, ranks and study-hour progress (moved from Settings) */}
+        <div className="mt-10">
+          <ProgressStats language={language} />
+        </div>
 
         {/* Excellence Companion — kept here per product spec, framed like the rest */}
         <div className="mt-10 border border-border bg-background p-5 clip-facet">
