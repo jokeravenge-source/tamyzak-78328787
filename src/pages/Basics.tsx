@@ -1014,14 +1014,16 @@ const Basics = ({
             </section>
           )}
 
-          <section className="mb-6 grid grid-cols-12 gap-3 sm:gap-5">
-            {/* Progress ring */}
-            <div className="col-span-12 md:col-span-6 bg-card rounded-3xl p-4 sm:p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
+          {/* Progress ring + daily report brief (merged) */}
+          <section className="mb-6">
+            <div className="bg-card rounded-3xl p-4 sm:p-6 border border-border relative overflow-hidden group shadow-[var(--shadow-card)]">
               <div
                 aria-hidden
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
                 style={{ background: "radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0.10), transparent 70%)" }}
               />
+              <div className="relative grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+                <div className="flex flex-col items-center justify-center text-center">
               <span className="relative inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full mb-3 border border-primary/20">
                 {activeCopy.tag}
               </span>
@@ -1068,10 +1070,10 @@ const Basics = ({
               <div className="mt-2 text-muted-foreground">
                 <VisitCounter inline />
               </div>
-            </div>
+                </div>
 
-            {/* Daily report brief (right of ring) */}
-            <div className="col-span-12 md:col-span-6 bg-card rounded-3xl p-4 sm:p-6 border border-border shadow-[var(--shadow-card)] flex flex-col">
+                {/* Daily report brief (right of ring) */}
+                <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                   <Sparkles className="w-4 h-4" />
@@ -1103,20 +1105,22 @@ const Basics = ({
                   ? "ملخص سريع ليومك الدراسي — افتح التقرير للتحليل الكامل."
                   : "A quick snapshot of your study day — open the report for full insights."}
               </p>
-            </div>
-          </section>
+                </div>
+              </div>
 
-          {/* Want more information */}
-          <section className="mb-6 flex flex-col items-center text-center">
-            <p className="text-sm font-semibold text-foreground mb-2">
-              {language === "ar" ? "تريد معلومات أكثر؟" : "Wants more information"}
-            </p>
-            <button
-              onClick={() => onNav("report")}
-              className="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-[var(--shadow-glow)] hover:opacity-90 transition-opacity"
-            >
-              {language === "ar" ? "اضغط هنا" : "Click here"}
-            </button>
+              {/* Want more information */}
+              <div className="relative mt-5 pt-5 border-t border-border flex flex-col items-center text-center">
+                <p className="text-sm font-semibold text-foreground mb-2">
+                  {language === "ar" ? "تريد معلومات أكثر؟" : "Wants more information"}
+                </p>
+                <button
+                  onClick={() => onNav("report")}
+                  className="inline-flex items-center gap-2 h-11 px-6 rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-[var(--shadow-glow)] hover:opacity-90 transition-opacity"
+                >
+                  {language === "ar" ? "اضغط هنا" : "Click here"}
+                </button>
+              </div>
+            </div>
           </section>
 
           {/* Core tools */}
