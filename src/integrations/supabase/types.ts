@@ -1217,6 +1217,39 @@ export type Database = {
         }
         Relationships: []
       }
+      join_requests: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          notified: boolean
+          notify_error: string | null
+          teacher_name: string
+          telegram_username: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          notified?: boolean
+          notify_error?: string | null
+          teacher_name: string
+          telegram_username: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          notified?: boolean
+          notify_error?: string | null
+          teacher_name?: string
+          telegram_username?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mission_progress: {
         Row: {
           completed: boolean
