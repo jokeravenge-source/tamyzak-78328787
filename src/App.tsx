@@ -574,8 +574,21 @@ const App = () => {
   const backToBasics = () => chooseMenu("basics");
   // First-run onboarding (subject picker → diagnostic → results → streak → dashboard)
   const [onboarded, setOnboarded] = useState<boolean>(() => isOnboardingDone());
+  // Only ever show onboarding once per account (checked against the server flag).
+  const [onboardChecked, setOnboardChecked] = useState<boolean>(false);
+  useEffect(() => {
+    let alive = true;
+    if (!authed) { setOnboardChecked(false); return; }
+    syncOnboardingWithServer().then((done) => {
+      if (!alive) return;
+      if (done) setOnboarded(true);
+      setOnboardChecked(true);
+    });
+    return () => { alive = false; };
+  }, [authed]);
   const finishOnboarding = ({ subject: s, chapter, startStudying }: { subject: OnboardingSubject; chapter: number; startStudying: boolean }) => {
     setOnboarded(true);
+    void markOnboardedRemote();
     if (startStudying) {
       try {
         sessionStorage.setItem("flashcards:review", "1");
