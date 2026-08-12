@@ -1016,7 +1016,7 @@ const Basics = ({
 
           <section className="mb-6 grid grid-cols-12 gap-3 sm:gap-5">
             {/* Progress ring */}
-            <div className="col-span-12 md:col-span-4 bg-card rounded-3xl p-4 sm:p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
+            <div className="col-span-12 md:col-span-6 bg-card rounded-3xl p-4 sm:p-6 border border-border flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-[var(--shadow-card)]">
               <div
                 aria-hidden
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
