@@ -2732,6 +2732,7 @@ export type Database = {
           votes: number
         }[]
       }
+      public_student_profile: { Args: { _user_id: string }; Returns: Json }
       redeem_premium_with_points: {
         Args: { _environment?: string }
         Returns: Json
