@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CharacterAvatar, type CharacterTraits, type Gender } from "./CharacterAvatar";
+import StudentProfileDialog from "./StudentProfileDialog";
 import { Users } from "lucide-react";
 
 type Occupant = {
@@ -58,6 +59,7 @@ export default function StudyRoom({
 }) {
   const [people, setPeople] = useState<Occupant[]>([]);
   const [now, setNow] = useState(Date.now());
+  const [openProfile, setOpenProfile] = useState<string | null>(null);
 
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 1000);
@@ -194,7 +196,14 @@ export default function StudyRoom({
             {people.map((p) => {
               const isMe = currentUserId && p.user_id === currentUserId;
               return (
-                <div key={p.user_id} className="flex flex-col items-center" style={{ width: 120 }}>
+                <button
+                  key={p.user_id}
+                  type="button"
+                  onClick={() => setOpenProfile(p.user_id)}
+                  className="flex flex-col items-center transition-transform hover:scale-105"
+                  style={{ width: 120 }}
+                  aria-label={language === "ar" ? `ملف ${p.display_name}` : `${p.display_name} profile`}
+                >
                   <div className={`mb-1 px-2 py-0.5 rounded-full backdrop-blur border text-xs font-medium max-w-[120px] truncate ${isMe ? "bg-primary text-primary-foreground border-primary" : "bg-background/80 border-primary/30"}`}>
                     {isMe ? (language === "ar" ? "أنت" : "You") : p.display_name}
                   </div>
@@ -209,12 +218,13 @@ export default function StudyRoom({
                   <div className="mt-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
                     {formatHMS(computeElapsedSeconds(p, now))}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
         )}
       </div>
+      <StudentProfileDialog userId={openProfile} language={language} onClose={() => setOpenProfile(null)} />
     </section>
   );
 }
