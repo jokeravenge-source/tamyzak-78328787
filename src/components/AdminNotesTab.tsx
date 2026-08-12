@@ -87,7 +87,7 @@ export default function AdminNotesTab() {
       template: templateKey,
       blocks: JSON.parse(JSON.stringify(tpl.blocks)),
       cover_emoji: "📘",
-      published: false,
+      published: true,
       background_image_url: null,
       notebook_id: activeNotebook?.id ?? null,
       created_at: "",
@@ -156,7 +156,7 @@ export default function AdminNotesTab() {
                 description: "",
                 cover_emoji: "📚",
                 cover_image_url: null,
-                published: false,
+                published: true,
                 created_at: "",
                 updated_at: "",
               })
