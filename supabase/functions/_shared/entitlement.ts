@@ -38,7 +38,7 @@ export async function claimFeature(req: Request, feature: string): Promise<Entit
     return {
       ok: false,
       status: 429,
-      error: "You've used your 5 free daily uses of this tool. They reset at midnight Baghdad time (Asia/Baghdad, UTC+3). Upgrade to Premium for unlimited access.",
+      error: "You've reached today's usage limit for this tool. It resets at midnight Baghdad time (Asia/Baghdad, UTC+3).",
     };
   }
   return { ok: true, userId, bypassed: false };

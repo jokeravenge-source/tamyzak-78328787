@@ -12,12 +12,8 @@ export type SubscriptionRow = {
   environment: string;
 };
 
-function isActive(sub: SubscriptionRow | null): boolean {
-  if (!sub) return false;
-  if (!["active", "trialing", "past_due"].includes(sub.status)) return false;
-  if (!sub.current_period_end) return true;
-  return new Date(sub.current_period_end).getTime() > Date.now();
-}
+// Premium subscriptions are discontinued — every feature is free for everyone.
+// `isPremium` stays in the API surface so existing gates simply always pass.
 
 export function useSubscription() {
   const [sub, setSub] = useState<SubscriptionRow | null>(null);
@@ -71,5 +67,5 @@ export function useSubscription() {
     };
   }, []);
 
-  return { subscription: sub, isPremium: isActive(sub), loading, userId };
+  return { subscription: sub, isPremium: true, loading, userId };
 }
