@@ -64,10 +64,14 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     directKey: "adminNotes",
   },
   {
+    titleEn: "Join", titleAr: "انضم",
+    items: [],
+    directKey: "joinTamayzak",
+  },
+  {
     titleEn: "Menu", titleAr: "القائمة",
     items: [
       { key: "account", labelEn: "Settings", labelAr: "الإعدادات", Icon: Settings },
-      { key: "joinTamayzak", labelEn: "Join Tamayzak", labelAr: "انضم الى تميزك", Icon: Sparkles },
       { key: "support" as MainMenuChoice, labelEn: "Support", labelAr: "الدعم", Icon: MessageCircle },
       { key: "report", labelEn: "Progress", labelAr: "تقدمي", Icon: LineChart },
     ],
@@ -80,6 +84,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   Notes: NotebookPen,
+  Join: Sparkles,
   Menu: MenuIcon,
 };
 
