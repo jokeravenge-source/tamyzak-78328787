@@ -46,7 +46,6 @@ const More = ({
 }) => {
   const t = copy[language];
   const items: { key: MoreKey; Icon: React.ComponentType<{ className?: string }> }[] = [
-    { key: "premium", Icon: Crown },
     { key: "mcq", Icon: HelpCircle },
     { key: "missions", Icon: ListChecks },
     { key: "advices", Icon: MessageSquareQuote },
