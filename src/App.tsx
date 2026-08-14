@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { lazy } from "react";
+import { lazyWithRetry as lazy } from "@/lib/lazyWithRetry";
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Chapters = lazy(() => import("./pages/Chapters.tsx"));
 import NotFound from "./pages/NotFound.tsx";
