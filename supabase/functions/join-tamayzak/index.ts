@@ -16,8 +16,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const fullName = String(body.full_name ?? "").trim().slice(0, 120);
     const telegram = String(body.telegram_username ?? "").trim().slice(0, 60);
-    const teacher = String(body.teacher_name ?? "").trim().slice(0, 120);
-    if (!fullName || !telegram || !teacher) return json({ error: "missing_fields" }, 400);
+    const cv = String(body.cv ?? body.teacher_name ?? "").trim().slice(0, 4000);
+    if (!fullName || !telegram || !cv) return json({ error: "missing_fields" }, 400);
 
     // Always persist the request first so a Telegram failure never loses a signup.
     const admin = createClient(
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     );
     const { data: saved } = await admin
       .from("join_requests")
-      .insert({ full_name: fullName, telegram_username: telegram, teacher_name: teacher })
+      .insert({ full_name: fullName, telegram_username: telegram, teacher_name: cv })
       .select("id")
       .maybeSingle();
 
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     if (!lovableKey || !tgKey) return json({ ok: true, notified: false });
 
     const handle = telegram.startsWith("@") ? telegram : `@${telegram}`;
-    const text = `🌟 طلب انضمام إلى تميزك\n\n👤 الاسم الكامل: ${fullName}\n💬 تيليجرام: ${handle}\n👨‍🏫 اسم المدرس: ${teacher}`;
+    const text = `🌟 طلب انضمام إلى تميزك\n\n👤 الاسم الكامل: ${fullName}\n💬 تيليجرام: ${handle}\n\n📄 السيرة الذاتية:\n${cv}`;
 
     let notified = false;
     let notifyError: string | null = null;
