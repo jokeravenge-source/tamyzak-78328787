@@ -8,6 +8,7 @@ import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import AdminNotesTab from "@/components/AdminNotesTab";
 import AdminBankTab from "@/components/AdminBankTab";
 import AdminAnalyticsTab from "@/components/AdminAnalyticsTab";
+import AdminCreditsTab from "@/components/AdminCreditsTab";
 import RegenerateDailyGamesButton from "@/components/RegenerateDailyGamesButton";
 import DailyGamesListButton from "@/components/DailyGamesListButton";
 
@@ -25,7 +26,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes" | "bank" | "analytics";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes" | "bank" | "analytics" | "credits";
   const [tab, setTab] = useState<Tab>("pending");
   // Owner gate: only this email sees every tab. Other admins are moderators
   // and only see acceptance/review-related tabs (summaries pending, flashcards
@@ -618,12 +619,19 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               Analytics
             </button>
           )}
+          {isOwner && (
+            <button onClick={() => setTab("credits")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "credits" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              Credits
+            </button>
+          )}
           <button onClick={() => setTab("bank")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "bank" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <BookOpen className="w-4 h-4 inline mr-1.5" />Question Bank
           </button>
         </div>
 
-        {tab === "analytics" ? (
+        {tab === "credits" ? (
+          <AdminCreditsTab />
+        ) : tab === "analytics" ? (
           <AdminAnalyticsTab />
         ) : tab === "bank" ? (
           <AdminBankTab />
