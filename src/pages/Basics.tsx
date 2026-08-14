@@ -670,20 +670,6 @@ const Basics = ({
 
       <div className="p-4 border-t border-border space-y-3">
         <button
-          onClick={() => onNav("premium")}
-          className="w-full p-3 rounded-xl text-left bg-gradient-to-br from-primary to-[hsl(213_94%_68%)] text-primary-foreground shadow-[var(--shadow-glow)] hover:opacity-95 transition-opacity"
-        >
-          <p className="text-[10px] font-semibold opacity-80 mb-0.5 uppercase tracking-wider">
-            {language === "ar" ? "حسابك" : "Account status"}
-          </p>
-          <p className="text-sm font-bold flex items-center gap-1">
-            {isPremium ? "✨" : "🎓"}{" "}
-            {isPremium
-              ? language === "ar" ? "مستخدم بريميوم" : "Premium user"
-              : language === "ar" ? "ترقية إلى بريميوم" : "Upgrade to Premium"}
-          </p>
-        </button>
-        <button
           onClick={() => onNav("account")}
           className="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
         >
