@@ -27,7 +27,6 @@ const CurvedNavBar = ({
     { key: "leaderboard", label: L.leaderboard, Icon: Trophy },
     { key: "subjectsHub", label: L.subjectsHub, Icon: BookOpen },
     { key: "report", label: L.report, Icon: Sparkles },
-    { key: "premium", label: L.premium, Icon: Crown },
     { key: "account", label: L.account, Icon: UserCog },
   ];
   const ease = [0.22, 1, 0.36, 1] as const;
