@@ -655,8 +655,6 @@ const App = () => {
         <main className="min-h-screen flex items-center justify-center">
           <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
         </main>
-      ) : authRole !== "admin" && !captchaPassed ? (
-        <CaptchaGate language={language ?? "ar"} onPassed={() => setCaptchaPassed(true)} />
       ) : authRole === "admin" && !authed ? (
         <AdminLogin onAuthed={() => setAuthed(true)} onBack={resetRole} />
       ) : authRole === "admin" && authed && isAdmin ? (
