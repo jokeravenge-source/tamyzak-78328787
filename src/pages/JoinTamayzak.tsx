@@ -8,13 +8,13 @@ const JoinTamayzak = ({ language, onBack }: { language: AppLanguage; onBack: () 
   const isAr = language === "ar";
   const [fullName, setFullName] = useState("");
   const [telegram, setTelegram] = useState("");
-  const [teacher, setTeacher] = useState("");
+  const [cv, setCv] = useState("");
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !telegram.trim() || !teacher.trim()) {
+    if (!fullName.trim() || !telegram.trim() || !cv.trim()) {
       toast.error(isAr ? "يرجى ملء جميع الحقول" : "Please fill all fields");
       return;
     }
@@ -24,7 +24,7 @@ const JoinTamayzak = ({ language, onBack }: { language: AppLanguage; onBack: () 
         body: {
           full_name: fullName.trim(),
           telegram_username: telegram.trim(),
-          teacher_name: teacher.trim(),
+          cv: cv.trim(),
         },
       });
       if (error || (data as { error?: string })?.error) throw new Error(error?.message ?? "failed");
@@ -84,14 +84,22 @@ const JoinTamayzak = ({ language, onBack }: { language: AppLanguage; onBack: () 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1.5">{isAr ? "اسم المدرس" : "Teacher name"}</label>
-              <input
-                value={teacher}
-                onChange={(e) => setTeacher(e.target.value)}
-                maxLength={120}
-                className="w-full h-11 px-3 rounded-lg border border-border bg-background text-sm"
-                placeholder={isAr ? "اكتب اسم مدرسك" : "Your teacher's name"}
+              <label className="block text-sm font-medium mb-1.5">
+                {isAr ? "السيرة الذاتية" : "Your CV"}
+              </label>
+              <textarea
+                value={cv}
+                onChange={(e) => setCv(e.target.value)}
+                maxLength={4000}
+                rows={7}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm resize-y leading-relaxed"
+                placeholder={
+                  isAr
+                    ? "اكتب سيرتك الذاتية: خبرتك، المواد التي تدرّسها، إنجازاتك..."
+                    : "Write your CV: experience, subjects you teach, achievements..."
+                }
               />
+              <p className="text-[11px] text-muted-foreground mt-1">{cv.length}/4000</p>
             </div>
             <button
               type="submit"
