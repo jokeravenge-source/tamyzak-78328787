@@ -43,8 +43,6 @@ const ENTRIES: Entry[] = [
     keywords: ["tasks", "todos", "checklist", "today", "homework", "plan", "schedule", "reminder", "مهام", "اليوم", "واجبات", "تذكير", "جدول"] },
   { key: "news", en: { title: "News", desc: "Announcements" }, ar: { title: "الأخبار", desc: "الإعلانات" },
     keywords: ["announcements", "updates", "posts", "notifications", "feed", "أخبار", "إعلانات", "تنبيهات", "تحديثات"] },
-  { key: "premium", en: { title: "Premium", desc: "Upgrade plan" }, ar: { title: "بريميوم", desc: "ترقية الخطة" },
-    keywords: ["upgrade", "subscription", "pay", "paddle", "pro", "vip", "plan", "billing", "اشتراك", "ترقية", "دفع", "خطة", "فاتورة"] },
   { key: "ministerialBank", en: { title: "Ministerial Bank", desc: "Past exam questions" }, ar: { title: "البنك الوزاري", desc: "أسئلة وزارية" },
     keywords: ["past papers", "exam", "ministry", "وزاري", "بنك", "امتحانات", "أسئلة سابقة"] },
   { key: "mindmap", en: { title: "Mind Map", desc: "AI mind maps" }, ar: { title: "الخرائط الذهنية", desc: "خرائط ذهنية" },
