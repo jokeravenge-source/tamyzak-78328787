@@ -852,9 +852,6 @@ const Basics = ({
                   {username && (
                     <span className="text-ash font-normal text-base sm:text-lg ms-2">· {username}</span>
                   )}
-                  {isPremium && (
-                    <Crown className="inline-block w-4 h-4 ms-2 text-ember align-middle" />
-                  )}
                 </h2>
                 <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                   <div className="rounded-2xl border border-border bg-card px-3 py-2.5">
