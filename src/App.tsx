@@ -229,7 +229,7 @@ const App = () => {
   }, []);
   const [authed, setAuthed] = useState(() => hasPersistedAuthSession());
   const [authLoading, setAuthLoading] = useState(() => !hasPersistedAuthSession());
-  const [captchaPassed, setCaptchaPassed] = useState<boolean>(() => isCaptchaPassed());
+  
   const [isAdmin, setIsAdmin] = useState(false);
   const [tgVerified, setTgVerified] = useState(false);
   const [tgLoading, setTgLoading] = useState(false);
