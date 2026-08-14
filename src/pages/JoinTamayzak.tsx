@@ -8,13 +8,13 @@ const JoinTamayzak = ({ language, onBack }: { language: AppLanguage; onBack: () 
   const isAr = language === "ar";
   const [fullName, setFullName] = useState("");
   const [telegram, setTelegram] = useState("");
-  const [teacher, setTeacher] = useState("");
+  const [cv, setCv] = useState("");
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !telegram.trim() || !teacher.trim()) {
+    if (!fullName.trim() || !telegram.trim() || !cv.trim()) {
       toast.error(isAr ? "يرجى ملء جميع الحقول" : "Please fill all fields");
       return;
     }
@@ -24,7 +24,7 @@ const JoinTamayzak = ({ language, onBack }: { language: AppLanguage; onBack: () 
         body: {
           full_name: fullName.trim(),
           telegram_username: telegram.trim(),
-          teacher_name: teacher.trim(),
+          cv: cv.trim(),
         },
       });
       if (error || (data as { error?: string })?.error) throw new Error(error?.message ?? "failed");
