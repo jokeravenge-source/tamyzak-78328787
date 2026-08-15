@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useVisibilityGatedChannel } from "@/lib/realtimeVisibility";
 import { CharacterAvatar, type CharacterTraits, type Gender } from "./CharacterAvatar";
 import StudentProfileDialog from "./StudentProfileDialog";
 import { Users } from "lucide-react";
@@ -123,16 +124,22 @@ export default function StudyRoom({
     };
 
     load();
-    const ch = supabase
-      .channel(`active_sessions_room_${subject}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "active_sessions", filter: `subject=eq.${subject}` }, () => load())
-      .subscribe();
-    // Cost: skip background polling while the tab is hidden.
-    const interval = window.setInterval(() => { if (!document.hidden) load(); }, 30000);
-    return () => { mounted = false; supabase.removeChannel(ch); window.clearInterval(interval); };
+    loadRef.current = load;
+    return () => { mounted = false; };
     // `people` intentionally excluded — load() reads it via closure for fallback only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subject, currentUserId]);
+
+  // Realtime updates only while the tab is visible; one fresh fetch on regain.
+  useVisibilityGatedChannel(
+    () =>
+      supabase
+        .channel(`active_sessions_room_${subject}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "active_sessions", filter: `subject=eq.${subject}` }, () => loadRef.current?.())
+        .subscribe(),
+    [subject],
+    () => loadRef.current?.(),
+  );
 
   const subj = SUBJECT_LABEL[subject];
   const subjLabel = subj ? (language === "ar" ? subj.ar : subj.en) : subject;
