@@ -70,16 +70,26 @@ export default function ParentFollow({ token }: { token: string }) {
     })();
   }, [token, unlocked]);
 
-  // Live updates: subscribe to the student's broadcast channel and refetch on changes.
+  // Live-ish updates: poll every 45s while the tab is visible (cheaper than realtime).
   useEffect(() => {
-    const channelName = data?.channel;
-    if (!channelName) return;
-    const ch = supabase
-      .channel(channelName)
-      .on("broadcast", { event: "todos-changed" }, () => { fetchSnapshot(); })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [data?.channel]);
+    if (!unlocked) return;
+    let id: number | null = null;
+    const start = () => {
+      if (id !== null) return;
+      id = window.setInterval(() => { fetchSnapshot(); }, 45000);
+    };
+    const stop = () => {
+      if (id !== null) { window.clearInterval(id); id = null; }
+    };
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else { fetchSnapshot(); start(); }
+    };
+    if (!document.hidden) start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => { document.removeEventListener("visibilitychange", onVisibility); stop(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlocked, token]);
 
   const submitCode = async (e: React.FormEvent) => {
     e.preventDefault();
