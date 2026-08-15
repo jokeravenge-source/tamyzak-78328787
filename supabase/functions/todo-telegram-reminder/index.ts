@@ -55,8 +55,23 @@ Deno.serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    const body = await req.json().catch(() => ({}));
+    const body = await req.json().catch(() => ({} as Record<string, unknown>));
     const language: "en" | "ar" = body.language === "ar" ? "ar" : "en";
+    const clientItems: Todo[] | null = Array.isArray((body as { items?: unknown }).items)
+      ? ((body as { items: unknown[] }).items
+          .filter((it) => it && typeof it === "object")
+          .slice(0, 200)
+          .map((it) => {
+            const o = it as Record<string, unknown>;
+            return {
+              id: String(o.id ?? ""),
+              text: String(o.text ?? "").slice(0, 300),
+              done: Boolean(o.done),
+              day: typeof o.day === "string" ? o.day : undefined,
+            };
+          })
+          .filter((it) => it.text.length > 0))
+      : null;
 
     const { data: tg } = await admin
       .from("telegram_verifications")
@@ -68,18 +83,23 @@ Deno.serve(async (req) => {
       return json({ error: "telegram_not_linked" }, 400);
     }
 
-    const { data: todoRow } = await admin
-      .from("student_todos")
-      .select("items")
-      .eq("user_id", u.user.id)
-      .maybeSingle();
-    const items: Todo[] = Array.isArray((todoRow as { items: unknown } | null)?.items)
-      ? ((todoRow as { items: Todo[] }).items)
-      : [];
+    let items: Todo[] = clientItems ?? [];
+    if (items.length === 0) {
+      const { data: todoRow } = await admin
+        .from("student_todos")
+        .select("items")
+        .eq("user_id", u.user.id)
+        .maybeSingle();
+      items = Array.isArray((todoRow as { items: unknown } | null)?.items)
+        ? ((todoRow as { items: Todo[] }).items)
+        : [];
+    }
 
-    const now = new Date();
-    const todayEn = DAY_EN[now.getDay()];
-    const todayAr = DAY_AR[now.getDay()];
+    // Use Baghdad time (UTC+3) so "today" matches what the student sees.
+    const baghdad = new Date(Date.now() + 3 * 60 * 60 * 1000);
+    const dayIdx = baghdad.getUTCDay();
+    const todayEn = DAY_EN[dayIdx];
+    const todayAr = DAY_AR[dayIdx];
 
     const todayItems = items.filter((it) => isToday(it.day, todayEn, todayAr));
     const pending = todayItems.filter((it) => !it.done);

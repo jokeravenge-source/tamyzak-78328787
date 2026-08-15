@@ -96,11 +96,21 @@ const TodoList = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     if (sending) return;
     setSending(true);
     try {
+      // Make sure the account copy is up to date, and send the current list too.
+      await pushTodos(todos);
       const { data, error } = await supabase.functions.invoke("todo-telegram-reminder", {
-        body: { language },
+        body: { language, items: todos },
       });
-      const err = (error as { message?: string } | null)?.message
-        || (data as { error?: string } | null)?.error;
+      let err = (data as { error?: string } | null)?.error;
+      if (!err && error) {
+        // invoke() hides the real body behind a generic non-2xx message.
+        const ctx = (error as { context?: Response }).context;
+        if (ctx && typeof ctx.text === "function") {
+          const raw = await ctx.text().catch(() => "");
+          try { err = (JSON.parse(raw) as { error?: string }).error || raw; } catch { err = raw; }
+        }
+        err = err || (error as { message?: string }).message || "unknown_error";
+      }
       if (err === "telegram_not_linked") {
         toast({ title: text.notLinked, variant: "destructive" });
       } else if (err) {
