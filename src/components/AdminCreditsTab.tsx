@@ -132,9 +132,9 @@ const AdminCreditsTab = () => {
       <Card className="border-amber-500/40">
         <p className="text-sm font-semibold mb-2 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> What is eating the credits</p>
         <ul className="text-xs text-muted-foreground space-y-1 list-disc ps-5">
-          <li><strong>Cloud realtime ({pct(243.391159785)}%)</strong> — live study rooms, chat and presence subscriptions. Biggest single driver.</li>
-          <li><strong>Build mode messages ({pct(182)}%)</strong> — editing the app with the assistant.</li>
-          <li><strong>Cloud egress + compute ({pct(29.912991274 + 12.381936)}%)</strong> — data served to clients, mainly PDFs, images and heavy queries.</li>
+          <li><strong>Cloud realtime ({pct(266.448545171)}%)</strong> — live study rooms, chat and presence subscriptions. Biggest single driver.</li>
+          <li><strong>Build mode messages ({pct(191.5)}%)</strong> — editing the app with the assistant.</li>
+          <li><strong>Cloud egress + compute ({pct(33.755790673 + 14.851512)}%)</strong> — data served to clients, mainly PDFs, images and heavy queries.</li>
           <li><strong>AI models ({pct(byCategory.find((c) => c.name === "AI models")?.credits ?? 0)}%)</strong> — grading, MCQ generation, tutor and notes.</li>
         </ul>
         <p className="text-[11px] text-muted-foreground mt-2">
