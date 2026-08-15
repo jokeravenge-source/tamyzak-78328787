@@ -94,22 +94,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     })();
   }, []);
 
-  // Live-refresh my own display name if I rename myself elsewhere
-  useEffect(() => {
-    if (!userId) return;
-    const ch = supabase
-      .channel(`my_profile_${userId}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${userId}` },
-        (payload: any) => {
-          const name = (payload.new?.display_name || "").trim();
-          if (name) setDisplayName(name);
-        },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [userId]);
+  // Display name is fetched once on mount above — no live subscription needed.
 
   const loadRoom = useCallback(async (roomId: string) => {
     const [{ data: mem }, { data: msg }, { data: roomRow }] = await Promise.all([
@@ -187,30 +172,19 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     })();
   }, [userId, loadRoom]);
 
-  // Realtime chat + members
-  useEffect(() => {
-    if (!room) return;
-    let ch: ReturnType<typeof supabase.channel> | null = null;
-    const open = () => {
-      if (ch) return;
-      ch = supabase
-        .channel(`study_room_${room.id}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "study_room_messages", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
-        .on("postgres_changes", { event: "*", schema: "public", table: "study_room_members", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
-        .subscribe();
-    };
-    const close = () => {
-      if (ch) { supabase.removeChannel(ch); ch = null; }
-    };
-    // Keep the socket open only while the tab is actually visible.
-    const onVisibility = () => {
-      if (document.hidden) close();
-      else { open(); loadRoom(room.id); }
-    };
-    if (!document.hidden) open();
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => { document.removeEventListener("visibilitychange", onVisibility); close(); };
-  }, [room, loadRoom]);
+  // Realtime chat + members (only while the tab is visible)
+  useVisibilityGatedChannel(
+    room
+      ? () =>
+          supabase
+            .channel(`study_room_${room.id}`)
+            .on("postgres_changes", { event: "*", schema: "public", table: "study_room_messages", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
+            .on("postgres_changes", { event: "*", schema: "public", table: "study_room_members", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
+            .subscribe()
+      : null,
+    [room?.id, loadRoom],
+    () => { if (room) loadRoom(room.id); },
+  );
 
   // Keep our stored membership name in sync with the profile name
   useEffect(() => {
@@ -227,12 +201,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length]);
 
-  // Refresh member timers periodically
-  useEffect(() => {
-    if (!room) return;
-    const id = setInterval(() => { if (!document.hidden) loadRoom(room.id); }, 20000);
-    return () => clearInterval(id);
-  }, [room, loadRoom]);
+  // Member timers tick locally below; realtime handles server-side changes.
 
   // Tick running timers locally between refreshes
   useEffect(() => {
