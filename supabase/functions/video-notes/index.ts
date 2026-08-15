@@ -38,6 +38,69 @@ const isDailyOrDisabledQuota = (payload: any) => {
   return text.includes("PerDay") || text.includes("limit: 0");
 };
 
+const extractYouTubeId = (value: string) => {
+  try {
+    const parsed = new URL(value);
+    if (parsed.hostname === "youtu.be") return parsed.pathname.slice(1).split("/")[0] || "";
+    if (parsed.pathname.startsWith("/shorts/")) return parsed.pathname.split("/")[2] || "";
+    return parsed.searchParams.get("v") || "";
+  } catch {
+    return "";
+  }
+};
+
+const decodeHtml = (value: string) => value
+  .replace(/&amp;/g, "&")
+  .replace(/&quot;/g, '"')
+  .replace(/&#39;/g, "'")
+  .replace(/&lt;/g, "<")
+  .replace(/&gt;/g, ">");
+
+const fetchYouTubeTranscript = async (videoUrl: string, language: "ar" | "en") => {
+  const videoId = extractYouTubeId(videoUrl);
+  if (!videoId) return "";
+
+  const watch = await fetch(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&hl=${language}`, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; Tamayzak/1.0)" },
+  });
+  if (!watch.ok) return "";
+  const html = await watch.text();
+  const marker = '"captionTracks":';
+  const markerAt = html.indexOf(marker);
+  if (markerAt < 0) return "";
+
+  const arrayStart = markerAt + marker.length;
+  const arrayEnd = html.indexOf('],"audioTracks"', arrayStart);
+  if (arrayEnd < 0) return "";
+
+  let tracks: any[] = [];
+  try {
+    tracks = JSON.parse(html.slice(arrayStart, arrayEnd + 1));
+  } catch (error) {
+    console.error("YouTube caption metadata parse failed", error);
+    return "";
+  }
+
+  const track = tracks.find((item) => item?.languageCode === language && item?.kind !== "asr")
+    || tracks.find((item) => item?.languageCode === language)
+    || tracks.find((item) => item?.kind !== "asr")
+    || tracks[0];
+  if (!track?.baseUrl) return "";
+
+  const captions = await fetch(`${decodeHtml(track.baseUrl)}&fmt=json3`, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; Tamayzak/1.0)" },
+  });
+  if (!captions.ok) return "";
+  const payload = await captions.json().catch(() => null);
+  const transcript = payload?.events
+    ?.flatMap((event: any) => event?.segs || [])
+    .map((segment: any) => segment?.utf8 || "")
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return typeof transcript === "string" ? transcript : "";
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const guard = await protect(req, "video-notes", { max: 6, windowSeconds: 60 });
@@ -61,59 +124,21 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "No AI API key configured" }, 500);
     }
 
-    // Step 1: transcribe the video with Gemini directly (Supadata is no longer used).
+    // YouTube page URLs are not video files and cannot be passed to Gemini as
+    // fileData. Read the video's public captions first, then use Gemini to turn
+    // that faithful transcript into notes.
     let transcriptText = typeof providedTranscript === "string" ? providedTranscript : "";
-    if (!transcriptText && GEMINI_API_KEY && url) {
-      for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
-        try {
-          const tRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                systemInstruction: {
-                  parts: [{
-                    text:
-                      "You transcribe lecture videos. Return ONLY the spoken content as plain running text, in the original spoken language, with no timestamps, no speaker labels and no commentary. Do not summarize — transcribe everything.",
-                  }],
-                },
-                contents: [{
-                  role: "user",
-                  parts: [
-                    { fileData: { fileUri: url.trim(), mimeType: "video/mp4" } },
-                    { text: "Transcribe this video fully." },
-                  ],
-                }],
-              }),
-            },
-          );
-          const tText = await tRes.text();
-          const tJson = parseJsonMaybe(tText);
-          if (!tRes.ok) {
-            console.error("Gemini transcribe error", tRes.status, model, tText);
-            continue;
-          }
-          const out = tJson?.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? "").join("") ?? "";
-          if (out.trim().length > 200) {
-            transcriptText = out.trim();
-            break;
-          }
-        } catch (e) {
-          console.error("Gemini transcribe failed", model, e);
-        }
-      }
+    if (!transcriptText && url) {
+      transcriptText = await fetchYouTubeTranscript(url.trim(), lang0);
     }
 
-    // No transcript (Supadata quota/no captions): for notes we can still let Gemini
-    // watch the video directly. Only hard-fail when there is no Gemini key at all.
-    if (!transcriptText && (runMode === "flashcards" || !GEMINI_API_KEY || !url)) {
+    if (!transcriptText) {
       return jsonResponse({
         error: lang0 === "ar"
-          ? "تعذّر تفريغ هذا الفيديو (قد يكون طويلاً جداً أو بدون ترجمة). جرّب فيديو آخر."
-          : "Could not transcribe this video (may be too long or lack captions). Try another video.",
-        retryable: true,
-      });
+          ? "لا يحتوي هذا الفيديو على ترجمة متاحة. فعّل الترجمة التلقائية للفيديو في يوتيوب ثم حاول مجدداً."
+          : "This video has no available captions. Enable automatic captions on YouTube, then try again.",
+        retryable: false,
+      }, 422);
     }
 
     // Cap transcript size to stay well under model limits.
@@ -319,14 +344,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 2) Direct Gemini fallback (supports raw video URL when no transcript)
+    // 2) Direct Gemini fallback using the extracted transcript.
     if (!notes.trim() && GEMINI_API_KEY) for (const model of geminiDirectModels) {
-      const userParts = transcriptText
-        ? [{ text: userPrompt }]
-        : [
-            { fileData: { fileUri: url.trim(), mimeType: "video/mp4" } },
-            { text: "Write the study notes now." },
-          ];
+      const userParts = [{ text: userPrompt }];
       let geminiRes: Response | null = null;
       let text = "";
       let payload: any = null;
@@ -394,7 +414,7 @@ Deno.serve(async (req) => {
         retryable: overloaded || (quota && !disabledOrDaily && retryAfter > 0),
         retryAfter,
         quota,
-      }, paymentRequired ? 402 : 200);
+      }, paymentRequired ? 402 : quota ? 429 : overloaded ? 503 : 500);
     }
 
     if (!notes.trim()) {
