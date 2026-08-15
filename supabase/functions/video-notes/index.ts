@@ -102,6 +102,31 @@ const fetchYouTubeTranscript = async (videoUrl: string, language: "ar" | "en") =
   return typeof transcript === "string" ? transcript : "";
 };
 
+const fetchSupadataTranscript = async (videoUrl: string, language: "ar" | "en") => {
+  const key = Deno.env.get("SUPADATA_API_KEY");
+  if (!key) return "";
+  try {
+    const endpoint = `https://api.supadata.ai/v1/youtube/transcript?url=${encodeURIComponent(videoUrl)}&lang=${language}&text=true`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25_000);
+    const res = await fetch(endpoint, { headers: { "x-api-key": key }, signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      console.error("Supadata transcript failed", res.status, (await res.text()).slice(0, 300));
+      return "";
+    }
+    const data = await res.json().catch(() => null);
+    if (typeof data?.content === "string") return data.content.replace(/\s+/g, " ").trim();
+    if (Array.isArray(data?.content)) {
+      return data.content.map((c: any) => c?.text || "").join(" ").replace(/\s+/g, " ").trim();
+    }
+    return "";
+  } catch (error) {
+    console.error("Supadata transcript error", error);
+    return "";
+  }
+};
+
 const refundFeatureUse = async (userId: string) => {
   try {
     const admin = createClient(
@@ -148,7 +173,8 @@ Deno.serve(async (req) => {
     // that faithful transcript into notes.
     let transcriptText = typeof providedTranscript === "string" ? providedTranscript : "";
     if (!transcriptText && url) {
-      transcriptText = await fetchYouTubeTranscript(url.trim(), lang0);
+      transcriptText = await fetchSupadataTranscript(url.trim(), lang0);
+      if (!transcriptText) transcriptText = await fetchYouTubeTranscript(url.trim(), lang0);
     }
 
     // Failed AI calls below refund the reserved use, so errors never burn it.
