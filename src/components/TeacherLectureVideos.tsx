@@ -98,6 +98,17 @@ function extractYouTubeId(url: string) {
   } catch { return null; }
 }
 
+async function getFunctionError(error: any, fallback: string) {
+  const response = error?.context;
+  if (response && typeof response.clone === "function") {
+    try {
+      const payload = await response.clone().json();
+      return String(payload?.error || payload?.message || fallback);
+    } catch { /* use fallback below */ }
+  }
+  return /non-2xx/i.test(String(error?.message || "")) ? fallback : String(error?.message || fallback);
+}
+
 // ---- Tiny markdown-ish renderer for the raw notes text -----------------
 function renderMd(md: string, isRTL: boolean) {
   const lines = md.split(/\r?\n/);
@@ -275,9 +286,9 @@ function AdminAddVideo({
     setBusy("gen");
     try {
       const { data, error } = await supabase.functions.invoke("video-notes", {
-        body: { url, language, mode: "notes" },
+        body: { url, language, mode: "notes", adminGeneration: true },
       });
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionError(error, language === "ar" ? "تعذّر توليد الملاحظات. حاول مجدداً." : "Failed to generate notes. Please try again."));
       if (data?.error) throw new Error(data.error);
       const p: NotePart[] = data?.parts || (data?.notes ? [{ title: T.videos, notes: data.notes }] : []);
       if (!p.length) throw new Error("No notes generated");

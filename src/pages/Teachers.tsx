@@ -1085,7 +1085,7 @@ function AnziBulkNotesGenerator({
         const url = `https://www.youtube.com/watch?v=${v.id}`;
         try {
           const { data, error } = await supabase.functions.invoke("video-notes", {
-            body: { url, language: lang, mode: "notes" },
+            body: { url, language: lang, mode: "notes", adminGeneration: true },
           });
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
