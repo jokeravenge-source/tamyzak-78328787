@@ -5,6 +5,7 @@ import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
 import { rankFor, RANKS } from "@/lib/points";
 import { CharacterAvatar, type Gender, type CharacterTraits } from "@/components/CharacterAvatar";
+import { readDaily, writeDaily } from "@/lib/dailyCache";
 
 type Row = { user_id: string; name: string; points: number; gender: Gender | null; traits: Partial<CharacterTraits> | null };
 
@@ -24,9 +25,16 @@ const Leaderboard = ({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     const { data: u } = await supabase.auth.getUser();
     setMe(u.user?.id ?? null);
+
+    // Cost: the board is a full scan of user_points + profiles. It refreshes
+    // once per Baghdad day per device unless the user taps refresh.
+    if (!force) {
+      const cached = readDaily<Row[]>("leaderboard");
+      if (cached) { setRows(cached); setLoading(false); return; }
+    }
 
     // All-time totals, so the leaderboard matches the points shown in each profile.
     const pageSize = 1000;
@@ -80,22 +88,12 @@ const Leaderboard = ({
       }))
       .sort((a, b) => b.points - a.points);
     setRows(list);
+    writeDaily("leaderboard", list);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     load();
-    const onFocus = () => load();
-    window.addEventListener("focus", onFocus);
-    // Poll while the board is open instead of holding two unfiltered realtime
-    // subscriptions open (same freshness, a fraction of the traffic).
-    const iv = window.setInterval(() => {
-      if (document.visibilityState === "visible") load();
-    }, 15000);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      window.clearInterval(iv);
-    };
   }, [load]);
 
   return (
@@ -114,7 +112,7 @@ const Leaderboard = ({
             {t("Leaderboard", "لوحة المتصدرين")}
           </span>
           <button
-            onClick={async () => { setRefreshing(true); await load(); setRefreshing(false); }}
+            onClick={async () => { setRefreshing(true); await load(true); setRefreshing(false); }}
             className="text-muted-foreground hover:text-primary transition"
             aria-label={t("Refresh", "تحديث")}
           >
