@@ -233,11 +233,10 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
 
 // Featured top cards (report/summaries + todo/fahrast)
 const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }>; tintBg: string; tintText: string }[] = [
-  { key: "report",          Icon: Sparkles,   tintBg: "bg-primary",     tintText: "text-primary-foreground" },
-  { key: "summaries",       Icon: FileText,   tintBg: "bg-violet-50",  tintText: "text-violet-600" },
-  { key: "todo",            Icon: ListChecks, tintBg: "bg-emerald-50", tintText: "text-emerald-600" },
-  { key: "missions",        Icon: Target,     tintBg: "bg-amber-50",   tintText: "text-amber-600" },
-  { key: "liveBattle",      Icon: Swords,     tintBg: "bg-fuchsia-50", tintText: "text-fuchsia-600" },
+  { key: "subjectsHub", Icon: BookOpen,   tintBg: "bg-primary",    tintText: "text-primary-foreground" },
+  { key: "missions",    Icon: Target,     tintBg: "bg-amber-50",   tintText: "text-amber-600" },
+  { key: "summaries",   Icon: FileText,   tintBg: "bg-violet-50",  tintText: "text-violet-600" },
+  { key: "sessions",    Icon: GraduationCap, tintBg: "bg-emerald-50", tintText: "text-emerald-600" },
 ];
 
 // Study tools grid (bottom section)
@@ -277,6 +276,8 @@ const FEATURED_COPY = {
     notes: { title: "Notes", subtitle: "Write and organize your own study notes." },
     companion: { title: "Success Companion", subtitle: "Your AI study partner and planner." },
     liveBattle: { title: "Live Battle", subtitle: "Challenge a friend in a 10-question MCQ duel." },
+    subjectsHub: { title: "Subjects", subtitle: "All your subjects, chapter by chapter." },
+    sessions: { title: "Study Sessions", subtitle: "Time your study and join study rooms." },
   },
   ar: {
     report: { title: "تقريري اليومي", subtitle: "ملاحظات ذكية ورابط متابعة لولي الأمر." },
@@ -290,6 +291,8 @@ const FEATURED_COPY = {
     notes: { title: "ملاحظاتي", subtitle: "اكتب ونظّم ملاحظاتك الدراسية." },
     companion: { title: "رفيق النجاح", subtitle: "شريكك الذكي في الدراسة والتخطيط." },
     liveBattle: { title: "المعركة المباشرة", subtitle: "تحد صديقك" },
+    subjectsHub: { title: "المواد", subtitle: "كل موادك، فصلاً بفصل." },
+    sessions: { title: "جلسات الدراسة", subtitle: "احسب وقت دراستك وادخل غرف الدراسة." },
   },
 } as const;
 
@@ -615,9 +618,9 @@ const Basics = ({
   const toolsHeader = { en: "Study tools", ar: "أدوات الدراسة" }[language];
   const recentTools = recentKeys
     .filter((k) => k !== "liveBattle" && TOOL_ICONS[k as MainMenuChoice] && (fc as any)[k])
-    .slice(0, 6)
+    .slice(0, 4)
     .map((k) => ({ key: k as MainMenuChoice, Icon: TOOL_ICONS[k as MainMenuChoice]! }));
-  const displayedTools = recentTools.length > 0 ? recentTools : STUDY_TOOLS;
+  const displayedTools = recentTools.length > 0 ? recentTools : STUDY_TOOLS.slice(0, 4);
   const displayedToolsHeader = recentTools.length > 0
     ? { en: "Recently used", ar: "المستخدمة مؤخراً" }[language]
     : toolsHeader;
@@ -1016,8 +1019,11 @@ const Basics = ({
 
           {/* Core tools */}
           <section className="mb-6">
+            <h4 className="text-base sm:text-lg font-bold text-foreground mb-4">
+              {language === "ar" ? "الأساسيات" : "Essentials"}
+            </h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              {FEATURED.filter((it) => it.key !== "liveBattle").map((it) => {
+              {FEATURED.map((it) => {
                 const Icon = it.Icon;
                 const meta = (fc as any)[it.key];
                 if (!meta) return null;
