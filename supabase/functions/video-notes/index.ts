@@ -1,6 +1,7 @@
 import { protect } from "../_shared/guard.ts";
 import { requireUser } from "../_shared/auth.ts";
 import { claimFeature } from "../_shared/entitlement.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,6 +102,28 @@ const fetchYouTubeTranscript = async (videoUrl: string, language: "ar" | "en") =
   return typeof transcript === "string" ? transcript : "";
 };
 
+const refundFeatureUse = async (userId: string) => {
+  try {
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL") || "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "",
+    );
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baghdad" }).format(new Date());
+    const { data } = await admin
+      .from("feature_usage")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("feature", "video-notes")
+      .eq("used_on", today)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data?.id) await admin.from("feature_usage").delete().eq("id", data.id);
+  } catch (error) {
+    console.error("Failed to refund video-notes use", error);
+  }
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const guard = await protect(req, "video-notes", { max: 6, windowSeconds: 60 });
@@ -113,10 +136,6 @@ Deno.serve(async (req) => {
     const runMode: "notes" | "flashcards" = mode === "flashcards" ? "flashcards" : "notes";
     if ((!url || typeof url !== "string") && !providedTranscript) {
       return jsonResponse({ error: "Missing url" }, 400);
-    }
-    const ent = await claimFeature(req, "video");
-    if (!ent.ok) {
-      return jsonResponse({ error: ent.error, upgrade: ent.status === 429 }, ent.status);
     }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -132,13 +151,10 @@ Deno.serve(async (req) => {
       transcriptText = await fetchYouTubeTranscript(url.trim(), lang0);
     }
 
-    if (!transcriptText) {
-      return jsonResponse({
-        error: lang0 === "ar"
-          ? "لا يحتوي هذا الفيديو على ترجمة متاحة. فعّل الترجمة التلقائية للفيديو في يوتيوب ثم حاول مجدداً."
-          : "This video has no available captions. Enable automatic captions on YouTube, then try again.",
-        retryable: false,
-      }, 422);
+    // Failed AI calls below refund the reserved use, so errors never burn it.
+    const ent = await claimFeature(req, "video-notes");
+    if (!ent.ok) {
+      return jsonResponse({ error: ent.error, upgrade: ent.status === 429 }, ent.status);
     }
 
     // Cap transcript size to stay well under model limits.
@@ -150,6 +166,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: lang0 === "ar" ? "تعذّر تفريغ هذا الفيديو لإنشاء بطاقات." : "Could not transcribe this video for flashcards." });
       }
       if (!LOVABLE_API_KEY) {
+        await refundFeatureUse(auth.userId);
         return jsonResponse({ error: "LOVABLE_API_KEY not configured" }, 500);
       }
       const n = Math.max(6, Math.min(40, Number(count) || 15));
@@ -192,13 +209,17 @@ Deno.serve(async (req) => {
       });
       if (!res.ok) {
         const txt = await res.text();
+        await refundFeatureUse(auth.userId);
         if (res.status === 429) return jsonResponse({ error: lang0 === "ar" ? "الذكاء الاصطناعي مشغول. حاول مجدداً." : "AI busy. Try again.", retryable: true }, 429);
         if (res.status === 402) return jsonResponse({ error: lang0 === "ar" ? "نفدت رصيد الذكاء الاصطناعي." : "AI credits exhausted." }, 402);
         return jsonResponse({ error: `AI error: ${txt}` }, 500);
       }
       const data = await res.json();
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-      if (!toolCall) return jsonResponse({ error: "No flashcards generated", retryable: true });
+      if (!toolCall) {
+        await refundFeatureUse(auth.userId);
+        return jsonResponse({ error: "No flashcards generated", retryable: true }, 502);
+      }
       const parsed = JSON.parse(toolCall.function.arguments);
       return jsonResponse({ cards: parsed.cards || [], transcript: transcriptText });
     }
@@ -246,7 +267,7 @@ Deno.serve(async (req) => {
 تقسيم إجباري: قسّم الفيديو إلى عدة أجزاء متتابعة (4 إلى 8 أجزاء حسب طول المحتوى)، ولكل جزء أعد كامل البنية أعلاه (نظرة عامة، مفاهيم، تعريفات، قوانين، أمثلة، نقاط مهمة، خلاصة) خاصة بذلك الجزء فقط. ابدأ كل جزء بعنوان واضح يصف موضوعه. أعد المخرجات عبر استدعاء الأداة submit_video_notes فقط.`;
     // Try Lovable AI Gateway first (multiple models for fallback on quota/overload),
     // then fall back to direct Gemini if available.
-    const lovableModels = [
+    const transcriptModels = [
       "google/gemini-3-flash-preview",
       "google/gemini-3.5-flash",
       "google/gemini-2.5-flash",
@@ -254,6 +275,11 @@ Deno.serve(async (req) => {
       "google/gemini-2.5-flash-lite",
       "google/gemini-2.5-pro",
     ];
+    // Video requests are much slower and must not cascade through many models,
+    // otherwise the edge function reaches its wall-clock timeout.
+    const lovableModels = transcriptText
+      ? transcriptModels
+      : ["google/gemini-3.5-flash"];
     const geminiDirectModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastGeminiError: any = null;
     let parts: { title: string; notes: string }[] = [];
@@ -289,11 +315,14 @@ Deno.serve(async (req) => {
     };
 
     // 1) Lovable AI Gateway attempts
-    if (LOVABLE_API_KEY && transcriptText) {
+    if (LOVABLE_API_KEY) {
       for (const model of lovableModels) {
         try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), transcriptText ? 45_000 : 95_000);
           const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
+            signal: controller.signal,
             headers: {
               "Content-Type": "application/json",
               "Lovable-API-Key": LOVABLE_API_KEY,
@@ -301,14 +330,25 @@ Deno.serve(async (req) => {
             },
             body: JSON.stringify({
               model,
-              messages: [
-                { role: "system", content: systemPrompt },
-                { role: "user", content: userPrompt },
-              ],
+              messages: transcriptText
+                ? [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                  ]
+                : [
+                    { role: "system", content: systemPrompt },
+                    {
+                      role: "user",
+                      content: [
+                        { type: "text", text: userPrompt },
+                        { type: "video_url", video_url: { url: url.trim() } },
+                      ],
+                    },
+                  ],
               tools: [partsTool],
               tool_choice: { type: "function", function: { name: "submit_video_notes" } },
             }),
-          });
+          }).finally(() => clearTimeout(timeout));
           const text = await res.text();
           const payload = parseJsonMaybe(text);
           if (!res.ok) {
@@ -345,7 +385,7 @@ Deno.serve(async (req) => {
     }
 
     // 2) Direct Gemini fallback using the extracted transcript.
-    if (!notes.trim() && GEMINI_API_KEY) for (const model of geminiDirectModels) {
+    if (!notes.trim() && GEMINI_API_KEY && transcriptText) for (const model of geminiDirectModels) {
       const userParts = [{ text: userPrompt }];
       let geminiRes: Response | null = null;
       let text = "";
@@ -409,6 +449,7 @@ Deno.serve(async (req) => {
           ? "تعذّر إنشاء الملاحظات من هذا الفيديو. تأكد من الرابط أو جرّب فيديو آخر."
           : "Could not generate notes from this video. Check the link or try another video.");
 
+      await refundFeatureUse(auth.userId);
       return jsonResponse({
         error: friendly,
         retryable: overloaded || (quota && !disabledOrDaily && retryAfter > 0),
@@ -418,7 +459,8 @@ Deno.serve(async (req) => {
     }
 
     if (!notes.trim()) {
-      return jsonResponse({ error: "Empty response from model", retryable: true });
+      await refundFeatureUse(auth.userId);
+      return jsonResponse({ error: "Empty response from model", retryable: true }, 502);
     }
     return jsonResponse({ notes, parts, transcript: transcriptText });
   } catch (e) {
