@@ -859,7 +859,7 @@ const ANZI_CHAPTERS: Record<number, { playlists: Record<AnziLang, string>; count
   },
   4: {
     playlists: { ar: "PL8aWGashaQUh0VHenzw39Mbs0bwy9bQQi", en: "PLsYLu8VyivsQQGKO7BT9SUiczS4CCUjPR" },
-    counts: { ar: 7, en: 6 },
+    counts: { ar: 7, en: 3 },
   },
 };
 const chapterCfg = (ch: number) => ANZI_CHAPTERS[ch] ?? ANZI_CHAPTERS[3];
