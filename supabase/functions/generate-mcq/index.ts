@@ -1,5 +1,5 @@
 import { protect } from "../_shared/guard.ts";
-import { requireUser } from "../_shared/auth.ts";
+import { requireAdmin, requireUser } from "../_shared/auth.ts";
 import { generateText, Output } from "npm:ai";
 import { z } from "npm:zod";
 import { createLovableAiGatewayProvider } from "../_shared/ai-gateway.ts";
@@ -119,6 +119,7 @@ const requestSchema = z.object({
   fileName: z.string().max(300).optional(),
   fileData: z.string().max(MAX_PDF_CHARS).optional(),
   pageImages: z.array(z.string()).max(200).optional(),
+  adminGeneration: z.boolean().optional(),
 });
 
 /**
@@ -335,9 +336,14 @@ Deno.serve(async (req) => {
     const limited = await enforceRateLimit(req, "mcq", 3, 60);
     if (!limited.ok) return json({ error: limited.error }, limited.status);
 
-    const entitlement = await claimFeature(req, "mcq");
-    if (!entitlement.ok) {
-      return json({ error: entitlement.error, upgrade: entitlement.status === 429 }, entitlement.status);
+    if (body.adminGeneration === true) {
+      const admin = await requireAdmin(req);
+      if (!admin.ok) return json({ error: admin.error }, admin.status);
+    } else {
+      const entitlement = await claimFeature(req, "mcq");
+      if (!entitlement.ok) {
+        return json({ error: entitlement.error, upgrade: entitlement.status === 429 }, entitlement.status);
+      }
     }
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");

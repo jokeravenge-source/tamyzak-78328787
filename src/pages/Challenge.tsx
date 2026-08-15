@@ -309,9 +309,21 @@ const AdminCreate = ({ language, onDone }: { language: AppLanguage; onDone: () =
           fileName: material.fileName,
           count,
           language: qLang,
+          adminGeneration: true,
         },
       });
-      if (error) throw error;
+      if (error) {
+        const fallback = T(language, "تعذّر توليد الأسئلة. حاول مجدداً.", "Failed to generate questions. Please try again.");
+        let message = fallback;
+        const response = (error as any)?.context;
+        if (response && typeof response.clone === "function") {
+          try {
+            const payload = await response.clone().json();
+            message = String(payload?.error || payload?.message || fallback);
+          } catch { /* use localized fallback */ }
+        }
+        throw new Error(message);
+      }
       if (data?.error) throw new Error(data.error);
       const qs: Draft[] = (data?.questions || []).filter(
         (q: any) => q?.choices?.length === 4 && typeof q.answer_index === "number",

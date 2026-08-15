@@ -562,10 +562,21 @@ function GeneratorPanel({
           fileName: material.fileName,
           count,
           language,
+          adminGeneration: true,
         },
       });
       toast.dismiss("tg-gen");
-      if (error) throw error;
+      if (error) {
+        let message = L.generating;
+        const response = (error as any)?.context;
+        if (response && typeof response.clone === "function") {
+          try {
+            const payload = await response.clone().json();
+            message = String(payload?.error || payload?.message || message);
+          } catch { /* use localized fallback */ }
+        }
+        throw new Error(message);
+      }
       if (data?.error) throw new Error(data.error);
       const qs: MCQItem[] = (data?.questions || []).filter(
         (q: any) => q?.choices?.length === 4 && typeof q.answer_index === "number",
