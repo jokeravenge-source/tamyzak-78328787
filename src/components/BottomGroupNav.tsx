@@ -23,6 +23,10 @@ type NavItem = {
 
 const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKey?: MainMenuChoice; locked?: boolean }[] = [
   {
+    titleEn: "Home", titleAr: "الرئيسية",
+    items: [],
+  },
+  {
     titleEn: "Subjects", titleAr: "المواد",
     items: [
       { key: "ourCourses", labelEn: "Our Courses", labelAr: "دوراتنا", Icon: CoursesIcon },
@@ -42,10 +46,6 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
       { key: "youtube", labelEn: "YouTube Player", labelAr: "مشغّل يوتيوب", Icon: Youtube },
       { key: "companion", labelEn: "Success Companion", labelAr: "رفيق النجاح", Icon: Sparkles },
     ],
-  },
-  {
-    titleEn: "Home", titleAr: "الرئيسية",
-    items: [],
   },
   {
     titleEn: "Community", titleAr: "المجتمع",
