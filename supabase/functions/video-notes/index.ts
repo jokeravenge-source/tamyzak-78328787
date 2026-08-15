@@ -61,29 +61,47 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "No AI API key configured" }, 500);
     }
 
-    // Step 1: fetch transcript via Supadata (handles long videos without exhausting Gemini token limits).
-    const SUPADATA_API_KEY = Deno.env.get("SUPADATA_API_KEY");
+    // Step 1: transcribe the video with Gemini directly (Supadata is no longer used).
     let transcriptText = typeof providedTranscript === "string" ? providedTranscript : "";
-    if (!transcriptText && SUPADATA_API_KEY) {
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 45000);
-        const tRes = await fetch(
-          `https://api.supadata.ai/v1/youtube/transcript?url=${encodeURIComponent(url.trim())}&text=true`,
-          { headers: { "x-api-key": SUPADATA_API_KEY }, signal: controller.signal },
-        );
-        clearTimeout(timer);
-        const tText = await tRes.text();
-        const tJson = parseJsonMaybe(tText);
-        if (tRes.ok && tJson) {
-          if (typeof tJson.content === "string") transcriptText = tJson.content;
-          else if (Array.isArray(tJson.content)) transcriptText = tJson.content.map((c: any) => c.text || "").join(" ");
-          else if (typeof tJson.transcript === "string") transcriptText = tJson.transcript;
-        } else {
-          console.error("Supadata error", tRes.status, tText);
+    if (!transcriptText && GEMINI_API_KEY && url) {
+      for (const model of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+        try {
+          const tRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                systemInstruction: {
+                  parts: [{
+                    text:
+                      "You transcribe lecture videos. Return ONLY the spoken content as plain running text, in the original spoken language, with no timestamps, no speaker labels and no commentary. Do not summarize — transcribe everything.",
+                  }],
+                },
+                contents: [{
+                  role: "user",
+                  parts: [
+                    { fileData: { fileUri: url.trim(), mimeType: "video/mp4" } },
+                    { text: "Transcribe this video fully." },
+                  ],
+                }],
+              }),
+            },
+          );
+          const tText = await tRes.text();
+          const tJson = parseJsonMaybe(tText);
+          if (!tRes.ok) {
+            console.error("Gemini transcribe error", tRes.status, model, tText);
+            continue;
+          }
+          const out = tJson?.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? "").join("") ?? "";
+          if (out.trim().length > 200) {
+            transcriptText = out.trim();
+            break;
+          }
+        } catch (e) {
+          console.error("Gemini transcribe failed", model, e);
         }
-      } catch (e) {
-        console.error("Supadata fetch failed", e);
       }
     }
 
