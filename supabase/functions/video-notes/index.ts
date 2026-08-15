@@ -87,7 +87,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!transcriptText) {
+    // No transcript (Supadata quota/no captions): for notes we can still let Gemini
+    // watch the video directly. Only hard-fail when there is no Gemini key at all.
+    if (!transcriptText && (runMode === "flashcards" || !GEMINI_API_KEY || !url)) {
       return jsonResponse({
         error: lang0 === "ar"
           ? "تعذّر تفريغ هذا الفيديو (قد يكون طويلاً جداً أو بدون ترجمة). جرّب فيديو آخر."
