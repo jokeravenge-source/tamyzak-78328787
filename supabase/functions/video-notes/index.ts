@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
   const auth = await requireUser(req);
   if (!auth.ok) return new Response(JSON.stringify({ error: auth.error }), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   try {
-    const { url, language, mode, transcript: providedTranscript, count } = await req.json();
+    const { url, language, mode, transcript: providedTranscript, count, adminGeneration } = await req.json();
     const lang0 = language === "en" ? "en" : "ar";
     const runMode: "notes" | "flashcards" = mode === "flashcards" ? "flashcards" : "notes";
     if ((!url || typeof url !== "string") && !providedTranscript) {
@@ -177,10 +177,27 @@ Deno.serve(async (req) => {
       if (!transcriptText) transcriptText = await fetchYouTubeTranscript(url.trim(), lang0);
     }
 
-    // Failed AI calls below refund the reserved use, so errors never burn it.
-    const ent = await claimFeature(req, "video-notes");
-    if (!ent.ok) {
-      return jsonResponse({ error: ent.error, upgrade: ent.status === 429 }, ent.status);
+    // Admin publishing is a content-management operation, not a student's
+    // daily tool use. The flag is trusted only after a server-side role check.
+    let quotaReserved = false;
+    if (adminGeneration === true) {
+      const adminClient = createClient(
+        Deno.env.get("SUPABASE_URL") || "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "",
+      );
+      const { data: adminRole } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", auth.userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!adminRole) return jsonResponse({ error: "Forbidden." }, 403);
+    } else {
+      const ent = await claimFeature(req, "video-notes");
+      if (!ent.ok) {
+        return jsonResponse({ error: ent.error, upgrade: ent.status === 429 }, ent.status);
+      }
+      quotaReserved = true;
     }
 
     // Cap transcript size to stay well under model limits.
@@ -192,7 +209,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: lang0 === "ar" ? "تعذّر تفريغ هذا الفيديو لإنشاء بطاقات." : "Could not transcribe this video for flashcards." });
       }
       if (!LOVABLE_API_KEY) {
-        await refundFeatureUse(auth.userId);
+        if (quotaReserved) await refundFeatureUse(auth.userId);
         return jsonResponse({ error: "LOVABLE_API_KEY not configured" }, 500);
       }
       const n = Math.max(6, Math.min(40, Number(count) || 15));
@@ -235,7 +252,7 @@ Deno.serve(async (req) => {
       });
       if (!res.ok) {
         const txt = await res.text();
-        await refundFeatureUse(auth.userId);
+        if (quotaReserved) await refundFeatureUse(auth.userId);
         if (res.status === 429) return jsonResponse({ error: lang0 === "ar" ? "الذكاء الاصطناعي مشغول. حاول مجدداً." : "AI busy. Try again.", retryable: true }, 429);
         if (res.status === 402) return jsonResponse({ error: lang0 === "ar" ? "نفدت رصيد الذكاء الاصطناعي." : "AI credits exhausted." }, 402);
         return jsonResponse({ error: `AI error: ${txt}` }, 500);
@@ -243,7 +260,7 @@ Deno.serve(async (req) => {
       const data = await res.json();
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       if (!toolCall) {
-        await refundFeatureUse(auth.userId);
+        if (quotaReserved) await refundFeatureUse(auth.userId);
         return jsonResponse({ error: "No flashcards generated", retryable: true }, 502);
       }
       const parsed = JSON.parse(toolCall.function.arguments);
@@ -475,7 +492,7 @@ Deno.serve(async (req) => {
           ? "تعذّر إنشاء الملاحظات من هذا الفيديو. تأكد من الرابط أو جرّب فيديو آخر."
           : "Could not generate notes from this video. Check the link or try another video.");
 
-      await refundFeatureUse(auth.userId);
+      if (quotaReserved) await refundFeatureUse(auth.userId);
       return jsonResponse({
         error: friendly,
         retryable: overloaded || (quota && !disabledOrDaily && retryAfter > 0),
@@ -485,7 +502,7 @@ Deno.serve(async (req) => {
     }
 
     if (!notes.trim()) {
-      await refundFeatureUse(auth.userId);
+      if (quotaReserved) await refundFeatureUse(auth.userId);
       return jsonResponse({ error: "Empty response from model", retryable: true }, 502);
     }
     return jsonResponse({ notes, parts, transcript: transcriptText });
