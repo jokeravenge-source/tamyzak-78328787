@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVisibilityGatedChannel } from "@/lib/realtimeVisibility";
 import { CharacterAvatar, type CharacterTraits, type Gender } from "./CharacterAvatar";
@@ -61,6 +61,7 @@ export default function StudyRoom({
   const [people, setPeople] = useState<Occupant[]>([]);
   const [now, setNow] = useState(Date.now());
   const [openProfile, setOpenProfile] = useState<string | null>(null);
+  const loadRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 1000);

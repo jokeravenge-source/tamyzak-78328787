@@ -41,6 +41,7 @@ const T = (l: AppLanguage) => ({
   waiting: l === "ar" ? "بانتظار اللاعب الثاني..." : "Waiting for second player...",
   searching: l === "ar" ? "جاري البحث عن منافس..." : "Searching for an opponent...",
   matchFound: l === "ar" ? "تم إيجاد منافس!" : "Match found!",
+  noMatchFound: l === "ar" ? "لم يتم العثور على منافس، حاول مرة أخرى" : "No opponent found, try again",
   cancelSearch: l === "ar" ? "إلغاء البحث" : "Cancel search",
   subject: l === "ar" ? "المادة" : "Subject",
   chapter: l === "ar" ? "الفصل" : "Chapter",
@@ -135,6 +136,7 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   const [randomChapter, setRandomChapter] = useState<number>(1);
   const matchmakingRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const matchedRef = useRef(false);
+  const matchTimeoutRef = useRef<number | null>(null);
 
   const meId = useRef<string>(Math.random().toString(36).slice(2, 10));
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -179,13 +181,10 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   // keep a subscription open on the results screen.
   useEffect(() => {
     if (phase !== "done") return;
-    const id = window.setTimeout(() => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    }, 3000);
-    return () => window.clearTimeout(id);
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
   }, [phase]);
 
   // Question timer
@@ -535,6 +534,10 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
   /* ---------------- Random matchmaking ---------------- */
 
   const stopMatchmaking = () => {
+    if (matchTimeoutRef.current) {
+      window.clearTimeout(matchTimeoutRef.current);
+      matchTimeoutRef.current = null;
+    }
     if (matchmakingRef.current) {
       supabase.removeChannel(matchmakingRef.current);
       matchmakingRef.current = null;
@@ -600,6 +603,14 @@ export default function LiveBattle({ language, onBack }: { language: AppLanguage
         await ch.track({ name, ts: Date.now() });
       }
     });
+
+    // Don't keep a presence channel open forever if nobody shows up.
+    matchTimeoutRef.current = window.setTimeout(() => {
+      if (matchedRef.current) return;
+      stopMatchmaking();
+      setPhase("randomSetup");
+      toast.error(t.noMatchFound);
+    }, 75000);
   };
 
   const cancelMatchmaking = () => {
