@@ -7,7 +7,7 @@ import {
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown,
   Home, Palette, GraduationCap as CoursesIcon, Users2, Lock,
-  Menu as MenuIcon, MessageCircle, LineChart, Heart,
+  Menu as MenuIcon, MessageCircle, LineChart, Heart, UserPlus,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
