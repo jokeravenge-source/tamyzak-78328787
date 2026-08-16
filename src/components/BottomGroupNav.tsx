@@ -211,6 +211,10 @@ const BottomGroupNav = ({
                   whileTap={{ scale: 0.92 }}
                   onClick={() => {
                     if (g.locked) return;
+                    if (g.url) {
+                      window.open(g.url, "_blank", "noopener,noreferrer");
+                      return;
+                    }
                     setActiveGroup(g.titleEn);
                     if (g.directKey) { setSheetGroup(null); onSelect(g.directKey); }
                     else if (g.items.length === 0) { setSheetGroup(null); onSelect("basics"); }
