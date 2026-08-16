@@ -30,7 +30,7 @@ type NavGroup = {
   url?: string; // external link (opens in new tab)
 };
 
-const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKey?: MainMenuChoice; locked?: boolean }[] = [
+const NAV_GROUPS: NavGroup[] = [
   {
     titleEn: "Home", titleAr: "الرئيسية",
     items: [],
@@ -73,9 +73,9 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     directKey: "adminNotes",
   },
   {
-    titleEn: "Join", titleAr: "انضم",
+    titleEn: "Donate", titleAr: "تبرع",
     items: [],
-    directKey: "joinTamayzak",
+    url: "https://t.me/ias404",
   },
   {
     titleEn: "Menu", titleAr: "القائمة",
@@ -93,7 +93,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   Notes: NotebookPen,
-  Join: Sparkles,
+  Donate: Heart,
   Menu: MenuIcon,
 };
 
