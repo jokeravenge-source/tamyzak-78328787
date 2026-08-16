@@ -93,7 +93,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   Notes: NotebookPen,
-  Donate: Heart,
+  Join: UserPlus,
   Menu: MenuIcon,
 };
 
