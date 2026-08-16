@@ -582,19 +582,26 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   };
 
   // Push a single presence update (used by heartbeat, focus, and pause/resume).
+  // Uses upsert so presence is recreated after a session was stopped/cleared.
   const pushPresence = async () => {
     if (!userId) return;
     const nowMs = Date.now();
     const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
-    await supabase
-      .from("active_sessions")
-      .update({
-        last_seen_at: new Date(nowMs).toISOString(),
-        started_at: startedIso,
-        elapsed_seconds: secondsRef.current,
-        is_running: runningRef.current,
-      })
-      .eq("user_id", userId);
+    if (!subjectRef.current || !startedRef.current) return;
+    try {
+      await supabase.from("active_sessions").upsert(
+        {
+          user_id: userId,
+          subject: subjectRef.current,
+          mission: (missionRef.current ?? "").slice(0, 200),
+          last_seen_at: new Date(nowMs).toISOString(),
+          started_at: startedIso,
+          elapsed_seconds: secondsRef.current,
+          is_running: runningRef.current,
+        },
+        { onConflict: "user_id" },
+      );
+    } catch { /* transient network error — next heartbeat retries */ }
   };
 
   // Heartbeat while a subject is selected so the room keeps showing the user
