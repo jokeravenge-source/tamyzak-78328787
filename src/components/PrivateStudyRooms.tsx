@@ -98,6 +98,7 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
   // Display name is fetched once on mount above — no live subscription needed.
 
   const loadRoom = useCallback(async (roomId: string) => {
+    try {
     const [{ data: mem }, { data: msg }, { data: roomRow }] = await Promise.all([
       supabase.from("study_room_members").select("user_id,display_name").eq("room_id", roomId),
       supabase.from("study_room_messages")
@@ -105,7 +106,19 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
         .eq("room_id", roomId).order("created_at", { ascending: true }).limit(200),
       supabase.from("study_rooms").select("id,code,name,owner_id").eq("id", roomId).maybeSingle(),
     ]);
-    if (roomRow) setRoom(roomRow as Room);
+    // Only replace the room object when something actually changed — a new
+    // object identity on every refresh re-triggers effects and loops.
+    if (roomRow) {
+      setRoom((prev) =>
+        prev &&
+        prev.id === roomRow.id &&
+        prev.code === roomRow.code &&
+        prev.name === roomRow.name &&
+        prev.owner_id === roomRow.owner_id
+          ? prev
+          : (roomRow as Room),
+      );
+    }
     const { data: banRows } = await supabase
       .from("study_room_bans").select("user_id,display_name").eq("room_id", roomId);
     setBans((banRows ?? []) as { user_id: string; display_name: string | null }[]);
@@ -158,6 +171,9 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
         display_name: (profById.get(m.user_id)?.display_name || "").trim() || m.display_name,
       })),
     );
+    } catch {
+      // Transient network error ("Failed to fetch") — keep the current view.
+    }
   }, []);
 
   // Restore last room
@@ -187,16 +203,23 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     () => { if (room) loadRoom(room.id); },
   );
 
-  // Keep our stored membership name in sync with the profile name
+  // Keep our stored membership name in sync with the profile name.
+  // Runs once per room/name change, and only when it actually differs, so it
+  // can't bounce off its own realtime update.
+  const syncedNameRef = useRef<string>("");
   useEffect(() => {
-    if (!room || !userId || !displayName) return;
+    const roomId = room?.id;
+    if (!roomId || !userId || !displayName) return;
+    const key = `${roomId}:${displayName}`;
+    if (syncedNameRef.current === key) return;
+    syncedNameRef.current = key;
     supabase
       .from("study_room_members")
       .update({ display_name: displayName })
-      .eq("room_id", room.id)
+      .eq("room_id", roomId)
       .eq("user_id", userId)
-      .then(() => {});
-  }, [room, userId, displayName]);
+      .then(() => {}, () => {});
+  }, [room?.id, userId, displayName]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -366,9 +389,32 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     if (!body) return;
     if (findBannedWords(body).length > 0) { toast.error(L.blocked); return; }
     setDraft("");
-    const { error } = await supabase.from("study_room_messages")
-      .insert({ room_id: room.id, user_id: userId, display_name: displayName, body });
-    if (error) { toast.error(error.message); setDraft(body); return; }
+    // Optimistic render so the chat feels instant even on a flaky connection.
+    const tempId = `temp-${Date.now()}`;
+    setMessages((prev) => [
+      ...prev,
+      { id: tempId, user_id: userId, display_name: displayName, body, created_at: new Date().toISOString() },
+    ]);
+    let lastErr: string | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { error } = await supabase.from("study_room_messages")
+          .insert({ room_id: room.id, user_id: userId, display_name: displayName, body });
+        if (!error) { lastErr = null; break; }
+        lastErr = error.message;
+        // Permission / validation errors won't succeed on retry.
+        if (!/fetch|network|timeout/i.test(error.message)) break;
+      } catch (e: any) {
+        lastErr = e?.message ?? "Network error";
+      }
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    }
+    if (lastErr) {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setDraft(body);
+      toast.error(ar ? "تعذّر إرسال الرسالة، تحقّق من الاتصال وحاول مجدداً." : "Couldn't send the message. Check your connection and try again.");
+      return;
+    }
     loadRoom(room.id);
   };
 
