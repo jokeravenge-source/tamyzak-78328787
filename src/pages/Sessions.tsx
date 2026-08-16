@@ -831,18 +831,36 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     }
     savingRef.current = true;
     setRunning(false);
-    clearPresence();
     // 5 points per full studied hour.
     const points = Math.floor(seconds / 3600) * 5;
-    const { data: inserted, error } = await supabase.from("study_sessions").insert({
-      user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
-      mission_completed: completed, points,
-    }).select("id").single();
-    if (error) { savingRef.current = false; toast.error(error.message); return; }
-    if (points > 0 && inserted?.id) {
-      await supabase.rpc("award_points_safe", {
-        _source: "session", _points: points, _ref_id: inserted.id,
-      });
+    let insertedId: string | null = null;
+    let lastErr: string | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { data: inserted, error } = await supabase.from("study_sessions").insert({
+          user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
+          mission_completed: completed, points,
+        }).select("id").single();
+        if (!error) { insertedId = inserted?.id ?? null; lastErr = null; break; }
+        lastErr = error.message;
+        if (!/fetch|network|timeout/i.test(error.message)) break;
+      } catch (e: any) {
+        lastErr = e?.message ?? "Network error";
+      }
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    }
+    if (lastErr) {
+      savingRef.current = false;
+      toast.error(lastErr);
+      return;
+    }
+    try { await clearPresence(); } catch { /* ignore */ }
+    if (points > 0 && insertedId) {
+      try {
+        await supabase.rpc("award_points_safe", {
+          _source: "session", _points: points, _ref_id: insertedId,
+        });
+      } catch { /* points can be reconciled later; the session is saved */ }
     }
     toast.success(`${L.saved} (+${points} ${L.points})`);
     try { localStorage.setItem("session_completed_today_v1", new Date().toISOString().slice(0,10)); } catch {}
