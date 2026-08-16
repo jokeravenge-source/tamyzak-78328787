@@ -7,7 +7,7 @@ import {
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown,
   Home, Palette, GraduationCap as CoursesIcon, Users2, Lock,
-  Menu as MenuIcon, MessageCircle, LineChart, Heart,
+  Menu as MenuIcon, MessageCircle, LineChart, UserPlus,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -73,9 +73,9 @@ const NAV_GROUPS: NavGroup[] = [
     directKey: "adminNotes",
   },
   {
-    titleEn: "Donate", titleAr: "تبرع",
+    titleEn: "Join", titleAr: "انضم",
     items: [],
-    url: "https://t.me/ias404",
+    directKey: "joinTamayzak",
   },
   {
     titleEn: "Menu", titleAr: "القائمة",
@@ -93,7 +93,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   Notes: NotebookPen,
-  Donate: Heart,
+  Join: UserPlus,
   Menu: MenuIcon,
 };
 
