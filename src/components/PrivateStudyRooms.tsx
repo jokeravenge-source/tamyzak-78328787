@@ -189,17 +189,27 @@ export default function PrivateStudyRooms({ language, children }: { language: "e
     })();
   }, [userId, loadRoom]);
 
+  // Coalesce bursts of realtime events into a single refresh (stops flicker).
+  const refreshTimer = useRef<number | null>(null);
+  const queueRefresh = useCallback((roomId: string) => {
+    if (refreshTimer.current) window.clearTimeout(refreshTimer.current);
+    refreshTimer.current = window.setTimeout(() => {
+      refreshTimer.current = null;
+      loadRoom(roomId);
+    }, 300);
+  }, [loadRoom]);
+
   // Realtime chat + members (only while the tab is visible)
   useVisibilityGatedChannel(
     room
       ? () =>
           supabase
             .channel(`study_room_${room.id}`)
-            .on("postgres_changes", { event: "*", schema: "public", table: "study_room_messages", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
-            .on("postgres_changes", { event: "*", schema: "public", table: "study_room_members", filter: `room_id=eq.${room.id}` }, () => loadRoom(room.id))
+            .on("postgres_changes", { event: "*", schema: "public", table: "study_room_messages", filter: `room_id=eq.${room.id}` }, () => queueRefresh(room.id))
+            .on("postgres_changes", { event: "*", schema: "public", table: "study_room_members", filter: `room_id=eq.${room.id}` }, () => queueRefresh(room.id))
             .subscribe()
       : null,
-    [room?.id, loadRoom],
+    [room?.id, queueRefresh],
     () => { if (room) loadRoom(room.id); },
   );
 
