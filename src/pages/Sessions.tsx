@@ -613,7 +613,7 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   // (even while paused). Only fully clear presence when leaving the page.
   useEffect(() => {
     if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
-    if (userId && subject) {
+    if (userId && subject && started) {
       upsertPresence(subject, mission);
       heartbeatRef.current = window.setInterval(() => {
         pushPresence();
@@ -634,11 +634,11 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, subject]);
+  }, [userId, subject, started]);
 
   // Immediate sync whenever play/pause toggles so the room reflects it instantly.
   useEffect(() => {
-    if (userId && subject) pushPresence();
+    if (userId && subject && started) pushPresence();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running]);
 
