@@ -73,9 +73,9 @@ const NAV_GROUPS: NavGroup[] = [
     directKey: "adminNotes",
   },
   {
-    titleEn: "Donate", titleAr: "تبرع",
+    titleEn: "Join", titleAr: "انضم",
     items: [],
-    url: "https://t.me/ias404",
+    directKey: "joinTamayzak",
   },
   {
     titleEn: "Menu", titleAr: "القائمة",
