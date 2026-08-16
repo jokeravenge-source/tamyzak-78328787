@@ -7,7 +7,7 @@ import {
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown,
   Home, Palette, GraduationCap as CoursesIcon, Users2, Lock,
-  Menu as MenuIcon, MessageCircle, LineChart,
+  Menu as MenuIcon, MessageCircle, LineChart, Heart,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -21,7 +21,16 @@ type NavItem = {
   subject?: string; // when set, opens SubjectsHub focused on this subject
 };
 
-const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKey?: MainMenuChoice; locked?: boolean }[] = [
+type NavGroup = {
+  titleEn: string;
+  titleAr: string;
+  items: NavItem[];
+  directKey?: MainMenuChoice;
+  locked?: boolean;
+  url?: string; // external link (opens in new tab)
+};
+
+const NAV_GROUPS: NavGroup[] = [
   {
     titleEn: "Home", titleAr: "الرئيسية",
     items: [],
@@ -64,9 +73,9 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKe
     directKey: "adminNotes",
   },
   {
-    titleEn: "Join", titleAr: "انضم",
+    titleEn: "Donate", titleAr: "تبرع",
     items: [],
-    directKey: "joinTamayzak",
+    url: "https://t.me/ias404",
   },
   {
     titleEn: "Menu", titleAr: "القائمة",
@@ -84,7 +93,7 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   Notes: NotebookPen,
-  Join: Sparkles,
+  Donate: Heart,
   Menu: MenuIcon,
 };
 
@@ -202,6 +211,10 @@ const BottomGroupNav = ({
                   whileTap={{ scale: 0.92 }}
                   onClick={() => {
                     if (g.locked) return;
+                    if (g.url) {
+                      window.open(g.url, "_blank", "noopener,noreferrer");
+                      return;
+                    }
                     setActiveGroup(g.titleEn);
                     if (g.directKey) { setSheetGroup(null); onSelect(g.directKey); }
                     else if (g.items.length === 0) { setSheetGroup(null); onSelect("basics"); }
