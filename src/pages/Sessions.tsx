@@ -560,10 +560,12 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   // --- Live presence helpers ---
   const upsertPresence = async (subj: string, miss: string) => {
     if (!userId) return;
+    if (!startedRef.current) return;
     const nowMs = Date.now();
     const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
     const nowIso = new Date(nowMs).toISOString();
-    await supabase.from("active_sessions").upsert(
+    try {
+      await supabase.from("active_sessions").upsert(
       {
         user_id: userId,
         subject: subj,
@@ -574,11 +576,14 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
         is_running: runningRef.current,
       },
       { onConflict: "user_id" }
-    );
+      );
+    } catch { /* transient network error — heartbeat retries */ }
   };
   const clearPresence = async () => {
     if (!userId) return;
-    await supabase.from("active_sessions").delete().eq("user_id", userId);
+    try {
+      await supabase.from("active_sessions").delete().eq("user_id", userId);
+    } catch { /* ignore */ }
   };
 
   // Push a single presence update (used by heartbeat, focus, and pause/resume).
