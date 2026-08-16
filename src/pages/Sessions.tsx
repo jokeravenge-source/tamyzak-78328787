@@ -560,10 +560,12 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
   // --- Live presence helpers ---
   const upsertPresence = async (subj: string, miss: string) => {
     if (!userId) return;
+    if (!startedRef.current) return;
     const nowMs = Date.now();
     const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
     const nowIso = new Date(nowMs).toISOString();
-    await supabase.from("active_sessions").upsert(
+    try {
+      await supabase.from("active_sessions").upsert(
       {
         user_id: userId,
         subject: subj,
@@ -574,34 +576,44 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
         is_running: runningRef.current,
       },
       { onConflict: "user_id" }
-    );
+      );
+    } catch { /* transient network error — heartbeat retries */ }
   };
   const clearPresence = async () => {
     if (!userId) return;
-    await supabase.from("active_sessions").delete().eq("user_id", userId);
+    try {
+      await supabase.from("active_sessions").delete().eq("user_id", userId);
+    } catch { /* ignore */ }
   };
 
   // Push a single presence update (used by heartbeat, focus, and pause/resume).
+  // Uses upsert so presence is recreated after a session was stopped/cleared.
   const pushPresence = async () => {
     if (!userId) return;
     const nowMs = Date.now();
     const startedIso = new Date(nowMs - secondsRef.current * 1000).toISOString();
-    await supabase
-      .from("active_sessions")
-      .update({
-        last_seen_at: new Date(nowMs).toISOString(),
-        started_at: startedIso,
-        elapsed_seconds: secondsRef.current,
-        is_running: runningRef.current,
-      })
-      .eq("user_id", userId);
+    if (!subjectRef.current || !startedRef.current) return;
+    try {
+      await supabase.from("active_sessions").upsert(
+        {
+          user_id: userId,
+          subject: subjectRef.current,
+          mission: (missionRef.current ?? "").slice(0, 200),
+          last_seen_at: new Date(nowMs).toISOString(),
+          started_at: startedIso,
+          elapsed_seconds: secondsRef.current,
+          is_running: runningRef.current,
+        },
+        { onConflict: "user_id" },
+      );
+    } catch { /* transient network error — next heartbeat retries */ }
   };
 
   // Heartbeat while a subject is selected so the room keeps showing the user
   // (even while paused). Only fully clear presence when leaving the page.
   useEffect(() => {
     if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
-    if (userId && subject) {
+    if (userId && subject && started) {
       upsertPresence(subject, mission);
       heartbeatRef.current = window.setInterval(() => {
         pushPresence();
@@ -622,11 +634,11 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
       if (heartbeatRef.current) { window.clearInterval(heartbeatRef.current); heartbeatRef.current = null; }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, subject]);
+  }, [userId, subject, started]);
 
   // Immediate sync whenever play/pause toggles so the room reflects it instantly.
   useEffect(() => {
-    if (userId && subject) pushPresence();
+    if (userId && subject && started) pushPresence();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running]);
 
@@ -831,18 +843,36 @@ const Sessions = ({ language, onBack }: { language: AppLanguage; onBack: () => v
     }
     savingRef.current = true;
     setRunning(false);
-    clearPresence();
     // 5 points per full studied hour.
     const points = Math.floor(seconds / 3600) * 5;
-    const { data: inserted, error } = await supabase.from("study_sessions").insert({
-      user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
-      mission_completed: completed, points,
-    }).select("id").single();
-    if (error) { savingRef.current = false; toast.error(error.message); return; }
-    if (points > 0 && inserted?.id) {
-      await supabase.rpc("award_points_safe", {
-        _source: "session", _points: points, _ref_id: inserted.id,
-      });
+    let insertedId: string | null = null;
+    let lastErr: string | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const { data: inserted, error } = await supabase.from("study_sessions").insert({
+          user_id: userId, subject, mission: mission.trim(), duration_seconds: seconds,
+          mission_completed: completed, points,
+        }).select("id").single();
+        if (!error) { insertedId = inserted?.id ?? null; lastErr = null; break; }
+        lastErr = error.message;
+        if (!/fetch|network|timeout/i.test(error.message)) break;
+      } catch (e: any) {
+        lastErr = e?.message ?? "Network error";
+      }
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    }
+    if (lastErr) {
+      savingRef.current = false;
+      toast.error(lastErr);
+      return;
+    }
+    try { await clearPresence(); } catch { /* ignore */ }
+    if (points > 0 && insertedId) {
+      try {
+        await supabase.rpc("award_points_safe", {
+          _source: "session", _points: points, _ref_id: insertedId,
+        });
+      } catch { /* points can be reconciled later; the session is saved */ }
     }
     toast.success(`${L.saved} (+${points} ${L.points})`);
     try { localStorage.setItem("session_completed_today_v1", new Date().toISOString().slice(0,10)); } catch {}
