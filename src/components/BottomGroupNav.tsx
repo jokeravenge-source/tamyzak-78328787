@@ -7,7 +7,7 @@ import {
   Sparkles, GraduationCap, ListChecks, Trophy, Newspaper, Lightbulb,
   UserCog, Crown,
   Home, Palette, GraduationCap as CoursesIcon, Users2, Lock,
-  Menu as MenuIcon, MessageCircle, LineChart,
+  Menu as MenuIcon, MessageCircle, LineChart, Heart,
 } from "lucide-react";
 import type { AppLanguage } from "@/components/LanguageGate";
 import type { MainMenuChoice } from "@/pages/MainMenu";
@@ -19,6 +19,15 @@ type NavItem = {
   labelAr: string;
   Icon: React.ComponentType<{ className?: string }>;
   subject?: string; // when set, opens SubjectsHub focused on this subject
+};
+
+type NavGroup = {
+  titleEn: string;
+  titleAr: string;
+  items: NavItem[];
+  directKey?: MainMenuChoice;
+  locked?: boolean;
+  url?: string; // external link (opens in new tab)
 };
 
 const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[]; directKey?: MainMenuChoice; locked?: boolean }[] = [
