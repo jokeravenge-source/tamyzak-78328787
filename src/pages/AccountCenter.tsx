@@ -10,6 +10,7 @@ import type { MainMenuChoice } from "@/pages/MainMenu";
 
 import { ThemePicker } from "@/components/ThemePicker";
 import { ReferralCard } from "@/components/ReferralCard";
+import { TelegramLinkCard } from "@/components/TelegramLinkCard";
 import { getNavVisibilityMode, setNavVisibilityMode, type NavVisibilityMode } from "@/hooks/useNavVisibility";
 import { PremiumBadge } from "@/components/PremiumBadge";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -383,6 +384,8 @@ const AccountCenter = ({
         </div>
 
         <ReferralCard language={language} />
+
+        <TelegramLinkCard language={language} />
 
         <CountdownSettings language={language} />
 
