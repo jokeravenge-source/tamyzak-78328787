@@ -1149,6 +1149,9 @@ function CourseRunner({
   const [humanSent, setHumanSent] = useState(false);
   const [routedSubject, setRoutedSubject] = useState<string>("");
   const [groupOverride, setGroupOverride] = useState<"physics" | "chemistry" | "biology" | "math" | "">("");
+  const [checking, setChecking] = useState(false);
+  const [aiReview, setAiReview] = useState<any | null>(null);
+  const [aiNotesText, setAiNotesText] = useState("");
 
   const prepareImageForGrading = (file: File) => new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -1183,6 +1186,8 @@ function CourseRunner({
     })();
     setStudentImages([]);
     setHumanSent(false);
+    setAiReview(null);
+    setAiNotesText("");
   }, [selected]);
 
   // Which exams of this course the student already finished.
@@ -1214,11 +1219,30 @@ function CourseRunner({
       next.push(dataUrl);
     }
     setStudentImages((prev) => [...prev, ...next].slice(0, 10));
+    setAiReview(null);
+    setAiNotesText("");
   };
 
-  /** Best-effort AI notes (no score shown to the student) to include in the Telegram message. */
-  const buildAiNotes = async (): Promise<string> => {
-    if (!selected) return "";
+  const notesFromReview = (r: any): string => {
+    const lines: string[] = [];
+    if (r?.overall_feedback) lines.push(String(r.overall_feedback));
+    if (Array.isArray(r?.per_question)) {
+      r.per_question.forEach((q: any) => {
+        const parts = [q?.feedback, q?.corrections].filter(Boolean).join(" — ");
+        if (parts) lines.push(`${isAr ? "س" : "Q"}${q?.n}: ${parts}`);
+      });
+    }
+    return lines.join("\n").slice(0, 3000);
+  };
+
+  /** Step 1: the AI reviews the paper and shows the student their mistakes (no score). */
+  const checkWithAi = async () => {
+    if (!selected) return;
+    if (!studentImages.length) {
+      toast.error(isAr ? "ارفع صور ورقتك أولاً" : "Upload photos of your answer first");
+      return;
+    }
+    setChecking(true);
     try {
       const { data, error } = await supabase.functions.invoke("grade-course-exam", {
         body: {
@@ -1229,19 +1253,14 @@ function CourseRunner({
           language: isAr ? "ar" : "en",
         },
       });
-      if (error || (data as any)?.error) return "";
-      const r = data as any;
-      const lines: string[] = [];
-      if (r?.overall_feedback) lines.push(String(r.overall_feedback));
-      if (Array.isArray(r?.per_question)) {
-        r.per_question.forEach((q: any) => {
-          const parts = [q?.feedback, q?.corrections].filter(Boolean).join(" — ");
-          if (parts) lines.push(`${isAr ? "س" : "Q"}${q?.n}: ${parts}`);
-        });
-      }
-      return lines.join("\n").slice(0, 3000);
-    } catch {
-      return "";
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setAiReview(data);
+      setAiNotesText(notesFromReview(data));
+    } catch (e: any) {
+      toast.error(e?.message ?? (isAr ? "تعذّر التحقق" : "Check failed"));
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -1258,7 +1277,7 @@ function CourseRunner({
     }
     setSendingHuman(true);
     try {
-      const aiNotes = await buildAiNotes();
+      const aiNotes = aiNotesText;
       const { data, error } = await supabase.functions.invoke("send-to-human-grader", {
         body: {
           telegramUsername: uname,
@@ -1505,6 +1524,57 @@ function CourseRunner({
 
             <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
               <div>
+                <div className="font-semibold">{isAr ? "تحقّق بالذكاء الاصطناعي" : "AI check"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {isAr
+                    ? "سيقرأ الذكاء الاصطناعي ورقتك ويعرض لك أخطاءك وملاحظاته قبل طلب الدرجة."
+                    : "The AI reads your paper and shows your mistakes and notes before you request a degree."}
+                </div>
+              </div>
+
+              <button
+                onClick={checkWithAi}
+                disabled={checking || !studentImages.length}
+                className="w-full h-11 rounded-xl border border-border bg-secondary font-semibold inline-flex items-center justify-center gap-2 hover:bg-secondary/70 disabled:opacity-60"
+              >
+                {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <GraduationCap className="w-4 h-4" />}
+                {checking
+                  ? (isAr ? "جاري التحقق..." : "Checking...")
+                  : aiReview
+                    ? (isAr ? "إعادة التحقق" : "Check again")
+                    : (isAr ? "تحقّق من إجابتي" : "Check my answers")}
+              </button>
+
+              {aiReview && (
+                <div className="space-y-3">
+                  {aiReview.overall_feedback && (
+                    <div className="rounded-lg border border-border bg-background px-3 py-2 text-sm whitespace-pre-wrap">
+                      {String(aiReview.overall_feedback)}
+                    </div>
+                  )}
+                  {Array.isArray(aiReview.per_question) && aiReview.per_question.map((q: any) => (
+                    <div key={q?.n} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                      <div className="font-semibold mb-1">{isAr ? `السؤال ${q?.n}` : `Question ${q?.n}`}</div>
+                      {q?.feedback && <div className="text-muted-foreground whitespace-pre-wrap">{String(q.feedback)}</div>}
+                      {q?.corrections && (
+                        <div className="mt-1 whitespace-pre-wrap">
+                          <span className="font-semibold">{isAr ? "الصحيح: " : "Correct: "}</span>
+                          {String(q.corrections)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {Array.isArray(aiReview.improvements) && aiReview.improvements.length > 0 && (
+                    <ul className="list-disc ps-5 text-sm text-muted-foreground space-y-1">
+                      {aiReview.improvements.map((s: string, i: number) => <li key={i}>{String(s)}</li>)}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+              <div>
                 <div className="font-semibold">{isAr ? "احصل على درجتي" : "Get my degree"}</div>
                 <div className="text-xs text-muted-foreground">
                   {isAr
@@ -1513,7 +1583,15 @@ function CourseRunner({
                 </div>
               </div>
 
-              {!humanSent && (
+              {!aiReview && !humanSent && (
+                <div className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+                  {isAr
+                    ? "راجع ورقتك بالذكاء الاصطناعي أولاً، ثم اطلب درجتك."
+                    : "Review your paper with the AI first, then request your degree."}
+                </div>
+              )}
+
+              {aiReview && !humanSent && (
                 <>
                   <div>
                     <label className="block text-xs font-semibold mb-1">
