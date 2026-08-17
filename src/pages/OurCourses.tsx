@@ -1143,10 +1143,6 @@ function CourseRunner({
   const [examUrl, setExamUrl] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Record<string, { score: number | null; out_of: number | null }>>({});
   const [studentImages, setStudentImages] = useState<string[]>([]);
-  const [grading, setGrading] = useState(false);
-  const [gradeResult, setGradeResult] = useState<any>(null);
-  const [revealScore, setRevealScore] = useState(false);
-  const [showHumanForm, setShowHumanForm] = useState(false);
   const [tgUsername, setTgUsername] = useState("");
   const [humanReason, setHumanReason] = useState("");
   const [sendingHuman, setSendingHuman] = useState(false);
@@ -1186,9 +1182,6 @@ function CourseRunner({
       setExamUrl(data?.signedUrl ?? null);
     })();
     setStudentImages([]);
-    setGradeResult(null);
-    setRevealScore(false);
-    setShowHumanForm(false);
     setHumanSent(false);
   }, [selected]);
 
@@ -1223,17 +1216,9 @@ function CourseRunner({
     setStudentImages((prev) => [...prev, ...next].slice(0, 10));
   };
 
-  const grade = async () => {
-    if (!selected) return;
-    if (!studentImages.length) {
-      toast.error(isAr ? "ارفع صور ورقتك أولاً" : "Upload photos of your answer first");
-      return;
-    }
-    setGrading(true);
-    setGradeResult(null);
-    setRevealScore(false);
-    setShowHumanForm(false);
-    setHumanSent(false);
+  /** Best-effort AI notes (no score shown to the student) to include in the Telegram message. */
+  const buildAiNotes = async (): Promise<string> => {
+    if (!selected) return "";
     try {
       const { data, error } = await supabase.functions.invoke("grade-course-exam", {
         body: {
@@ -1244,53 +1229,28 @@ function CourseRunner({
           language: isAr ? "ar" : "en",
         },
       });
-      if (error) {
-        // Prefer the function's real JSON error over the generic "non-2xx" wrapper.
-        let msg = error.message ?? "";
-        try {
-          const resp = (error as any)?.context?.response ?? (error as any)?.context;
-          if (resp && typeof resp.json === "function") {
-            const body = await resp.json();
-            if (body?.error) msg = body.error;
-          } else if (resp && typeof resp.text === "function") {
-            const txt = await resp.text();
-            if (txt) msg = txt;
-          }
-        } catch { /* ignore */ }
-        const fallback = isAr
-          ? "تعذّر استلام نتيجة التصحيح. جرّب صوراً أوضح أو عدداً أقل من الصور."
-          : "Couldn't receive the grading result. Try clearer photos or fewer photos.";
-        throw new Error(/non-2xx/i.test(msg) ? fallback : (msg || fallback));
+      if (error || (data as any)?.error) return "";
+      const r = data as any;
+      const lines: string[] = [];
+      if (r?.overall_feedback) lines.push(String(r.overall_feedback));
+      if (Array.isArray(r?.per_question)) {
+        r.per_question.forEach((q: any) => {
+          const parts = [q?.feedback, q?.corrections].filter(Boolean).join(" — ");
+          if (parts) lines.push(`${isAr ? "س" : "Q"}${q?.n}: ${parts}`);
+        });
       }
-      if ((data as any)?.error) throw new Error((data as any).error);
-      setGradeResult(data);
-      // Mark this exam as completed so the student can tell it apart next time.
-      const score = Number((data as any)?.total);
-      const outOf = Number((data as any)?.graded_out_of) || 100;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await (supabase as any).from("course_exam_completions").upsert(
-          {
-            user_id: user.id,
-            exam_id: selected.id,
-            course_id: course.id,
-            score: Number.isFinite(score) ? score : null,
-            graded_out_of: outOf,
-            completed_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,exam_id" },
-        );
-        setCompleted((p) => ({ ...p, [selected.id]: { score: Number.isFinite(score) ? score : null, out_of: outOf } }));
-      }
-    } catch (e: any) {
-      toast.error(e?.message ?? (isAr ? "تعذّر التصحيح" : "Grading failed"));
-    } finally {
-      setGrading(false);
+      return lines.join("\n").slice(0, 3000);
+    } catch {
+      return "";
     }
   };
 
-  const sendToHuman = async () => {
+  const getMyDegree = async () => {
     if (!selected) return;
+    if (!studentImages.length) {
+      toast.error(isAr ? "ارفع صور ورقتك أولاً" : "Upload photos of your answer first");
+      return;
+    }
     const uname = tgUsername.trim().replace(/^@+/, "");
     if (!/^[A-Za-z0-9_]{4,32}$/.test(uname)) {
       toast.error(isAr ? "اسم مستخدم تيليغرام غير صالح" : "Invalid Telegram username");
@@ -1298,6 +1258,7 @@ function CourseRunner({
     }
     setSendingHuman(true);
     try {
+      const aiNotes = await buildAiNotes();
       const { data, error } = await supabase.functions.invoke("send-to-human-grader", {
         body: {
           telegramUsername: uname,
@@ -1307,9 +1268,7 @@ function CourseRunner({
           studentImages,
           examId: selected.id,
           answerFilename: `${selected.title} - answer`,
-          aiScore: gradeResult
-            ? `${Math.round(Number(gradeResult.total) || 0)} / ${Number(gradeResult.graded_out_of) || 100}`
-            : "",
+          aiNotes,
           reason: humanReason.trim(),
         },
       });
@@ -1317,6 +1276,21 @@ function CourseRunner({
       if ((data as any)?.error) throw new Error((data as any).error);
       setHumanSent(true);
       setRoutedSubject((data as any)?.routed ? String((data as any)?.subjectCode ?? "") : "");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await (supabase as any).from("course_exam_completions").upsert(
+          {
+            user_id: user.id,
+            exam_id: selected.id,
+            course_id: course.id,
+            score: null,
+            graded_out_of: null,
+            completed_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,exam_id" },
+        );
+        setCompleted((p) => ({ ...p, [selected.id]: { score: null, out_of: null } }));
+      }
       toast.success(isAr ? "تم الإرسال إلى المدرّس" : "Sent to the human grader");
     } catch (e: any) {
       toast.error(e?.message ?? (isAr ? "تعذّر الإرسال" : "Send failed"));
