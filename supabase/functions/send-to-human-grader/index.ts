@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
     const examText = String(body.examText ?? "").slice(0, 3500);
     const studentText = String(body.studentText ?? "").slice(0, 3500);
     const aiScore = body.aiScore != null ? String(body.aiScore).slice(0, 40) : "";
+    const aiNotes = String(body.aiNotes ?? "").slice(0, 3500);
     const reason = String(body.reason ?? "").slice(0, 500);
     const images: string[] = Array.isArray(body.studentImages)
       ? body.studentImages.filter((s: unknown) => typeof s === "string" && (s as string).startsWith("data:image/")).slice(0, 10)
@@ -138,6 +139,18 @@ Deno.serve(async (req) => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(withThread({ chat_id: TARGET_CHAT_ID, text: `✍️ إجابة الطالب:\n\n${p}` })),
+        });
+      }
+    }
+
+    // 3b. AI notes about the student's answer
+    if (aiNotes) {
+      const parts = aiNotes.match(/[\s\S]{1,3500}/g) ?? [];
+      for (const p of parts) {
+        await fetch(`${base}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(withThread({ chat_id: TARGET_CHAT_ID, text: `🤖 ملاحظات الذكاء الاصطناعي:\n\n${p}` })),
         });
       }
     }

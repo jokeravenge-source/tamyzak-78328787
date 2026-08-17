@@ -1143,10 +1143,6 @@ function CourseRunner({
   const [examUrl, setExamUrl] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Record<string, { score: number | null; out_of: number | null }>>({});
   const [studentImages, setStudentImages] = useState<string[]>([]);
-  const [grading, setGrading] = useState(false);
-  const [gradeResult, setGradeResult] = useState<any>(null);
-  const [revealScore, setRevealScore] = useState(false);
-  const [showHumanForm, setShowHumanForm] = useState(false);
   const [tgUsername, setTgUsername] = useState("");
   const [humanReason, setHumanReason] = useState("");
   const [sendingHuman, setSendingHuman] = useState(false);
@@ -1186,9 +1182,6 @@ function CourseRunner({
       setExamUrl(data?.signedUrl ?? null);
     })();
     setStudentImages([]);
-    setGradeResult(null);
-    setRevealScore(false);
-    setShowHumanForm(false);
     setHumanSent(false);
   }, [selected]);
 
@@ -1223,17 +1216,9 @@ function CourseRunner({
     setStudentImages((prev) => [...prev, ...next].slice(0, 10));
   };
 
-  const grade = async () => {
-    if (!selected) return;
-    if (!studentImages.length) {
-      toast.error(isAr ? "ارفع صور ورقتك أولاً" : "Upload photos of your answer first");
-      return;
-    }
-    setGrading(true);
-    setGradeResult(null);
-    setRevealScore(false);
-    setShowHumanForm(false);
-    setHumanSent(false);
+  /** Best-effort AI notes (no score shown to the student) to include in the Telegram message. */
+  const buildAiNotes = async (): Promise<string> => {
+    if (!selected) return "";
     try {
       const { data, error } = await supabase.functions.invoke("grade-course-exam", {
         body: {
@@ -1244,53 +1229,28 @@ function CourseRunner({
           language: isAr ? "ar" : "en",
         },
       });
-      if (error) {
-        // Prefer the function's real JSON error over the generic "non-2xx" wrapper.
-        let msg = error.message ?? "";
-        try {
-          const resp = (error as any)?.context?.response ?? (error as any)?.context;
-          if (resp && typeof resp.json === "function") {
-            const body = await resp.json();
-            if (body?.error) msg = body.error;
-          } else if (resp && typeof resp.text === "function") {
-            const txt = await resp.text();
-            if (txt) msg = txt;
-          }
-        } catch { /* ignore */ }
-        const fallback = isAr
-          ? "تعذّر استلام نتيجة التصحيح. جرّب صوراً أوضح أو عدداً أقل من الصور."
-          : "Couldn't receive the grading result. Try clearer photos or fewer photos.";
-        throw new Error(/non-2xx/i.test(msg) ? fallback : (msg || fallback));
+      if (error || (data as any)?.error) return "";
+      const r = data as any;
+      const lines: string[] = [];
+      if (r?.overall_feedback) lines.push(String(r.overall_feedback));
+      if (Array.isArray(r?.per_question)) {
+        r.per_question.forEach((q: any) => {
+          const parts = [q?.feedback, q?.corrections].filter(Boolean).join(" — ");
+          if (parts) lines.push(`${isAr ? "س" : "Q"}${q?.n}: ${parts}`);
+        });
       }
-      if ((data as any)?.error) throw new Error((data as any).error);
-      setGradeResult(data);
-      // Mark this exam as completed so the student can tell it apart next time.
-      const score = Number((data as any)?.total);
-      const outOf = Number((data as any)?.graded_out_of) || 100;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await (supabase as any).from("course_exam_completions").upsert(
-          {
-            user_id: user.id,
-            exam_id: selected.id,
-            course_id: course.id,
-            score: Number.isFinite(score) ? score : null,
-            graded_out_of: outOf,
-            completed_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,exam_id" },
-        );
-        setCompleted((p) => ({ ...p, [selected.id]: { score: Number.isFinite(score) ? score : null, out_of: outOf } }));
-      }
-    } catch (e: any) {
-      toast.error(e?.message ?? (isAr ? "تعذّر التصحيح" : "Grading failed"));
-    } finally {
-      setGrading(false);
+      return lines.join("\n").slice(0, 3000);
+    } catch {
+      return "";
     }
   };
 
-  const sendToHuman = async () => {
+  const getMyDegree = async () => {
     if (!selected) return;
+    if (!studentImages.length) {
+      toast.error(isAr ? "ارفع صور ورقتك أولاً" : "Upload photos of your answer first");
+      return;
+    }
     const uname = tgUsername.trim().replace(/^@+/, "");
     if (!/^[A-Za-z0-9_]{4,32}$/.test(uname)) {
       toast.error(isAr ? "اسم مستخدم تيليغرام غير صالح" : "Invalid Telegram username");
@@ -1298,6 +1258,7 @@ function CourseRunner({
     }
     setSendingHuman(true);
     try {
+      const aiNotes = await buildAiNotes();
       const { data, error } = await supabase.functions.invoke("send-to-human-grader", {
         body: {
           telegramUsername: uname,
@@ -1307,9 +1268,7 @@ function CourseRunner({
           studentImages,
           examId: selected.id,
           answerFilename: `${selected.title} - answer`,
-          aiScore: gradeResult
-            ? `${Math.round(Number(gradeResult.total) || 0)} / ${Number(gradeResult.graded_out_of) || 100}`
-            : "",
+          aiNotes,
           reason: humanReason.trim(),
         },
       });
@@ -1317,6 +1276,21 @@ function CourseRunner({
       if ((data as any)?.error) throw new Error((data as any).error);
       setHumanSent(true);
       setRoutedSubject((data as any)?.routed ? String((data as any)?.subjectCode ?? "") : "");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await (supabase as any).from("course_exam_completions").upsert(
+          {
+            user_id: user.id,
+            exam_id: selected.id,
+            course_id: course.id,
+            score: null,
+            graded_out_of: null,
+            completed_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,exam_id" },
+        );
+        setCompleted((p) => ({ ...p, [selected.id]: { score: null, out_of: null } }));
+      }
       toast.success(isAr ? "تم الإرسال إلى المدرّس" : "Sent to the human grader");
     } catch (e: any) {
       toast.error(e?.message ?? (isAr ? "تعذّر الإرسال" : "Send failed"));
@@ -1526,184 +1500,88 @@ function CourseRunner({
                     }}
                   />
                 </label>
-                <button
-                  onClick={grade}
-                  disabled={grading}
-                  className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-60"
-                >
-                  {grading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GraduationCap className="w-4 h-4" />}
-                  {grading ? (isAr ? "جاري التصحيح..." : "Grading...") : (isAr ? "صحّح إجابتي" : "Grade my answer")}
-                </button>
               </div>
             </div>
 
-            {gradeResult && (
-              <div className="rounded-2xl border border-border bg-card p-5 space-y-5">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold">{isAr ? "ملاحظات التصحيح" : "Grading notes"}</h3>
-                  {revealScore ? (
-                    <div className="text-right">
-                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground">{isAr ? "المجموع" : "Total"}</div>
-                      <div className="text-3xl font-bold text-primary">
-                        {Math.round(Number(gradeResult.total) || 0)} / {Number(gradeResult.graded_out_of) || 100}
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setRevealScore(true)}
-                      className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
-                    >
-                      {isAr ? "احصل على درجتي" : "Get my degree"}
-                    </button>
-                  )}
-                </div>
-                {gradeResult.overall_feedback && (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{gradeResult.overall_feedback}</p>
-                )}
-                {(typeof gradeResult.ocr_confidence_avg === "number" || Number(gradeResult.review_count) > 0) && (
-                  <div className="rounded-xl border border-border bg-background p-3 flex flex-wrap items-center gap-3 text-xs">
-                    {typeof gradeResult.ocr_confidence_avg === "number" && (
-                      <span className="text-muted-foreground">
-                        {isAr ? "جودة قراءة الخط (OCR):" : "Handwriting read quality (OCR):"}{" "}
-                        <span className="font-mono font-semibold text-foreground">{gradeResult.ocr_confidence_avg}%</span>
-                      </span>
-                    )}
-                    {Number(gradeResult.review_count) > 0 && (
-                      <span className="px-2 py-1 rounded-full bg-amber-500/15 text-amber-600 font-semibold">
-                        {isAr
-                          ? `${gradeResult.review_count} سؤال يحتاج مراجعة يدوية`
-                          : `${gradeResult.review_count} question(s) flagged for manual review`}
-                      </span>
-                    )}
-                  </div>
-                )}
-                {Array.isArray(gradeResult.per_question) && gradeResult.per_question.length > 0 && (
-                  <div className="space-y-2">
-                    {gradeResult.per_question.map((q: any) => {
-                      const conf = typeof q.ocr_confidence === "number" ? q.ocr_confidence : null;
-                      const confTone = conf === null ? "text-muted-foreground bg-muted"
-                        : conf >= 80 ? "text-emerald-600 bg-emerald-500/15"
-                        : conf >= 60 ? "text-amber-600 bg-amber-500/15"
-                        : "text-destructive bg-destructive/10";
-                      return (
-                      <div key={q.n} className={`rounded-xl border p-3 ${q.needs_review ? "border-amber-400/60 bg-amber-500/5" : "border-border bg-background"}`}>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold">{isAr ? `س${q.n}` : `Q${q.n}`}</span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${confTone}`}>
-                              {isAr ? "وضوح" : "clarity"} {conf === null ? "—" : `${conf}%`}
-                            </span>
-                            {q.needs_review && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 font-semibold">
-                                {isAr ? "يحتاج مراجعة يدوية" : "needs manual review"}
-                              </span>
-                            )}
-                          </div>
-                          {revealScore && (
-                            <div className="text-sm font-mono text-primary">{Math.round(Number(q.score) || 0)} / {Math.round(Number(q.out_of) || Number(gradeResult.per_question_max) || 20)}</div>
-                          )}
-                        </div>
-                        {q.feedback && <p className="text-sm whitespace-pre-wrap">{q.feedback}</p>}
-                        {q.corrections && (
-                          <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{q.corrections}</p>
-                        )}
-                      </div>
-                    );})}
-                  </div>
-                )}
-
-                <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-amber-400/20 text-amber-500 flex items-center justify-center shrink-0">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold">{isAr ? "غير راضٍ عن التصحيح؟" : "Not satisfied with the AI grading?"}</div>
-                      <div className="text-xs text-muted-foreground">{isAr ? "أرسل ورقتك لمدرّس حقيقي عبر تيليغرام." : "Send your paper to a real teacher via Telegram."}</div>
-                    </div>
-                    {!showHumanForm && !humanSent && (
-                      <button
-                        onClick={() => setShowHumanForm(true)}
-                        className="h-9 px-3 rounded-lg text-xs font-semibold bg-amber-400 text-black hover:bg-amber-300"
-                      >
-                        {isAr ? "أرسل لمدرّس" : "Send to teacher"}
-                      </button>
-                    )}
-                  </div>
-
-                  {showHumanForm && !humanSent && (
-                    <div className="mt-4 space-y-3">
-                      <div>
-                        <label className="block text-xs font-semibold mb-1">
-                          {isAr ? "اسم مستخدم تيليغرام (بدون @)" : "Telegram username (without @)"}
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground text-sm">@</span>
-                          <input
-                            value={tgUsername}
-                            onChange={(e) => setTgUsername(e.target.value)}
-                            placeholder="ali_2007"
-                            maxLength={32}
-                            dir="ltr"
-                            className="flex-1 h-10 px-3 rounded-lg border border-border bg-background text-sm"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold mb-1">
-                          {isAr ? "ملاحظة اختيارية" : "Optional note"}
-                        </label>
-                        <Textarea
-                          value={humanReason}
-                          onChange={(e) => setHumanReason(e.target.value)}
-                          maxLength={500}
-                          className="min-h-[70px] rounded-lg text-sm"
-                          dir={isAr ? "rtl" : "ltr"}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold mb-1">
-                          {isAr ? "أرسل الاعتراض إلى كروب" : "Send objection to group"}
-                        </label>
-                        <select
-                          value={groupOverride || (["physics","chemistry","biology","math"].includes(course.id) ? course.id : "")}
-                          onChange={(e) => setGroupOverride(e.target.value as typeof groupOverride)}
-                          className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
-                          dir={isAr ? "rtl" : "ltr"}
-                        >
-                          <option value="">{isAr ? "— اختر الكروب —" : "— Choose group —"}</option>
-                          <option value="physics">{isAr ? "الفيزياء" : "Physics"}</option>
-                          <option value="chemistry">{isAr ? "الكيمياء" : "Chemistry"}</option>
-                          <option value="biology">{isAr ? "الأحياء" : "Biology"}</option>
-                          <option value="math">{isAr ? "الرياضيات" : "Math"}</option>
-                        </select>
-                      </div>
-                      <button
-                        onClick={sendToHuman}
-                        disabled={sendingHuman}
-                        className="w-full h-11 rounded-xl bg-amber-400 text-black font-semibold hover:bg-amber-300 inline-flex items-center justify-center gap-2 disabled:opacity-60"
-                      >
-                        {sendingHuman ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        {sendingHuman ? (isAr ? "جاري الإرسال..." : "Sending...") : (isAr ? "إرسال" : "Send")}
-                      </button>
-                    </div>
-                  )}
-
-                  {humanSent && (
-                    <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-300">
-                      <div>✓ {isAr ? "تم الإرسال. سيتواصل معك المدرّس عبر تيليغرام." : "Sent. The teacher will contact you on Telegram."}</div>
-                      {routedSubject && (
-                        <div className="mt-1 text-xs opacity-90">
-                          {isAr
-                            ? `تم توجيه الاعتراض إلى كروب ${({ physics: "الفيزياء", chemistry: "الكيمياء", biology: "الأحياء", math: "الرياضيات" } as Record<string,string>)[routedSubject] ?? routedSubject} الخاص بالمصححين.`
-                            : `Your request was routed to the ${({ physics: "Physics", chemistry: "Chemistry", biology: "Biology", math: "Math" } as Record<string,string>)[routedSubject] ?? routedSubject} graders group.`}
-                        </div>
-                      )}
-                    </div>
-                  )}
+            <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+              <div>
+                <div className="font-semibold">{isAr ? "احصل على درجتي" : "Get my degree"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {isAr
+                    ? "سنرسل ورقتك مع الإجابة النموذجية وملاحظات الذكاء الاصطناعي إلى المصحّح على تيليغرام."
+                    : "We'll send your paper, the official answer key and the AI notes to the grader on Telegram."}
                 </div>
               </div>
-            )}
+
+              {!humanSent && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">
+                      {isAr ? "اسم مستخدم تيليغرام (بدون @)" : "Telegram username (without @)"}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground text-sm">@</span>
+                      <input
+                        value={tgUsername}
+                        onChange={(e) => setTgUsername(e.target.value)}
+                        placeholder="ali_2007"
+                        maxLength={32}
+                        dir="ltr"
+                        className="flex-1 h-10 px-3 rounded-lg border border-border bg-background text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{isAr ? "ملاحظة اختيارية" : "Optional note"}</label>
+                    <Textarea
+                      value={humanReason}
+                      onChange={(e) => setHumanReason(e.target.value)}
+                      maxLength={500}
+                      className="min-h-[70px] rounded-lg text-sm"
+                      dir={isAr ? "rtl" : "ltr"}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold mb-1">{isAr ? "كروب المادة" : "Subject group"}</label>
+                    <select
+                      value={groupOverride || (["physics","chemistry","biology","math"].includes(course.id) ? course.id : "")}
+                      onChange={(e) => setGroupOverride(e.target.value as typeof groupOverride)}
+                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm"
+                      dir={isAr ? "rtl" : "ltr"}
+                    >
+                      <option value="">{isAr ? "— اختر الكروب —" : "— Choose group —"}</option>
+                      <option value="physics">{isAr ? "الفيزياء" : "Physics"}</option>
+                      <option value="chemistry">{isAr ? "الكيمياء" : "Chemistry"}</option>
+                      <option value="biology">{isAr ? "الأحياء" : "Biology"}</option>
+                      <option value="math">{isAr ? "الرياضيات" : "Math"}</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={getMyDegree}
+                    disabled={sendingHuman}
+                    className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-60"
+                  >
+                    {sendingHuman ? <Loader2 className="w-4 h-4 animate-spin" /> : <GraduationCap className="w-4 h-4" />}
+                    {sendingHuman
+                      ? (isAr ? "جاري الإرسال..." : "Sending...")
+                      : (isAr ? "احصل على درجتي" : "Get my degree")}
+                  </button>
+                </>
+              )}
+
+              {humanSent && (
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-300">
+                  <div>✓ {isAr ? "تم الإرسال. سيصلك التصحيح والدرجة عبر تيليغرام." : "Sent. Your grade and feedback will arrive on Telegram."}</div>
+                  {routedSubject && (
+                    <div className="mt-1 text-xs opacity-90">
+                      {isAr
+                        ? `تم التوجيه إلى كروب ${({ physics: "الفيزياء", chemistry: "الكيمياء", biology: "الأحياء", math: "الرياضيات" } as Record<string,string>)[routedSubject] ?? routedSubject} الخاص بالمصححين.`
+                        : `Routed to the ${({ physics: "Physics", chemistry: "Chemistry", biology: "Biology", math: "Math" } as Record<string,string>)[routedSubject] ?? routedSubject} graders group.`}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
