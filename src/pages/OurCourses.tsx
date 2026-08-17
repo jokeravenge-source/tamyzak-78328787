@@ -1532,7 +1532,15 @@ function CourseRunner({
                 </div>
               </div>
 
-              {!humanSent && (
+              {!aiReview && !humanSent && (
+                <div className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+                  {isAr
+                    ? "راجع ورقتك بالذكاء الاصطناعي أولاً، ثم اطلب درجتك."
+                    : "Review your paper with the AI first, then request your degree."}
+                </div>
+              )}
+
+              {aiReview && !humanSent && (
                 <>
                   <div>
                     <label className="block text-xs font-semibold mb-1">
