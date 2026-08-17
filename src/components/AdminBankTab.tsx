@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, Loader2, Search, Library, Calculator } from "lucide-react";
+import { Plus, Trash2, Loader2, Search, Library, Calculator, ListChecks } from "lucide-react";
 
-type Kind = "text" | "problems";
+type Kind = "text" | "problems" | "mcq";
 
 const TEXT_SUBJECTS = ["arabic", "english", "math", "chemistry", "biology", "physics", "islamic", "french"] as const;
 const PROBLEM_SUBJECTS = ["math", "chemistry", "biology", "physics"] as const;
+const MCQ_SUBJECTS = ["physics", "chemistry", "biology", "english", "french", "arabic", "islamic"] as const;
 
 type TextRow = {
   id: string; subject: string; chapter: number; chapter_title: string | null; section: string | null;
@@ -16,6 +17,12 @@ type ProblemRow = {
   id: string; subject: string; chapter: number; chapter_title: string | null; section: string | null;
   language: string; problem: string; solution: string; final_answer: string | null; difficulty: string; source: string | null;
 };
+type McqRow = {
+  id: string; subject: string; chapter: number; chapter_title: string | null; section: string | null;
+  language: string; question: string; choices: string[]; answer_index: number; explanation: string | null;
+  difficulty: string; source: string | null;
+};
+type AnyRow = TextRow | ProblemRow | McqRow;
 
 const PAGE = 50;
 
@@ -25,19 +32,20 @@ export default function AdminBankTab() {
   const [chapter, setChapter] = useState<string>("all");
   const [language, setLanguage] = useState<string>("all");
   const [search, setSearch] = useState("");
-  const [rows, setRows] = useState<(TextRow | ProblemRow)[]>([]);
+  const [rows, setRows] = useState<AnyRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [chapters, setChapters] = useState<number[]>([]);
 
-  const table = kind === "text" ? "bank_text_questions" : "bank_problems";
-  const subjects = kind === "text" ? TEXT_SUBJECTS : PROBLEM_SUBJECTS;
+  const table = kind === "text" ? "bank_text_questions" : kind === "problems" ? "bank_problems" : "mcq_banks";
+  const subjects = kind === "text" ? TEXT_SUBJECTS : kind === "problems" ? PROBLEM_SUBJECTS : MCQ_SUBJECTS;
 
   const [form, setForm] = useState({
     chapter: "1", chapter_title: "", section: "", language: "ar",
     question: "", answer: "", final_answer: "", difficulty: "medium",
+    choices: ["", "", "", ""] as string[], answerIndex: 0,
   });
 
   const load = useCallback(async () => {
@@ -46,7 +54,7 @@ export default function AdminBankTab() {
     if (chapter !== "all") q = q.eq("chapter", Number(chapter));
     if (language !== "all") q = q.eq("language", language);
     if (search.trim()) {
-      const col = kind === "text" ? "question" : "problem";
+      const col = kind === "problems" ? "problem" : "question";
       q = q.ilike(col, `%${search.trim()}%`);
     }
     const { data, count, error } = await q
@@ -55,7 +63,7 @@ export default function AdminBankTab() {
       .range(page * PAGE, page * PAGE + PAGE - 1);
     setLoading(false);
     if (error) { toast({ title: "Load failed", description: error.message, variant: "destructive" }); return; }
-    setRows((data ?? []) as unknown as (TextRow | ProblemRow)[]);
+    setRows((data ?? []) as unknown as AnyRow[]);
     setTotal(count ?? 0);
   }, [table, subject, chapter, language, search, page, kind]);
 
@@ -78,8 +86,12 @@ export default function AdminBankTab() {
   const pages = Math.max(1, Math.ceil(total / PAGE));
 
   const addRow = async () => {
-    if (!form.question.trim() || !form.answer.trim()) {
+    if (!form.question.trim() || (kind !== "mcq" && !form.answer.trim())) {
       toast({ title: "Question and answer are required", variant: "destructive" });
+      return;
+    }
+    if (kind === "mcq" && form.choices.some((c) => !c.trim())) {
+      toast({ title: "All 4 choices are required", variant: "destructive" });
       return;
     }
     const base = {
@@ -93,11 +105,19 @@ export default function AdminBankTab() {
     };
     const payload = kind === "text"
       ? { ...base, question: form.question.trim(), answer: form.answer.trim() }
-      : { ...base, problem: form.question.trim(), solution: form.answer.trim(), final_answer: form.final_answer.trim() || null };
+      : kind === "problems"
+        ? { ...base, problem: form.question.trim(), solution: form.answer.trim(), final_answer: form.final_answer.trim() || null }
+        : {
+            ...base,
+            question: form.question.trim(),
+            choices: form.choices.map((c) => c.trim()),
+            answer_index: form.answerIndex,
+            explanation: form.answer.trim() || null,
+          };
     const { error } = await supabase.from(table).insert(payload as never);
     if (error) { toast({ title: "Add failed", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Question added" });
-    setForm({ ...form, question: "", answer: "", final_answer: "" });
+    setForm({ ...form, question: "", answer: "", final_answer: "", choices: ["", "", "", ""], answerIndex: 0 });
     void load();
   };
 
@@ -112,7 +132,7 @@ export default function AdminBankTab() {
   };
 
   const heading = useMemo(
-    () => (kind === "text" ? "Text questions" : "Problems"),
+    () => (kind === "text" ? "Text questions" : kind === "problems" ? "Problems" : "MCQ bank"),
     [kind],
   );
 
@@ -126,6 +146,9 @@ export default function AdminBankTab() {
         </button>
         <button onClick={() => setKind("problems")} className={`px-3 py-1.5 rounded-full text-xs border ${kind === "problems" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-secondary/40 text-muted-foreground"}`}>
           <Calculator className="w-3 h-3 inline mr-1" /> Problems
+        </button>
+        <button onClick={() => setKind("mcq")} className={`px-3 py-1.5 rounded-full text-xs border ${kind === "mcq" ? "bg-primary text-primary-foreground border-primary" : "border-white/10 bg-secondary/40 text-muted-foreground"}`}>
+          <ListChecks className="w-3 h-3 inline mr-1" /> MCQ bank
         </button>
       </div>
 
@@ -142,8 +165,23 @@ export default function AdminBankTab() {
             {kind === "text" && <option value="fr">French</option>}
           </select>
         </div>
-        <textarea value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} placeholder={kind === "text" ? "Question" : "Problem statement"} rows={2} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
-        <textarea value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} placeholder={kind === "text" ? "Answer" : "Full solution steps"} rows={3} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
+        <textarea value={form.question} onChange={(e) => setForm({ ...form, question: e.target.value })} placeholder={kind === "problems" ? "Problem statement" : "Question"} rows={2} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
+        {kind === "mcq" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {form.choices.map((c, i) => (
+              <label key={i} className="flex items-center gap-2">
+                <input type="radio" name="mcq-answer" checked={form.answerIndex === i} onChange={() => setForm({ ...form, answerIndex: i })} className="accent-primary" />
+                <input
+                  value={c}
+                  onChange={(e) => setForm({ ...form, choices: form.choices.map((x, j) => (j === i ? e.target.value : x)) })}
+                  placeholder={`Choice ${String.fromCharCode(65 + i)}`}
+                  className={`flex-1 ${inputCls}`}
+                />
+              </label>
+            ))}
+          </div>
+        )}
+        <textarea value={form.answer} onChange={(e) => setForm({ ...form, answer: e.target.value })} placeholder={kind === "text" ? "Answer" : kind === "problems" ? "Full solution steps" : "Explanation (optional)"} rows={3} className="w-full px-3 py-2 rounded-lg bg-background border border-white/10 text-sm" />
         {kind === "problems" && (
           <input value={form.final_answer} onChange={(e) => setForm({ ...form, final_answer: e.target.value })} placeholder="Final answer (optional)" className={`w-full ${inputCls}`} />
         )}
@@ -197,7 +235,10 @@ export default function AdminBankTab() {
         <ul className="space-y-3">
           {rows.map((r) => {
             const q = "question" in r ? r.question : r.problem;
-            const a = "answer" in r ? r.answer : r.solution;
+            const isMcq = "choices" in r;
+            const a = isMcq
+              ? (r as McqRow).explanation ?? ""
+              : "answer" in r ? r.answer : (r as ProblemRow).solution;
             return (
               <li key={r.id} className="rounded-2xl p-4 border border-white/10 bg-secondary/30">
                 <div className="flex items-start gap-3">
@@ -210,6 +251,15 @@ export default function AdminBankTab() {
                       {r.source && <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-muted-foreground">{r.source}</span>}
                     </div>
                     <p className="text-sm font-medium whitespace-pre-wrap break-words">{q}</p>
+                    {isMcq && (
+                      <ul className="mt-2 space-y-1">
+                        {((r as McqRow).choices ?? []).map((c, i) => (
+                          <li key={i} className={`text-xs ${i === (r as McqRow).answer_index ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                            {String.fromCharCode(65 + i)}) {c}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                     <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap break-words">{a}</p>
                   </div>
                   <button onClick={() => removeRow(r.id)} disabled={busyId === r.id} className="shrink-0 p-2 rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10 disabled:opacity-50">
