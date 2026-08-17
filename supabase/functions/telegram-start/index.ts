@@ -33,7 +33,38 @@ Deno.serve(async (req) => {
     }
     const userId = u.user.id;
 
+    let body: any = null;
+    try { body = await req.json(); } catch { /* no body */ }
+    const action: string = body?.action ?? "start";
+
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    if (action === "disconnect") {
+      await admin.from("telegram_verifications").delete().eq("user_id", userId);
+      return new Response(JSON.stringify({ ok: true, verified: false, telegramUsername: null }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "relink") {
+      const fresh = randomToken();
+      await admin.from("telegram_verifications").delete().eq("user_id", userId);
+      const { error: insErr } = await admin
+        .from("telegram_verifications")
+        .insert({ user_id: userId, token: fresh });
+      if (insErr) throw new Error(insErr.message);
+      return new Response(
+        JSON.stringify({
+          token: fresh,
+          deepLink: `https://t.me/${BOT_USERNAME}?start=${fresh}`,
+          botUsername: BOT_USERNAME,
+          verified: false,
+          telegramUsername: null,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const { data: existing } = await admin
       .from("telegram_verifications")
       .select("token, verified, telegram_username")
@@ -56,6 +87,7 @@ Deno.serve(async (req) => {
         deepLink,
         botUsername: BOT_USERNAME,
         verified: !!existing?.verified,
+        telegramUsername: existing?.telegram_username ?? null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

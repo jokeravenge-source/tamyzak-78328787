@@ -102,6 +102,14 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: true }));
   }
 
+  // A Telegram account can only be linked to one app account: clear stale links
+  // on other rows before attaching it to this one.
+  await supabase
+    .from("telegram_verifications")
+    .update({ telegram_user_id: null, telegram_username: null, verified: false })
+    .eq("telegram_user_id", fromId)
+    .neq("user_id", row.user_id);
+
   await supabase
     .from("telegram_verifications")
     .update({
