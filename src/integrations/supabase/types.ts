@@ -1250,6 +1250,66 @@ export type Database = {
         }
         Relationships: []
       }
+      mcq_banks: {
+        Row: {
+          answer_index: number
+          chapter: number
+          chapter_title: string | null
+          choices: Json
+          created_at: string
+          created_by: string | null
+          difficulty: string
+          explanation: string | null
+          id: string
+          language: string
+          question: string
+          section: string | null
+          sort_order: number
+          source: string | null
+          subject: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          answer_index?: number
+          chapter?: number
+          chapter_title?: string | null
+          choices?: Json
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          explanation?: string | null
+          id?: string
+          language?: string
+          question: string
+          section?: string | null
+          sort_order?: number
+          source?: string | null
+          subject: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          answer_index?: number
+          chapter?: number
+          chapter_title?: string | null
+          choices?: Json
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string
+          explanation?: string | null
+          id?: string
+          language?: string
+          question?: string
+          section?: string | null
+          sort_order?: number
+          source?: string | null
+          subject?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mission_progress: {
         Row: {
           completed: boolean
