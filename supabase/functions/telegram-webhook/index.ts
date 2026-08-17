@@ -60,11 +60,14 @@ Deno.serve(async (req) => {
   const update = await req.json().catch(() => null);
   const message = update?.message ?? update?.edited_message;
   const chatId = message?.chat?.id;
+  const chatType = message?.chat?.type;
   const fromId = message?.from?.id;
   const username = message?.from?.username ?? null;
   const text: string = message?.text ?? "";
 
   if (!chatId || !fromId) return new Response(JSON.stringify({ ok: true }));
+  // Only handle 1:1 chats — never reply inside groups/channels the bot belongs to.
+  if (chatType !== "private") return new Response(JSON.stringify({ ok: true, ignored: "non_private_chat" }));
 
   let token: string | null = null;
   if (text.startsWith("/start")) {
