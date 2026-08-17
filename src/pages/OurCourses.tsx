@@ -1149,6 +1149,9 @@ function CourseRunner({
   const [humanSent, setHumanSent] = useState(false);
   const [routedSubject, setRoutedSubject] = useState<string>("");
   const [groupOverride, setGroupOverride] = useState<"physics" | "chemistry" | "biology" | "math" | "">("");
+  const [checking, setChecking] = useState(false);
+  const [aiReview, setAiReview] = useState<any | null>(null);
+  const [aiNotesText, setAiNotesText] = useState("");
 
   const prepareImageForGrading = (file: File) => new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -1183,6 +1186,8 @@ function CourseRunner({
     })();
     setStudentImages([]);
     setHumanSent(false);
+    setAiReview(null);
+    setAiNotesText("");
   }, [selected]);
 
   // Which exams of this course the student already finished.
@@ -1214,11 +1219,30 @@ function CourseRunner({
       next.push(dataUrl);
     }
     setStudentImages((prev) => [...prev, ...next].slice(0, 10));
+    setAiReview(null);
+    setAiNotesText("");
   };
 
-  /** Best-effort AI notes (no score shown to the student) to include in the Telegram message. */
-  const buildAiNotes = async (): Promise<string> => {
-    if (!selected) return "";
+  const notesFromReview = (r: any): string => {
+    const lines: string[] = [];
+    if (r?.overall_feedback) lines.push(String(r.overall_feedback));
+    if (Array.isArray(r?.per_question)) {
+      r.per_question.forEach((q: any) => {
+        const parts = [q?.feedback, q?.corrections].filter(Boolean).join(" — ");
+        if (parts) lines.push(`${isAr ? "س" : "Q"}${q?.n}: ${parts}`);
+      });
+    }
+    return lines.join("\n").slice(0, 3000);
+  };
+
+  /** Step 1: the AI reviews the paper and shows the student their mistakes (no score). */
+  const checkWithAi = async () => {
+    if (!selected) return;
+    if (!studentImages.length) {
+      toast.error(isAr ? "ارفع صور ورقتك أولاً" : "Upload photos of your answer first");
+      return;
+    }
+    setChecking(true);
     try {
       const { data, error } = await supabase.functions.invoke("grade-course-exam", {
         body: {
@@ -1229,19 +1253,14 @@ function CourseRunner({
           language: isAr ? "ar" : "en",
         },
       });
-      if (error || (data as any)?.error) return "";
-      const r = data as any;
-      const lines: string[] = [];
-      if (r?.overall_feedback) lines.push(String(r.overall_feedback));
-      if (Array.isArray(r?.per_question)) {
-        r.per_question.forEach((q: any) => {
-          const parts = [q?.feedback, q?.corrections].filter(Boolean).join(" — ");
-          if (parts) lines.push(`${isAr ? "س" : "Q"}${q?.n}: ${parts}`);
-        });
-      }
-      return lines.join("\n").slice(0, 3000);
-    } catch {
-      return "";
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setAiReview(data);
+      setAiNotesText(notesFromReview(data));
+    } catch (e: any) {
+      toast.error(e?.message ?? (isAr ? "تعذّر التحقق" : "Check failed"));
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -1258,7 +1277,7 @@ function CourseRunner({
     }
     setSendingHuman(true);
     try {
-      const aiNotes = await buildAiNotes();
+      const aiNotes = aiNotesText;
       const { data, error } = await supabase.functions.invoke("send-to-human-grader", {
         body: {
           telegramUsername: uname,
