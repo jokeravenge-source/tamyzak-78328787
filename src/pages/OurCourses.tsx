@@ -11,6 +11,7 @@ import organicImg from "@/assets/course-organic.jpg";
 import geometryImg from "@/assets/course-geometry.jpg";
 import nuclearImg from "@/assets/course-nuclear.jpg";
 import laserImg from "@/assets/course-laser.jpg";
+import arabicImg from "@/assets/course-arabic.jpg";
 
 type Course = {
   id: string;
@@ -24,6 +25,7 @@ type Course = {
   active?: boolean;
   fixedPlaylistId?: string;
   hasLectures?: boolean;
+  isArabicHub?: boolean;
 };
 
 const COURSES: Course[] = [
@@ -71,6 +73,18 @@ const COURSES: Course[] = [
     accent: "270 85% 62%",
     cover: geneticsImg,
     active: true,
+  },
+  {
+    id: "arabic",
+    titleAr: "اللغة العربية",
+    titleEn: "Arabic",
+    descAr: "الأدب والقواعد: اختر القسم الذي تريد الدراسة فيه.",
+    descEn: "Literature and grammar: choose the section you want.",
+    Icon: BookOpen,
+    accent: "35 90% 55%",
+    cover: arabicImg,
+    active: true,
+    isArabicHub: true,
   },
 ];
 
@@ -141,6 +155,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
   const [openPlaylist, setOpenPlaylist] = useState<Course | null>(null);
   const [openPhysicsHub, setOpenPhysicsHub] = useState<Course | null>(null);
   const [openLectures, setOpenLectures] = useState<Course | null>(null);
+  const [openArabicHub, setOpenArabicHub] = useState<Course | null>(null);
   const [planActive, setPlanActive] = useState(true);
 
   const refresh = async () => {
@@ -189,7 +204,7 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
     window.scrollTo({ top: 0, behavior: "auto" });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-  }, [openCourse, openPhysicsHub, openLectures, openPlaylist]);
+  }, [openCourse, openPhysicsHub, openLectures, openPlaylist, openArabicHub]);
 
   const deleteExam = async (exam: ExamRow) => {
     if (!confirm(isAr ? "حذف هذا الامتحان؟" : "Delete this exam?")) return;
@@ -262,8 +277,9 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           {COURSES.map((c, idx) => {
             const Icon = c.Icon;
             const examCount = counts[c.id] ?? 0;
-            const isReady = !!c.fixedPlaylistId || !!c.hasLectures || examCount > 0;
+            const isReady = !!c.fixedPlaylistId || !!c.hasLectures || !!c.isArabicHub || examCount > 0;
             const handleStart = () => {
+              if (c.isArabicHub) { setOpenArabicHub(c); return; }
               if (!planActive) {
                 toast.error(
                   isAr
@@ -475,9 +491,75 @@ const OurCourses = ({ language, onBack }: { language: AppLanguage; onBack: () =>
           onClose={() => setOpenLectures(null)}
         />
       )}
+      {openArabicHub && (
+        <ArabicHub isAr={isAr} onClose={() => setOpenArabicHub(null)} />
+      )}
     </main>
   );
 };
+
+function ArabicHub({ isAr, onClose }: { isAr: boolean; onClose: () => void }) {
+  const [grammarSoon, setGrammarSoon] = useState(false);
+  return (
+    <div className="fixed inset-0 z-50 bg-background overflow-y-auto" dir={isAr ? "rtl" : "ltr"}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        <button
+          onClick={onClose}
+          className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-border bg-card text-sm font-medium hover:bg-secondary transition-colors mb-6"
+        >
+          <ArrowLeft className={`w-4 h-4 ${isAr ? "rotate-180" : ""}`} />
+          {isAr ? "رجوع" : "Back"}
+        </button>
+
+        <h2 className="text-2xl sm:text-3xl font-extrabold mb-2">{isAr ? "اللغة العربية" : "Arabic"}</h2>
+        <p className="text-muted-foreground text-sm mb-6">
+          {isAr ? "اختر القسم الذي تريده" : "Choose the section you want"}
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <a
+            href="https://t.me/heh212_bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group rounded-2xl border border-border/60 bg-card p-6 flex flex-col gap-3 hover:-translate-y-1 transition-transform"
+            style={{ boxShadow: "0 12px 30px -12px hsl(35 90% 55% / 0.35)" }}
+          >
+            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-extrabold">{isAr ? "أدب" : "Literature (أدب)"}</h3>
+            <p className="text-sm text-muted-foreground">
+              {isAr ? "انتقل إلى بوت الأدب على تيليجرام" : "Open the literature bot on Telegram"}
+            </p>
+            <span className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-primary">
+              <ExternalLink className="w-4 h-4" />
+              @heh212_bot
+            </span>
+          </a>
+
+          <button
+            onClick={() => setGrammarSoon(true)}
+            className="group text-start rounded-2xl border border-border/60 bg-card p-6 flex flex-col gap-3 hover:-translate-y-1 transition-transform"
+          >
+            <div className="w-12 h-12 rounded-xl bg-secondary text-secondary-foreground flex items-center justify-center">
+              <Languages className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-extrabold">{isAr ? "قواعد" : "Grammar (قواعد)"}</h3>
+            <p className="text-sm text-muted-foreground">
+              {grammarSoon
+                ? isAr ? "قريباً" : "Coming soon"
+                : isAr ? "اضغط لعرض الحالة" : "Tap to see status"}
+            </p>
+            <span className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-secondary text-secondary-foreground w-fit">
+              <Sparkles className="w-3 h-3 text-primary" />
+              {isAr ? "قريباً" : "Coming soon"}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function UploadModal({
   course,
