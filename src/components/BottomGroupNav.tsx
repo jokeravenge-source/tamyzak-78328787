@@ -73,11 +73,6 @@ const NAV_GROUPS: NavGroup[] = [
     directKey: "adminNotes",
   },
   {
-    titleEn: "Join", titleAr: "انضم",
-    items: [],
-    directKey: "joinTamayzak",
-  },
-  {
     titleEn: "Menu", titleAr: "القائمة",
     items: [
       { key: "account", labelEn: "Settings", labelAr: "الإعدادات", Icon: Settings },
@@ -93,7 +88,6 @@ const GROUP_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Home: Home,
   Community: Users,
   Notes: NotebookPen,
-  Join: UserPlus,
   Menu: MenuIcon,
 };
 
