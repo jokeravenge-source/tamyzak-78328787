@@ -1340,7 +1340,17 @@ function CourseRunner({
       setAiReview(data);
       setAiNotesText(notesFromReview(data));
     } catch (e: any) {
-      toast.error(e?.message ?? (isAr ? "تعذّر التحقق" : "Check failed"));
+      let msg = e?.message ?? (isAr ? "تعذّر التحقق" : "Check failed");
+      // supabase.functions.invoke hides the response body behind a generic
+      // "non-2xx status code" message — read the real reason out of it.
+      try {
+        const res = (e as any)?.context;
+        if (res && typeof res.json === "function") {
+          const body = await res.clone().json();
+          if (body?.error) msg = String(body.error);
+        }
+      } catch { /* keep generic message */ }
+      toast.error(msg);
     } finally {
       setChecking(false);
     }
