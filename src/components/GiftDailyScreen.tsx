@@ -77,6 +77,42 @@ export default function GiftDailyScreen({ language, onClose }: { language: AppLa
       await supabase.rpc("claim_daily_feature_limit", { _feature: FEATURE, _limit: 1 });
 
       const lang = isAr ? "ar" : "en";
+
+      // Prefer real MCQs from the MCQ bank (with authored choices).
+      const { count: mcqCount } = await supabase
+        .from("mcq_banks")
+        .select("*", { count: "exact", head: true })
+        .eq("language", lang);
+      if (mcqCount) {
+        const mcqOffset = Math.floor(Math.random() * mcqCount);
+        const { data: mcqPick } = await supabase
+          .from("mcq_banks")
+          .select("id, subject, chapter, question, choices, answer_index")
+          .eq("language", lang)
+          .order("id", { ascending: true })
+          .range(mcqOffset, mcqOffset);
+        const m = mcqPick?.[0];
+        const rawChoices = Array.isArray(m?.choices) ? (m!.choices as unknown[]).map((c) => String(c)) : [];
+        if (m && rawChoices.length >= 2) {
+          const correctText = rawChoices[m.answer_index] ?? rawChoices[0];
+          const shuffled = [...rawChoices];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          const drawnMcq: GiftQuestion = {
+            q: m.question,
+            choices: shuffled,
+            answer: shuffled.indexOf(correctText),
+            subject: m.subject,
+            chapter: m.chapter,
+          };
+          setQuestion(drawnMcq);
+          writeLocal({ day: todayKey(), question: drawnMcq, picked: null });
+          return;
+        }
+      }
+
       const { count } = await supabase
         .from("bank_text_questions")
         .select("*", { count: "exact", head: true })
