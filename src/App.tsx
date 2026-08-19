@@ -25,6 +25,9 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminMcqReview from "./pages/AdminMcqReview";
 import RoleGate, { ROLE_GATE_STORAGE_KEY, type AuthRole } from "./components/RoleGate";
 
+// Secret admin panel URL — not linked anywhere in the UI.
+const ADMIN_PANEL_PATH = "/tmz-ctrl-8462";
+
 const AccountCenter = lazy(() => import("./pages/AccountCenter"));
 const Essay = lazy(() => import("./pages/Essay"));
 const VideoNotes = lazy(() => import("./pages/VideoNotes"));
@@ -247,6 +250,8 @@ const App = () => {
   const [authRole, setAuthRole] = useState<AuthRole | null>(
     () => {
       if (typeof window === "undefined") return null;
+      // Hidden admin entry point: only reachable by typing the secret URL.
+      if (window.location.pathname.replace(/\/+$/, "") === ADMIN_PANEL_PATH) return "admin";
       const stored = localStorage.getItem(ROLE_GATE_STORAGE_KEY) as AuthRole | null;
       if (!stored && window.location.pathname.startsWith("/who-is-best")) return "guest";
       // Lecture deep links are always public: fall back to guest unless the

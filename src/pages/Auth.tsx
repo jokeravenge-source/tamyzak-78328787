@@ -139,16 +139,6 @@ export const Auth = ({
               {mode === "signin" ? "Sign in" : "Sign up"}
             </span>
           </div>
-          {onGoAdmin && (
-            <button
-              type="button"
-              onClick={onGoAdmin}
-              aria-label="Admin access"
-              className="w-10 h-10 rounded-full border border-white/10 bg-background/40 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-all"
-            >
-              <Shield className="w-5 h-5" />
-            </button>
-          )}
         </div>
 
         <h1 className="text-3xl md:text-4xl font-bold gradient-text leading-tight mb-2">

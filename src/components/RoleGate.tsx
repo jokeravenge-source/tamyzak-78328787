@@ -1,4 +1,4 @@
-import { Shield, GraduationCap, ArrowRight, Sparkles, PlayCircle } from "lucide-react";
+import { GraduationCap, ArrowRight, Sparkles, PlayCircle } from "lucide-react";
 
 export type AuthRole = "student" | "admin" | "guest";
 
@@ -24,7 +24,7 @@ export const RoleGate = ({ onSelect }: { onSelect: (role: AuthRole) => void }) =
           Who are you?
         </h1>
         <p className="text-center text-muted-foreground mb-10">Choose how you want to continue.</p>
-        <div className="grid sm:grid-cols-2 gap-5">
+        <div className="grid gap-5">
           <button
             onClick={() => choose("student")}
             className="group rounded-2xl p-7 border border-border bg-card hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all duration-300 text-left"
@@ -35,19 +35,6 @@ export const RoleGate = ({ onSelect }: { onSelect: (role: AuthRole) => void }) =
             <h3 className="text-xl font-bold mb-1 text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>Student</h3>
             <p className="text-sm text-muted-foreground mb-5">Sign in or create an account to study.</p>
             <span className="inline-flex items-center gap-1 text-primary text-sm font-semibold">
-              Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </button>
-          <button
-            onClick={() => choose("admin")}
-            className="group rounded-2xl p-7 border border-border bg-card hover:border-primary/40 hover:shadow-[var(--shadow-card)] transition-all duration-300 text-left"
-          >
-            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center mb-5 group-hover:bg-foreground transition-colors">
-              <Shield className="w-6 h-6 text-muted-foreground group-hover:text-background" />
-            </div>
-            <h3 className="text-xl font-bold mb-1 text-foreground" style={{ fontFamily: "'Outfit', sans-serif" }}>Admin</h3>
-            <p className="text-sm text-muted-foreground mb-5">Manage and approve uploaded summaries.</p>
-            <span className="inline-flex items-center gap-1 text-primary text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
               Continue <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </span>
           </button>

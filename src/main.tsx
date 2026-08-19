@@ -26,3 +26,14 @@ if (typeof window !== "undefined") {
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// PWA: pick the install manifest that matches the phone's language.
+if (typeof window !== "undefined") {
+  const isArabic = (navigator.languages?.[0] ?? navigator.language ?? "en")
+    .toLowerCase()
+    .startsWith("ar");
+  const link = document.getElementById("app-manifest") as HTMLLinkElement | null;
+  const href = isArabic ? "/manifest-ar.webmanifest" : "/manifest-en.webmanifest";
+  if (link) link.href = href;
+  document.documentElement.setAttribute("lang", isArabic ? "ar" : "en");
+}
