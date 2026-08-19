@@ -259,10 +259,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (action === "send_password_reset") {
-      // handled below
-    }
-
     if (action === "set_password") {
       const targetId = String(body?.user_id || "");
       const newPassword = String(body?.password || "");
