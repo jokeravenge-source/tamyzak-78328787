@@ -297,6 +297,20 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   };
 
   const [resetBusyId, setResetBusyId] = useState<string | null>(null);
+  const [setPassBusyId, setSetPassBusyId] = useState<string | null>(null);
+  const setPasswordManually = async (u: UserRow) => {
+    const pw = prompt(`Set a new password for ${u.display_name} (8–72 characters). The user can sign in with it immediately.`);
+    if (pw === null) return;
+    const pass = pw.trim();
+    if (pass.length < 8 || pass.length > 72) return toast.error("Password must be 8–72 characters");
+    setSetPassBusyId(u.user_id);
+    const { data, error } = await supabase.functions.invoke("admin-manage-users", {
+      body: { action: "set_password", user_id: u.user_id, password: pass },
+    });
+    setSetPassBusyId(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error ?? "Failed");
+    toast.success("Password updated");
+  };
   const sendPasswordReset = async (u: UserRow) => {
     if (!u.email) return toast.error("This user has no email on file.");
     if (!confirm(`Send a password reset email to ${u.email}?`)) return;
