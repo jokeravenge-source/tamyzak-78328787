@@ -260,6 +260,48 @@ Deno.serve(async (req) => {
     }
 
     if (action === "send_password_reset") {
+      // handled below
+    }
+
+    if (action === "set_password") {
+      const targetId = String(body?.user_id || "");
+      const newPassword = String(body?.password || "");
+      if (!targetId) {
+        return new Response(JSON.stringify({ error: "missing user_id" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (newPassword.length < 8 || newPassword.length > 72) {
+        return new Response(JSON.stringify({ error: "password_must_be_8_to_72_chars" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (await isAdmin(targetId)) {
+        return new Response(JSON.stringify({ error: "cannot_change_admin_password" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const r = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${targetId}`, {
+        method: "PUT",
+        headers: {
+          apikey: SERVICE_ROLE,
+          Authorization: `Bearer ${SERVICE_ROLE}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      if (!r.ok) {
+        const txt = await r.text();
+        return new Response(JSON.stringify({ error: txt || "failed_to_set_password" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "send_password_reset") {
       const targetId = String(body?.user_id || "");
       const redirectTo = String(body?.redirect_to || "");
       if (!targetId) {
