@@ -235,6 +235,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
 // Featured top cards (report/summaries + todo/fahrast)
 const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }>; tintBg: string; tintText: string }[] = [
   { key: "subjectsHub", Icon: BookOpen,   tintBg: "bg-primary",    tintText: "text-primary-foreground" },
+  { key: "mcqBank",     Icon: Layers,     tintBg: "bg-sky-50",     tintText: "text-sky-600" },
   { key: "missions",    Icon: Target,     tintBg: "bg-amber-50",   tintText: "text-amber-600" },
   { key: "summaries",   Icon: FileText,   tintBg: "bg-violet-50",  tintText: "text-violet-600" },
   { key: "sessions",    Icon: GraduationCap, tintBg: "bg-emerald-50", tintText: "text-emerald-600" },
@@ -242,13 +243,13 @@ const FEATURED: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: s
 
 // Study tools grid (bottom section)
 const STUDY_TOOLS: { key: MainMenuChoice; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "mcqBank",    Icon: Layers },
   { key: "videoNotes", Icon: Headphones },
   { key: "youtube",    Icon: Youtube },
   { key: "canvas",     Icon: Palette },
   { key: "notes",      Icon: NotebookPen },
   { key: "companion",  Icon: Sparkles },
   { key: "mcq",        Icon: HelpCircle },
-  { key: "mcqBank",    Icon: Layers },
 ];
 
 // Icons for any tool that can show up in "recently used"
