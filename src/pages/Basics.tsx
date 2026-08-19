@@ -626,7 +626,13 @@ const Basics = ({
     .filter((k) => k !== "liveBattle" && TOOL_ICONS[k as MainMenuChoice] && (fc as any)[k])
     .slice(0, 4)
     .map((k) => ({ key: k as MainMenuChoice, Icon: TOOL_ICONS[k as MainMenuChoice]! }));
-  const displayedTools = recentTools.length > 0 ? recentTools : STUDY_TOOLS.slice(0, 4);
+  const displayedTools = (() => {
+    const base = recentTools.length > 0 ? recentTools : STUDY_TOOLS.slice(0, 4);
+    const withBank = base.some((t) => t.key === "mcqBank")
+      ? base
+      : [{ key: "mcqBank" as MainMenuChoice, Icon: Layers }, ...base];
+    return withBank.slice(0, 4);
+  })();
   const displayedToolsHeader = recentTools.length > 0
     ? { en: "Recently used", ar: "المستخدمة مؤخراً" }[language]
     : toolsHeader;
