@@ -2721,6 +2721,10 @@ export type Database = {
           label: string
         }[]
       }
+      answer_mcq_bank: {
+        Args: { _choice_index: number; _question_id: string }
+        Returns: Json
+      }
       award_points: {
         Args: { _action_type: string; _metadata?: Json }
         Returns: Json

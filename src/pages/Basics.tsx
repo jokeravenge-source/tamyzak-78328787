@@ -188,6 +188,7 @@ const NAV_GROUPS: { titleEn: string; titleAr: string; items: NavItem[] }[] = [
       { key: "notes", labelEn: "Notes", labelAr: "ملاحظاتي", Icon: NotebookPen },
       { key: "summaries", labelEn: "Summaries", labelAr: "الملخصات", Icon: FileText },
       { key: "mcq", labelEn: "MCQ Generator", labelAr: "مولّد الأسئلة", Icon: HelpCircle },
+      { key: "mcqBank", labelEn: "MCQ Bank", labelAr: "بنك الأسئلة", Icon: Layers },
       { key: "mindmap", labelEn: "Mind Map", labelAr: "الخريطة الذهنية", Icon: Network },
       { key: "videoNotes", labelEn: "Video Notes", labelAr: "ملاحظات الفيديو", Icon: Headphones },
       { key: "textToVideo", labelEn: "Text → Video", labelAr: "نص إلى فيديو", Icon: Video },
@@ -247,6 +248,7 @@ const STUDY_TOOLS: { key: MainMenuChoice; Icon: React.ComponentType<{ className?
   { key: "notes",      Icon: NotebookPen },
   { key: "companion",  Icon: Sparkles },
   { key: "mcq",        Icon: HelpCircle },
+  { key: "mcqBank",    Icon: Layers },
 ];
 
 // Icons for any tool that can show up in "recently used"
@@ -257,6 +259,7 @@ const TOOL_ICONS: Partial<Record<MainMenuChoice, React.ComponentType<{ className
   notes: NotebookPen,
   companion: Sparkles,
   mcq: HelpCircle,
+  mcqBank: Layers,
   report: Sparkles,
   summaries: FileText,
   todo: ListChecks,
@@ -270,6 +273,7 @@ const FEATURED_COPY = {
     todo: { title: "To-Do List", subtitle: "Plan tasks and celebrate when you finish." },
     missions: { title: "Al-Fahrast", subtitle: "Chapter topics tracked per subject." },
     mcq: { title: "MCQ Generator", subtitle: "Get multiple-choice questions from any file." },
+    mcqBank: { title: "MCQ Bank", subtitle: "Solve real MCQs by subject: +5 points right, -5 wrong." },
     youtube: { title: "YouTube Player", subtitle: "Watch any YouTube video inside the app." },
     videoNotes: { title: "Video to Notes", subtitle: "Turn a YouTube lecture into AI study notes." },
     canvas: { title: "Canvas", subtitle: "Sketch and diagram your ideas freely." },
@@ -285,6 +289,7 @@ const FEATURED_COPY = {
     todo: { title: "قائمة المهام", subtitle: "نظّم مهامك واحتفل بإنجازها." },
     missions: { title: "الفهرست", subtitle: "مواضيع الفصول لكل مادة." },
     mcq: { title: "مولّد الأسئلة", subtitle: "احصل على اختيارات من متعدد من أي ملف." },
+    mcqBank: { title: "بنك الأسئلة", subtitle: "حل أسئلة حسب المادة: +5 نقاط للصحيح و-5 للخطأ." },
     youtube: { title: "مشغّل يوتيوب", subtitle: "شاهد أي فيديو يوتيوب داخل التطبيق." },
     videoNotes: { title: "من الفيديو إلى ملاحظات", subtitle: "حوّل محاضرة يوتيوب إلى ملاحظات بالذكاء." },
     canvas: { title: "اللوحة", subtitle: "ارسم ونظّم أفكارك بحرية." },
