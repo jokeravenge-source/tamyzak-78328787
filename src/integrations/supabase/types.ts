@@ -2721,6 +2721,15 @@ export type Database = {
           label: string
         }[]
       }
+      admin_grant_points: {
+        Args: { _points: number; _reason?: string; _user_id: string }
+        Returns: Json
+      }
+      admin_points_overview: { Args: { _limit?: number }; Returns: Json }
+      admin_points_user_detail: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: Json
+      }
       answer_mcq_bank: {
         Args: { _choice_index: number; _question_id: string }
         Returns: Json
