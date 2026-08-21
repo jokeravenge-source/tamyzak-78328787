@@ -26,7 +26,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes" | "bank" | "analytics" | "credits";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes" | "bank" | "analytics" | "credits" | "points";
   const [tab, setTab] = useState<Tab>("pending");
   // Owner gate: only this email sees every tab. Other admins are moderators
   // and only see acceptance/review-related tabs (summaries pending, flashcards
