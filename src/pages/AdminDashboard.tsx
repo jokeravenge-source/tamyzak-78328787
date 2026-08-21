@@ -638,15 +638,23 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               Credits
             </button>
           )}
+          {isOwner && (
+            <button onClick={() => setTab("points")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "points" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              <Coins className="w-4 h-4 inline mr-1.5" />Points
+            </button>
+          )}
           <button onClick={() => setTab("bank")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "bank" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <BookOpen className="w-4 h-4 inline mr-1.5" />Question Bank
           </button>
         </div>
 
-        {tab === "credits" ? (
+        {tab === "points" ? (
+          <AdminPointsTab />
+        ) : tab === "credits" ? (
           <AdminCreditsTab />
         ) : tab === "analytics" ? (
           <AdminAnalyticsTab />
+
         ) : tab === "bank" ? (
           <AdminBankTab />
         ) : tab === "notes" ? (
