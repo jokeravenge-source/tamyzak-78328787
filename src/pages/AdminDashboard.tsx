@@ -9,6 +9,7 @@ import AdminNotesTab from "@/components/AdminNotesTab";
 import AdminBankTab from "@/components/AdminBankTab";
 import AdminAnalyticsTab from "@/components/AdminAnalyticsTab";
 import AdminCreditsTab from "@/components/AdminCreditsTab";
+import AdminPointsTab from "@/components/AdminPointsTab";
 import RegenerateDailyGamesButton from "@/components/RegenerateDailyGamesButton";
 import DailyGamesListButton from "@/components/DailyGamesListButton";
 
