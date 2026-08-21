@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen, Crown, KeyRound, StickyNote } from "lucide-react";
+import { Shield, LogOut, FileText, Check, Trash2, Loader2, Download, Clock, Layers, Bell, Plus, Send, Newspaper, Upload, Users as UsersIcon, Search, Ban, RotateCcw, UserCog, X, Timer, BookOpen, Crown, KeyRound, StickyNote, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SUMMARY_SUBJECTS } from "./Summaries";
@@ -9,6 +9,7 @@ import AdminNotesTab from "@/components/AdminNotesTab";
 import AdminBankTab from "@/components/AdminBankTab";
 import AdminAnalyticsTab from "@/components/AdminAnalyticsTab";
 import AdminCreditsTab from "@/components/AdminCreditsTab";
+import AdminPointsTab from "@/components/AdminPointsTab";
 import RegenerateDailyGamesButton from "@/components/RegenerateDailyGamesButton";
 import DailyGamesListButton from "@/components/DailyGamesListButton";
 
@@ -26,7 +27,7 @@ type Row = {
 };
 
 const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes" | "bank" | "analytics" | "credits";
+  type Tab = "pending" | "approved" | "flashcards" | "notifications" | "news" | "users" | "usernames" | "aifiles" | "notes" | "bank" | "analytics" | "credits" | "points";
   const [tab, setTab] = useState<Tab>("pending");
   // Owner gate: only this email sees every tab. Other admins are moderators
   // and only see acceptance/review-related tabs (summaries pending, flashcards
@@ -638,15 +639,23 @@ const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               Credits
             </button>
           )}
+          {isOwner && (
+            <button onClick={() => setTab("points")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "points" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
+              <Coins className="w-4 h-4 inline mr-1.5" />Points
+            </button>
+          )}
           <button onClick={() => setTab("bank")} className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${tab === "bank" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
             <BookOpen className="w-4 h-4 inline mr-1.5" />Question Bank
           </button>
         </div>
 
-        {tab === "credits" ? (
+        {tab === "points" ? (
+          <AdminPointsTab />
+        ) : tab === "credits" ? (
           <AdminCreditsTab />
         ) : tab === "analytics" ? (
           <AdminAnalyticsTab />
+
         ) : tab === "bank" ? (
           <AdminBankTab />
         ) : tab === "notes" ? (
