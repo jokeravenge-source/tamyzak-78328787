@@ -38,25 +38,25 @@ function subjectLabel(subject: string, language: AppLanguage): string {
 }
 
 function useStreakDays(): number {
-  const [days, setDays] = useState<number>(() => {
-    try {
-      const raw = localStorage.getItem("streak_state_v1");
-      if (raw) return JSON.parse(raw).days ?? 0;
-    } catch {}
-    return 0;
-  });
+  const [days, setDays] = useState<number>(() => readLocalStreak().days);
   useEffect(() => {
-    const read = () => {
-      try {
-        const raw = localStorage.getItem("streak_state_v1");
-        if (raw) setDays(JSON.parse(raw).days ?? 0);
-      } catch {}
-    };
+    const read = () => setDays(readLocalStreak().days);
     read();
+    // Server is the source of truth (survives reinstalls / new app versions).
+    void fetchServerStreak().then((d) => { if (typeof d === "number") setDays(d); });
     const id = window.setInterval(read, 1500);
     window.addEventListener("storage", read);
-    return () => { window.clearInterval(id); window.removeEventListener("storage", read); };
+    window.addEventListener("app:streak-synced", read);
+    const onFocus = () => { void fetchServerStreak().then((d) => { if (typeof d === "number") setDays(d); }); };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("storage", read);
+      window.removeEventListener("app:streak-synced", read);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
+
   useEffect(() => {
     if (!days) return;
     try {
